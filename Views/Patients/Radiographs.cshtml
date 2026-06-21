@@ -1,0 +1,448 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Patient
+@using DentalCollegeManagementSystem_AAU.Models
+
+@{
+    var radiographs = ViewBag.Radiographs as List<Radiograph> ?? new();
+}
+
+<style>
+    :root {
+        --vt-navy:     #1a237e;
+        --vt-navy-mid: #283593;
+        --vt-border:   #d0d7e3;
+    }
+    .ph-section-wrapper {
+        background: #fff; border: 1.5px solid var(--vt-border);
+        border-radius: 10px; padding: 22px 24px 18px; margin-bottom: 24px;
+    }
+    .ph-section-title {
+        font-weight: 700; font-size: 1rem; color: var(--vt-navy);
+        margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+    }
+    .ph-section-title .count-badge {
+        font-size: .75rem; background: #e8eaf6; color: var(--vt-navy);
+        padding: 2px 10px; border-radius: 20px; font-weight: 600;
+    }
+
+    .ph-gallery { display: flex; flex-wrap: wrap; gap: 16px; padding: 6px 2px 10px; }
+    .ph-photo-item {
+        position: relative; width: 160px; border-radius: 8px;
+        border: 1px solid #ddd; overflow: hidden; background: #fff;
+        cursor: pointer; transition: box-shadow .2s, transform .15s;
+        display: flex; flex-direction: column;
+    }
+    .ph-photo-item:hover { box-shadow: 0 4px 16px rgba(26,35,126,.15); transform: translateY(-2px); }
+    .ph-photo-item .ph-img-area { width: 160px; height: 140px; overflow: hidden; flex-shrink: 0; }
+    .ph-photo-item .ph-img-area img {
+        width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .2s;
+    }
+    .ph-photo-item:hover .ph-img-area img { transform: scale(1.05); }
+    .ph-photo-info {
+        padding: 8px 10px 9px; border-top: 1px solid #eee;
+        background: #fff; flex: 1; display: flex; flex-direction: column; gap: 3px;
+    }
+    .ph-photo-type {
+        display: inline-block; font-size: .68rem; font-weight: 700;
+        background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 10px;
+    }
+    .ph-photo-date  { font-size: .65rem; color: #888; }
+    .ph-photo-name  { font-size: .68rem; color: #555; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ph-photo-notes { font-size: .63rem; color: #bbb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .ph-delete-btn {
+        position: absolute; top: 5px; right: 5px;
+        background: rgba(192,57,43,.85); border: none; border-radius: 50%;
+        width: 26px; height: 26px; color: white; font-size: 13px;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        opacity: 0; transition: opacity .2s; z-index: 2;
+    }
+    .ph-photo-item:hover .ph-delete-btn { opacity: 1; }
+
+    .ph-empty { font-size: .85rem; color: #aaa; font-style: italic; }
+
+    .ph-upload-zone {
+        border: 2px dashed #ccc; border-radius: 8px; padding: 30px 20px;
+        text-align: center; cursor: pointer; transition: border-color .2s, background .2s;
+    }
+    .ph-upload-zone:hover { border-color: var(--vt-navy); background: #f8f8ff; }
+    .ph-upload-zone p { font-size: .85rem; color: #888; margin: 8px 0 12px; }
+    .ph-upload-btn {
+        background: var(--vt-navy); color: #fff; border: none;
+        border-radius: 4px; padding: 8px 20px; font-size: .85rem; cursor: pointer;
+    }
+    .ph-upload-btn:hover { background: var(--vt-navy-mid); }
+
+   
+
+#ph-lightbox.open {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: all;
+}
+    /* Lightbox */
+    #rad-lightbox {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,.85); z-index: 99999;
+        align-items: center; justify-content: center;
+    }
+    #rad-lightbox.open { display: flex; }
+    #rad-lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+    #rad-lightbox-close {
+        position: absolute; top: 20px; right: 24px;
+        color: #fff; font-size: 32px; cursor: pointer; background: none; border: none;
+    }
+</style>
+
+<div class="vt-container">
+
+    <!-- ── Upload ─────────────────────────────────────────── -->
+    <div class="ph-section-wrapper">
+        <div class="ph-section-title">Upload Radiograph</div>
+
+        <div style="display:grid; grid-template-columns:200px 1fr; gap:16px; align-items:start; margin-bottom:16px;">
+            <div>
+                <label style="font-size:.85rem; font-weight:600; color:#555; display:block; margin-bottom:6px;">
+                    Radiograph Type
+                </label>
+                <select id="radType" class="form-select form-select-sm">
+                    <option value="Panoramic">Panoramic</option>
+                    <option value="Periapical">Periapical</option>
+                    <option value="Bitewing">Bitewing</option>
+                    <option value="Occlusal">Occlusal</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:.85rem; font-weight:600; color:#555; display:block; margin-bottom:6px;">
+                    Notes (optional)
+                </label>
+                <input type="text" id="radNotes" class="form-control form-control-sm"
+                       placeholder="e.g. Pre-treatment, Follow-up..." />
+            </div>
+        </div>
+
+        <div class="ph-upload-zone" onclick="document.getElementById('radFileInput').click()">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+                 stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p>Click or drag &amp; drop to upload radiograph</p>
+            <button type="button" class="ph-upload-btn">Choose File</button>
+            <input type="file" id="radFileInput" accept="image/*" multiple
+                   style="display:none;" onchange="uploadRadiographs(this)" />
+        </div>
+
+        <div id="radUploadStatus" style="margin-top:10px; font-size:.82rem; color:#555;"></div>
+    </div>
+
+    <!-- ── Gallery ────────────────────────────────────────── -->
+    <div class="ph-section-wrapper">
+        <div class="ph-section-title">
+            All Radiographs
+            <span class="count-badge" id="radCount">@radiographs.Count</span>
+        </div>
+
+        @if (!radiographs.Any())
+        {
+            <p class="ph-empty" id="radEmpty">No radiographs uploaded yet.</p>
+        }
+
+        <div class="ph-gallery" id="radGallery">
+            @foreach (var r in radiographs)
+            {
+                <div class="ph-photo-item" id="rad_@r.RadiographID">
+                    <div class="ph-img-area">
+                        <img src="@r.PhotoPath" alt="@r.RadiographType"
+                             onclick="openRadLightbox('@r.PhotoPath')" />
+                    </div>
+                    <button class="ph-delete-btn"
+                            onclick="deleteRadiograph(@r.RadiographID, event)"
+                            title="Delete">&#x2715;</button>
+                    <div class="ph-photo-info">
+                        <span class="ph-photo-type">@r.RadiographType</span>
+                        <span class="ph-photo-name">@r.FileName</span>
+                        <span class="ph-photo-date">@r.UploadedDate.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+</div>
+
+<!-- Lightbox -->
+<div id="rad-lightbox" onclick="closeRadLightbox()">
+    <button id="rad-lightbox-close" onclick="closeRadLightbox()">&#x2715;</button>
+    <img id="rad-lightbox-img" src="" alt="" />
+</div>
+
+@Html.AntiForgeryToken()
+
+<script>
+    const RAD_PATIENT_ID = @Model.PatientID;
+    const RAD_CSRF       = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+    function openRadLightbox(src) {
+        document.getElementById('rad-lightbox-img').src = src;
+        document.getElementById('rad-lightbox').classList.add('open');
+    }
+    function closeRadLightbox() {
+        document.getElementById('rad-lightbox').classList.remove('open');
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  Upload
+    // ══════════════════════════════════════════════════════
+    function uploadRadiographs(input) {
+        if (!input.files || !input.files.length) return;
+
+        const type   = document.getElementById('radType').value;
+        const notes  = document.getElementById('radNotes').value;
+        const status = document.getElementById('radUploadStatus');
+
+        Array.from(input.files).forEach(file => {
+            status.textContent = `Uploading ${file.name}...`;
+
+            const fd = new FormData();
+            fd.append('patientId',      RAD_PATIENT_ID);
+            fd.append('photo',          file);
+            fd.append('radiographType', type);
+            fd.append('notes',          notes);
+            fd.append('__RequestVerificationToken', RAD_CSRF);
+
+            fetch('/Radiographs/Upload', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(result => {
+                    if (result.success) {
+                        status.textContent = `\u2705 ${file.name} uploaded.`;
+
+                        // اضف في gallery هاي الصفحة
+                        _addToLocalGallery(result, type, file.name, notes);
+
+                        // اضف في تاب Photos بدون ريفريش
+                        syncRadToPhotosTab(result.photoId, result.photoPath, type, file.name, result.uploadedDate);
+
+                        showToast('Radiograph uploaded.', 'success');
+                    } else {
+                        status.textContent = `\u274C ${result.message}`;
+                        showToast(result.message, 'error');
+                    }
+                })
+                .catch(() => {
+                    status.textContent = '\u274C Upload failed.';
+                    showToast('Upload failed.', 'error');
+                });
+        });
+
+        input.value = '';
+    }
+
+    function _addToLocalGallery(result, type, fileName, notes) {
+        document.getElementById('radEmpty')?.remove();
+
+        const gallery = document.getElementById('radGallery');
+        const count   = document.getElementById('radCount');
+
+        const today = new Date().toLocaleString('en-GB', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+
+        const div = document.createElement('div');
+        div.className = 'ph-photo-item';
+        div.id = `rad_${result.photoId}`;
+        div.innerHTML = `
+            <div class="ph-img-area">
+                <img src="${result.photoPath}" alt="${type}"
+                     onclick="openRadLightbox('${result.photoPath}')" />
+            </div>
+            <button class="ph-delete-btn"
+                    onclick="deleteRadiograph(${result.photoId}, event)"
+                    title="Delete">&#x2715;</button>
+            <div class="ph-photo-info">
+                <span class="ph-photo-type">${type}</span>
+                <span class="ph-photo-name">${fileName}</span>
+                <span class="ph-photo-date">${today}</span>
+                ${notes ? `<span class="ph-photo-notes">${notes}</span>` : ''}
+            </div>`;
+
+        gallery.appendChild(div);
+
+        if (count) count.textContent = gallery.querySelectorAll('.ph-photo-item').length;
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  Delete
+    // ══════════════════════════════════════════════════════
+    function deleteRadiograph(photoId, e) {
+        if (e) e.stopPropagation();
+        if (!confirm('Delete this radiograph?')) return;
+
+        const fd = new FormData();
+        fd.append('photoId',   photoId);
+        fd.append('patientId', RAD_PATIENT_ID);
+        fd.append('__RequestVerificationToken', RAD_CSRF);
+
+        fetch('/Radiographs/Delete', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) {
+                    // احذف من هاي الصفحة
+                    document.getElementById(`rad_${photoId}`)?.remove();
+
+                    const gallery = document.getElementById('radGallery');
+                    const count   = document.getElementById('radCount');
+                    if (count && gallery)
+                        count.textContent = gallery.querySelectorAll('.ph-photo-item').length;
+
+                    // احذف من تاب Photos بدون ريفريش
+                    removeRadFromPhotosTab(photoId);
+
+                    showToast('Deleted.', 'success');
+                } else {
+                    showToast('Error deleting.', 'error');
+                }
+            })
+            .catch(() => showToast('Server error.', 'error'));
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  Drag & Drop
+    // ══════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+        const zone = document.querySelector('.ph-upload-zone');
+        if (!zone) return;
+        zone.addEventListener('dragover',  e => { e.preventDefault(); zone.style.borderColor = '#1a237e'; });
+        zone.addEventListener('dragleave', () => { zone.style.borderColor = '#ccc'; });
+        zone.addEventListener('drop', e => {
+            e.preventDefault();
+            zone.style.borderColor = '#ccc';
+            const input = document.getElementById('radFileInput');
+            const dt    = new DataTransfer();
+            Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+            input.files = dt.files;
+            uploadRadiographs(input);
+        });
+    });
+
+    // ══════════════════════════════════════════════════════════
+    // مزامنة Radiograph مع تاب Photos
+    // ══════════════════════════════════════════════════════════
+    function syncRadToPhotosTab(photoId, photoPath, radType, fileName, uploadedDate) {
+
+        const wrapper = document.getElementById('ph_radWrapper');
+        if (!wrapper) return;
+
+        // ازل رسالة "No radiographs yet" ان وجدت
+        document.getElementById('ph_radEmpty')?.remove();
+
+        // اجلب او انشئ الـ gallery
+        let gallery = document.getElementById('ph_radGallery');
+        if (!gallery) {
+            gallery = document.createElement('div');
+            gallery.className = 'ph-flat-gallery';
+            gallery.id = 'ph_radGallery';
+            wrapper.appendChild(gallery);
+        }
+
+        // اجمع المسارات للـ lightbox
+        const srcs = Array.from(gallery.querySelectorAll('img')).map(i => `'${i.src}'`);
+        srcs.push(`'${photoPath}'`);
+        const allPaths = `[${srcs.join(',')}]`;
+
+        // حدث onclick للكاردات الموجودة
+        gallery.querySelectorAll('.ph-photo-card').forEach(c => {
+            const s  = c.querySelector('img')?.src;
+            const fn = c.querySelector('.ph-info-section-name')?.textContent ?? '';
+            const dt = c.querySelector('.ph-info-date')?.textContent ?? '';
+            if (s) c.setAttribute('onclick', `openLightbox('${s}', ${allPaths}, '${fn} \u00b7 ${dt}')`);
+        });
+
+        const today = new Date().toLocaleDateString('en-GB');
+
+        const card = document.createElement('div');
+        card.className = 'ph-photo-card';
+        card.id = `ph_rad_${photoId}`;
+        card.setAttribute('onclick',
+            `openLightbox('${photoPath}', ${allPaths}, '${radType} \u00b7 ${today}')`);
+
+        card.innerHTML = `
+            <div class="ph-img-wrap">
+                <img src="${photoPath}" alt="${radType}" />
+                <div class="ph-type-pill">${radType}</div>
+                <div class="ph-lock-icon">&#x1F512;</div>
+            </div>
+            <div class="ph-photo-info">
+                <div class="ph-info-row">
+                    <div class="ph-icon-sq">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none"
+                             stroke="#555" stroke-width="2.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                    </div>
+                    <span class="ph-info-section-name">${fileName}</span>
+                </div>
+                <div class="ph-info-divider"></div>
+                <div class="ph-info-row">
+                    <div class="ph-icon-sq">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none"
+                             stroke="#555" stroke-width="2.5">
+                            <rect x="3" y="4" width="18" height="18" rx="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8"  y1="2" x2="8"  y2="6"/>
+                            <line x1="3"  y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
+                    <span class="ph-info-date">${today}</span>
+                </div>
+                <div class="ph-source-tag">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    Radiograph
+                </div>
+            </div>`;
+
+        gallery.appendChild(card);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // حذف Radiograph من تاب Photos
+    // ══════════════════════════════════════════════════════════
+    function removeRadFromPhotosTab(photoId) {
+
+        document.getElementById(`ph_rad_${photoId}`)?.remove();
+
+        const gallery = document.getElementById('ph_radGallery');
+        if (!gallery) return;
+
+        const remaining = gallery.querySelectorAll('.ph-photo-card').length;
+
+        if (remaining === 0) {
+            gallery.remove();
+            const wrapper = document.getElementById('ph_radWrapper');
+            if (wrapper && !document.getElementById('ph_radEmpty')) {
+                const p = document.createElement('p');
+                p.className   = 'ph-empty';
+                p.id          = 'ph_radEmpty';
+                p.textContent = 'No radiographs uploaded yet.';
+                wrapper.appendChild(p);
+            }
+        } else {
+            // حدث مسارات الـ lightbox بعد الحذف
+            const srcs     = Array.from(gallery.querySelectorAll('img')).map(i => `'${i.src}'`);
+            const allPaths = `[${srcs.join(',')}]`;
+            gallery.querySelectorAll('.ph-photo-card').forEach(c => {
+                const s  = c.querySelector('img')?.src;
+                const fn = c.querySelector('.ph-info-section-name')?.textContent ?? '';
+                const dt = c.querySelector('.ph-info-date')?.textContent ?? '';
+                if (s) c.setAttribute('onclick', `openLightbox('${s}', ${allPaths}, '${fn} \u00b7 ${dt}')`);
+            });
+        }
+    }
+</script>

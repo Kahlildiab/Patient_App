@@ -1,0 +1,329 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Appointment
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+    :root {
+        --cream: #FAF7F2;
+        --charcoal: #1C1C1E;
+        --teal: #2A7C76;
+        --teal-light: #3AADA5;
+        --teal-muted: #E8F4F3;
+        --border: #E0DDD8;
+        --muted: #8A8680;
+        --danger: #C0392B;
+        --danger-light: #FFF2F2;
+        --danger-border: #F5C6C6;
+        --shadow: 0 2px 20px rgba(0,0,0,0.06);
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background-color: var(--cream);
+        font-family: 'DM Sans', sans-serif;
+        color: var(--charcoal);
+    }
+
+    .page-wrapper {
+        min-height: 100vh;
+        padding: 48px 24px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        padding: 48px;
+        width: 100%;
+        max-width: 640px;
+        border: 1px solid var(--border);
+        animation: fadeUp 0.4s ease both;
+    }
+
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    .card-header {
+        margin-bottom: 28px;
+    }
+
+    .breadcrumb {
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 8px;
+    }
+
+        .breadcrumb a {
+            color: var(--teal);
+            text-decoration: none;
+        }
+
+            .breadcrumb a:hover {
+                text-decoration: underline;
+            }
+
+    .page-title {
+        font-family: 'DM Serif Display', serif;
+        font-size: 32px;
+        color: var(--charcoal);
+        line-height: 1.2;
+    }
+
+    /* Warning Banner */
+    .warning-banner {
+        background: var(--danger-light);
+        border: 1px solid var(--danger-border);
+        border-left: 4px solid var(--danger);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 32px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .warning-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--danger);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #fff;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .warning-text strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--danger);
+        margin-bottom: 2px;
+    }
+
+    .warning-text span {
+        font-size: 13px;
+        color: #8B3030;
+    }
+
+    .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 24px 0;
+    }
+
+    .section-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--teal);
+        margin-bottom: 16px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+        .info-grid .full {
+            grid-column: 1 / -1;
+        }
+
+    .info-item {
+        background: var(--cream);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 13px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+        .info-item .label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .info-item .value {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--charcoal);
+        }
+
+    .status-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        background: var(--teal-muted);
+        color: var(--teal);
+    }
+
+    .actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-top: 32px;
+    }
+
+    .btn-delete {
+        background: var(--danger);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 11px 28px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.15s;
+    }
+
+        .btn-delete:hover {
+            background: #A93226;
+            transform: translateY(-1px);
+        }
+
+        .btn-delete:active {
+            transform: translateY(0);
+        }
+
+    .btn-cancel {
+        font-size: 14px;
+        color: var(--muted);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+
+        .btn-cancel:hover {
+            color: var(--charcoal);
+        }
+
+    @@media (max-width: 520px) {
+        .card {
+            padding: 28px 20px;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+            .info-grid .full {
+                grid-column: 1;
+            }
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="card">
+
+        <div class="card-header">
+            <div class="breadcrumb">
+                <a asp-action="Index">Appointments</a> / Delete
+            </div>
+            <h1 class="page-title">Delete Appointment</h1>
+        </div>
+
+        <div class="warning-banner">
+            <div class="warning-icon">!</div>
+            <div class="warning-text">
+                <strong>This action cannot be undone</strong>
+                <span>The appointment record will be permanently removed from the system.</span>
+            </div>
+        </div>
+
+        <div class="section-label">Patient & Clinic</div>
+        <div class="info-grid">
+            <div class="info-item full">
+                <span class="label">@Html.DisplayNameFor(model => model.Patient)</span>
+                <span class="value">@Html.DisplayFor(model => model.Patient.FirstName)</span>
+            </div>
+            <div class="info-item full">
+                <span class="label">@Html.DisplayNameFor(model => model.ClinicName)</span>
+                <span class="value">@Html.DisplayFor(model => model.ClinicName)</span>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-label">Date & Time</div>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="label">@Html.DisplayNameFor(model => model.AppointmentDate)</span>
+                <span class="value">@Html.DisplayFor(model => model.AppointmentDate)</span>
+            </div>
+            <div class="info-item">
+                <span class="label">@Html.DisplayNameFor(model => model.AppointmentDay)</span>
+                <span class="value">@Html.DisplayFor(model => model.AppointmentDay)</span>
+            </div>
+            <div class="info-item">
+                <span class="label">@Html.DisplayNameFor(model => model.TimeFrom)</span>
+                <span class="value">@Html.DisplayFor(model => model.TimeFrom)</span>
+            </div>
+            <div class="info-item">
+                <span class="label">@Html.DisplayNameFor(model => model.TimeTo)</span>
+                <span class="value">@Html.DisplayFor(model => model.TimeTo)</span>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-label">Status & Metadata</div>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="label">@Html.DisplayNameFor(model => model.AppointmentStatus)</span>
+                <span class="value">
+                    <span class="status-badge">@Html.DisplayFor(model => model.AppointmentStatus)</span>
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="label">@Html.DisplayNameFor(model => model.CreatedDate)</span>
+                <span class="value">@Html.DisplayFor(model => model.CreatedDate)</span>
+            </div>
+        </div>
+
+        <form asp-action="Delete">
+            <input type="hidden" asp-for="AppointmentID" />
+            <div class="actions">
+                <button type="submit" class="btn-delete">Yes, Delete</button>
+                <a asp-action="Index" class="btn-cancel">← Cancel & Go Back</a>
+            </div>
+        </form>
+
+    </div>
+</div>

@@ -1,0 +1,75 @@
+﻿@model IEnumerable<DentalCollegeManagementSystem_AAU.Models.Patient>
+@{
+    ViewData["Title"] = "Rejected Patients";
+}
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="~/css/all.min.css" />
+<link rel="stylesheet" href="~/css/_grid.scss" />
+<link rel="stylesheet" href="~/css/_reboot.scss" />
+<link rel="stylesheet" href="~/css/_root.scss" />
+<link rel="stylesheet" href="~/css/RTE.css" />
+
+
+<div class="page-wrapper">
+    <div class="container">
+
+        <div class="        " style="                 background-size: 100% !important;-webkit-background-size: cover !important;-moz-background-size: cover !important;-o-background-size: cover !important;background-size: cover !important;background-position: center !important;">
+            <section id="title-wrapper" style=" justify-content: End;">
+                <div class="lineleft" style="  "></div>
+                <h1 class="sectiontitle heading6"><p style="text-align: center;"><span style="color: #252468;">REJECTED PATIENTS</span></p></h1>
+                <div class="lineright" style="display: block; background-color: #daa328; "></div>
+            </section>
+        </div>
+        <div class="custom-card">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0" style="color:#751851; font-weight:600;">
+                    Rejected Patients List
+                    <span style="background-color:#751851;color:white;padding:5px 10px;border-radius:px;font-size:13px;font-weight:600;border:none;margin:2px;cursor:pointer;">@Model.Count()</span>
+                </h5>
+                @* <a asp-controller="Home" asp-action="Index" class="btn-back">← Back to Patients</a> *@
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Numbers</th>
+                            <th>Name</th>
+                            <th>National ID</th>
+                            <th>Gender</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="empty-msg">No rejected patients found ✅</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            int i = 1;
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@(i++)</td>
+                                    <td>@item.FirstName @item.SecondName @item.ThirdName @item.FourthName</td>
+                                    <td>@item.NationalID_PassportNumber</td>
+                                    <td>@item.Gender</td>
+                                    <td>@item.PhoneNumber</td>
+                                    <td><span style="background-color:#751851;color:white;padding:5px 10px;border-radius:px;font-size:13px;font-weight:600;border:none;margin:2px;cursor:pointer;">Rejected</span></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </div>
+</div>

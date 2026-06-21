@@ -1,0 +1,811 @@
+﻿@model IEnumerable<DentalCollegeManagementSystem_AAU.Models.Appointment>
+
+@{
+    ViewData["Title"] = "Appointments";
+    var userRole = Context.Session.GetString("UserRole") ?? "";
+
+    int pageSize = 10;
+    int pageNumber = Context.Request.Query.ContainsKey("page") ? int.Parse(Context.Request.Query["page"]) : 1;
+
+    string searchName = Context.Request.Query["searchName"].ToString().Trim().ToLower();
+    string searchID = Context.Request.Query["searchID"].ToString().Trim().ToLower();
+    string filterDate = Context.Request.Query["filterDate"].ToString().Trim();
+    string filterTime = Context.Request.Query["filterTime"].ToString().Trim();
+
+    var filtered = Model.AsEnumerable();
+
+    if (!string.IsNullOrEmpty(searchName))
+        filtered = filtered.Where(a =>
+            a.Patient != null &&
+            (a.Patient.FirstName + " " + a.Patient.SecondName + " " +
+             a.Patient.ThirdName + " " + a.Patient.FourthName)
+            .ToLower().Contains(searchName));
+
+    if (!string.IsNullOrEmpty(searchID))
+        filtered = filtered.Where(a =>
+            a.Patient != null &&
+            a.Patient.NationalID_PassportNumber != null &&
+            a.Patient.NationalID_PassportNumber.ToLower().Contains(searchID));
+
+    if (!string.IsNullOrEmpty(filterDate) && DateTime.TryParse(filterDate, out DateTime parsedDate))
+        filtered = filtered.Where(a => a.AppointmentDate.Date == parsedDate.Date);
+
+    if (!string.IsNullOrEmpty(filterTime))
+        filtered = filtered.Where(a =>
+            a.Patient != null &&
+            a.Patient.AppointmentTime != null &&
+            a.Patient.AppointmentTime.StartsWith(filterTime, StringComparison.OrdinalIgnoreCase));
+
+    int totalItems = filtered.Count();
+    int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+    var pagedModel = filtered.OrderByDescending(a => a.AppointmentDate)
+                             .Skip((pageNumber - 1) * pageSize)
+                             .Take(pageSize)
+                             .ToList();
+
+    var allOrdered = Model
+        .Where(a => a.PatientID != 0)
+        .OrderBy(a => a.PatientID)
+        .ThenBy(a => a.AppointmentDate)
+        .ToList();
+
+    var visitNumbers = new Dictionary<int, int>();
+    var patientCounter = new Dictionary<int, int>();
+    foreach (var ap in allOrdered)
+    {
+        if (!patientCounter.ContainsKey(ap.PatientID))
+            patientCounter[ap.PatientID] = 0;
+        patientCounter[ap.PatientID]++;
+        visitNumbers[ap.AppointmentID] = patientCounter[ap.PatientID];
+    }
+
+    string[] suffixes = { "th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th" };
+    string Ordinal(int n)
+    {
+        if (n % 100 >= 11 && n % 100 <= 13) return n + "th";
+        return n + suffixes[n % 10];
+    }
+}
+
+<link rel="stylesheet" href="~/css/RTE.css" />
+<link rel="stylesheet" href="~/css/Site.css" />
+
+<style>
+    .active-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .filter-tag {
+        background: #e8eaf6;
+        color: #252468;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .apt-search-input {
+        width: 100%;
+        border: 1.5px solid #d0d7e3;
+        border-radius: 6px;
+        padding: 10px 14px;
+        font-size: .92rem;
+        outline: none;
+        transition: border-color .2s;
+    }
+
+        .apt-search-input:focus {
+            border-color: #1a237e;
+        }
+
+    .apt-patient-item {
+        padding: 10px 14px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: background .15s;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .apt-patient-item:hover {
+            background: #e8eaf6;
+        }
+
+    .apt-patient-name {
+        font-weight: 700;
+        color: #1a237e;
+        font-size: .9rem;
+    }
+
+    .apt-patient-id {
+        font-size: .78rem;
+        color: #888;
+    }
+
+    .apt-results-box {
+        max-height: 260px;
+        overflow-y: auto;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        margin-top: 8px;
+        background: #fff;
+    }
+
+    .apt-no-results {
+        padding: 14px;
+        text-align: center;
+        color: #aaa;
+        font-size: .85rem;
+    }
+
+    .visit-num-badge {
+        background: #1a237e;
+        color: #fff;
+        border-radius: 4px;
+        padding: 2px 10px;
+        font-size: .78rem;
+        font-weight: 700;
+        letter-spacing: .3px;
+    }
+
+    .visit-num-first {
+        background: #daa328;
+    }
+
+    .visit-num-second {
+        background: #1565c0;
+    }
+
+    .vt-cancel-btn {
+        background: #fff;
+        color: #555;
+        border: 1px solid #d0d7e3;
+        border-radius: 6px;
+        padding: 9px 20px;
+        font-size: .88rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .vt-modal-save-btn {
+        background: #daa328;
+        color: #fff;
+        border: none;
+        border-radius: 0px 8px 8px;
+        padding: 9px 28px;
+        font-size: .88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .15s;
+    }
+
+        .vt-modal-save-btn:hover {
+            background: #b8891e;
+        }
+
+        .vt-modal-save-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: .7;
+        }
+
+    .vt-input {
+        width: 100%;
+        border: 1px solid #d0d7e3;
+        border-radius: 6px;
+        padding: 9px 13px;
+        font-size: .88rem;
+        color: #333;
+        outline: none;
+        box-sizing: border-box;
+        transition: border-color .2s;
+    }
+
+        .vt-input:focus {
+            border-color: #1a237e;
+        }
+
+    .vt-label {
+        font-size: .82rem;
+        color: #78909c;
+        font-weight: 500;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .attendance-block-alert {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        padding: 14px 16px;
+        margin-top: 12px;
+        display: none;
+    }
+
+        .attendance-block-alert .alert-icon {
+            font-size: 1.4rem;
+            color: #856404;
+            margin-bottom: 6px;
+        }
+
+        .attendance-block-alert .alert-title {
+            font-weight: 700;
+            color: #856404;
+            font-size: .92rem;
+            margin-bottom: 4px;
+        }
+
+        .attendance-block-alert .alert-msg {
+            font-size: .82rem;
+            color: #856404;
+            line-height: 1.5;
+        }
+
+    .slot-option-btn {
+        border: 2px solid #1a237e;
+        color: #1a237e;
+        background: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 7px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+        min-width: 100px;
+    }
+
+        .slot-option-btn:hover {
+            background: #e8eaf6;
+        }
+
+        .slot-option-btn.selected {
+            background: #1a237e;
+            color: #fff;
+        }
+
+        .slot-option-btn:disabled {
+            border-color: #ccc;
+            color: #aaa;
+            background: #f5f5f5;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+
+    .capacity-warning {
+        background: #f8d7da;
+        color: #842029;
+        border: 1px solid #f5c2c7;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: .8rem;
+        font-weight: 600;
+        margin-top: 8px;
+        display: none;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="custom-card">
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">@TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
+
+        <!-- SEARCH BAR -->
+        <div style="background:#e9e8e8; width:100vw; position:relative; left:50%; right:50%; margin-left:-50vw; margin-right:-50vw; padding:30px 40px;">
+            <div style="max-width:1300px; margin:0 auto;">
+                <section id="title-wrapper" style="justify-content:flex-start;">
+                    <div class="lineright" style="display:block; background-color:#daa328; max-width:650px;"></div>
+                    <h1 class="sectiontitle heading6">
+                        <p style="text-align:left;"><span style="color:#252468;">SEARCH</span></p>
+                    </h1>
+                </section>
+                <br />
+                <form method="get">
+                    <div style="background:white; padding:16px 20px;">
+                        <div class="row align-items-center mb-2">
+                            <div class="col-md-2"><label style="font-weight:600; font-size:13px; color:#252468; margin:0;">Search by Name</label></div>
+                            <div class="col-md-10">
+                                <input type="text" name="searchName" value="@searchName" placeholder="e.g. Ahmad Mohammad" class="form-control" style="border:1px solid #ddd; border-radius:0;" />
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row align-items-center">
+                            <div class="col-md-2"><label style="font-weight:600; font-size:13px; color:#252468; margin:0;">National ID / Passport</label></div>
+                            <div class="col-md-3">
+                                <input type="text" name="searchID" value="@searchID" placeholder="e.g. 9876543210" class="form-control" style="border:1px solid #ddd; border-radius:0;" />
+                            </div>
+                            <div class="col-md-2 text-center"><label style="font-weight:600; font-size:13px; color:#252468; margin:0;">Appointment Date</label></div>
+                            <div class="col-md-3">
+                                <input type="date" name="filterDate" value="@filterDate" class="form-control" style="border:1px solid #ddd; border-radius:0;" />
+                            </div>
+                            <div class="col-md-1 text-center"><label style="font-weight:600; font-size:13px; color:#252468; margin:0;">AM / PM</label></div>
+                            <div class="col-md-1">
+                                <select name="filterTime" class="form-control" style="border:1px solid #ddd; border-radius:0;">
+                                    <option value="">-- All --</option>
+                                    <option value="AM" selected="@(filterTime == "AM" ? "selected" : null)">AM</option>
+                                    <option value="PM" selected="@(filterTime == "PM" ? "selected" : null)">PM</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align:center;">
+                        <button type="submit" style="width:90%; background:#c81589; color:white; border:none; padding:12px; font-size:15px; font-weight:600; cursor:pointer; margin-top:3px; letter-spacing:1px;">
+                            Search &nbsp;<i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <br />
+
+        <section id="title-wrapper" style="justify-content:End;">
+            <div class="lineleft"></div>
+            <h1 class="sectiontitle heading6">
+                <p style="text-align:center;"><span style="color:#252468;">APPOINTMENTS</span></p>
+            </h1>
+            <div class="lineright" style="display:block; background-color:#daa328;"></div>
+        </section>
+        <br />
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0" style="color:rgb(38,76,159); font-weight:600;">
+                Appointments
+                <span style="background-color:#daa328; color:white; padding:4px 12px; font-weight:600;">@totalItems</span>
+            </h5>
+            @if (userRole != "Student")
+            {
+                <button type="button" data-bs-toggle="modal" data-bs-target="#searchPatientModal"
+                        style="background-color:#1a237e;color:white;border:2px solid white !important;outline:2px solid #1a237e !important;padding:5px 10px;border-radius:0 !important;font-size:13px;font-weight:600;cursor:pointer;">
+                    <i class="fa-solid fa-person-circle-plus"></i> Add New Appointment
+                </button>
+            }
+        </div>
+
+        <!-- Active Filters -->
+        @if (!string.IsNullOrEmpty(searchName) || !string.IsNullOrEmpty(searchID) || !string.IsNullOrEmpty(filterDate) || !string.IsNullOrEmpty(filterTime))
+        {
+            <div class="active-filters">
+                <span style="font-size:12px; font-weight:600; color:#C81587; align-self:center;">Active filters:</span>
+                @if (!string.IsNullOrEmpty(searchName))
+                {
+                    <span class="filter-tag"><i class="fa-solid fa-user me-1"></i> @searchName</span>
+                }
+                @if (!string.IsNullOrEmpty(searchID))
+                {
+                    <span class="filter-tag"><i class="fa-solid fa-id-card me-1"></i> @searchID</span>
+                }
+                @if (!string.IsNullOrEmpty(filterDate))
+                {
+                    <span class="filter-tag"><i class="fa-solid fa-calendar me-1"></i> @filterDate</span>
+                }
+                @if (!string.IsNullOrEmpty(filterTime))
+                {
+                    <span class="filter-tag"><i class="fa-solid fa-clock me-1"></i> @filterTime</span>
+                }
+            </div>
+        }
+
+        <!-- TABLE -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Visit #</th>
+                        <th>Name</th>
+                        <th>National ID</th>
+                        <th>Clinic</th>
+                        <th>Day</th>
+                        <th>Date</th>
+                        <th>AM / PM</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!pagedModel.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                <i class="fa-solid fa-circle-exclamation me-2"></i>
+                                No appointments found matching your search.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in pagedModel)
+                        {
+                            int vNum = visitNumbers.ContainsKey(item.AppointmentID) ? visitNumbers[item.AppointmentID] : 1;
+                            string badgeClass = vNum == 1 ? "visit-num-first" : (vNum == 2 ? "visit-num-second" : "");
+
+                            string rawTime = item.Patient?.AppointmentTime ?? "";
+                            string period = "";
+                            string apptTime = "";
+
+                            if (rawTime.Contains("|"))
+                            {
+                                var parts = rawTime.Split('|');
+                                period = parts[0];
+                                apptTime = parts[1];
+                            }
+                            else if (rawTime == "AM" || rawTime == "PM")
+                            {
+                                period = rawTime;
+                                apptTime = rawTime == "AM" ? "09:00" : "13:00";
+                            }
+                            else
+                            {
+                                period = item.TimeFrom.Hours < 12 ? "AM" : "PM";
+                                apptTime = item.TimeFrom.Hours < 12 ? "09:00" : "13:00";
+                            }
+
+                            <tr>
+                                <td><span class="visit-num-badge @badgeClass">@Ordinal(vNum)</span></td>
+                                <td>@item.Patient?.FirstName @item.Patient?.SecondName @item.Patient?.ThirdName @item.Patient?.FourthName</td>
+                                <td>@item.Patient?.NationalID_PassportNumber</td>
+                                <td>@item.ClinicName</td>
+                                <td>@item.AppointmentDay</td>
+                                <td>@item.AppointmentDate.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    <span style="font-weight:700;">@period</span>
+                                    @if (!string.IsNullOrEmpty(apptTime))
+                                    {
+                                        <span style="background:#e8eaf6; color:#1a237e; border-radius:4px; padding:2px 8px; font-size:.78rem; font-weight:700; margin-left:4px;">
+                                            <i class="fa-solid fa-clock me-1" style="font-size:.7rem;"></i>@apptTime
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.AppointmentStatus == "Cancelled")
+                                    {
+                                        <span style="background:#f8d7da; color:#842029; border:1px solid #f5c2c7; border-radius:4px; padding:2px 10px; font-size:.75rem; font-weight:700;">
+                                            <i class="fa-solid fa-xmark me-1"></i> Cancelled
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span style="background:#d1e7dd; color:#0f5132; border:1px solid #a3cfbb; border-radius:4px; padding:2px 10px; font-size:.75rem; font-weight:700;">
+                                            <i class="fa-solid fa-check me-1"></i> Active
+                                        </span>
+                                    }
+                                </td>
+                                <td style="white-space:nowrap;">
+                                    <a asp-action="Edit" asp-route-id="@item.AppointmentID"
+                                       style="background:none; color:#3F8CCA; border:none; padding:5px 6px; font-size:13px; font-weight:600; margin:2px; cursor:pointer; text-decoration:none; display:inline-block;">
+                                        <i class="fa-solid fa-pen"></i> Edit
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <nav class="mt-3">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(pageNumber == 1 ? "disabled" : "")">
+                        <a class="page-link" href="?page=@(pageNumber - 1)&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime">←</a>
+                    </li>
+                    @for (int p = 1; p <= totalPages; p++)
+                    {
+                        <li class="page-item @(p == pageNumber ? "active" : "")">
+                            <a class="page-link" href="?page=@p&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime"
+                               style="border-radius:0 !important; border:none !important; box-shadow:none !important; font-weight:600;">@p</a>
+                        </li>
+                    }
+                    <li class="page-item @(pageNumber == totalPages ? "disabled" : "")">
+                        <a class="page-link" href="?page=@(pageNumber + 1)&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime">→</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+
+    </div>
+</div>
+
+
+<!-- ============================== -->
+<!-- STEP 1: Search Patient Modal   -->
+<!-- ============================== -->
+<div class="modal fade" id="searchPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1a237e;">
+                <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-magnifying-glass me-2"></i>Search Patient</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="vt-label" style="font-size:.9rem; font-weight:700; color:#1a237e;">
+                    Search by Name, National ID, or Passport Number
+                </label>
+                <input type="text" id="patientSearchBox" class="apt-search-input"
+                       placeholder="e.g. Ahmad Mohammad or 9876543210" autocomplete="off" />
+                <div id="patientResultsBox" class="apt-results-box" style="display:none;"></div>
+                <div id="patientSearchLoading" style="display:none; text-align:center; padding:10px; color:#888; font-size:.85rem;">
+                    <i class="fa-solid fa-spinner fa-spin me-1"></i> Searching...
+                </div>
+                <div id="noPatientMsg" style="display:none;" class="apt-no-results">
+                    <i class="fa-solid fa-circle-exclamation me-1"></i> No patients found.
+                </div>
+                <div class="attendance-block-alert" id="attendanceBlockAlert">
+                    <div class="alert-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="alert-title">Cannot Book New Appointment</div>
+                    <div class="alert-msg" id="attendanceBlockMsg">
+                        This patient has a previous appointment with no attendance record.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="vt-cancel-btn" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ============================== -->
+<!-- STEP 2: Date & Time Modal      -->
+<!-- ============================== -->
+<div class="modal fade" id="addAppointmentModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1a237e;">
+                <h5 class="modal-title fw-bold text-white"><i class="fa-solid fa-calendar-plus me-2"></i>Add New Appointment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-controller="Appointments" asp-action="Save" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="PatientID" id="selectedPatientID" value="" />
+                <input type="hidden" name="AppointmentTime" id="selectedTimeSlot" value="" />
+                <div class="modal-body">
+
+                    <!-- معلومات المريض -->
+                    <div class="mb-3 p-3" style="background:#e8eaf6; border-radius:8px; border-left:4px solid #1a237e;">
+                        <div class="vt-label" style="color:#555; margin-bottom:2px;">Selected Patient</div>
+                        <div id="selectedPatientName" style="font-weight:700; color:#1a237e; font-size:.95rem;">—</div>
+                        <div id="selectedPatientNID" style="font-size:.78rem; color:#888; margin-top:2px;">—</div>
+                    </div>
+
+                    <!-- التاريخ -->
+                    <div class="mb-3">
+                        <label class="vt-label" style="font-size:.88rem; font-weight:600; color:#555;">Date</label>
+                        <input type="date" name="AppointmentDate" id="modalAppointmentDate"
+                               class="vt-input" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                    </div>
+
+                    <!-- AM / PM -->
+                    <div class="mb-3">
+                        <label class="vt-label" style="font-size:.88rem; font-weight:600; color:#555;">AM / PM</label>
+                        <div style="display:flex; gap:32px; align-items:center; padding:8px 4px;">
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:.92rem; font-weight:500; color:#333;">
+                                <input type="radio" name="AppointmentPeriod" value="AM" id="periodAM"
+                                       style="accent-color:#1a237e; width:16px; height:16px;" /> AM
+                            </label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:.92rem; font-weight:500; color:#333;">
+                                <input type="radio" name="AppointmentPeriod" value="PM" id="periodPM"
+                                       style="accent-color:#1a237e; width:16px; height:16px;" /> PM
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Time Slots -->
+                    <div id="timeSlotsSection" style="display:none;">
+                        <label class="vt-label" style="font-size:.88rem; font-weight:600; color:#555; margin-bottom:10px;">
+                            <i class="fa-solid fa-clock me-1"></i> Select Time Slot
+                        </label>
+                        <div id="slotsContainer" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+                        <div id="capacityWarning" class="capacity-warning">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                            This time slot is full. Please choose another.
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="vt-cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="vt-modal-save-btn" id="saveAppointmentBtn" disabled>
+                        Save Appointment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const MODAL_SLOTS = {
+        AM: [
+            { value: "09:00", label: "9:00 AM"  },
+            { value: "11:00", label: "11:00 AM" }
+        ],
+        PM: [
+            { value: "13:00", label: "1:00 PM"  },
+            { value: "15:00", label: "3:00 PM"  }
+        ]
+    };
+
+    let selectedSlot  = "";
+    let searchTimeout = null;
+
+    function renderSlots(period) {
+        const container  = document.getElementById("slotsContainer");
+        const section    = document.getElementById("timeSlotsSection");
+        const warning    = document.getElementById("capacityWarning");
+        const saveBtn    = document.getElementById("saveAppointmentBtn");
+        const hiddenSlot = document.getElementById("selectedTimeSlot");
+
+        selectedSlot          = "";
+        hiddenSlot.value      = "";
+        saveBtn.disabled      = true;
+        warning.style.display = "none";
+        container.innerHTML   = "";
+
+        MODAL_SLOTS[period].forEach(function (slot) {
+            const btn       = document.createElement("button");
+            btn.type        = "button";
+            btn.className   = "slot-option-btn";
+            btn.textContent = slot.label;
+            btn.dataset.val = slot.value;
+
+            btn.addEventListener("click", function () {
+                document.querySelectorAll(".slot-option-btn").forEach(b => b.classList.remove("selected"));
+                this.classList.add("selected");
+                selectedSlot     = this.dataset.val;
+                hiddenSlot.value = selectedSlot;
+                checkCapacity();
+            });
+
+            container.appendChild(btn);
+        });
+
+        section.style.display = "block";
+    }
+
+    async function checkCapacity() {
+        const date    = document.getElementById("modalAppointmentDate").value;
+        const warning = document.getElementById("capacityWarning");
+        const saveBtn = document.getElementById("saveAppointmentBtn");
+
+        if (!date || !selectedSlot) return;
+
+        try {
+            const res  = await fetch(`/Patients/CheckSlot?date=${date}&time=${selectedSlot}`);
+            const data = await res.json();
+
+            if (!data.available) {
+                warning.style.display = "block";
+                saveBtn.disabled      = true;
+            } else {
+                warning.style.display = "none";
+                saveBtn.disabled      = false;
+            }
+        } catch {
+            warning.style.display = "none";
+            saveBtn.disabled      = false;
+        }
+    }
+
+    document.querySelectorAll('input[name="AppointmentPeriod"]').forEach(function (radio) {
+        radio.addEventListener("change", function () {
+            renderSlots(this.value);
+        });
+    });
+
+    document.getElementById("modalAppointmentDate").addEventListener("change", function () {
+        if (selectedSlot) checkCapacity();
+    });
+
+    document.getElementById("addAppointmentModal").addEventListener("show.bs.modal", function () {
+        document.querySelectorAll('input[name="AppointmentPeriod"]').forEach(r => r.checked = false);
+        document.getElementById("timeSlotsSection").style.display = "none";
+        document.getElementById("slotsContainer").innerHTML       = "";
+        document.getElementById("capacityWarning").style.display  = "none";
+        document.getElementById("saveAppointmentBtn").disabled    = true;
+        document.getElementById("selectedTimeSlot").value         = "";
+        selectedSlot = "";
+    });
+
+    document.getElementById('patientSearchBox').addEventListener('input', function () {
+        const q          = this.value.trim();
+        const resultsBox = document.getElementById('patientResultsBox');
+        const loading    = document.getElementById('patientSearchLoading');
+        const noMsg      = document.getElementById('noPatientMsg');
+        const blockAlert = document.getElementById('attendanceBlockAlert');
+
+        clearTimeout(searchTimeout);
+
+        if (q.length < 2) {
+            resultsBox.style.display = noMsg.style.display = loading.style.display = blockAlert.style.display = 'none';
+            return;
+        }
+
+        loading.style.display    = 'block';
+        resultsBox.style.display = noMsg.style.display = blockAlert.style.display = 'none';
+
+        searchTimeout = setTimeout(async () => {
+            try {
+                const res  = await fetch(`/Appointments/SearchPatient?q=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                loading.style.display = 'none';
+
+                if (!data || data.length === 0) { noMsg.style.display = 'block'; return; }
+
+                resultsBox.innerHTML = '';
+                data.forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = 'apt-patient-item';
+                    item.innerHTML = `
+                        <div>
+                            <div class="apt-patient-name">${p.fullName || p.FullName}</div>
+                            <div class="apt-patient-id">ID: ${p.nationalID_PassportNumber || p.NationalID_PassportNumber || '—'}</div>
+                        </div>
+                        <i class="fa-solid fa-arrow-right" style="color:#1a237e;"></i>`;
+                    item.addEventListener('click', () => selectPatient(
+                        p.patientID || p.PatientID,
+                        p.fullName  || p.FullName,
+                        p.nationalID_PassportNumber || p.NationalID_PassportNumber || '—'
+                    ));
+                    resultsBox.appendChild(item);
+                });
+                resultsBox.style.display = 'block';
+            } catch (e) {
+                loading.style.display = 'none';
+            }
+        }, 350);
+    });
+
+    async function selectPatient(id, name, nid) {
+        document.getElementById('patientResultsBox').style.display    = 'none';
+        document.getElementById('attendanceBlockAlert').style.display = 'none';
+
+        try {
+            const res  = await fetch(`/Appointments/GetPatientAttendance?patientId=${id}`);
+            const data = await res.json();
+            if (!data.canBook) {
+                document.getElementById('attendanceBlockMsg').textContent     = data.message;
+                document.getElementById('attendanceBlockAlert').style.display = 'block';
+                return;
+            }
+        } catch (e) { /* proceed */ }
+
+        document.getElementById('selectedPatientID').value         = id;
+        document.getElementById('selectedPatientName').textContent = name;
+        document.getElementById('selectedPatientNID').textContent  = 'ID: ' + nid;
+
+        const searchModal = bootstrap.Modal.getInstance(document.getElementById('searchPatientModal'));
+        searchModal.hide();
+
+        document.getElementById('searchPatientModal').addEventListener('hidden.bs.modal', function openNext() {
+            new bootstrap.Modal(document.getElementById('addAppointmentModal')).show();
+            document.getElementById('searchPatientModal').removeEventListener('hidden.bs.modal', openNext);
+        });
+    }
+
+    document.getElementById('searchPatientModal').addEventListener('shown.bs.modal', function () {
+        document.getElementById('patientSearchBox').value             = '';
+        document.getElementById('patientResultsBox').style.display    = 'none';
+        document.getElementById('patientResultsBox').innerHTML        = '';
+        document.getElementById('noPatientMsg').style.display         = 'none';
+        document.getElementById('attendanceBlockAlert').style.display = 'none';
+        document.getElementById('patientSearchBox').focus();
+    });
+</script>

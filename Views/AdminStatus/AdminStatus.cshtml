@@ -1,0 +1,846 @@
+﻿@model IEnumerable<DentalCollegeManagementSystem_AAU.Models.Patient>
+
+@{
+    ViewData["Title"] = "Admin – Patient Status";
+
+    int totalPages = ViewBag.TotalPages;
+    int currentPage = ViewBag.CurrentPage;
+    string searchName = ViewBag.SearchName ?? "";
+    string searchID = ViewBag.SearchID ?? "";
+    string filterStatus = ViewBag.FilterStatus ?? "";
+
+    int pageSize = 10;
+    int rowStart = ((currentPage - 1) * pageSize) + 1;
+}
+
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="~/css/RTE.css" />
+
+<style>
+    .badge-screening {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffc107;
+    }
+
+    .badge-allocated {
+        background: #d1e7dd;
+        color: #0f5132;
+        border: 1px solid #a3cfbb;
+    }
+
+    .badge-discharged {
+        background: #e2e3e5;
+        color: #383d41;
+        border: 1px solid #d6d8db;
+    }
+
+    .status-badge {
+        border-radius: 4px;
+        padding: 3px 10px;
+        font-size: .72rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .status-btn-group {
+        display: flex;
+        gap: 4px;
+        flex-wrap: nowrap;
+    }
+
+    .status-btn {
+        border: 1px solid #ddd;
+        background: #fff;
+        padding: 4px 10px;
+        font-size: .72rem;
+        font-weight: 600;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all .15s;
+    }
+
+        .status-btn:hover:not(:disabled) {
+            opacity: .85;
+        }
+
+        .status-btn.btn-screening {
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .status-btn.btn-allocated {
+            border-color: #a3cfbb;
+            color: #0f5132;
+        }
+
+        .status-btn.btn-discharged {
+            border-color: #b0b3b8;
+            color: #383d41;
+        }
+
+        .status-btn.btn-screening.active {
+            background: #fff3cd;
+        }
+
+        .status-btn.btn-allocated.active {
+            background: #d1e7dd;
+        }
+
+        .status-btn.btn-discharged.active {
+            background: #e2e3e5;
+        }
+
+    .active-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .filter-tag {
+        background: #e8eaf6;
+        color: #252468;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+</style>
+
+@* ── Toast ── *@
+@if (TempData["Success"] != null)
+{
+    <div id="successToast" style="
+        position:fixed;bottom:30px;right:30px;
+        background:#28a745;color:#fff;
+        padding:16px 25px;border-radius:10px;
+        font-weight:600;font-size:15px;
+        box-shadow:0 8px 20px rgba(0,0,0,.2);
+        z-index:9999;opacity:1;transition:opacity 1s ease;">
+        @TempData["Success"]
+    </div>
+    <script>
+        setTimeout(function () {
+            var t = document.getElementById('successToast');
+            t.style.opacity = '0';
+            setTimeout(function () { t.style.display = 'none'; }, 1000);
+        }, 3000);
+    </script>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger mt-3">@TempData["Error"]</div>
+}
+
+@* ── Page Title ── *@
+<div>
+    <section id="title-wrapper" style="justify-content:End;">
+        <div class="lineleft"></div>
+        <h1 class="sectiontitle heading6">
+            <p style="text-align:center;">
+                <span style="color:#252468;">PATIENT STATUS MANAGEMENT</span>
+            </p>
+        </h1>
+        <div class="lineright" style="display:block;background-color:#daa328;"></div>
+    </section>
+</div>
+
+@* ── Summary Cards ── *@
+<div class="container-fluid padding margin">
+    <div class="row g-4">
+        <div class="col-lg-3 col-md-6 d-grid">
+            <div class="countersection">
+                <h2 class="countertitle"><p><span class="heading8">TOTAL PATIENTS</span></p></h2>
+                <span class="countercorner"></span>
+                <div class="counterposition">
+                    <div class="counterarea heading5">
+                        <span style="color:inherit;" data-toggle="counterUp">@ViewBag.TotalPatients</span>
+                        <span class="counterareacorner"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 d-grid">
+            <div class="countersection">
+                <h2 class="countertitle"><p><span class="heading8">SCREENING</span></p></h2>
+                <span class="countercorner"></span>
+                <div class="counterposition">
+                    <div class="counterarea heading5">
+                        <span style="color:inherit;" data-toggle="counterUp">@ViewBag.Screening</span>
+                        <span class="counterareacorner"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 d-grid">
+            <div class="countersection">
+                <h2 class="countertitle"><p><span class="heading8">ALLOCATED</span></p></h2>
+                <span class="countercorner"></span>
+                <div class="counterposition">
+                    <div class="counterarea heading5">
+                        <span style="color:inherit;" data-toggle="counterUp">@ViewBag.Allocated</span>
+                        <span class="counterareacorner"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 d-grid">
+            <div class="countersection">
+                <h2 class="countertitle"><p><span class="heading8">DISCHARGED</span></p></h2>
+                <span class="countercorner"></span>
+                <div class="counterposition">
+                    <div class="counterarea heading5">
+                        <span style="color:inherit;" data-toggle="counterUp">@ViewBag.Discharged</span>
+                        <span class="counterareacorner"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="custom-card">
+
+        @* ── Search Bar ── *@
+        <div style="background:#e9e8e8;width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;padding:30px 40px;">
+            <div style="max-width:1300px;margin:0 auto;">
+                <section id="title-wrapper" style="justify-content:flex-start;">
+                    <div class="lineright" style="display:block;background-color:#daa328;max-width:650px;"></div>
+                    <h1 class="sectiontitle heading6">
+                        <p style="text-align:left;"><span style="color:#252468;">SEARCH</span></p>
+                    </h1>
+                </section>
+                <br />
+                <form method="get">
+                    <div style="background:white;padding:16px 20px;">
+                        <div class="row align-items-center mb-3">
+                            <div class="col-md-2">
+                                <label style="font-weight:600;font-size:13px;color:#252468;margin:0;">Search by Name</label>
+                            </div>
+                            <div class="col-md-10">
+                                <input type="text" name="searchName" value="@searchName"
+                                       placeholder="e.g. Ahmad Mohammad"
+                                       class="form-control" style="border:1px solid #ddd;border-radius:0;" />
+                            </div>
+                        </div>
+                        <div class="row align-items-center g-2">
+                            <div class="col-md-2">
+                                <label style="font-weight:600;font-size:13px;color:#252468;margin:0;">National ID / Passport</label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="searchID" value="@searchID"
+                                       placeholder="e.g. 9876543210"
+                                       class="form-control" style="border:1px solid #ddd;border-radius:0;" />
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <label style="font-weight:600;font-size:13px;color:#252468;margin:0;">Status</label>
+                            </div>
+                            <div class="col-md-4">
+                                <select name="filterStatus" class="form-control" style="border:1px solid #ddd;border-radius:0;">
+                                    <option value="">-- All --</option>
+                                    <option value="Screening" selected="@(filterStatus == "Screening" ? "selected" : null)">🔬 Screening</option>
+                                    <option value="Allocated" selected="@(filterStatus == "Allocated" ? "selected" : null)">✅ Allocated</option>
+                                    <option value="Discharged" selected="@(filterStatus == "Discharged" ? "selected" : null)">🚪 Discharged</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align:center;">
+                        <button type="submit"
+                                style="width:90%;background:#c81589;color:white;border:none;padding:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:3px;letter-spacing:1px;">
+                            Search &nbsp;<i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <br />
+
+        <section id="title-wrapper" style="justify-content:End;">
+            <div class="lineleft"></div>
+            <h1 class="sectiontitle heading6">
+                <p style="text-align:center;"><span style="color:#252468;">PATIENTS</span></p>
+            </h1>
+            <div class="lineright" style="display:block;background-color:#daa328;"></div>
+        </section>
+        <br />
+
+        @* ── Active Filters ── *@
+        @if (!string.IsNullOrEmpty(searchName) || !string.IsNullOrEmpty(searchID) || !string.IsNullOrEmpty(filterStatus))
+        {
+            <div class="active-filters">
+                <span style="font-size:12px;font-weight:600;color:#C81587;align-self:center;">Active filters:</span>
+                @if (!string.IsNullOrEmpty(searchName))
+                {
+                    <span class="filter-tag"><i class="fa-solid fa-user me-1"></i> @searchName</span>
+                }
+                @if (!string.IsNullOrEmpty(searchID))
+                {
+                    <span class="filter-tag"><i class="fa-solid fa-id-card me-1"></i> @searchID</span>
+                }
+                @if (!string.IsNullOrEmpty(filterStatus))
+                {
+                    string statusIcon = filterStatus == "Allocated" ? "fa-user-check"
+                                      : filterStatus == "Discharged" ? "fa-door-open"
+                                      : "fa-microscope";
+                    <span class="filter-tag"><i class="fa-solid @statusIcon me-1"></i> @filterStatus</span>
+                }
+            </div>
+        }
+
+        @* ── Header Row ── *@
+        <div class="d-flex justify-content-between align-items-center mb-3" style="flex-wrap:wrap;gap:10px;">
+            <h5 style="color:rgb(38,76,159);font-weight:600;margin:0;">
+                Patients &nbsp;
+                <span style="background-color:#daa328;color:white;padding:4px 12px;font-weight:600;">
+                    @ViewBag.TotalPatients
+                </span>
+            </h5>
+        </div>
+
+        @* ── Table ── *@
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>National ID</th>
+                        <th>Gender</th>
+                        <th>Age</th>
+                        <th>Phone</th>
+                        <th>Current Status</th>
+                        <th style="min-width:280px;">Change Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="fa-solid fa-circle-exclamation me-2"></i>
+                                No patients found.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        int rowNum = rowStart;
+                        foreach (var item in Model)
+                        {
+                            string currentStatus = string.IsNullOrEmpty(item.PatientStatus)
+                                                 ? "Screening" : item.PatientStatus;
+
+                            string badgeClass = currentStatus == "Allocated" ? "badge-allocated"
+                                              : currentStatus == "Discharged" ? "badge-discharged"
+                                              : "badge-screening";
+
+                            string badgeIcon = currentStatus == "Allocated" ? "fa-user-check"
+                                             : currentStatus == "Discharged" ? "fa-door-open"
+                                             : "fa-microscope";
+
+                            string jsName = System.Text.Json.JsonSerializer.Serialize(
+                                $"{item.FirstName} {item.FourthName}");
+
+                            <tr>
+                                <td style="color:#aaa;font-size:.8rem;">@rowNum</td>
+                                <td style="font-weight:600;">
+                                    @item.FirstName @item.SecondName
+                                    @item.ThirdName @item.FourthName
+                                </td>
+                                <td>@item.NationalID_PassportNumber</td>
+                                <td>@item.Gender?.Substring(0, 1)</td>
+                                <td>
+                                    @if (item.DateOfBirth.HasValue)
+                                    {
+                                        int age = DateTime.Today.Year - item.DateOfBirth.Value.Year;
+                                        if (item.DateOfBirth.Value.Date > DateTime.Today.AddYears(-age)) age--;
+                                        @age
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#aaa;">-</span>
+                                    }
+                                </td>
+                                <td>@item.PhoneNumber</td>
+                                <td>
+                                    <span class="status-badge @badgeClass">
+                                        <i class="fa-solid @badgeIcon me-1"></i>@currentStatus
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="status-btn-group">
+                                        <button type="button"
+                                                data-pid="@item.PatientID"
+                                                data-current="@currentStatus"
+                                                data-new="Screening"
+                                                data-name='@Html.Raw(jsName)'
+                                                onclick="handleStatusChange(this)"
+                                                class="status-btn btn-screening @(currentStatus == "Screening" ? "active" : "")"
+                                            @(currentStatus == "Screening" ? "disabled" : "")>
+                                            🔬 Screening
+                                        </button>
+                                        <button type="button"
+                                                data-pid="@item.PatientID"
+                                                data-current="@currentStatus"
+                                                data-new="Allocated"
+                                                data-name='@Html.Raw(jsName)'
+                                                onclick="handleStatusChange(this)"
+                                                class="status-btn btn-allocated @(currentStatus == "Allocated" ? "active" : "")"
+                                            @(currentStatus == "Allocated" ? "disabled" : "")>
+                                            ✅ Allocated
+                                        </button>
+                                        <button type="button"
+                                                data-pid="@item.PatientID"
+                                                data-current="@currentStatus"
+                                                data-new="Discharged"
+                                                data-name='@Html.Raw(jsName)'
+                                                onclick="handleStatusChange(this)"
+                                                class="status-btn btn-discharged @(currentStatus == "Discharged" ? "active" : "")"
+                                            @(currentStatus == "Discharged" ? "disabled" : "")>
+                                            🚪 Discharged
+                                        </button>
+                                        <button type="button"
+                                                onclick="openHistoryModal(@item.PatientID, '@item.FirstName @item.FourthName')"
+                                                class="status-btn"
+                                                title="View Status History"
+                                                style="border-color:#6c757d;color:#6c757d;">
+                                            📋
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            rowNum++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @* ── Pagination ── *@
+        @if (totalPages > 1)
+        {
+            <nav class="mt-3">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?page=@(currentPage - 1)&searchName=@searchName&searchID=@searchID&filterStatus=@filterStatus">←</a>
+                    </li>
+                    @for (int p = 1; p <= totalPages; p++)
+                    {
+                        <li class="page-item @(p == currentPage ? "active" : "")">
+                            <a class="page-link"
+                               href="?page=@p&searchName=@searchName&searchID=@searchID&filterStatus=@filterStatus"
+                               style="border-radius:0 !important;border:none !important;box-shadow:none !important;font-weight:600;">
+                                @p
+                            </a>
+                        </li>
+                    }
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?page=@(currentPage + 1)&searchName=@searchName&searchID=@searchID&filterStatus=@filterStatus">→</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+
+    </div>
+</div>
+
+@* ── Hidden Form ── *@
+<form id="scForm" method="post" asp-controller="AdminStatus" asp-action="ChangeStatus" style="display:none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" id="scf_patientId" name="patientId" />
+    <input type="hidden" id="scf_newStatus" name="newStatus" />
+    <input type="hidden" name="searchName" value="@searchName" />
+    <input type="hidden" name="searchID" value="@searchID" />
+    <input type="hidden" name="filterStatus" value="@filterStatus" />
+    <input type="hidden" name="page" value="@currentPage" />
+</form>
+
+@* ── Info Modal ── *@
+<div class="modal fade" id="infoModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1a237e;">
+                <h5 class="modal-title text-white fw-bold" id="infoModalTitle"></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4" id="infoModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Confirm Modal ── *@
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1a237e;">
+                <h5 class="modal-title text-white fw-bold">
+                    <i class="fa-solid fa-circle-question me-2"></i>Confirm
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4" id="confirmModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="confirmOkBtn"
+                        style="background:#252468;color:white;border:none;padding:9px 24px;
+                    border-radius:6px;font-weight:700;cursor:pointer;">
+                    ✅ Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── History Modal ── *@
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1a237e;">
+                <h5 class="modal-title text-white fw-bold">
+                    📋 Status History — <span id="historyModalName"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="historyModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Assign Modal ── *@
+<div class="modal fade" id="assignModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1a237e;">
+                <h5 class="modal-title text-white fw-bold">
+                    <i class="fa-solid fa-user-check me-2"></i>
+                    Assign Student(s) — <span id="assignModalName"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="assignModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="assignConfirmBtn"
+                        style="background:#252468;color:white;border:none;padding:9px 24px;
+                    border-radius:6px;font-weight:700;cursor:pointer;opacity:0.5;"
+                        disabled>
+                    ✅ Confirm Allocation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let _patientId = null;
+    let _current   = null;
+    let _new       = null;
+    let _name      = null;
+    let _assigned  = [];
+    let _available = [];
+
+    async function handleStatusChange(btn) {
+        const patientId     = btn.dataset.pid;
+        const currentStatus = btn.dataset.current;
+        const newStatus     = btn.dataset.new;
+        const patientName   = JSON.parse(btn.dataset.name);
+
+        _patientId = patientId;
+        _current   = currentStatus || 'Screening';
+        _new       = newStatus;
+        _name      = patientName;
+
+        if (_current === 'Discharged' && newStatus === 'Allocated') {
+            showInfoModal('❌ Not Allowed',
+                `Cannot re-allocate a discharged patient.<br>
+                 <strong>${patientName}</strong> has already been discharged.`);
+            return;
+        }
+
+        if (newStatus === 'Allocated') {
+            await openAssignModal();
+            return;
+        }
+
+        if (_current === 'Allocated' && newStatus === 'Screening') {
+            const res  = await fetch(`/AdminStatus/GetStudentCount?patientId=${patientId}`);
+            const data = await res.json();
+            if (data.count > 0) {
+                showInfoModal('❌ Cannot Revert to Screening',
+                    `<strong>${patientName}</strong> has <strong>${data.count}</strong> assigned student(s).<br>
+                     All students must be removed first.`);
+                return;
+            }
+        }
+
+        if (_current === 'Allocated' && newStatus === 'Discharged') {
+            showConfirmModal(
+                `Are you sure you want to discharge <strong>${patientName}</strong>?`,
+                submitChange
+            );
+            return;
+        }
+
+        showConfirmModal(
+            `Are you sure you want to change <strong>${patientName}</strong>'s status to <strong>${newStatus}</strong>?`,
+            submitChange
+        );
+    }
+
+    function showInfoModal(title, msg) {
+        document.getElementById('infoModalTitle').innerHTML = title;
+        document.getElementById('infoModalBody').innerHTML  = msg;
+        const modal = bootstrap.Modal.getInstance(document.getElementById('infoModal'))
+                      || new bootstrap.Modal(document.getElementById('infoModal'));
+        modal.show();
+    }
+
+    function showConfirmModal(msg, onOk) {
+        document.getElementById('confirmModalBody').innerHTML = msg;
+        const btn = document.getElementById('confirmOkBtn');
+        btn.onclick = () => {
+            bootstrap.Modal.getInstance(document.getElementById('confirmModal'))?.hide();
+            onOk();
+        };
+        const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'))
+                      || new bootstrap.Modal(document.getElementById('confirmModal'));
+        modal.show();
+    }
+
+    function submitChange() {
+        document.getElementById('scf_patientId').value = _patientId;
+        document.getElementById('scf_newStatus').value  = _new;
+        document.getElementById('scForm').submit();
+    }
+
+    function calcDuration(fromDateStr, toDateStr) {
+        const from         = new Date(fromDateStr.trim());
+        const to           = toDateStr ? new Date(toDateStr.trim()) : new Date();
+        const diffMs       = to - from;
+        const totalMinutes = Math.floor(diffMs / 60000);
+        const days         = Math.floor(totalMinutes / 1440);
+        const hours        = Math.floor((totalMinutes % 1440) / 60);
+        const minutes      = totalMinutes % 60;
+        if (days > 0)  return `${days}d ${hours}h`;
+        if (hours > 0) return `${hours}h ${minutes}m`;
+        return `${minutes}m`;
+    }
+
+    async function openHistoryModal(patientId, patientName) {
+        document.getElementById('historyModalName').textContent = patientName;
+        document.getElementById('historyModalBody').innerHTML =
+            '<div class="text-center py-4"><i class="fa-solid fa-spinner fa-spin fa-2x text-muted"></i></div>';
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('historyModal'))
+                      || new bootstrap.Modal(document.getElementById('historyModal'));
+        modal.show();
+
+        const res  = await fetch(`/AllocatedStudent/GetStatusHistory?patientId=${patientId}`);
+        const data = await res.json();
+
+        if (!data.length) {
+            document.getElementById('historyModalBody').innerHTML =
+                '<div class="text-center text-muted py-4"><i class="fa-solid fa-clock-rotate-left me-2"></i>No history found.</div>';
+            return;
+        }
+
+        const statusColor = s =>
+            s === 'Allocated'  ? '#0f5132' :
+            s === 'Discharged' ? '#383d41' : '#856404';
+
+        const statusBg = s =>
+            s === 'Allocated'  ? '#d1e7dd' :
+            s === 'Discharged' ? '#e2e3e5' : '#fff3cd';
+
+        const asc  = [...data].reverse();
+        const rows = asc.map((h, i) => {
+            const next     = asc[i + 1];
+            const toDate   = next ? next.changedAt : null;
+            const duration = calcDuration(h.changedAt, toDate);
+            return { ...h, duration, isOngoing: !next };
+        });
+        const rowsDesc = [...rows].reverse();
+
+        document.getElementById('historyModalBody').innerHTML = `
+            <table class="table table-bordered table-striped" style="font-size:13px;">
+                <thead style="background:#f0f4ff;">
+                    <tr>
+                        <th>#</th><th>Old Status</th><th>New Status</th>
+                        <th>Changed At</th><th>Duration in Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsDesc.map((h, i) => `
+                        <tr>
+                            <td style="color:#aaa;">${i + 1}</td>
+                            <td><span style="background:${statusBg(h.oldStatus)};color:${statusColor(h.oldStatus)};
+                                padding:2px 10px;border-radius:4px;font-weight:700;font-size:.75rem;">${h.oldStatus}</span></td>
+                            <td><span style="background:${statusBg(h.newStatus)};color:${statusColor(h.newStatus)};
+                                padding:2px 10px;border-radius:4px;font-weight:700;font-size:.75rem;">${h.newStatus}</span></td>
+                            <td style="color:#555;">${h.changedAt}</td>
+                            <td style="font-weight:600;color:#252468;">
+                                ${h.isOngoing
+                                    ? `⏱ ${h.duration} <span style="font-size:.7rem;color:#888;font-weight:400;">(ongoing)</span>`
+                                    : h.duration}
+                            </td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>
+            <div style="font-size:11px;color:#9ca3af;margin-top:4px;">
+                * Duration = time spent in the new status until the next change (or now if ongoing).
+            </div>`;
+    }
+
+    async function openAssignModal() {
+        document.getElementById('assignModalName').textContent = _name;
+        document.getElementById('assignModalBody').innerHTML =
+            '<div class="text-center py-5"><i class="fa-solid fa-spinner fa-spin fa-2x text-muted"></i></div>';
+        document.getElementById('assignConfirmBtn').disabled = true;
+        document.getElementById('assignConfirmBtn').style.opacity = '0.5';
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('assignModal'))
+                      || new bootstrap.Modal(document.getElementById('assignModal'), { backdrop: 'static' });
+        modal.show();
+
+        const res  = await fetch(`/AllocatedStudent/GetPatientDetailsJson?patientId=${_patientId}`);
+        const data = await res.json();
+        _assigned  = data.assigned;
+        _available = data.available;
+        renderAssignPanel();
+    }
+
+    function renderAssignPanel() {
+        document.getElementById('assignModalBody').innerHTML = `
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+                <div style="font-weight:700;color:#15803d;">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    Assign at least <strong>1 student</strong> to confirm Allocated status.
+                </div>
+                <div style="font-size:13px;color:#166534;margin-top:4px;">
+                    Currently assigned: <strong id="assignedCount">${_assigned.length}</strong> student(s)
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div style="border:1px solid #bbf7d0;border-radius:8px;padding:12px;background:#f0fdf4;">
+                        <div style="font-weight:700;color:#15803d;margin-bottom:8px;">
+                            ✅ Assigned (<span id="assignedListCount">${_assigned.length}</span>)
+                        </div>
+                        <input type="text" id="searchAssigned" placeholder="Search..."
+                               oninput="renderList('assigned')"
+                               style="width:100%;border:1px solid #ddd;border-radius:6px;padding:6px 10px;font-size:13px;margin-bottom:8px;" />
+                        <div id="listAssigned"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="border:1px solid #bfdbfe;border-radius:8px;padding:12px;background:#eff6ff;">
+                        <div style="font-weight:700;color:#1d4ed8;margin-bottom:8px;">
+                            👤 Available (<span id="availableListCount">${_available.length}</span>)
+                        </div>
+                        <input type="text" id="searchAvailable" placeholder="Search..."
+                               oninput="renderList('available')"
+                               style="width:100%;border:1px solid #ddd;border-radius:6px;padding:6px 10px;font-size:13px;margin-bottom:8px;" />
+                        <div id="listAvailable"></div>
+                    </div>
+                </div>
+            </div>`;
+        renderList('assigned');
+        renderList('available');
+        updateAssignBtn();
+    }
+
+    function renderList(type) {
+        const isAssigned = type === 'assigned';
+        const q    = (document.getElementById(isAssigned ? 'searchAssigned' : 'searchAvailable')?.value || '').toLowerCase();
+        const data = isAssigned ? _assigned : _available;
+        const el   = document.getElementById(isAssigned ? 'listAssigned' : 'listAvailable');
+        const filtered = data.filter(s =>
+            s.nameEn.toLowerCase().includes(q) || (s.userTypeEn || '').toLowerCase().includes(q));
+
+        if (!filtered.length) {
+            el.innerHTML = `<div style="text-align:center;color:#9ca3af;padding:14px;font-size:13px;">
+                ${isAssigned ? 'No students assigned yet.' : 'No students available.'}</div>`;
+            return;
+        }
+
+        el.innerHTML = filtered.map(s => `
+            <div style="display:flex;justify-content:space-between;align-items:center;
+                        background:white;border:1px solid #e5e7eb;border-radius:6px;
+                        padding:8px 10px;margin-bottom:4px;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;">${s.nameEn}</div>
+                    <div style="font-size:11px;color:#6b7280;">${s.userTypeEn || '—'}</div>
+                </div>
+                ${isAssigned
+                    ? `<button onclick="doRemove(${s.id})"
+                               style="background:#dc2626;color:#fff;border:none;border-radius:5px;
+                                      width:28px;height:28px;font-size:16px;cursor:pointer;">−</button>`
+                    : `<button onclick="doAssign(${s.id})"
+                               style="background:#16a34a;color:#fff;border:none;border-radius:5px;
+                                      width:28px;height:28px;font-size:16px;cursor:pointer;">+</button>`
+                }
+            </div>`).join('');
+    }
+
+    function updateAssignBtn() {
+        const btn = document.getElementById('assignConfirmBtn');
+        btn.disabled      = _assigned.length === 0;
+        btn.style.opacity = _assigned.length === 0 ? '0.5' : '1';
+        const cnt = document.getElementById('assignedCount');
+        if (cnt) cnt.textContent = _assigned.length;
+        const lc1 = document.getElementById('assignedListCount');
+        if (lc1) lc1.textContent = _assigned.length;
+        const lc2 = document.getElementById('availableListCount');
+        if (lc2) lc2.textContent = _available.length;
+    }
+
+    async function doAssign(appUserId) {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+        const res   = await fetch('/AllocatedStudent/Assign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+            body: `patientId=${_patientId}&appUserId=${appUserId}`
+        });
+        const data = await res.json();
+        _assigned  = data.assigned;
+        _available = data.available;
+        renderList('assigned');
+        renderList('available');
+        updateAssignBtn();
+    }
+
+    async function doRemove(appUserId) {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+        const res   = await fetch('/AllocatedStudent/Remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
+            body: `patientId=${_patientId}&appUserId=${appUserId}`
+        });
+        const data = await res.json();
+        _assigned  = data.assigned;
+        _available = data.available;
+        renderList('assigned');
+        renderList('available');
+        updateAssignBtn();
+    }
+
+    document.getElementById('assignConfirmBtn').addEventListener('click', function () {
+        bootstrap.Modal.getInstance(document.getElementById('assignModal'))?.hide();
+        submitChange();
+    });
+</script>

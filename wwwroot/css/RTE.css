@@ -1,0 +1,178 @@
+ 
+
+/**umb_name:Heading 1*/
+.heading1 {
+	font-size: 72px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading 2*/
+.heading2 {
+	font-size: 60px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading 3*/
+.heading3 {
+	font-size: 52px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading 4*/
+.heading4 {
+	font-size: 48px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading 5*/
+.heading5 {
+	font-size: 45px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading 6*/
+.heading6 {
+	font-size: 40px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading7*/
+.heading7 {
+	font-size:35px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading8*/
+.heading8 {
+	font-size:30px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading9*/
+.heading9 {
+	font-size:29px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading10*/
+.heading10 {
+	font-size:27px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading11*/
+.heading11 {
+	font-size:26px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading12*/
+.heading12 {
+	font-size:25px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading13*/
+.heading13 {
+	font-size:23px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading14*/
+.heading14 {
+	font-size:21px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading15*/
+.heading15 {
+	font-size:20px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading16*/
+.heading16 {
+	font-size:18px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Heading17*/
+.heading17 {
+	font-size:15px;
+	font-weight:700;
+	color:#252468;
+}
+
+/**umb_name:Normal*/
+.normal {
+	font-size: 18px;
+	font-weight: 400;
+	color: #777777;
+	text-align: justify;
+}
+
+/**umb_name:Weight100*/
+.weight100 {
+	font-weight:100 !important;
+}
+
+/**umb_name:Weight200*/
+.weight200 {
+	font-weight:200 !important;
+}
+
+/**umb_name:Weight300*/
+.weight300 {
+	font-weight:300 !important;
+}
+
+/**umb_name:Weight400*/
+.weight400 {
+	font-weight:400 !important;
+}
+
+/**umb_name:Weight500*/
+.weight500 {
+	font-weight:500 !important;
+}
+
+/**umb_name:Weight600*/
+.weight600 {
+	font-weight:600 !important;
+}
+
+/**umb_name:Weight700*/
+.weight700 {
+	font-weight:700 !important;
+}
+
+/**umb_name:Weight800*/
+.weight800 {
+	font-weight:800 !important;
+}
+
+/**umb_name:Weight900*/
+.weight900 {
+	font-weight:900 !important;
+}
+
+/**umb_name:Weight1000*/
+.weight1000 {
+	font-weight:1000 !important;
+}

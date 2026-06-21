@@ -1,0 +1,77 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Medication
+
+@{
+    ViewData["Title"] = "Delete Medication";
+    var flagCls = Model.FlagType switch {
+        "Anticoagulant"      => "flag-anticoagulant",
+        "Bisphosphonates"    => "flag-bisphosphonates",
+        "Steroids"           => "flag-steroids",
+        "Immunosuppressants" => "flag-immunosuppressants",
+        _                    => null
+    };
+}
+
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="~/css/all.min.css" />
+
+<style>
+    .details-wrapper { padding: 30px 20px; max-width: 700px; margin: 0 auto; }
+    .details-card { border: 1.5px solid #c0392b; background: #fff; padding: 30px 36px; }
+    .details-info { font-size: 13px; color: #333; line-height: 2.4; }
+    .details-info span.lbl { font-weight: 600; color: #252468; min-width: 120px; display: inline-block; }
+    .flag-badge { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 20px; font-weight: 600; }
+    .flag-anticoagulant      { background: #ffe0e0; color: #c0392b; }
+    .flag-bisphosphonates    { background: #fff3cd; color: #856404; }
+    .flag-steroids           { background: #ffe8cc; color: #d35400; }
+    .flag-immunosuppressants { background: #e8d5f5; color: #6c3483; }
+    .warning-banner { background:#fff5f5; border:1.5px solid #e74c3c; border-radius:6px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; gap:12px; font-size:13px; color:#c0392b; font-weight:600; }
+</style>
+
+<div class="details-wrapper">
+    <section id="title-wrapper" style="justify-content:center; margin-bottom:20px;">
+        <div class="lineleft"></div>
+        <h1 class="sectiontitle heading6">
+            <p style="text-align:center;"><span style="color:#c0392b;">DELETE MEDICATION</span></p>
+        </h1>
+        <div class="lineright" style="display:block; background-color:#c0392b;"></div>
+    </section>
+
+    <div class="warning-banner">
+        <span style="font-size:22px;">⚠️</span>
+        Are you sure you want to delete this medication? This action cannot be undone.
+    </div>
+
+    <div class="details-card">
+        <div class="details-info">
+            <div><span class="lbl">Drug Name:</span> @Model.DrugName</div>
+            <div><span class="lbl">Dose:</span> @(string.IsNullOrEmpty(Model.Dose) ? "---" : Model.Dose)</div>
+            <div><span class="lbl">Frequency:</span> @(string.IsNullOrEmpty(Model.Frequency) ? "---" : Model.Frequency)</div>
+            <div><span class="lbl">Duration:</span> @(string.IsNullOrEmpty(Model.Duration) ? "---" : Model.Duration)</div>
+            <div>
+                <span class="lbl">Flag:</span>
+                @if (flagCls != null)
+                {
+                    <span class="flag-badge @flagCls">@Model.FlagType</span>
+                }
+                else
+                {
+                    <span style="color:#aaa;">---</span>
+                }
+            </div>
+            <div><span class="lbl">Patient ID:</span> @Model.PatientID</div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:28px;">
+            <a asp-action="Index" style="color:#252468; font-size:13px; font-weight:600; text-decoration:none;">
+                <i class="fa-solid fa-arrow-left"></i> Back to List
+            </a>
+            <form asp-action="Delete" style="margin:0;">
+                <input type="hidden" asp-for="MedicationID" />
+                <button type="submit"
+                    style="background:#c0392b; color:white; border:none; padding:10px 28px; font-size:13px; font-weight:600; border-radius:5px; cursor:pointer;">
+                    <i class="fa-solid fa-trash"></i> Confirm Delete
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

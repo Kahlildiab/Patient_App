@@ -1,0 +1,331 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Appointment
+
+@{
+    ViewData["Title"] = "Create Appointment";
+}
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+    :root {
+        --cream: #FAF7F2;
+        --charcoal: #1C1C1E;
+        --teal: #2A7C76;
+        --teal-light: #3AADA5;
+        --teal-muted: #E8F4F3;
+        --border: #E0DDD8;
+        --muted: #8A8680;
+        --gold: #DAA328;
+        --navy: #252468;
+        --danger: #C0392B;
+        --shadow: 0 2px 20px rgba(0,0,0,0.06);
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background-color: var(--cream);
+        font-family: 'DM Sans', sans-serif;
+        color: var(--charcoal);
+    }
+
+    .page-wrapper {
+        min-height: 100vh;
+        padding: 48px 24px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        padding: 48px;
+        width: 100%;
+        max-width: 640px;
+        border: 1px solid var(--border);
+        animation: fadeUp 0.4s ease both;
+    }
+
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    /* Header */
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 36px;
+    }
+
+    .header-line {
+        flex: 1;
+        height: 2px;
+        border-radius: 2px;
+    }
+
+        .header-line.left {
+            background: linear-gradient(to right, transparent, var(--gold));
+        }
+
+        .header-line.right {
+            background: linear-gradient(to left, transparent, var(--gold));
+        }
+
+    .page-title {
+        font-family: 'DM Serif Display', serif;
+        font-size: 26px;
+        color: var(--navy);
+        white-space: nowrap;
+        letter-spacing: 0.04em;
+    }
+
+    .page-subtitle {
+        text-align: center;
+        font-size: 14px;
+        color: var(--muted);
+        margin-top: -28px;
+        margin-bottom: 28px;
+    }
+
+    .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 28px 0;
+    }
+
+    .section-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--teal);
+        margin-bottom: 20px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+        .form-grid .full {
+            grid-column: 1 / -1;
+        }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+        .field label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--charcoal);
+        }
+
+        .field input,
+        .field select {
+            padding: 10px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'DM Sans', sans-serif;
+            color: var(--charcoal);
+            background: var(--cream);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .field select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238A8680' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-color: var(--cream);
+            padding-right: 36px;
+        }
+
+            .field input:focus,
+            .field select:focus {
+                border-color: var(--teal-light);
+                box-shadow: 0 0 0 3px rgba(58, 173, 165, 0.12);
+                background: #fff;
+            }
+
+        .field .validation-msg {
+            font-size: 12px;
+            color: var(--danger);
+        }
+
+    .validation-summary {
+        background: #FFF2F2;
+        border: 1px solid #F5C6C6;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 28px;
+        font-size: 13px;
+        color: var(--danger);
+    }
+
+    /* Actions */
+    .actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-top: 32px;
+    }
+
+    .btn-create {
+        background: var(--teal);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 32px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.15s;
+        letter-spacing: 0.02em;
+    }
+
+        .btn-create:hover {
+            background: var(--teal-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-create:active {
+            transform: translateY(0);
+        }
+
+    .btn-cancel {
+        font-size: 14px;
+        color: var(--muted);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+
+        .btn-cancel:hover {
+            color: var(--charcoal);
+        }
+
+    @@media (max-width: 520px) {
+        .card {
+            padding: 28px 20px;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+            .form-grid .full {
+                grid-column: 1;
+            }
+
+        .page-title {
+            font-size: 20px;
+        }
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="card">
+
+        <div class="card-header">
+            <div class="header-line left"></div>
+            <h1 class="page-title">NEW APPOINTMENT</h1>
+            <div class="header-line right"></div>
+        </div>
+
+        <p class="page-subtitle">Fill in the details to schedule a new appointment.</p>
+
+        <form asp-action="Create">
+            <div asp-validation-summary="All" class="validation-summary text-danger"></div>
+
+            <div class="section-label">Patient & Clinic</div>
+            <div class="form-grid">
+                <div class="field full">
+                    <label asp-for="PatientID"></label>
+                    <select asp-for="PatientID" asp-items="ViewBag.PatientID"></select>
+                </div>
+                <div class="field full">
+                    <label asp-for="ClinicName"></label>
+                    <select asp-for="ClinicName" asp-items="ViewBag.ClinicID"></select>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-label">Date & Time</div>
+            <div class="form-grid">
+                <div class="field">
+                    <label asp-for="AppointmentDate"></label>
+                    <input asp-for="AppointmentDate" type="date" />
+                    <span asp-validation-for="AppointmentDate" class="validation-msg"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="AppointmentDay"></label>
+                    <input asp-for="AppointmentDay" />
+                    <span asp-validation-for="AppointmentDay" class="validation-msg"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="TimeFrom"></label>
+                    <input asp-for="TimeFrom" type="time" />
+                    <span asp-validation-for="TimeFrom" class="validation-msg"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="TimeTo"></label>
+                    <input asp-for="TimeTo" type="time" />
+                    <span asp-validation-for="TimeTo" class="validation-msg"></span>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-label">Status & Metadata</div>
+            <div class="form-grid">
+                <div class="field">
+                    <label asp-for="AppointmentStatus"></label>
+                    <input asp-for="AppointmentStatus" />
+                    <span asp-validation-for="AppointmentStatus" class="validation-msg"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="CreatedDate"></label>
+                    <input asp-for="CreatedDate" type="date" />
+                    <span asp-validation-for="CreatedDate" class="validation-msg"></span>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn-create">Create Appointment</button>
+                <a asp-action="Index" class="btn-cancel">← Back to List</a>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

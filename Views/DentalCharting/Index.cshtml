@@ -1,0 +1,2165 @@
+﻿@* ─────────────────────────────────────────────────────────────────────────
+   Views/DentalCharting/Index.cshtml
+───────────────────────────────────────────────────────────────────────── *@
+@{
+    ViewData["Title"] = "Dental Chart";
+    var patientId = ViewBag.PatientId ?? 0;
+}
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    :root {
+        --bg: #f4f6fb;
+        --panel: #ffffff;
+        --line: #d7dde6;
+        --soft: #eef2f7;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --disease: #d9485f;
+        --previous: #2463b3;
+        --inside: #2f9e44;
+        --others: #f08c00;
+        --neutral: #8a93a3;
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+    }
+
+    .app {
+        width: 111%;
+        margin: 0 auto;
+        padding: 12px;
+    }
+
+    .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: rgba(244,246,251,.96);
+        backdrop-filter: blur(4px);
+        padding-bottom: 12px;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 12px 16px;
+    }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header small {
+            color: var(--muted);
+            display: block;
+            margin-top: 4px;
+            font-size: 13px;
+        }
+
+    .db-bar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+        .db-bar .db-status {
+            font-size: 13px;
+            color: var(--muted);
+            margin-left: auto;
+        }
+
+    .toolbar {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 10px;
+    }
+
+    .toolbar-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .tool-strip {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+    }
+
+    .group-block {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 8px;
+        background: #fff;
+        min-width: max-content;
+    }
+
+    .group-title {
+        font-size: 12px;
+        font-weight: bold;
+        color: #111827;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .group-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .tool-strip {
+        display: flex;
+        gap: 6px;
+        flex-wrap: nowrap;
+    }
+
+    .tool-btn {
+        flex: 1;
+        max-width: 60px;
+        width: 54px;
+        height: 44px;
+        border: 0px solid var(--line);
+        background: #fff;
+        border-radius: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: .15s;
+        position: relative;
+        flex: 0 0 auto;
+    }
+
+        .tool-btn:hover {
+            transform: translateY(-1px);
+    background: #f0f4ff;
+        }
+
+        .tool-btn.active {
+            background: #e8f0ff;
+    box-shadow: 0 0 0 3px rgba(17,24,39,.12);
+    border-radius: 12px;
+        }
+
+        .tool-btn .tip {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: -34px;
+            background: #111827;
+            color: #fff;
+            font-size: 11px;
+            padding: 4px 7px;
+            border-radius: 8px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: .15s;
+            z-index: 99;
+        }
+
+        .tool-btn:hover .tip {
+            opacity: 1;
+        }
+
+    .main {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 12px;
+        margin-top: 12px;
+        align-items: start;
+    }
+
+    .chart-panel,
+    .side-panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 14px;
+    }
+
+    .side-panel {
+        position: sticky;
+        top: 160px;
+    }
+
+    .status-box {
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px;
+        margin-bottom: 12px;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+        .status-box b {
+            color: #111827;
+        }
+
+    .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .btn {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 12px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: opacity .15s, transform .1s;
+    }
+
+        .btn:hover {
+            opacity: .88;
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+    .btn-secondary {
+        background: #e5e7eb;
+        color: #111827;
+    }
+
+    .btn-danger {
+        background: #dc2626;
+        color: #fff;
+    }
+
+    .btn-primary {
+        background: #2563eb;
+        color: #fff;
+    }
+
+    .btn-warning {
+        background: #f59e0b;
+        color: #fff;
+    }
+
+    .btn-green {
+        background: #16a34a;
+        color: #fff;
+    }
+
+    textarea {
+        width: 100%;
+        min-height: 90px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px;
+        resize: vertical;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        margin-top: 8px;
+    }
+
+    .legend {
+        margin-top: 12px;
+        font-size: 13px;
+        color: #4b5563;
+        line-height: 1.6;
+        background: #fafafa;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px;
+    }
+
+    .chart-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+        .chart-title h2 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .chart-title .hint {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+    .chart-grid {
+        display: grid;
+        grid-template-columns: 52px repeat(16, minmax(56px, 1fr));
+        gap: 6px;
+        align-items: center;
+    }
+
+    .side-label {
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        text-align: center;
+        color: #4b5563;
+        font-style: italic;
+        font-size: 14px;
+        padding: 8px 0;
+        justify-self: center;
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .number-cell {
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+        color: #111827;
+        padding: 2px 0 6px;
+    }
+
+    .tooth-cell {
+        text-align: center;
+        padding: 2px;
+    }
+
+    .tooth-svg {
+        width: 135%;
+        height: auto;
+        display: block;
+        cursor: pointer;
+    }
+
+    .mid-rl {
+        grid-column: 2 / span 16;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #4b5563;
+        font-size: 22px;
+        font-weight: bold;
+        padding: 2px 8px 6px;
+        border-top: 1px solid #e5e7eb;
+        border-bottom: 1px solid #e5e7eb;
+        margin: 4px 0;
+    }
+
+    .mini-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .mini-item {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 8px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        background: #fff;
+    }
+
+    .mini-icon {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        flex: 0 0 auto;
+    }
+
+    .mini-text {
+        font-size: 13px;
+        line-height: 1.4;
+        min-width: 0;
+        flex: 1;
+    }
+
+        .mini-text .key {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+
+        .mini-text .value {
+            font-weight: bold;
+            word-break: break-word;
+        }
+
+    .mini-item button {
+        width: 28px;
+        height: 28px;
+        border: none;
+        border-radius: 8px;
+        background: #ef4444;
+        color: #fff;
+        font-weight: bold;
+        cursor: pointer;
+        flex: 0 0 auto;
+    }
+
+    .session-note-wrap {
+        margin-top: 10px;
+    }
+
+        .session-note-wrap label {
+            font-size: 13px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .session-note-wrap textarea {
+            min-height: 56px;
+        }
+
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.45);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+    .modal-box {
+        background: #fff;
+        border-radius: 18px;
+        padding: 20px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    }
+
+        .modal-box h3 {
+            margin: 0 0 14px;
+            font-size: 20px;
+        }
+
+    .history-item {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .history-item .hi-meta {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .history-item .hi-note {
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 2px;
+        }
+
+    #toastContainer {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .toast {
+        padding: 12px 20px;
+        border-radius: 12px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: bold;
+        box-shadow: 0 4px 20px rgba(0,0,0,.25);
+        animation: slideIn .25s ease;
+        transition: opacity .4s;
+    }
+
+    @@keyframes slideIn {
+        from {
+            transform: translateX(40px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @@media (max-width: 1280px) {
+        .main {
+            grid-template-columns: 1fr;
+        }
+
+        .side-panel {
+            position: static;
+        }
+    }
+
+    @@media (max-width: 920px) {
+        .chart-grid {
+            grid-template-columns: 42px repeat(16, minmax(48px, 1fr));
+        }
+
+        .number-cell {
+            font-size: 15px;
+        }
+    }
+</style>
+
+<div id="toastContainer"></div>
+
+<!-- History Modal -->
+<div class="modal-overlay" id="historyModal">
+    <div class="modal-box">
+        <h3>📋 Previous Sessions History</h3>
+        <div id="historyList"><p style="color:var(--muted)">Loading...</p></div>
+        <div style="margin-top:14px;text-align:right;">
+            <button class="btn btn-secondary" onclick="closeHistory()">✕ Close</button>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay" id="summaryModal">
+    <div class="modal-box" style="max-width:700px">
+        <h3>📊 Session Summary</h3>
+        <div id="summaryMeta" style="font-size:13px;color:var(--muted);margin-bottom:12px;"></div>
+        <div id="summaryTable"></div>
+        <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+            <button class="btn btn-secondary" onclick="closeSummary()">✕ Close</button>
+            <button class="btn btn-primary" id="summaryOpenBtn">📂 Open in Chart</button>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay" id="othersTextModal">
+    <div class="modal-box" style="max-width:460px;">
+        <h3 id="othersTextTitle">📝 Add Note</h3>
+        <textarea id="othersTextInput"
+                  placeholder="اكتب ملاحظتك هنا / Write your note here..."
+                  style="min-height:120px;margin-top:0;font-size:15px;"></textarea>
+        <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn btn-secondary" onclick="closeOthersTextModal()">✕ Cancel</button>
+            <button class="btn btn-primary" onclick="saveOthersText()">💾 Save Note</button>
+        </div>
+    </div>
+</div>
+<div class="app">
+    <div class="topbar">
+        <div class="header">
+            <div>
+                <h1>🦷 Dental Chart</h1>
+                <small>Patient ID: <strong>@patientId</strong> — SVG Interactive Chart</small>
+            </div>
+            <div class="db-bar">
+                <button class="btn btn-primary" onclick="loadChartFromDb()">📥 Load</button>
+                <button class="btn btn-green" onclick="saveChartToDb()">💾 Save</button>
+                <button class="btn btn-warning" onclick="saveNewSession()">🗂️ New Session</button>
+                <button class="btn btn-secondary" onclick="openHistory()">🕐 History</button>
+                <span class="db-status" id="dbStatus">—</span>
+            </div>
+        </div>
+
+        <div class="toolbar" id="toolbar"></div>
+    </div>
+
+    <div class="main">
+        <div class="chart-panel">
+            <div class="chart-title">
+                <h2>Interactive Dental Chart</h2>
+                <div class="hint">Select a tool from the toolbar, then click on a tooth area.</div>
+            </div>
+            <div id="chartHost"></div>
+        </div>
+
+        <div class="side-panel">
+            
+            <div class="status-box">
+                <div><b>Selected Tool:</b>  <span id="selectedToolLabel">—</span></div>
+                <div><b>Selected Tooth:</b> <span id="selectedToothLabel">—</span></div>
+                <div><b>Selected Area:</b>  <span id="selectedAreaLabel">—</span></div>
+
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="clearSelectedTarget()">Clear Area</button>
+                    <button class="btn btn-danger" onclick="clearSelectedTooth()">Clear Tooth</button>
+                    <button class="btn btn-warning" onclick="clearAllChart()">Clear All</button>
+                </div>
+
+                <div style="margin-top:10px;"><b>Area Note</b></div>
+                <textarea id="noteBox" placeholder="Write a note for the selected area..."></textarea>
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="saveNote()">💾 Save Note</button>
+                </div>
+
+                <div class="session-note-wrap">
+                    <label>General Session Note</label>
+                    <textarea id="sessionNoteGlobal" placeholder="General note for this session..."></textarea>
+                </div>
+            </div>
+
+            <div class="legend">
+                <b>Colors:</b><br>
+                <span style="color:#d9485f">■</span> Disease &nbsp;
+                <span style="color:#2463b3">■</span> Previous Treatment &nbsp;
+                <span style="color:#2f9e44">■</span> In-Hospital &nbsp;
+                <span style="color:#f08c00">■</span> Others
+                <br><br>
+                <b>Scope:</b><br>
+                Surface = Selected area only<br>
+                Root = Root only<br>
+                Whole = Entire tooth in all views
+            </div>
+
+            <div style="margin-top:12px;font-weight:bold;">Selected Details</div>
+            <div class="mini-list" id="detailList">
+                <div style="margin-top:12px;font-weight:bold;">Tool Report</div>
+                <div id="reportPanel" style="margin-top:8px;"></div>
+
+                <div style="margin-top:12px;font-weight:bold;">Selected Details</div>
+                <div class="mini-list" id="detailList">
+                    <div style="color:#6b7280;font-size:13px;">Nothing selected.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+       // ════════════════════════════════════════════════════════════════
+    //  CONFIG
+    // ════════════════════════════════════════════════════════════════
+    const PATIENT_ID = @patientId;
+    const API_BASE = "/DentalChart/api";
+
+    // ════════════════════════════════════════════════════════════════
+    //  CONSTANTS
+    // ════════════════════════════════════════════════════════════════
+    const GROUP_COLORS = {
+        disease:  getComputedStyle(document.documentElement).getPropertyValue('--disease').trim(),
+        previous: getComputedStyle(document.documentElement).getPropertyValue('--previous').trim(),
+        inside:   getComputedStyle(document.documentElement).getPropertyValue('--inside').trim(),
+        others:   getComputedStyle(document.documentElement).getPropertyValue('--others').trim()
+    };
+
+    const GROUP_LABELS = {
+        disease:  "Disease",
+        previous: "Previous Treatment",
+        inside:   "In-Hospital",
+        others:   "Others"
+    };
+
+    const TOOLS = [
+        { id:"caries",                      label:"Caries",                             group:"disease",  glyph:"caries",           scope:"surface" },
+        { id:"secondary_caries",            label:"Secondary Caries",                   group:"disease",  glyph:"secondary",        scope:"surface" },
+        { id:"periapical_lesion",           label:"Periapical Lesion",                  group:"disease",  glyph:"periapical",       scope:"surface" },
+        { id:"crack_tooth",                 label:"Crack Tooth",                        group:"disease",  glyph:"crack",            scope:"surface" },
+        { id:"tooth_mobility",              label:"Tooth Mobility",                     group:"disease",  glyph:"mobility",         scope:"surface" },
+        { id:"remaining_root",              label:"Remaining Root",                     group:"disease",  glyph:"remainingRoot",    scope:"surface" },
+        { id:"surface_loss",                label:"Tooth Surface Loss",                 group:"disease",  glyph:"surfaceLoss",      scope:"surface" },
+
+        { id:"amalgam_prev",                label:"Amalgam",                            group:"previous", glyph:"resto1",           scope:"surface" },
+        { id:"composite_prev",              label:"Composite Restoration",              group:"previous", glyph:"resto2",           scope:"surface" },
+        { id:"gic_prev",                    label:"GIC",                                group:"previous", glyph:"resto3",           scope:"surface" },
+        { id:"temporary_restoration_prev",  label:"Temporary Restoration",              group:"previous", glyph:"resto4",           scope:"surface" },
+        { id:"partial_restoration_prev",    label:"Partial Restoration",                group:"previous", glyph:"resto5",           scope:"surface" },
+        { id:"metal_crown_prev",            label:"Metal Crown",                        group:"previous", glyph:"crown1",           scope:"surface" },
+        { id:"zirconia_crown_prev",         label:"Zirconia Crown",                     group:"previous", glyph:"crown2",           scope:"surface" },
+        { id:"emax_crown_prev",             label:"Emax Crown",                         group:"previous", glyph:"crown3",           scope:"surface" },
+        { id:"pfm_crown_prev",              label:"PFM Crown",                          group:"previous", glyph:"crown4",           scope:"surface" },
+        {id:"temporary_crown_prev",         label:"Temporary Crown",                    group:"previous", glyph:"tempCrown",        scope:"surface" },
+        { id:"stainless_crown_prev",        label:"Stainless Steel Crown",              group:"previous", glyph:"crown6",           scope:"surface" },
+        { id:"resin_bonded_bridge_prev",    label:"Resin Bonded Bridge",                group:"previous", glyph:"bridge",           scope:"surface" },
+        { id:"root_canal_prev",             label:"Root Canal Treatment",               group:"previous", glyph:"rct",              scope:"surface" },
+        { id:"vital_pulp_therapy_prev",     label:"Vital Pulp Therapy",                 group:"previous", glyph:"vpt",              scope:"surface" },
+        { id:"post_prev",                   label:"Post",                               group:"previous", glyph:"post",             scope:"surface" },
+        { id:"stabilization_splint_prev",   label:"Stabilization Splint",               group:"previous", glyph:"splint",           scope:"surface" },
+        { id:"partial_acrylic_denture_prev",label:"Partial Acrylic Denture",            group:"previous", glyph:"denture",          scope:"surface" },
+        { id:"cc_denture_prev",             label:"Cobalt Chromium Partial Denture",    group:"previous", glyph:"ccDenture",        scope:"surface" },
+        { id:"complete_denture_prev",       label:"Complete Denture",                   group:"previous", glyph:"completeDenture",  scope:"surface" },
+        { id:"space_maintainer_prev",       label:"Space Maintainer",                   group:"previous", glyph:"spaceMaintainer",  scope:"surface" },
+        { id:"pulpotomy_prev",              label:"Pulpotomy",                          group:"previous", glyph:"pulpotomy",        scope:"surface" },
+        { id:"pulpectomy_prev",             label:"Pulpectomy",                         group:"previous", glyph:"pulpectomy",       scope:"surface" },
+
+        { id:"amalgam_in",                  label:"Amalgam",                            group:"inside",   glyph:"resto1",           scope:"surface" },
+        { id:"composite_in",                label:"Composite Restoration",              group:"inside",   glyph:"resto2",           scope:"surface" },
+        { id:"gic_in",                      label:"GIC",                                group:"inside",   glyph:"resto3",           scope:"surface" },
+        { id:"temporary_restoration_in",    label:"Temporary Restoration",              group:"inside",   glyph:"resto4",           scope:"surface" },
+        { id:"partial_restoration_in",      label:"Partial Restoration",                group:"inside",   glyph:"resto5",           scope:"surface" },
+        { id:"metal_crown_in",              label:"Metal Crown",                        group:"inside",   glyph:"crown1",           scope:"surface" },
+        { id:"ceramic_crown_in",            label:"Ceramic Crown",                      group:"inside",   glyph:"crown2",           scope:"surface" },
+        { id:"emax_crown_in",               label:"Emax Crown",                         group:"inside",   glyph:"crown3",           scope:"surface" },
+        { id:"pfm_crown_in",                label:"PFM Crown",                          group:"inside",   glyph:"crown4",           scope:"surface" },
+        { id:"temporary_crown_in",          label:"Temporary Crown",                    group:"inside",   glyph:"tempCrown",        scope:"surface" },
+        { id:"stainless_crown_in",          label:"Stainless Steel Crown",              group:"inside",   glyph:"crown6",           scope:"surface" },
+        { id:"resin_bonded_bridge_in",      label:"Resin Bonded Bridge",                group:"inside",   glyph:"bridge",           scope:"surface" },
+        { id:"root_canal_in",               label:"Root Canal Treatment",               group:"inside",   glyph:"rct",              scope:"surface" },
+        { id:"vpt_in",                      label:"Vital Pulp Therapy",                 group:"inside",   glyph:"vpt",              scope:"surface" },
+        { id:"post_in",                     label:"Post",                               group:"inside",   glyph:"post",             scope:"surface" },
+        { id:"stabilization_splint_in",     label:"Stabilization Splint",               group:"inside",   glyph:"splint",           scope:"surface" },
+        { id:"partial_denture_in",          label:"Partial Acrylic Denture",            group:"inside",   glyph:"denture",          scope:"surface" },
+        { id:"cc_denture_in",               label:"Cobalt Chromium Partial Denture",    group:"inside",   glyph:"ccDenture",        scope:"surface" },
+        { id:"complete_denture_in",         label:"Complete Denture",                   group:"inside",   glyph:"completeDenture",  scope:"surface" },
+        { id:"space_maintainer_in",         label:"Space Maintainer",                   group:"inside",   glyph:"spaceMaintainer",  scope:"surface" },
+        { id:"pulpotomy_in",                label:"Pulpotomy",                          group:"inside",   glyph:"pulpotomy",        scope:"surface" },
+        { id:"pulpectomy_in",               label:"Pulpectomy",                         group:"inside",   glyph:"pulpectomy",       scope:"surface" },
+        { id:"extracted_tooth_in",          label:"Extracted Tooth",                    group:"inside",   glyph:"extracted",        scope:"surface" },
+
+        { id:"impacted_tooth",              label:"Impacted Tooth",                     group:"others",   glyph:"impacted",         scope:"surface" },
+        { id:"soft_tissue_impacted",        label:"Soft Tissue Impacted Tooth",         group:"others",   glyph:"softImpacted",     scope:"surface" },
+        { id:"partially_erupted",           label:"Partially Erupted Tooth",            group:"others",   glyph:"partiallyErupted", scope:"surface" },
+        { id:"teeth_transposition",         label:"Teeth Transposition",                group:"others",   glyph:"transposition",    scope:"surface" },
+        { id:"teeth_change",                label:"Teeth Change Permanent/Deciduous",   group:"others",   glyph:"teethChange",      scope:"surface" },
+        { id:"extracted_tooth",             label:"Extracted Tooth",                    group:"others",   glyph:"extracted",        scope:"surface" },
+        { id:"others_text",                 label:"Others / Text",                      group:"others",   glyph:"note",             scope:"surface" }
+    ];
+
+    const POS_LABELS  = [8,7,6,5,4,3,2,1,1,2,3,4,5,6,7,8];
+    const TOOTH_TYPES = [
+        "molar3","molar2","molar1","premolar2","premolar1","canine","lateral","central",
+        "central","lateral","canine","premolar1","premolar2","molar1","molar2","molar3"
+    ];
+    const UPPER_IDS = Array.from({length:16}, (_,i)=>`U${i}`);
+    const LOWER_IDS = Array.from({length:16}, (_,i)=>`L${i}`);
+
+    // ════════════════════════════════════════════════════════════════
+    //  STATE
+    // ════════════════════════════════════════════════════════════════
+    const chartData = {};
+    let selectedToolId   = null;
+    let selectedTarget   = null;
+    let currentSessionId = null;
+    let reportToolId     = null;   
+    let pendingSwapToothId = null;
+
+    function makeSlot() { return { disease:[], previous:[], inside:[], others:[], note:"" }; }
+
+        function makeTooth(id) {
+        return {
+            id,
+            isDeciduous: false,   // ⬅️ جديد: false = دائم (Permanent) / true = لبني (Deciduous)
+            whole: makeSlot(),
+            areas: {
+                buccal: makeSlot(), lingual: makeSlot(), palatal: makeSlot(),
+                mesial: makeSlot(), distal:  makeSlot(), occlusal: makeSlot(), root: makeSlot()
+            }
+        };
+    }
+
+    [...UPPER_IDS, ...LOWER_IDS].forEach(id => { chartData[id] = makeTooth(id); });
+
+    // ════════════════════════════════════════════════════════════════
+    //  HELPERS
+    // ════════════════════════════════════════════════════════════════
+    function pick(obj, camel, pascal) {
+        return obj[camel] !== undefined ? obj[camel] : obj[pascal];
+    }
+
+    function getTool(id)      { return TOOLS.find(t => t.id === id) || null; }
+    function getToothType(id) { return TOOTH_TYPES[parseInt(id.slice(1), 10)]; }
+    function isSelected(tid, area) {
+        return selectedTarget && selectedTarget.toothId === tid && selectedTarget.area === area;
+    }
+
+    function hexToRgba(hex, alpha) {
+        const h = hex.replace('#','');
+        const b = parseInt(h, 16);
+        return `rgba(${(b>>16)&255},${(b>>8)&255},${b&255},${alpha})`;
+    }
+
+    function getMarks(slot) {
+        const out = [];
+        ["disease","previous","inside","others"].forEach(g => {
+            (slot[g] || []).forEach(tid => {
+                const t = getTool(tid);
+                if (t) out.push({ group: g, tool: t });
+            });
+        });
+        return out;
+    }
+
+    function getWholeMarks(tid)      { return getMarks(chartData[tid].whole); }
+    function getAreaMarks(tid, area) { return getMarks(chartData[tid].areas[area]); }
+
+    function surfaceTint(tid, area) {
+        const m = getAreaMarks(tid, area);
+        if (!m.length)    return "#ffffff";
+        if (m.length===1) return hexToRgba(GROUP_COLORS[m[0].group], .24);
+        return "#eef2f7";
+    }
+
+    function escapeHtml(s) {
+        return String(s)
+            .replaceAll("&","&amp;").replaceAll("<","&lt;")
+            .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  ICONS
+    // ════════════════════════════════════════════════════════════════
+                  function iconSvg(glyph, color, size = 24, group = "") {
+        iconSvg._uid = (iconSvg._uid || 0) + 1;
+        const safeColor = String(color).replace(/[^a-zA-Z0-9]/g, "");
+        const safeGroup = String(group || "").replace(/[^a-zA-Z0-9]/g, "");
+        const uid = `pat_${glyph}_${safeColor}_${safeGroup}_${iconSvg._uid}`;
+
+        const PATTERNS = {
+            caries:{p:1},secondary:{p:2},periapical:{p:3},crack:{p:4},mobility:{p:5},
+            remainingRoot:{p:6},surfaceLoss:{p:7},resto1:{p:8},resto2:{p:9},resto3:{p:10},
+            resto4:{p:11},resto5:{p:12},crown1:{p:13},crown2:{p:14},crown3:{p:15},
+            crown4:{p:27},crown5:{p:17},crown6:{p:18},crown:{p:19},bridge:{p:20},
+            rct:{p:21},vpt:{p:22},post:{p:23},splint:{p:24},denture:{p:25},
+            spaceMaintainer:{p:26},impacted:{p:1,rotate:25},softImpacted:{p:2,rotate:-25},
+            partiallyErupted:{p:3},transposition:{p:4},teethChange:{p:5},
+            extracted:{p:6},restoration:{p:7},note:{p:8},
+            pulpotomy:{p:28},pulpectomy:{p:29},ccDenture:{p:30},
+            completeDenture:{p:31},tempCrown:{p:16},
+        };
+
+        const pat = PATTERNS[glyph] || { p: 1 };
+
+        function makePattern(uid, pat, color) {
+            const sp = pat.sp || 5;
+            const sw = pat.sw || 1.1;
+            const op = pat.opacity || 0.75;
+            const rotate = pat.rotate || 0;
+            const transform = rotate !== 0 ? ` patternTransform="rotate(${rotate})"` : "";
+            switch (pat.p) {
+                case 1:  return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><line x1="0" y1="${sp}" x2="${sp}" y2="0" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 2:  return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><line x1="0" y1="0" x2="${sp}" y2="${sp}" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 3:  return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><line x1="${sp/2}" y1="0" x2="${sp/2}" y2="${sp}" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 4:  return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><line x1="0" y1="${sp/2}" x2="${sp}" y2="${sp/2}" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 5:  return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><line x1="0" y1="0" x2="${sp}" y2="${sp}" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="0" y1="${sp}" x2="${sp}" y2="0" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 6:  return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><line x1="${sp/2}" y1="0" x2="${sp/2}" y2="${sp}" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="0" y1="${sp/2}" x2="${sp}" y2="${sp/2}" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 7:  return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><circle cx="${sp/2}" cy="${sp/2}" r="1" fill="${color}" fill-opacity="${op}"/></pattern>`;
+                case 8:  return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="7" height="7"${transform}><circle cx="3.5" cy="3.5" r="1.6" fill="${color}" fill-opacity="${op}"/></pattern>`;
+                case 9:  return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="6" height="6"${transform}><rect x="0" y="0" width="3" height="3" fill="${color}" fill-opacity="${op}"/><rect x="3" y="3" width="3" height="3" fill="${color}" fill-opacity="${op}"/></pattern>`;
+                case 10: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="8" height="6"${transform}><path d="M0 4 L2 2 L4 4 L6 2 L8 4" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 11: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="8" height="6"${transform}><path d="M0 3 Q2 0 4 3 T8 3" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 12: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="8" height="5"${transform}><line x1="0" y1="2.5" x2="4" y2="2.5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 13: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="5" height="8"${transform}><line x1="2.5" y1="0" x2="2.5" y2="4" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 14: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><circle cx="4" cy="4" r="2.4" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 15: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><path d="M4 1 L7 7 H1 Z" fill="${color}" fill-opacity="${op}"/></pattern>`;
+                case 16: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><path d="M4 1 L7 4 L4 7 L1 4 Z" fill="${color}" fill-opacity="${op}"/></pattern>`;
+                case 17: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><line x1="4" y1="1.5" x2="4" y2="6.5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="1.5" y1="4" x2="6.5" y2="4" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 18: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><line x1="0" y1="8" x2="3" y2="5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="5" y1="3" x2="8" y2="0" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 19: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="10" height="6"${transform}><path d="M0 0 H10 M0 3 H10 M5 0 V3 M2.5 3 V6 M7.5 3 V6" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 20: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="7" height="7"${transform}><line x1="0" y1="7" x2="7" y2="0" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="-3" y1="7" x2="7" y2="-3" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op * 0.7}"/></pattern>`;
+                case 21: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="7" height="7"${transform}><line x1="2" y1="0" x2="2" y2="7" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="5" y1="0" x2="5" y2="7" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 22: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="7" height="7"${transform}><line x1="0" y1="2" x2="7" y2="2" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="0" y1="5" x2="7" y2="5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 23: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="9" height="9"${transform}><circle cx="2.5" cy="2.5" r="1" fill="${color}" fill-opacity="${op}"/><circle cx="7" cy="7" r="1" fill="${color}" fill-opacity="${op}"/></pattern>`;
+                case 24: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><rect x="1.5" y="1.5" width="5" height="5" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 25: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="9" height="9"${transform}><circle cx="4.5" cy="4.5" r="3" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><circle cx="4.5" cy="4.5" r="0.9" fill="${color}" fill-opacity="${op}"/></pattern>`;
+                case 26: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="9" height="9"${transform}><path d="M4.5 1.2 L5.4 3.6 L8 4.5 L5.4 5.4 L4.5 7.8 L3.6 5.4 L1 4.5 L3.6 3.6 Z" fill="${color}" fill-opacity="${op}"/></pattern>`;
+                case 27: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="6" height="6"${transform}><line x1="0" y1="0" x2="6" y2="6" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="6" y1="0" x2="0" y2="6" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="3" y1="-3" x2="9" y2="3" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="-3" y1="3" x2="3" y2="9" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 28: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="10" height="10"${transform}><circle cx="5" cy="5" r="3.5" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><circle cx="5" cy="5" r="1" fill="${color}" fill-opacity="${op}"/></pattern>`;
+                case 29: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><path d="M0 2 L2 0 L4 4 L6 0 L8 2" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><path d="M0 6 L2 4 L4 8 L6 4 L8 6" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 30: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><line x1="0" y1="4" x2="4" y2="0" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="4" y1="8" x2="8" y2="4" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="0" y1="8" x2="8" y2="0" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                case 31: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="9" height="9"${transform}><circle cx="4.5" cy="4.5" r="2" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="4.5" y1="0" x2="4.5" y2="2.5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="4.5" y1="6.5" x2="4.5" y2="9" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="0" y1="4.5" x2="2.5" y2="4.5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="6.5" y1="4.5" x2="9" y2="4.5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+                default: return `<pattern id="${uid}" patternUnits="userSpaceOnUse" width="5" height="5"><line x1="0" y1="5" x2="5" y2="0" stroke="${color}" stroke-width="1.1" stroke-opacity="0.75"/></pattern>`;
+            }
+        }
+
+        const patternDef = makePattern(uid, pat, color);
+        const fillVal = `url(#${uid})`;
+        const H = `fill="${fillVal}" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"`;
+        const O = `fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"`;
+        const S = `fill="${color}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"`;
+
+        const map = {
+            caries:`<circle cx="16" cy="16" r="8" ${H}/><circle cx="16" cy="16" r="3" fill="${color}" stroke="none"/>`,
+            secondary:`<circle cx="16" cy="16" r="10" ${H}/><circle cx="16" cy="16" r="5" fill="${color}" stroke="${color}" stroke-width="1"/><circle cx="16" cy="16" r="2" fill="#fff" stroke="none"/>`,
+            periapical:`<path d="M13 7 H19 L18 24 H14 Z" ${H}/><ellipse cx="16" cy="27" rx="7" ry="4" ${H}/>`,
+            crack:`<path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/><path d="M16 7 L13 15 L19 15 L15 26" fill="none" stroke="${color}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+            mobility:`<path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/><path d="M4 16 H28" ${O}/><path d="M7 12 L3 16 L7 20" ${O}/><path d="M25 12 L29 16 L25 20" ${O}/>`,
+            remainingRoot:`<path d="M14 5 H18 L17 28 H15 Z" ${H}/>`,
+            surfaceLoss:`<path d="M8 11 Q16 7 24 11 L23 23 Q16 26 9 23 Z" ${H}/><path d="M9 11 L23 23 M9 23 L23 11" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round"/>`,
+            restoration:`<rect x="8" y="10" width="16" height="14" rx="3" ${H}/>`,
+            crown:`<path d="M8 22 L10 10 L14 16 L16 8 L18 16 L22 10 L24 22 Q22 27 16 27 Q10 27 8 22 Z" ${H}/>`,
+            bridge:`<ellipse cx="10" cy="20" rx="5" ry="7" ${H}/><ellipse cx="22" cy="20" rx="5" ry="7" ${H}/><rect x="10" y="16" width="12" height="8" rx="2" fill="${color}" fill-opacity="0.3" stroke="${color}" stroke-width="1.6"/>`,
+            rct:`<path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/><line x1="12" y1="12" x2="20" y2="12" stroke="${color}" stroke-width="1.5"/><line x1="13" y1="17" x2="19" y2="17" stroke="${color}" stroke-width="1.5"/><line x1="13" y1="22" x2="19" y2="22" stroke="${color}" stroke-width="1.5"/>`,
+            pulpotomy:`<path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" fill="url(#${uid})" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="12" x2="20" y2="12" stroke="${color}" stroke-width="1.5"/><line x1="13" y1="17" x2="19" y2="17" stroke="${color}" stroke-width="1.5"/><line x1="13" y1="22" x2="19" y2="22" stroke="${color}" stroke-width="1.5"/>`,
+            pulpectomy:`<path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" fill="url(#${uid})" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="12" x2="20" y2="12" stroke="${color}" stroke-width="1.5"/><line x1="13" y1="17" x2="19" y2="17" stroke="${color}" stroke-width="1.5"/><line x1="13" y1="22" x2="19" y2="22" stroke="${color}" stroke-width="1.5"/>`,
+            vpt:`<path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/><path d="M16 10 V24 M11 17 H21" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round"/>`,
+            post:`<rect x="13" y="6" width="6" height="20" rx="2" ${H}/><rect x="10" y="6" width="12" height="5" rx="2" ${H}/>`,
+            splint:`<rect x="5" y="12" width="22" height="10" rx="4" ${H}/><path d="M5 17 Q16 10 27 17" ${O} stroke-width="2.2"/>`,
+            denture:`<path d="M6 23 Q16 8 26 23" ${H} stroke-width="2"/><circle cx="10" cy="20" r="2.5" ${S}/><circle cx="16" cy="16" r="2.5" ${S}/><circle cx="22" cy="20" r="2.5" ${S}/>`,
+            ccDenture:`<path d="M6 23 Q16 8 26 23" fill="url(#${uid})" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20" r="2.5" ${S}/><circle cx="16" cy="16" r="2.5" ${S}/><circle cx="22" cy="20" r="2.5" ${S}/>`,
+            completeDenture:`<path d="M6 23 Q16 8 26 23" fill="url(#${uid})" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20" r="2.5" ${S}/><circle cx="16" cy="16" r="2.5" ${S}/><circle cx="22" cy="20" r="2.5" ${S}/>`,
+            spaceMaintainer:`<rect x="5" y="12" width="7" height="10" rx="2" ${H}/><rect x="20" y="12" width="7" height="10" rx="2" ${H}/><path d="M12 17 H20" ${O} stroke-width="2.2"/>`,
+            tempCrown:`<path d="M8 22 L10 10 L14 16 L16 8 L18 16 L22 10 L24 22 Q22 27 16 27 Q10 27 8 22 Z" fill="url(#${uid})" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+            impacted:`<path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H} stroke-dasharray="4 2.5"/>`,
+            softImpacted:`<path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H} stroke-dasharray="4 2.5"/><path d="M8 19 Q16 14 24 19" ${O} stroke-width="2.2"/>`,
+            partiallyErupted:`<path d="M12 13 Q16 7 20 13 L19 26 Q16 28 13 26 Z" ${H}/><path d="M7 18 Q16 15 25 18" ${O} stroke-width="2.2"/>`,
+            transposition:`<path d="M8 10 Q22 10 22 16 Q22 22 8 22" ${O} stroke-width="2.2"/><path d="M24 22 Q10 22 10 16 Q10 10 24 10" ${O} stroke-width="2.2"/>`,
+            teethChange:`<path d="M10 10 A8 8 0 0 1 22 12" ${O}/><path d="M22 22 A8 8 0 0 1 10 20" ${O}/><path d="M21 9 L23 13 L19 13" ${O}/><path d="M12 23 L10 19 L14 19" ${O}/>`,
+            extracted:`<rect x="9" y="9" width="14" height="14" rx="3" ${H}/><path d="M9 9 L23 23 M23 9 L9 23" stroke="${color}" stroke-width="4" stroke-linecap="round" fill="none"/>`,
+            note:`<rect x="9" y="6" width="14" height="20" rx="2" ${H}/><line x1="12" y1="11" x2="20" y2="11" stroke="${color}" stroke-width="1.4"/><line x1="12" y1="15" x2="20" y2="15" stroke="${color}" stroke-width="1.4"/><line x1="12" y1="19" x2="17" y2="19" stroke="${color}" stroke-width="1.4"/>`,
+            resto1:`<rect x="8" y="10" width="16" height="14" rx="3" ${H}/>`,
+            resto2:`<rect x="8" y="10" width="16" height="14" rx="3" ${H}/>`,
+            resto3:`<rect x="8" y="10" width="16" height="14" rx="3" ${H}/>`,
+            resto4:`<rect x="8" y="10" width="16" height="14" rx="3" ${H}/>`,
+            resto5:`<rect x="8" y="10" width="16" height="14" rx="3" ${H}/>`,
+            crown1:`<path d="M8 22 L10 10 L14 16 L16 8 L18 16 L22 10 L24 22 Q22 27 16 27 Q10 27 8 22 Z" ${H}/>`,
+            crown2:`<path d="M8 22 L10 10 L14 16 L16 8 L18 16 L22 10 L24 22 Q22 27 16 27 Q10 27 8 22 Z" ${H}/>`,
+            crown3:`<path d="M8 22 L10 10 L14 16 L16 8 L18 16 L22 10 L24 22 Q22 27 16 27 Q10 27 8 22 Z" ${H}/>`,
+            crown4:`<path d="M8 22 L10 10 L14 16 L16 8 L18 16 L22 10 L24 22 Q22 27 16 27 Q10 27 8 22 Z" ${H}/>`,
+            crown5:`<path d="M8 22 L10 10 L14 16 L16 8 L18 16 L22 10 L24 22 Q22 27 16 27 Q10 27 8 22 Z" fill="url(#${uid})" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+            crown6:`<path d="M8 22 L10 10 L14 16 L16 8 L18 16 L22 10 L24 22 Q22 27 16 27 Q10 27 8 22 Z" ${H}/>`
+        };
+
+        return `<svg width="${size}" height="${size}" viewBox="4 4 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <defs>${patternDef}</defs>
+                    ${map[glyph] || map.note}
+                </svg>`;
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  TOOLBAR
+    // ════════════════════════════════════════════════════════════════
+    function renderToolbar() {
+        const order = ["previous", "inside", "disease", "others"];
+        const fullWidth = ["previous", "inside"];
+        const grouped = {
+            disease:  TOOLS.filter(t=>t.group==="disease"),
+            previous: TOOLS.filter(t=>t.group==="previous"),
+            inside:   TOOLS.filter(t=>t.group==="inside"),
+            others:   TOOLS.filter(t=>t.group==="others")
+        };
+        document.getElementById("toolbar").innerHTML = `
+            <div class="toolbar-row">
+              ${order.map(group => `
+                <div class="group-block" ${fullWidth.includes(group) ? 'style="grid-column: span 2;"' : ''}>
+                  <div class="group-title">
+                    <span class="group-dot" style="background:${GROUP_COLORS[group]}"></span>
+                    ${GROUP_LABELS[group]}
+                  </div>
+                  <div class="tool-strip">
+                    ${grouped[group].map(tool => `
+                      <button class="tool-btn ${selectedToolId===tool.id?'active':''}"
+                              onclick="selectTool('${tool.id}')" title="${escapeHtml(tool.label)}">
+                        ${iconSvg(tool.glyph, GROUP_COLORS[group], 36)}
+                        <span class="tip">${escapeHtml(tool.label)}</span>
+                      </button>
+                    `).join("")}
+                  </div>
+                </div>
+              `).join("")}
+            </div>`;
+    }
+
+    function selectTool(toolId) {
+        selectedToolId = toolId;
+        pendingSwapToothId = null;   // ⬅️ جديد
+        renderAll();
+    }
+        function swapTeeth(tid1, tid2) {
+        const temp = chartData[tid1];
+        chartData[tid1] = chartData[tid2];
+        chartData[tid2] = temp;
+        // حافظ على الـ id الصحيح بعد التبديل لأن كل كائن كان عنده id القديم بداخله
+        chartData[tid1].id = tid1;
+        chartData[tid2].id = tid2;
+    }
+    // ════════════════════════════════════════════════════════════════
+    //  TOOTH IMAGE MAP
+    // ════════════════════════════════════════════════════════════════
+    const TOOTH_IMAGES = {
+        "U0":"/images/teeth/U-8L-F.svg","U1":"/images/teeth/U-7L-F.svg",
+        "U2":"/images/teeth/U-6L-F.svg","U3":"/images/teeth/U-5L-F.svg",
+        "U4":"/images/teeth/U-4L-F.svg","U5":"/images/teeth/U-3L-F.svg",
+        "U6":"/images/teeth/U-2R-F.svg","U7":"/images/teeth/U-1R-F.svg",
+        "U8":"/images/teeth/U-1R-F.svg","U9":"/images/teeth/U-2R-F.svg",
+        "U10":"/images/teeth/U-3L-F.svg","U11":"/images/teeth/U-4L-F.svg",
+        "U12":"/images/teeth/U-5L-F.svg","U13":"/images/teeth/U-6L-F.svg",
+        "U14":"/images/teeth/U-7L-F.svg","U15":"/images/teeth/U-8L-F.svg",
+        "L0":"/images/teeth/U-8L-F.svg","L1":"/images/teeth/U-7L-F.svg",
+        "L2":"/images/teeth/U-6L-F.svg","L3":"/images/teeth/U-5L-F.svg",
+        "L4":"/images/teeth/U-4L-F.svg","L5":"/images/teeth/U-3L-F.svg",
+        "L6":"/images/teeth/U-2L-F.svg","L7":"/images/teeth/U-1L-F.svg",
+        "L8":"/images/teeth/U-1L-F.svg","L9":"/images/teeth/U-2L-F.svg",
+        "L10":"/images/teeth/U-3L-F.svg","L11":"/images/teeth/U-4L-F.svg",
+        "L12":"/images/teeth/U-5L-F.svg","L13":"/images/teeth/U-6L-F.svg",
+        "L14":"/images/teeth/U-7L-F.svg","L15":"/images/teeth/U-8L-F.svg"
+    };
+        // ✏️ عدّل هذا الجدول بمسارات صور الأسنان اللبنية (Deciduous) — نفس مفاتيح TOOTH_IMAGES تماماً
+    const TOOTH_IMAGES_DECIDUOUS = {
+        "U0":"/images/teeth/deciduous/U-8L-F.svg","U1":"/images/teeth/deciduous/U-7L-F.svg",
+        "U2":"/images/teeth/deciduous/U-6L-F.svg","U3":"/images/teeth/deciduous/U-5L-F.svg",
+        "U4":"/images/teeth/deciduous/U-4L-F.svg","U5":"/images/teeth/deciduous/U-3L-F.svg",
+        "U6":"/images/teeth/deciduous/U-2R-F.svg","U7":"/images/teeth/deciduous/U-1R-F.svg",
+        "U8":"/images/teeth/deciduous/U-1R-F.svg","U9":"/images/teeth/deciduous/U-2R-F.svg",
+        "U10":"/images/teeth/deciduous/U-3L-F.svg","U11":"/images/teeth/deciduous/U-4L-F.svg",
+        "U12":"/images/teeth/deciduous/U-5L-F.svg","U13":"/images/teeth/deciduous/U-6L-F.svg",
+        "U14":"/images/teeth/deciduous/U-7L-F.svg","U15":"/images/teeth/deciduous/U-8L-F.svg",
+        "L0":"/images/teeth/deciduous/U-8L-F.svg","L1":"/images/teeth/deciduous/U-7L-F.svg",
+        "L2":"/images/teeth/deciduous/U-6L-F.svg","L3":"/images/teeth/deciduous/U-5L-F.svg",
+        "L4":"/images/teeth/deciduous/U-4L-F.svg","L5":"/images/teeth/deciduous/U-3L-F.svg",
+        "L6":"/images/teeth/deciduous/U-2L-F.svg","L7":"/images/teeth/deciduous/U-1L-F.svg",
+        "L8":"/images/teeth/deciduous/U-1L-F.svg","L9":"/images/teeth/deciduous/U-2L-F.svg",
+        "L10":"/images/teeth/deciduous/U-3L-F.svg","L11":"/images/teeth/deciduous/U-4L-F.svg",
+        "L12":"/images/teeth/deciduous/U-5L-F.svg","L13":"/images/teeth/deciduous/U-6L-F.svg",
+        "L14":"/images/teeth/deciduous/U-7L-F.svg","L15":"/images/teeth/deciduous/U-8L-F.svg"
+    };
+    // ════════════════════════════════════════════════════════════════
+    //  SVG SHAPES
+    // ════════════════════════════════════════════════════════════════
+    function frontShape(type, arch) {
+        const upper = arch === "upper";
+        const map = {
+            molar3:   upper ? { crown:`M15 20 Q16 8 24 8 Q28 6 32 10 Q36 6 40 8 Q48 8 49 20 L47 34 Q32 40 17 34 Z`, root:`M20 34 Q22 48 18 70 Q24 66 28 48 L30 34 M44 34 Q42 48 46 70 Q40 66 36 48 L34 34` }
+                             : { crown:`M17 20 Q18 9 25 9 Q29 7 32 10 Q35 7 39 9 Q46 9 47 20 L45 34 Q32 39 19 34 Z`, root:`M24 34 Q24 52 22 74 L28 74 Q31 54 31 34 M40 34 Q40 52 42 74 L36 74 Q33 54 33 34` },
+            molar2:   upper ? { crown:`M17 20 Q18 9 25 9 Q29 7 32 10 Q35 7 39 9 Q46 9 47 20 L45 34 Q32 39 19 34 Z`, root:`M24 34 Q24 53 21 74 Q28 69 30 48 L31 34 M40 34 Q40 53 43 74 Q36 69 34 48 L33 34` }
+                             : { crown:`M18 20 Q18 10 25 10 Q29 8 32 11 Q35 8 39 10 Q46 10 46 20 L45 33 Q32 37 19 33 Z`, root:`M26 33 Q26 55 24 76 L29 76 Q31 56 31 33 M38 33 Q38 55 40 76 L35 76 Q33 56 33 33` },
+            molar1:   upper ? { crown:`M18 20 Q18 10 25 10 Q29 8 32 11 Q35 8 39 10 Q46 10 46 20 L45 33 Q32 38 19 33 Z`, root:`M26 33 Q26 55 24 76 L29 76 Q31 56 31 33 M38 33 Q38 55 40 76 L35 76 Q33 56 33 33` }
+                             : { crown:`M19 20 Q20 11 26 11 Q30 9 32 12 Q34 9 38 11 Q44 11 45 20 L44 33 Q32 37 20 33 Z`, root:`M27 33 Q27 56 26 78 L30 78 Q31 59 31 33 M37 33 Q37 56 38 78 L34 78 Q33 59 33 33` },
+            premolar2:upper ? { crown:`M23 18 Q24 9 32 8 Q40 9 41 18 L40 31 Q32 35 24 31 Z`, root:`M29 31 Q27 49 26 76 L31 78 L35 76 Q34 49 35 31 Z` }
+                             : { crown:`M24 18 Q24 10 32 9 Q40 10 40 18 L39 31 Q32 34 25 31 Z`, root:`M29 31 Q28 49 29 78 L35 77 Q35 49 35 31 Z` },
+            premolar1:upper ? { crown:`M24 18 Q25 9 32 8 Q39 9 40 18 L39 31 Q32 35 25 31 Z`, root:`M29 31 Q28 49 29 79 L35 78 Q35 49 35 31 Z` }
+                             : { crown:`M25 18 Q25 10 32 9 Q39 10 39 18 L38 31 Q32 34 26 31 Z`, root:`M30 31 Q29 51 30 80 L34 80 Q35 51 34 31 Z` },
+            canine:   upper ? { crown:`M28 16 L32 7 L36 16 L38 31 Q32 35 26 31 Z`, root:`M30 31 Q29 50 30 82 L34 82 Q35 50 34 31 Z` }
+                             : { crown:`M29 16 L32 8 L35 16 L37 30 Q32 34 27 30 Z`, root:`M30 30 Q29 52 31 82 L34 82 Q35 52 34 30 Z` },
+            lateral:  upper ? { crown:`M27 16 Q28 9 32 9 Q36 9 37 16 L36 30 Q32 33 28 30 Z`, root:`M30 30 Q28 48 29 80 L34 80 Q35 48 34 30 Z` }
+                             : { crown:`M28 17 Q28 11 32 10 Q36 11 36 17 L35 29 Q32 32 29 29 Z`, root:`M30 29 Q29 48 30 79 L34 79 Q35 48 34 29 Z` },
+            central:  upper ? { crown:`M26 16 Q27 8 32 8 Q37 8 38 16 L37 30 Q32 34 27 30 Z`, root:`M29 30 Q28 48 29 80 L35 80 Q36 48 35 30 Z` }
+                             : { crown:`M28 17 Q28 10 32 10 Q36 10 36 17 L35 29 Q32 32 29 29 Z`, root:`M30 29 Q29 49 31 80 L34 80 Q35 49 34 29 Z` }
+        };
+        return map[type];
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  OVERLAYS & BADGES
+    // ════════════════════════════════════════════════════════════════
+    function wholeToothOverlayFront(tid) {
+        const wm = getWholeMarks(tid);
+        if (!wm.length && !chartData[tid].whole.note) return "";
+        let p = "";
+        const extracted  = wm.find(m=>m.tool.glyph==="extracted");
+        const impacted   = wm.find(m=>m.tool.glyph==="impacted"||m.tool.glyph==="softImpacted");
+        const crown      = wm.find(m=>m.tool.glyph==="crown"||/^crown[1-6]$/.test(m.tool.glyph));
+        const mobility   = wm.find(m=>m.tool.glyph==="mobility");
+        const remainRoot = wm.find(m=>m.tool.glyph==="remainingRoot");
+        const partErupt  = wm.find(m=>m.tool.glyph==="partiallyErupted");
+        if (crown)     { const c=GROUP_COLORS[crown.group];    p+=`<rect x="17" y="9" width="30" height="24" rx="7" fill="${hexToRgba(c,.16)}" stroke="${c}" stroke-width="2"/>`; }
+        if (partErupt) { const c=GROUP_COLORS[partErupt.group];p+=`<path d="M14 25 Q32 18 50 25" fill="none" stroke="${c}" stroke-width="3"/>`; }
+        if (impacted)  { const c=GROUP_COLORS[impacted.group]; p+=`<rect x="10" y="6" width="44" height="72" rx="14" fill="none" stroke="${c}" stroke-dasharray="4 3" stroke-width="2.5"/>`; }
+        if (remainRoot){ const c=GROUP_COLORS[remainRoot.group];p+=`<rect x="25" y="37" width="14" height="40" rx="4" fill="${hexToRgba(c,.18)}" stroke="${c}" stroke-width="2.2"/>`; }
+        if (mobility)  { const c=GROUP_COLORS[mobility.group]; p+=`<path d="M8 18 H56" stroke="${c}" stroke-width="3" stroke-linecap="round"/><path d="M12 14 L8 18 L12 22" stroke="${c}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M52 14 L56 18 L52 22" stroke="${c}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`; }
+        if (extracted) { const c=GROUP_COLORS[extracted.group];p+=`<path d="M14 12 L50 74" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><path d="M50 12 L14 74" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/>`; }
+        const positions = [{x:6,y:4},{x:42,y:4},{x:6,y:60},{x:42,y:60}];
+        wm.slice(0,4).forEach((m,i) => {
+            const pp = positions[i];
+            p += `<g transform="translate(${pp.x},${pp.y})"><rect x="0" y="0" width="16" height="16" rx="4" fill="#ffffff" stroke="${GROUP_COLORS[m.group]}" stroke-width="1.5"/><g transform="translate(0,0)">${iconSvg(m.tool.glyph,GROUP_COLORS[m.group],16)}</g></g>`;
+        });
+        if (chartData[tid].whole.note) { p+=`<g transform="translate(24,58)"><rect x="0" y="0" width="16" height="16" rx="4" fill="#ffffff" stroke="#6b7280" stroke-width="1.5"/><g>${iconSvg("note","#6b7280",16)}</g></g>`; }
+        return p;
+    }
+
+    function wholeToothOverlayOcclusal(tid) {
+        const wm = getWholeMarks(tid);
+        if (!wm.length && !chartData[tid].whole.note) return "";
+        let p = "";
+        const extracted = wm.find(m=>m.tool.glyph==="extracted");
+        const impacted  = wm.find(m=>m.tool.glyph==="impacted"||m.tool.glyph==="softImpacted");
+        const mobility  = wm.find(m=>m.tool.glyph==="mobility");
+        const bridge    = wm.find(m=>m.tool.glyph==="bridge");
+        const denture   = wm.find(m=>m.tool.glyph==="denture");
+        if (impacted)  { const c=GROUP_COLORS[impacted.group]; p+=`<rect x="6" y="4" width="52" height="40" rx="14" fill="none" stroke="${c}" stroke-dasharray="4 3" stroke-width="2.4"/>`; }
+        if (mobility)  { const c=GROUP_COLORS[mobility.group]; p+=`<path d="M10 24 H54" stroke="${c}" stroke-width="2.8" stroke-linecap="round"/><path d="M15 20 L10 24 L15 28" stroke="${c}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M49 20 L54 24 L49 28" stroke="${c}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>`; }
+        if (bridge)    { const c=GROUP_COLORS[bridge.group];   p+=`<path d="M12 24 H52" stroke="${c}" stroke-width="2.8"/>`; }
+        if (denture)   { const c=GROUP_COLORS[denture.group];  p+=`<path d="M12 34 Q32 14 52 34" fill="none" stroke="${c}" stroke-width="2.8"/>`; }
+        if (extracted) { const c=GROUP_COLORS[extracted.group];p+=`<path d="M12 10 L52 38" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><path d="M52 10 L12 38" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/>`; }
+        const positions = [{x:8,y:2},{x:24,y:2},{x:40,y:2},{x:24,y:30}];
+        wm.slice(0,4).forEach((m,i) => {
+            const pp = positions[i];
+            p += `<g transform="translate(${pp.x},${pp.y})"><rect x="0" y="0" width="14" height="14" rx="4" fill="#ffffff" stroke="${GROUP_COLORS[m.group]}" stroke-width="1.3"/><g transform="translate(-1,-1)">${iconSvg(m.tool.glyph,GROUP_COLORS[m.group],16)}</g></g>`;
+        });
+        if (chartData[tid].whole.note) { p+=`<g transform="translate(44,30)"><rect x="0" y="0" width="14" height="14" rx="4" fill="#ffffff" stroke="#6b7280" stroke-width="1.3"/><g transform="translate(-1,-1)">${iconSvg("note","#6b7280",16)}</g></g>`; }
+        return p;
+    }
+
+    function areaBadges(tid, area, points, showIcons = true) {
+        const marks = getAreaMarks(tid, area);
+        let out = "";
+        if (false) {
+            marks.slice(0,4).forEach((m,i) => {
+                const pt = points[i];
+                out += `<g transform="translate(${pt.x-8},${pt.y-8})"><circle cx="8" cy="8" r="8" fill="#ffffff" stroke="${GROUP_COLORS[m.group]}" stroke-width="1.6"/><g>${iconSvg(m.tool.glyph,GROUP_COLORS[m.group],16)}</g></g>`;
+            });
+            if (chartData[tid].areas[area].note) {
+                const pt = points[Math.min(marks.length, points.length-1)];
+                out += `<g transform="translate(${pt.x-8},${pt.y-8})"><circle cx="8" cy="8" r="8" fill="#ffffff" stroke="#6b7280" stroke-width="1.6"/><g>${iconSvg("note","#6b7280",16)}</g></g>`;
+            }
+        }
+        return out;
+    }
+
+                 function glyphPattern(patId, glyph, color) {
+        const GLYPH_P = {
+            caries:{p:1},secondary:{p:2},periapical:{p:3},crack:{p:4},mobility:{p:5},
+            remainingRoot:{p:6},surfaceLoss:{p:7},resto1:{p:8},resto2:{p:9},resto3:{p:10},
+            resto4:{p:11},resto5:{p:12},crown1:{p:13},crown2:{p:14},crown3:{p:15},
+            crown4:{p:27},crown5:{p:17},crown6:{p:18},crown:{p:19},bridge:{p:20},
+            rct:{p:21},vpt:{p:22},post:{p:23},splint:{p:24},denture:{p:25},
+            spaceMaintainer:{p:26},impacted:{p:1,rotate:25},softImpacted:{p:2,rotate:-25},
+            partiallyErupted:{p:3},transposition:{p:4},teethChange:{p:5},
+            extracted:{p:6},restoration:{p:7},note:{p:8},
+            pulpotomy:{p:28},pulpectomy:{p:29},ccDenture:{p:30},
+            completeDenture:{p:31},tempCrown:{p:16},pulpotomy:{p:32},
+        };
+        const pat = GLYPH_P[glyph] || { p: 1 };
+        const sp  = pat.sp  || 5;
+        const sw  = pat.sw  || 1.1;
+        const op  = pat.opacity || 0.75;
+        const rotate = pat.rotate || 0;
+        const transform = rotate !== 0 ? ` patternTransform="rotate(${rotate})"` : "";
+        switch (pat.p) {
+            case 1:  return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><line x1="0" y1="${sp}" x2="${sp}" y2="0" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 2:  return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><line x1="0" y1="0" x2="${sp}" y2="${sp}" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 3:  return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><line x1="${sp/2}" y1="0" x2="${sp/2}" y2="${sp}" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 4:  return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><line x1="0" y1="${sp/2}" x2="${sp}" y2="${sp/2}" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 5:  return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><line x1="0" y1="0" x2="${sp}" y2="${sp}" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="0" y1="${sp}" x2="${sp}" y2="0" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 6:  return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><line x1="${sp/2}" y1="0" x2="${sp/2}" y2="${sp}" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="0" y1="${sp/2}" x2="${sp}" y2="${sp/2}" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 7:  return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}"${transform}><circle cx="${sp/2}" cy="${sp/2}" r="1" fill="${color}" fill-opacity="${op}"/></pattern>`;
+            case 8:  return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="7" height="7"${transform}><circle cx="3.5" cy="3.5" r="1.6" fill="${color}" fill-opacity="${op}"/></pattern>`;
+            case 9:  return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="6" height="6"${transform}><rect x="0" y="0" width="3" height="3" fill="${color}" fill-opacity="${op}"/><rect x="3" y="3" width="3" height="3" fill="${color}" fill-opacity="${op}"/></pattern>`;
+            case 10: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="8" height="6"${transform}><path d="M0 4 L2 2 L4 4 L6 2 L8 4" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 11: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="8" height="6"${transform}><path d="M0 3 Q2 0 4 3 T8 3" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 12: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="8" height="5"${transform}><line x1="0" y1="2.5" x2="4" y2="2.5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 13: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="5" height="8"${transform}><line x1="2.5" y1="0" x2="2.5" y2="4" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 14: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><circle cx="4" cy="4" r="2.4" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 15: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><path d="M4 1 L7 7 H1 Z" fill="${color}" fill-opacity="${op}"/></pattern>`;
+            case 16: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><path d="M4 1 L7 4 L4 7 L1 4 Z" fill="${color}" fill-opacity="${op}"/></pattern>`;
+            case 17: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><line x1="4" y1="1.5" x2="4" y2="6.5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="1.5" y1="4" x2="6.5" y2="4" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 18: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><line x1="0" y1="8" x2="3" y2="5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="5" y1="3" x2="8" y2="0" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 19: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="10" height="6"${transform}><path d="M0 0 H10 M0 3 H10 M5 0 V3 M2.5 3 V6 M7.5 3 V6" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 20: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="7" height="7"${transform}><line x1="0" y1="7" x2="7" y2="0" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="-3" y1="7" x2="7" y2="-3" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op * 0.7}"/></pattern>`;
+            case 21: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="7" height="7"${transform}><line x1="2" y1="0" x2="2" y2="7" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="5" y1="0" x2="5" y2="7" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 22: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="7" height="7"${transform}><line x1="0" y1="2" x2="7" y2="2" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="0" y1="5" x2="7" y2="5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 23: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="9" height="9"${transform}><circle cx="2.5" cy="2.5" r="1" fill="${color}" fill-opacity="${op}"/><circle cx="7" cy="7" r="1" fill="${color}" fill-opacity="${op}"/></pattern>`;
+            case 24: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><rect x="1.5" y="1.5" width="5" height="5" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 25: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="9" height="9"${transform}><circle cx="4.5" cy="4.5" r="3" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><circle cx="4.5" cy="4.5" r="0.9" fill="${color}" fill-opacity="${op}"/></pattern>`;
+            case 26: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="9" height="9"${transform}><path d="M4.5 1.2 L5.4 3.6 L8 4.5 L5.4 5.4 L4.5 7.8 L3.6 5.4 L1 4.5 L3.6 3.6 Z" fill="${color}" fill-opacity="${op}"/></pattern>`;
+            case 27: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="6" height="6"${transform}><line x1="0" y1="0" x2="6" y2="6" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="6" y1="0" x2="0" y2="6" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="3" y1="-3" x2="9" y2="3" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="-3" y1="3" x2="3" y2="9" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 28: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="10" height="10"${transform}><circle cx="5" cy="5" r="3.5" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><circle cx="5" cy="5" r="1" fill="${color}" fill-opacity="${op}"/></pattern>`;
+            case 29: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><path d="M0 2 L2 0 L4 4 L6 0 L8 2" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><path d="M0 6 L2 4 L4 8 L6 4 L8 6" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 30: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="8" height="8"${transform}><line x1="0" y1="4" x2="4" y2="0" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="4" y1="8" x2="8" y2="4" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="0" y1="8" x2="8" y2="0" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 31: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="9" height="9"${transform}><circle cx="4.5" cy="4.5" r="2" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="4.5" y1="0" x2="4.5" y2="2.5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="4.5" y1="6.5" x2="4.5" y2="9" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="0" y1="4.5" x2="2.5" y2="4.5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><line x1="6.5" y1="4.5" x2="9" y2="4.5" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/></pattern>`;
+            case 32: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="10" height="10"${transform}><circle cx="5" cy="5" r="4" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><circle cx="5" cy="5" r="2" fill="none" stroke="${color}" stroke-width="${sw}" stroke-opacity="${op}"/><circle cx="5" cy="5" r="0.7" fill="${color}" fill-opacity="${op}"/></pattern>`;
+            default: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="5" height="5"><line x1="0" y1="5" x2="5" y2="0" stroke="${color}" stroke-width="1.1" stroke-opacity="0.75"/></pattern>`;
+        }
+    }
+        function getExtractedColor(tid) {
+        const allAreas = ["buccal","lingual","palatal","mesial","distal","occlusal","root"];
+        const groups   = ["disease","previous","inside","others"];
+
+        for (const g of groups) {
+            const tools = chartData[tid].whole[g] || [];
+            if (tools.includes("extracted_tooth") || tools.includes("extracted_tooth_in")) {
+                return GROUP_COLORS[g];
+            }
+        }
+
+        for (const area of allAreas) {
+            const slot = chartData[tid].areas[area];
+            for (const g of groups) {
+                const tools = slot[g] || [];
+                if (tools.includes("extracted_tooth") || tools.includes("extracted_tooth_in")) {
+                    return GROUP_COLORS[g];
+                }
+            }
+        }
+
+        return null;
+    }
+
+               function frontToothSvg(tid, arch) {
+        const isLower = arch === "lower";
+        const imgSrc = (chartData[tid].isDeciduous
+            ? TOOTH_IMAGES_DECIDUOUS[tid]
+            : TOOTH_IMAGES[tid]) || TOOTH_IMAGES[tid] || "/images/teeth/U-8R-F.svg";   // ⬅️ معدّل
+        const splitY      = 10.5;
+
+        const extractedColor = getExtractedColor(tid);
+
+        const buccalMarks = extractedColor ? [] : getAreaMarks(tid, "buccal");
+        const rootMarks   = extractedColor ? [] : getAreaMarks(tid, "root");
+
+        const buccalGlyph = buccalMarks.length ? buccalMarks[0].tool.glyph : null;
+        const rootGlyph   = rootMarks.length   ? rootMarks[0].tool.glyph   : null;
+        const buccalCol   = buccalMarks.length ? GROUP_COLORS[buccalMarks[0].tool.group] : null;
+        const rootCol     = rootMarks.length   ? GROUP_COLORS[rootMarks[0].tool.group]   : null;
+        const crownFill   = buccalGlyph ? `url(#fp_${tid}_b)` : "transparent";
+        const rootFill    = rootGlyph   ? `url(#fp_${tid}_r)` : "transparent";
+        const imgTransform = isLower ? `` : `transform="translate(0,21) scale(1,-1)"`;
+
+        const extractedX = extractedColor ? `
+            <line x1="0.5" y1="0.5" x2="10.5" y2="20.5"
+                  stroke="${extractedColor}" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="10.5" y1="0.5" x2="0.5" y2="20.5"
+                  stroke="${extractedColor}" stroke-width="1.2" stroke-linecap="round"/>
+        ` : "";
+
+        return `
+            <svg class="tooth-svg" viewBox="0 0 11 21" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+              <defs>
+                ${buccalGlyph ? glyphPattern(`fp_${tid}_b`, buccalGlyph, buccalCol) : ""}
+                ${rootGlyph   ? glyphPattern(`fp_${tid}_r`, rootGlyph,   rootCol)   : ""}
+              </defs>
+              <image href="${imgSrc}" x="0" y="0" width="11" height="21" ${imgTransform}/>
+              <rect x="0.5" y="${isLower ? 0 : splitY}" width="10" height="${splitY}"
+                    fill="${crownFill}" fill-opacity="0.75"
+                    stroke="${isSelected(tid,'buccal') ? '#111827' : 'none'}"
+                    stroke-width="0.35" rx="1.2"
+                    onclick="selectArea('${tid}','buccal')" style="cursor:pointer"/>
+              <rect x="2" y="${isLower ? splitY : 0}" width="7" height="${splitY}"
+                    fill="${rootFill}" fill-opacity="0.75"
+                    stroke="${isSelected(tid,'root') ? '#111827' : 'none'}"
+                    stroke-width="0.35" rx="0.8"
+                    onclick="selectArea('${tid}','root')" style="cursor:pointer"/>
+              ${wholeToothOverlayFront(tid)}
+              ${extractedX}
+            </svg>`;
+    }
+
+             function frontToothSvgFlipped(tid, arch) {
+        const imgSrc = (chartData[tid].isDeciduous
+            ? TOOTH_IMAGES_DECIDUOUS[tid]
+            : TOOTH_IMAGES[tid]) || TOOTH_IMAGES[tid] || "/images/teeth/U-8R-F.svg";   
+        const splitY      = 10.5;
+
+        const extractedColor = getExtractedColor(tid);
+
+        const buccalMarks = extractedColor ? [] : getAreaMarks(tid, "buccal");
+        const rootMarks   = extractedColor ? [] : getAreaMarks(tid, "root");
+
+        const buccalGlyph = buccalMarks.length ? buccalMarks[0].tool.glyph : null;
+        const rootGlyph   = rootMarks.length   ? rootMarks[0].tool.glyph   : null;
+        const buccalCol   = buccalMarks.length ? GROUP_COLORS[buccalMarks[0].tool.group] : null;
+        const rootCol     = rootMarks.length   ? GROUP_COLORS[rootMarks[0].tool.group]   : null;
+        const crownFill   = buccalGlyph ? `url(#fp_${tid}_b)` : "transparent";
+        const rootFill    = rootGlyph   ? `url(#fp_${tid}_r)` : "transparent";
+
+        const extractedX = extractedColor ? `
+            <line x1="0.5" y1="0.5" x2="10.5" y2="20.5"
+                  stroke="${extractedColor}" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="10.5" y1="0.5" x2="0.5" y2="20.5"
+                  stroke="${extractedColor}" stroke-width="1.2" stroke-linecap="round"/>
+        ` : "";
+
+        return `
+            <svg class="tooth-svg" viewBox="0 0 11 21" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+              <defs>
+                ${buccalGlyph ? glyphPattern(`fp_${tid}_b`, buccalGlyph, buccalCol) : ""}
+                ${rootGlyph   ? glyphPattern(`fp_${tid}_r`, rootGlyph,   rootCol)   : ""}
+              </defs>
+              <image href="${imgSrc}" x="0" y="0" width="11" height="21"/>
+              <rect x="0.5" y="0" width="10" height="${splitY}"
+                    fill="${crownFill}" fill-opacity="0.75"
+                    stroke="${isSelected(tid,'buccal') ? '#111827' : 'none'}"
+                    stroke-width="0.35" rx="1.2"
+                    onclick="selectArea('${tid}','buccal')" style="cursor:pointer"/>
+              <rect x="2" y="${splitY}" width="7" height="${splitY}"
+                    fill="${rootFill}" fill-opacity="0.75"
+                    stroke="${isSelected(tid,'root') ? '#111827' : 'none'}"
+                    stroke-width="0.35" rx="0.8"
+                    onclick="selectArea('${tid}','root')" style="cursor:pointer"/>
+              ${wholeToothOverlayFront(tid)}
+              ${extractedX}
+            </svg>`;
+    }
+
+    function renderToothFront(tid, arch) {
+        const toothIndex = parseInt(tid.slice(1), 10);
+        const isFlipped  = [6, 7, 8, 9].includes(toothIndex);
+        return isFlipped ? frontToothSvgFlipped(tid, arch) : frontToothSvg(tid, arch);
+    }
+
+        function occlusalToothSvg(tid, arch) {
+        const insideName = arch === "upper" ? "palatal" : "lingual";
+        const cx = 32, cy = 26, rx = 26, ry = 20, irx = 13, iry = 10;
+
+        const extractedColor = getExtractedColor(tid);   // ⬅️ نتحقق أول شي
+
+        function ptOuter(a) { const r=a*Math.PI/180; return {x:cx+rx*Math.cos(r),y:cy+ry*Math.sin(r)}; }
+        function ptInner(a) { const r=a*Math.PI/180; return {x:cx+irx*Math.cos(r),y:cy+iry*Math.sin(r)}; }
+        function segmentPath(sa, ea) {
+            const t=a=>a*Math.PI/180;
+            const x1o=cx+rx*Math.cos(t(sa)),y1o=cy+ry*Math.sin(t(sa));
+            const x2o=cx+rx*Math.cos(t(ea)),y2o=cy+ry*Math.sin(t(ea));
+            const x1i=cx+irx*Math.cos(t(ea)),y1i=cy+iry*Math.sin(t(ea));
+            const x2i=cx+irx*Math.cos(t(sa)),y2i=cy+iry*Math.sin(t(sa));
+            const la=Math.abs(ea-sa)>180?1:0;
+            return `M ${x1o} ${y1o} A ${rx} ${ry} 0 ${la} 1 ${x2o} ${y2o} L ${x1i} ${y1i} A ${irx} ${iry} 0 ${la} 0 ${x2i} ${y2i} Z`;
+        }
+        const xAngles = [45, 135, 225, 315];
+        const segments = [
+            { key:"distal",    startAngle:-45,  endAngle:45  },
+            { key:"buccal",    startAngle:45,   endAngle:135 },
+            { key:"mesial",    startAngle:135,  endAngle:225 },
+            { key:insideName,  startAngle:225,  endAngle:315 }
+        ];
+        const badgeSpots = {
+            buccal:[{x:28,y:40},{x:36,y:40}], palatal:[{x:28,y:10},{x:36,y:10}],
+            lingual:[{x:28,y:10},{x:36,y:10}], mesial:[{x:6,y:22},{x:6,y:30}],
+            distal:[{x:52,y:22},{x:52,y:30}],  occlusal:[{x:28,y:22},{x:36,y:22}]
+        };
+        const allKeys = [...segments.map(s=>s.key), "occlusal"];
+
+        const defsContent = extractedColor ? "" : allKeys.map(key => {     // ⬅️ بدون patterns لو مخلوع
+            const marks = getAreaMarks(tid, key);
+            if (!marks.length) return "";
+            return glyphPattern(`occ_${tid}_${key}`, marks[0].tool.glyph, GROUP_COLORS[marks[0].tool.group]);
+        }).join("");
+
+        const segmentsSvg = segments.map(s => {
+            const marks  = extractedColor ? [] : getAreaMarks(tid, s.key);   // ⬅️ فاضي لو مخلوع
+            const fill   = marks.length ? `url(#occ_${tid}_${s.key})` : "transparent";
+            const stroke = isSelected(tid, s.key) ? "#111827" : "#c4ccd7";
+            const sw     = isSelected(tid, s.key) ? 2.0 : 0.9;
+            return `<path d="${segmentPath(s.startAngle, s.endAngle)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" onclick="selectArea('${tid}','${s.key}')" style="cursor:pointer"/>`;
+        }).join("");
+
+        const occlusalMarks = extractedColor ? [] : getAreaMarks(tid, "occlusal");  // ⬅️ فاضي لو مخلوع
+        const occlusalFill  = occlusalMarks.length ? `url(#occ_${tid}_occlusal)` : "transparent";
+
+        const xLines = xAngles.map(a => {
+            const o=ptOuter(a), i=ptInner(a);
+            return `<line x1="${i.x.toFixed(2)}" y1="${i.y.toFixed(2)}" x2="${o.x.toFixed(2)}" y2="${o.y.toFixed(2)}" stroke="#1f2937" stroke-width="0.9"/>`;
+        }).join("");
+
+        // ⬇️ جديد: X كبيرة عبر السن كامل بالـ occlusal view
+        const extractedBigX = extractedColor ? `
+            <line x1="${cx-rx*0.85}" y1="${cy-ry*0.85}" x2="${cx+rx*0.85}" y2="${cy+ry*0.85}"
+                  stroke="${extractedColor}" stroke-width="2.6" stroke-linecap="round"/>
+            <line x1="${cx+rx*0.85}" y1="${cy-ry*0.85}" x2="${cx-rx*0.85}" y2="${cy+ry*0.85}"
+                  stroke="${extractedColor}" stroke-width="2.6" stroke-linecap="round"/>
+        ` : "";
+
+        return `
+            <svg class="tooth-svg" viewBox="0 0 64 52" xmlns="http://www.w3.org/2000/svg">
+              <defs>${defsContent}</defs>
+              <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#fafafa" stroke="#d0d6df" stroke-width="1.4"/>
+              ${segmentsSvg}
+              ${xLines}
+              <ellipse cx="${cx}" cy="${cy}" rx="${irx}" ry="${iry}"
+                       fill="${occlusalFill}"
+                       stroke="${isSelected(tid,'occlusal') ? '#111827' : '#c4ccd7'}"
+                       stroke-width="${isSelected(tid,'occlusal') ? 2.0 : 0.9}"
+                       onclick="selectArea('${tid}','occlusal')" style="cursor:pointer"/>
+              <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="#c4ccd7" stroke-width="1.3"/>
+              ${wholeToothOverlayOcclusal(tid)}
+              ${segments.map(s=>areaBadges(tid,s.key,badgeSpots[s.key]||badgeSpots.occlusal)).join("")}
+              ${areaBadges(tid,'occlusal',badgeSpots.occlusal,false)}
+              ${extractedBigX}
+            </svg>`;
+    }
+        function toggleToothVariant(tid) {
+        const tooth = chartData[tid];
+        if (!tooth) return;
+        tooth.isDeciduous = !tooth.isDeciduous;
+
+        // سجّل/امسح الأداة بالـ whole.others عشان تنعكس بالـ Tool Report تلقائياً
+        const arr = tooth.whole.others;
+        const idx = arr.indexOf("teeth_change");
+        if (tooth.isDeciduous) {
+            if (idx === -1) arr.push("teeth_change");
+        } else {
+            if (idx > -1) arr.splice(idx, 1);
+        }
+    }
+    // ════════════════════════════════════════════════════════════════
+    //  INTERACTIONS
+    // ════════════════════════════════════════════════════════════════
+
+              function selectArea(tid, area) {
+        selectedTarget = { toothId: tid, area };
+
+        if (selectedToolId === "others_text") {
+            openOthersTextModal(tid, area);
+            return;
+        }
+
+        if (selectedToolId === "teeth_change") {
+            if (!pendingSwapToothId) {
+                pendingSwapToothId = tid;
+                showToast(`🔁 اختر السن الثاني للتبديل مع ${tid}`, "info");
+                renderAll();
+                return;
+            }
+            if (pendingSwapToothId === tid) {
+                pendingSwapToothId = null;
+                showToast("❌ تم إلغاء التبديل", "info");
+                renderAll();
+                return;
+            }
+            const firstId = pendingSwapToothId;
+            swapTeeth(firstId, tid);
+            pendingSwapToothId = null;
+            showToast(`✅ تم تبديل ${firstId} مع ${tid}`, "success");
+            renderAll();
+            return;
+        }
+
+        if (selectedToolId) applyToolToSelectedTarget();
+        renderAll();
+    }
+
+    function applyToolToSelectedTarget() {
+        if (!selectedToolId || !selectedTarget) return;
+        const tool  = getTool(selectedToolId);
+        const tooth = chartData[selectedTarget.toothId];
+        if (!tool) return;
+        if (tool.scope === "whole") {
+            if (!Array.isArray(tooth.whole[tool.group])) tooth.whole[tool.group] = [];
+            if (!tooth.whole[tool.group].includes(tool.id)) tooth.whole[tool.group].push(tool.id);
+        } else if (tool.scope === "root") {
+            const arr = tooth.areas.root[tool.group];
+            if (!arr.includes(tool.id)) arr.push(tool.id);
+            selectedTarget.area = "root";
+        } else {
+            const arr = tooth.areas[selectedTarget.area][tool.group];
+            if (!arr.includes(tool.id)) arr.push(tool.id);
+        }
+    }
+
+    function clearSelectedTarget() {
+        if (!selectedTarget) return;
+        chartData[selectedTarget.toothId].areas[selectedTarget.area] = makeSlot();
+        renderAll();
+    }
+
+    function clearSelectedTooth() {
+        if (!selectedTarget) return;
+        const id = selectedTarget.toothId;
+        chartData[id] = makeTooth(id);
+        renderAll();
+    }
+
+    function clearAllChart() {
+        [...UPPER_IDS, ...LOWER_IDS].forEach(id => { chartData[id] = makeTooth(id); });
+        renderAll();
+    }
+
+    function saveNote() {
+        if (!selectedTarget) return;
+        const text = document.getElementById("noteBox").value.trim();
+        chartData[selectedTarget.toothId].areas[selectedTarget.area].note = text;
+        renderAll();
+    }
+
+    function removeGroupFromArea(group, toolId) {
+        if (!selectedTarget) return;
+        const arr = chartData[selectedTarget.toothId].areas[selectedTarget.area][group];
+        const idx = arr.indexOf(toolId);
+        if (idx > -1) arr.splice(idx, 1);
+        renderAll();
+    }
+
+    function removeWholeGroup(tid, group, toolId) {
+        const arr = chartData[tid].whole[group];
+        if (Array.isArray(arr)) {
+            const idx = arr.indexOf(toolId);
+            if (idx > -1) arr.splice(idx, 1);
+        }
+        renderAll();
+    }
+
+    function removeFromArea(toothId, areaKey, group, toolId) {
+        const arr = chartData[toothId].areas[areaKey][group];
+        const idx = arr.indexOf(toolId);
+        if (idx > -1) arr.splice(idx, 1);
+        renderAll();
+    }
+
+    function clearAreaNote() {
+        if (!selectedTarget) return;
+        chartData[selectedTarget.toothId].areas[selectedTarget.area].note = "";
+        renderAll();
+    }
+
+    function clearAreaNoteFor(toothId, areaKey) {
+        chartData[toothId].areas[areaKey].note = "";
+        renderAll();
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  DESELECT ON BACKGROUND CLICK
+    // ════════════════════════════════════════════════════════════════
+    document.addEventListener("click", function(e) {
+        const isOnTooth    = e.target.closest("svg.tooth-svg");
+        const isOnBtn      = e.target.closest("button");
+        const isOnTextarea = e.target.closest("textarea");
+        const isOnMiniItem = e.target.closest(".mini-item");
+        const isOnToolbar  = e.target.closest("#toolbar");
+        const isOnModal    = e.target.closest(".modal-box");
+        const isOnReport   = e.target.closest("#reportPanel");
+        if (!isOnTooth && !isOnBtn && !isOnTextarea && !isOnMiniItem && !isOnToolbar && !isOnModal && !isOnReport) {
+            if (selectedToolId) {
+                selectedToolId = null;
+                pendingSwapToothId = null;
+                renderAll();
+            }
+        }
+    });
+
+    // ════════════════════════════════════════════════════════════════
+    //  REPORT
+    // ════════════════════════════════════════════════════════════════
+    function buildToolReport() {
+        const report   = {};
+        const allAreas = ["buccal","lingual","palatal","mesial","distal","occlusal","root"];
+        const grps     = ["disease","previous","inside","others"];
+        [...UPPER_IDS, ...LOWER_IDS].forEach(tid => {
+            const tooth = chartData[tid];
+            if (!tooth) return;
+            grps.forEach(g => {
+                (tooth.whole[g] || []).forEach(toolId => {
+                    if (!report[toolId]) report[toolId] = [];
+                    report[toolId].push({ toothId: tid, area: "whole", group: g });
+                });
+            });
+            allAreas.forEach(area => {
+                const slot = tooth.areas[area];
+                if (!slot) return;
+                grps.forEach(g => {
+                    (slot[g] || []).forEach(toolId => {
+                        if (!report[toolId]) report[toolId] = [];
+                        report[toolId].push({ toothId: tid, area, group: g });
+                    });
+                });
+            });
+        });
+        return report;
+    }
+
+    function selectReportTool(toolId) {
+        reportToolId = (reportToolId === toolId) ? null : toolId;
+        renderSideInfo();
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  RENDER
+    // ════════════════════════════════════════════════════════════════
+    function renderSideInfo() {
+        const AREA_NAMES = ["buccal","lingual","palatal","mesial","distal","occlusal","root"];
+        const GRPS       = ["disease","previous","inside","others"];
+
+        document.getElementById("selectedToolLabel").textContent  = selectedToolId ? getTool(selectedToolId).label : "—";
+        document.getElementById("selectedToothLabel").textContent = selectedTarget  ? selectedTarget.toothId        : "—";
+        document.getElementById("selectedAreaLabel").textContent  = selectedTarget  ? selectedTarget.area           : "—";
+
+        // ── Report Panel ──
+        const report      = buildToolReport();
+        const reportKeys  = Object.keys(report);
+        const reportPanel = document.getElementById("reportPanel");
+        if (reportPanel) {
+            if (!reportKeys.length) {
+                reportPanel.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:6px 0;">No tools applied yet.</div>`;
+            } else {
+                reportPanel.innerHTML = reportKeys.map(toolId => {
+                    const tool     = getTool(toolId);
+                    if (!tool) return "";
+                    const color    = GROUP_COLORS[tool.group];
+                    const usages   = report[toolId];
+                    const isActive = reportToolId === toolId;
+                    return `
+                    <div onclick="selectReportTool('${toolId}')"
+                         style="display:flex;align-items:center;gap:8px;padding:8px 10px;
+                                border-radius:10px;cursor:pointer;margin-bottom:5px;
+                                border:2px solid ${isActive ? color : 'var(--line)'};
+                                background:${isActive ? hexToRgba(color,.07) : '#fafafa'};
+                                transition:.15s;">
+                        <div style="flex:0 0 auto;">${iconSvg(tool.glyph, color, 28)}</div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:12px;font-weight:bold;color:${color};
+                                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                ${escapeHtml(tool.label)}
+                            </div>
+                            <div style="font-size:11px;color:var(--muted);">
+                                ${GROUP_LABELS[tool.group]} · ${usages.length} location${usages.length>1?'s':''}
+                            </div>
+                        </div>
+                        <div style="font-size:16px;font-weight:bold;color:${color};flex:0 0 auto;
+                                    background:${hexToRgba(color,.12)};border-radius:8px;padding:2px 8px;">
+                            ${usages.length}
+                        </div>
+                    </div>`;
+                }).join("");
+            }
+        }
+
+        // ── Detail List ──
+        const detailList = document.getElementById("detailList");
+
+        if (reportToolId) {
+            const tool   = getTool(reportToolId);
+            const usages = report[reportToolId] || [];
+            const color  = tool ? GROUP_COLORS[tool.group] : "#6b7280";
+            if (!tool || !usages.length) {
+                detailList.innerHTML = `<div style="color:var(--muted);font-size:13px;">Nothing found.</div>`;
+                return;
+            }
+            detailList.innerHTML = `
+                <div style="font-size:12px;font-weight:bold;color:${color};
+                            margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                    ${iconSvg(tool.glyph, color, 18)}
+                    ${escapeHtml(tool.label)}
+                    <span style="margin-left:auto;background:${hexToRgba(color,.12)};
+                                 color:${color};border-radius:6px;padding:1px 8px;font-size:11px;">
+                        ${usages.length} location${usages.length>1?'s':''}
+                    </span>
+                </div>
+                ${usages.map(u => `
+                    <div class="mini-item" style="margin-bottom:5px;cursor:pointer;
+                                border-left:3px solid ${GROUP_COLORS[u.group]};"
+                         onclick="selectArea('${u.toothId}','${u.area==='whole'?'buccal':u.area}');
+                                  reportToolId=null;renderSideInfo();">
+                        <div class="mini-icon">${iconSvg(tool.glyph, GROUP_COLORS[u.group], 22)}</div>
+                        <div class="mini-text">
+                            <div class="key">Tooth ${u.toothId} · ${u.area} · ${u.group}</div>
+                            <div class="value" style="color:${GROUP_COLORS[u.group]};">
+                                ${u.toothId} — ${u.area}
+                            </div>
+                        </div>
+                    </div>
+                `).join("")}`;
+            return;
+        }
+
+        if (!selectedTarget) {
+            detailList.innerHTML = `<div style="color:#6b7280;font-size:13px;">Nothing selected.</div>`;
+            document.getElementById("noteBox").value = "";
+            return;
+        }
+
+        const { toothId, area } = selectedTarget;
+        const areaSlot  = chartData[toothId].areas[area];
+        const wholeSlot = chartData[toothId].whole;
+        document.getElementById("noteBox").value = areaSlot.note || "";
+
+        const reportRows = [];
+        AREA_NAMES.forEach(areaKey => {
+            const slot  = chartData[toothId].areas[areaKey];
+            const marks = [];
+            GRPS.forEach(g => {
+                (slot[g] || []).forEach(tid => {
+                    const t = getTool(tid);
+                    if (t) marks.push({ group: g, tool: t });
+                });
+            });
+            if (marks.length || slot.note) reportRows.push({ areaKey, marks, note: slot.note });
+        });
+
+        const wholeMarks = [];
+        GRPS.forEach(g => {
+            (wholeSlot[g] || []).forEach(tid => {
+                const t = getTool(tid);
+                if (t) wholeMarks.push({ group: g, tool: t });
+            });
+        });
+        if (wholeMarks.length || wholeSlot.note) {
+            reportRows.push({ areaKey: "whole tooth", marks: wholeMarks, note: wholeSlot.note });
+        }
+
+        if (!reportRows.length) {
+            detailList.innerHTML = `<div style="color:#6b7280;font-size:13px;">Area is empty.</div>`;
+            return;
+        }
+
+        detailList.innerHTML = reportRows.map(row => {
+            const toolsHtml = row.marks.map(m => `
+                <div class="mini-item" style="margin-bottom:4px;">
+                    <div class="mini-icon">${iconSvg(m.tool.glyph, GROUP_COLORS[m.group], 22)}</div>
+                    <div class="mini-text">
+                        <div class="key">Tooth ${toothId} · ${row.areaKey} · ${m.group}</div>
+                        <div class="value">${escapeHtml(m.tool.label)}</div>
+                    </div>
+                    <button onclick="${row.areaKey==='whole tooth'
+                        ? `removeWholeGroup('${toothId}','${m.group}','${m.tool.id}')`
+                        : `removeFromArea('${toothId}','${row.areaKey}','${m.group}','${m.tool.id}')`
+                    }">✕</button>
+                </div>`).join("");
+
+            const noteHtml = row.note ? `
+                <div class="mini-item" style="margin-bottom:4px;">
+                    <div class="mini-icon">${iconSvg("note","#6b7280",22)}</div>
+                    <div class="mini-text">
+                        <div class="key">Tooth ${toothId} · ${row.areaKey} · note</div>
+                        <div class="value">${escapeHtml(row.note)}</div>
+                    </div>
+                    <button onclick="clearAreaNoteFor('${toothId}','${row.areaKey}')">✕</button>
+                </div>` : "";
+
+            return `
+                <div style="border:1px solid var(--line);border-radius:12px;padding:8px;
+                            margin-bottom:8px;background:#f8fafc;">
+                    <div style="font-size:12px;font-weight:bold;color:#374151;margin-bottom:6px;
+                                text-transform:uppercase;letter-spacing:.5px;">
+                        📍 ${row.areaKey}
+                    </div>
+                    ${toolsHtml}${noteHtml}
+                </div>`;
+        }).join("");
+    }
+        function openOthersTextModal(tid, area) {
+        const existing = chartData[tid].areas[area].note || "";
+        const modal = document.getElementById("othersTextModal");
+        document.getElementById("othersTextInput").value = existing;
+        document.getElementById("othersTextTitle").textContent = `📝 Tooth ${tid} — ${area}`;
+        modal.classList.add("open");
+        modal.dataset.tid  = tid;
+        modal.dataset.area = area;
+        setTimeout(() => document.getElementById("othersTextInput").focus(), 100);
+    }
+
+    function saveOthersText() {
+        const modal = document.getElementById("othersTextModal");
+        const tid   = modal.dataset.tid;
+        const area  = modal.dataset.area;
+        const text  = document.getElementById("othersTextInput").value.trim();
+        if (text) {
+            // أضف الأداة others_text على المنطقة
+            const arr = chartData[tid].areas[area]["others"];
+            if (!arr.includes("others_text")) arr.push("others_text");
+            // احفظ النص كـ note
+            chartData[tid].areas[area].note = text;
+        }
+        modal.classList.remove("open");
+        renderAll();
+    }
+
+    function closeOthersTextModal() {
+        document.getElementById("othersTextModal").classList.remove("open");
+    }
+        function renderChart() {
+        function cellStyle(id) {
+            return id === pendingSwapToothId
+                ? 'style="background:#fef3c7;border-radius:10px;box-shadow:0 0 0 2px #f59e0b inset;"'
+                : '';
+        }
+        document.getElementById("chartHost").innerHTML = `
+            <div class="chart-grid">
+              <div></div>
+              ${POS_LABELS.map(n=>`<div class="number-cell">${n}</div>`).join("")}
+              <div class="side-label">Buccal</div>
+              ${UPPER_IDS.map(id=>`<div class="tooth-cell" ${cellStyle(id)}>${renderToothFront(id,"upper")}</div>`).join("")}
+              <div class="side-label">Lingual - Palatal</div>
+              ${UPPER_IDS.map(id=>`<div class="tooth-cell" ${cellStyle(id)}>${occlusalToothSvg(id,"upper")}</div>`).join("")}
+              <div></div>
+              <div class="mid-rl"><span>R</span><span>L</span></div>
+              <div class="side-label">Lingual - Palatal</div>
+              ${LOWER_IDS.map(id=>`<div class="tooth-cell" ${cellStyle(id)}>${occlusalToothSvg(id,"lower")}</div>`).join("")}
+              <div class="side-label">Buccal</div>
+              ${LOWER_IDS.map(id=>`<div class="tooth-cell" ${cellStyle(id)}>${renderToothFront(id,"lower")}</div>`).join("")}
+              <div></div>
+              ${POS_LABELS.map(n=>`<div class="number-cell">${n}</div>`).join("")}
+            </div>`;
+    }
+
+    function renderAll() {
+        renderToolbar();
+        renderChart();
+        renderSideInfo();
+    }
+        // ════════════════════════════════════════════════════════════════
+    //  SESSION SUMMARY HELPERS
+    // ════════════════════════════════════════════════════════════════
+    let _pendingSessionId = null;
+
+    function buildSummaryFromData(data) {
+        const groups   = ["disease","previous","inside","others"];
+        const allAreas = ["buccal","lingual","palatal","mesial","distal","occlusal","root"];
+        const FDI_MAP  = {
+            U:{ 0:18,1:17,2:16,3:15,4:14,5:13,6:12,7:11,8:21,9:22,10:23,11:24,12:25,13:26,14:27,15:28 },
+            L:{ 0:48,1:47,2:46,3:45,4:44,5:43,6:42,7:41,8:31,9:32,10:33,11:34,12:35,13:36,14:37,15:38 }
+        };
+        const rows = [];
+        Object.keys(data).forEach(tid => {
+            const tooth  = data[tid];
+            if (!tooth)  return;
+            const arch   = tid[0];
+            const idx    = parseInt(tid.slice(1), 10);
+            const fdi    = FDI_MAP[arch]?.[idx] ?? tid;
+            // whole-tooth marks
+            groups.forEach(g => {
+                (tooth.whole?.[g] || []).forEach(toolId => {
+                    const t = getTool(toolId);
+                    if (t) rows.push({ fdi, tid, area:"whole tooth", group:g, label:t.label, glyph:t.glyph });
+                });
+            });
+            // area marks
+            allAreas.forEach(area => {
+                const slot = tooth.areas?.[area];
+                if (!slot) return;
+                groups.forEach(g => {
+                    (slot[g] || []).forEach(toolId => {
+                        const t = getTool(toolId);
+                        if (t) rows.push({ fdi, tid, area, group:g, label:t.label, glyph:t.glyph });
+                    });
+                });
+                if (slot.note) {
+                    rows.push({ fdi, tid, area, group:"note", label: slot.note, glyph:"note" });
+                }
+            });
+        });
+        return rows.sort((a,b) => a.fdi - b.fdi);
+    }
+
+    function buildSummaryTable(rows) {
+        if (!rows.length) return `<p style="color:var(--muted)">No treatments recorded in this session.</p>`;
+        const GROUP_BADGE_COLORS = {
+            disease:  { bg:"#fde8eb", color:"#9b1d2e" },
+            previous: { bg:"#dbeafe", color:"#1a3d7a" },
+            inside:   { bg:"#dcfce7", color:"#155d27" },
+            others:   { bg:"#fef3c7", color:"#7c4a00" },
+            note:     { bg:"#f1f5f9", color:"#374151" }
+        };
+        const badge = (group) => {
+            const c = GROUP_BADGE_COLORS[group] || GROUP_BADGE_COLORS.note;
+            const label = GROUP_LABELS[group] || group;
+            return `<span style="background:${c.bg};color:${c.color};font-size:11px;font-weight:bold;
+                                 padding:2px 8px;border-radius:20px;white-space:nowrap;">${label}</span>`;
+        };
+        // group by FDI tooth number
+        const byTooth = {};
+        rows.forEach(r => {
+            if (!byTooth[r.fdi]) byTooth[r.fdi] = { fdi:r.fdi, tid:r.tid, items:[] };
+            byTooth[r.fdi].items.push(r);
+        });
+        const toothBlocks = Object.values(byTooth).map(tooth => {
+            const itemRows = tooth.items.map(r => `
+                <tr>
+                    <td style="padding:5px 8px;font-size:13px;color:#374151;white-space:nowrap;">
+                        ${iconSvg(r.glyph, GROUP_COLORS[r.group] || "#6b7280", 18)}
+                    </td>
+                    <td style="padding:5px 8px;font-size:13px;color:#374151;
+                               text-transform:capitalize;">${escapeHtml(r.area)}</td>
+                    <td style="padding:5px 8px;">${badge(r.group)}</td>
+                    <td style="padding:5px 8px;font-size:13px;color:#111827;">${escapeHtml(r.label)}</td>
+                </tr>`).join("");
+            return `
+                <div style="margin-bottom:10px;border:1px solid var(--line);
+                            border-radius:12px;overflow:hidden;">
+                    <div style="background:#f1f5f9;padding:7px 12px;font-weight:bold;
+                                font-size:14px;border-bottom:1px solid var(--line);">
+                        🦷 Tooth <span style="color:#2563eb">${tooth.fdi}</span>
+                        <span style="font-weight:normal;color:var(--muted);
+                                     font-size:12px;margin-left:6px;">(${tooth.tid})</span>
+                    </div>
+                    <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#fafafa;">
+                                <th style="padding:4px 8px;font-size:11px;color:var(--muted);
+                                           text-align:left;font-weight:normal;width:28px;"></th>
+                                <th style="padding:4px 8px;font-size:11px;color:var(--muted);
+                                           text-align:left;font-weight:normal;">Area</th>
+                                <th style="padding:4px 8px;font-size:11px;color:var(--muted);
+                                           text-align:left;font-weight:normal;">Group</th>
+                                <th style="padding:4px 8px;font-size:11px;color:var(--muted);
+                                           text-align:left;font-weight:normal;">Treatment</th>
+                            </tr>
+                        </thead>
+                        <tbody>${itemRows}</tbody>
+                    </table>
+                </div>`;
+        });
+        return toothBlocks.join("");
+    }
+
+    function closeSummary() {
+        document.getElementById("summaryModal").classList.remove("open");
+        _pendingSessionId = null;
+    }
+
+    async function previewSessionById(id) {
+        // أغلق هيستوري وافتح السمري مودال
+        closeHistory();
+        _pendingSessionId = id;
+        document.getElementById("summaryModal").classList.add("open");
+        document.getElementById("summaryTable").innerHTML = "<p style='color:var(--muted)'>Loading...</p>";
+        document.getElementById("summaryMeta").textContent = "";
+        document.getElementById("summaryOpenBtn").onclick = () => confirmOpenSession(id);
+
+        try {
+            const res = await fetch(`${API_BASE}/single/${id}`);
+            if (!res.ok) {
+                document.getElementById("summaryTable").innerHTML = `<p style='color:red'>Failed to load (HTTP ${res.status})</p>`;
+                return;
+            }
+            const result = await res.json();
+            const jsonStr = pick(result, "chartDataJson", "ChartDataJson");
+            const note    = pick(result, "sessionNote",   "SessionNote") || "—";
+            const upd     = pick(result, "updatedAt",     "UpdatedAt");
+            const loaded = JSON.parse(jsonStr);
+            const rows   = buildSummaryFromData(loaded);
+
+            document.getElementById("summaryMeta").innerHTML =
+                `<b>Session #${id}</b> &nbsp;|&nbsp; ${new Date(upd).toLocaleString("en-GB")}
+                 &nbsp;|&nbsp; Note: <i>${escapeHtml(note)}</i>
+                 &nbsp;|&nbsp; <b>${rows.length}</b> recorded item(s)`;
+
+            document.getElementById("summaryTable").innerHTML = buildSummaryTable(rows);
+            document.getElementById("summaryOpenBtn").onclick = () => confirmOpenSession(id, result);
+        } catch(err) {
+            document.getElementById("summaryTable").innerHTML = `<p style='color:red'>${escapeHtml(err.message)}</p>`;
+        }
+    }
+
+           async function confirmOpenSession(id, preloadedResult = null) {
+        document.getElementById("summaryModal").classList.remove("open");
+        _pendingSessionId = null;
+
+        try {
+            // استخدم الـ result المحفوظ إذا موجود، وإلا اعمل fetch جديد
+            const result = preloadedResult || await (await fetch(`${API_BASE}/single/${id}`)).json();
+
+            [...UPPER_IDS, ...LOWER_IDS].forEach(tid => { chartData[tid] = makeTooth(tid); });
+            applyLoadedSession(result);
+
+            setTimeout(() => {
+                renderAll();
+                setDbStatus(`✅ Session #${id} loaded`);
+                showToast(`✅ Session #${id} loaded`, "success");
+            }, 50);
+
+        } catch (err) {
+            showToast("❌ " + err.message, "error");
+        }
+    }
+    // ════════════════════════════════════════════════════════════════
+    //  DATABASE API
+    // ════════════════════════════════════════════════════════════════
+    function setDbStatus(msg) {
+        document.getElementById("dbStatus").textContent = msg;
+    }
+
+    function resetPage() {
+        currentSessionId = null;
+        reportToolId     = null;   // ← reset صح كـ global
+        selectedToolId   = null;
+        selectedTarget   = null;
+        [...UPPER_IDS, ...LOWER_IDS].forEach(id => { chartData[id] = makeTooth(id); });
+        document.getElementById("sessionNoteGlobal").value = "";
+        document.getElementById("noteBox").value = "";
+        renderAll();
+    }
+
+    function applyLoadedSession(result) {
+        const jsonStr = pick(result, "chartDataJson", "ChartDataJson");
+        if (!jsonStr) throw new Error("chartDataJson missing in response");
+        const loaded = JSON.parse(jsonStr);
+        Object.keys(chartData).forEach(k => {
+            if (loaded[k]) chartData[k] = loaded[k];
+        });
+        const note = pick(result, "sessionNote", "SessionNote") || "";
+        document.getElementById("sessionNoteGlobal").value = note;
+        currentSessionId = pick(result, "id", "Id");
+        normalizeChartData();
+    }
+
+    function normalizeChartData() {
+        const groups = ["disease","previous","inside","others"];
+        const areas  = ["buccal","lingual","palatal","mesial","distal","occlusal","root"];
+        [...UPPER_IDS, ...LOWER_IDS].forEach(tid => {
+            const tooth = chartData[tid];
+            if (!tooth) return;
+            groups.forEach(g => {
+                if (!Array.isArray(tooth.whole[g]))
+                    tooth.whole[g] = tooth.whole[g] ? [tooth.whole[g]] : [];
+            });
+            areas.forEach(area => {
+                if (!tooth.areas[area]) return;
+                groups.forEach(g => {
+                    if (!Array.isArray(tooth.areas[area][g]))
+                        tooth.areas[area][g] = tooth.areas[area][g] ? [tooth.areas[area][g]] : [];
+                });
+            });
+        });
+    }
+
+    async function saveChartToDb() {
+        if (!PATIENT_ID) { showToast("❌ Patient ID is not set!", "error"); return; }
+        if (!currentSessionId) {
+            showToast("⚠️ No active session — creating one automatically...", "info");
+            await saveNewSession();
+            return;
+        }
+        setDbStatus("⏳ Saving...");
+        const payload = {
+            patientId:     PATIENT_ID,
+            chartDataJson: JSON.stringify(chartData),
+            sessionNote:   document.getElementById("sessionNoteGlobal").value.trim()
+        };
+        try {
+            const res    = await fetch(`${API_BASE}/update/${currentSessionId}`, {
+                method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            if (res.ok) {
+                setDbStatus(`✅ Session #${currentSessionId} saved at ` + new Date().toLocaleTimeString());
+                showToast(`✅ Session #${currentSessionId} saved!`, "success");
+            } else {
+                setDbStatus("❌ Save failed");
+                showToast("❌ " + (result.message || result.Message || "Save failed"), "error");
+            }
+        } catch (err) {
+            setDbStatus("❌ Connection error");
+            showToast("❌ Server connection error", "error");
+        }
+    }
+
+    async function loadChartFromDb() { openHistory(); }
+
+    async function saveNewSession() {
+        if (!PATIENT_ID) { showToast("❌ Patient ID is not set!", "error"); return; }
+        const note = document.getElementById("sessionNoteGlobal").value.trim()
+                   || prompt("Session note (optional):") || "";
+        const payload = {
+            patientId: PATIENT_ID, chartDataJson: JSON.stringify(chartData), sessionNote: note
+        };
+        try {
+            const res    = await fetch(`${API_BASE}/save-session`, {
+                method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            if (res.ok) {
+                const newId = pick(result, "id", "Id");
+                showToast(`✅ Session #${newId} saved — starting fresh`, "success");
+                setDbStatus(`✅ Session #${newId} saved`);
+                resetPage();
+            } else {
+                showToast("❌ " + (result.message || result.Message || "Save failed"), "error");
+            }
+        } catch (err) {
+            showToast("❌ Server connection error", "error");
+        }
+    }
+
+    async function openHistory() {
+        document.getElementById("historyModal").classList.add("open");
+        document.getElementById("historyList").innerHTML = "<p style='color:var(--muted)'>Loading...</p>";
+        try {
+            const res = await fetch(`${API_BASE}/history/${PATIENT_ID}`);
+            if (!res.ok) {
+                document.getElementById("historyList").innerHTML = `<p style='color:red'>Server error: ${res.status}</p>`;
+                return;
+            }
+            const charts = await res.json();
+            if (!Array.isArray(charts) || !charts.length) {
+                document.getElementById("historyList").innerHTML = "<p style='color:var(--muted)'>No history found.</p>";
+                return;
+            }
+            document.getElementById("historyList").innerHTML = charts.map(c => {
+                const id        = pick(c, "id",          "Id");
+                const updatedAt = pick(c, "updatedAt",   "UpdatedAt");
+                const noteText  = pick(c, "sessionNote", "SessionNote") || "—";
+                return `
+                  <div class="history-item">
+                    <div>
+                      <div class="hi-meta">${new Date(updatedAt).toLocaleString("en-GB")} &bull; ID: ${id}</div>
+                      <div class="hi-note">${escapeHtml(noteText)}</div>
+                    </div>
+    <button class="btn btn-primary" onclick="previewSessionById(${id})">📊 Preview</button>  
+    </div>`;
+            }).join("");
+        } catch (err) {
+            document.getElementById("historyList").innerHTML = "<p style='color:red'>Failed to load history.</p>";
+        }
+    }
+
+    function closeHistory() {
+        document.getElementById("historyModal").classList.remove("open");
+    }
+
+    async function loadSessionById(id) {
+        if (!id || id === "undefined") { showToast("❌ Invalid session ID", "error"); return; }
+        try {
+            const res = await fetch(`${API_BASE}/single/${id}`);
+            if (!res.ok) { showToast(`❌ Failed to load session (HTTP ${res.status})`, "error"); return; }
+            const result = await res.json();
+            applyLoadedSession(result);
+            renderAll();
+            closeHistory();
+            setDbStatus(`✅ Session #${id} loaded`);
+            showToast(`✅ Session #${id} loaded`, "success");
+        } catch (err) {
+            showToast("❌ " + err.message, "error");
+        }
+    }
+
+    async function loadLatestSession() {
+        try {
+            const res = await fetch(`${API_BASE}/${PATIENT_ID}`);
+            if (!res.ok) return;
+            const result = await res.json();
+            applyLoadedSession(result);
+            renderAll();
+            setDbStatus(`✅ Session #${currentSessionId} loaded`);
+        } catch (err) {
+            console.error("loadLatestSession:", err);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  TOAST
+    // ════════════════════════════════════════════════════════════════
+    function showToast(msg, type = "info") {
+        const colors = { success:"#16a34a", error:"#dc2626", info:"#2563eb", warning:"#f59e0b" };
+        const el = document.createElement("div");
+        el.className = "toast";
+        el.style.background = colors[type] || "#374151";
+        el.textContent = msg;
+        document.getElementById("toastContainer").appendChild(el);
+        setTimeout(() => { el.style.opacity = "0"; }, 2800);
+        setTimeout(() => el.remove(), 3200);
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  INIT
+    // ════════════════════════════════════════════════════════════════
+    renderAll();
+    if (PATIENT_ID > 0) {
+        loadLatestSession();
+    }
+</script>

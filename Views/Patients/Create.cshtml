@@ -1,0 +1,233 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Patient
+
+@{
+    ViewData["Title"] = "Add New Patient";
+
+}
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="~/css/all.min.css" />
+<link rel="stylesheet" href="~/css/_grid.scss" />
+<link rel="stylesheet" href="~/css/_reboot.scss" />
+<link rel="stylesheet" href="~/css/_root.scss" />
+<link rel="stylesheet" href="~/css/RTE.css" />
+
+
+<div class="        " style="                 background-size: 100% !important;-webkit-background-size: cover !important;-moz-background-size: cover !important;-o-background-size: cover !important;background-size: cover !important;background-position: center !important;">
+
+    <section id="title-wrapper" style=" justify-content: End;">
+        <div class="lineleft" style="  "></div>
+        <h1 class="sectiontitle heading6"><p style="text-align: center;"><span style="color: #252468;">ADD NEW PATIENT</span></p></h1>
+        <div class="lineright" style="display: block; background-color: #daa328; "></div>
+    </section>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="custom-card">
+
+                <h2 class="text-center mb-4" style="color:#252468;">Add New Patient</h2>
+
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                    <!-- Personal Information -->
+                    <div class="section-divider"><span>Personal Information</span></div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label asp-for="FirstName"></label>
+                            <input asp-for="FirstName" class="form-control" />
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label asp-for="SecondName"></label>
+                            <input asp-for="SecondName" class="form-control" />
+                            <span asp-validation-for="SecondName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label asp-for="ThirdName"></label>
+                            <input asp-for="ThirdName" class="form-control" />
+                            <span asp-validation-for="ThirdName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label asp-for="FourthName"></label>
+                            <input asp-for="FourthName" class="form-control" />
+                            <span asp-validation-for="FourthName" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <!-- Nationality -->
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Nationality"></label><br />
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" asp-for="Nationality" value="1" />
+                                <label class="form-check-label">Jordanian</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" asp-for="Nationality" value="2" />
+                                <label class="form-check-label">Non-Jordanian</label>
+                            </div>
+                        </div>
+
+                        <!-- Gender -->
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Gender" class="d-block mb-2"></label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" asp-for="Gender" id="GenderMale" value="Male" />
+                                <label class="form-check-label" for="GenderMale">Male</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" asp-for="Gender" id="GenderFemale" value="Female" />
+                                <label class="form-check-label" for="GenderFemale">Female</label>
+                            </div>
+                            <span asp-validation-for="Gender" class="text-danger d-block"></span>
+                        </div>
+                    </div>
+                    <!-- Identity & Contact -->
+                    
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label asp-for="NationalID_PassportNumber"></label>
+                            <input asp-for="NationalID_PassportNumber" class="form-control" />
+                            <span asp-validation-for="NationalID_PassportNumber" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label asp-for="PhoneNumber"></label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="07XXXXXXXX" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label asp-for="DateOfBirth"></label>
+                            <input asp-for="DateOfBirth" type="date" class="form-control" id="DateOfBirth" />
+                            <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Address"></label>
+                            <input asp-for="Address" class="form-control" placeholder="City, Street..." />
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- First Appointment -->
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label asp-for="AppointmentDate"></label>
+                            <input asp-for="AppointmentDate" type="date" class="form-control" />
+                            <span asp-validation-for="AppointmentDate" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label asp-for="AppointmentTime"></label>
+                            <select asp-for="AppointmentTime" class="form-control">
+                                <option value="">Select AM / PM</option>
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                            <span asp-validation-for="AppointmentTime" class="text-danger"></span>
+                        </div>
+                    </div>
+                        
+                    <!-- Parent / Guardian -->
+                    <div class="row">
+                        <div class="col-md-6 form-group" id="FatherSection" style="display:none">
+                            <label asp-for="FatherName"></label>
+                            <input asp-for="FatherName" class="form-control" />
+                        </div>
+                        <div class="col-md-6 form-group" id="FatherPhoneSection" style="display:none">
+                            <label asp-for="FatherPhone"></label>
+                            <input asp-for="FatherPhone" class="form-control" />
+                        </div>
+                        <div class="col-md-6 form-group" id="MotherSection" style="display:none">
+                            <label asp-for="MotherName"></label>
+                            <input asp-for="MotherName" class="form-control" />
+                        </div>
+                        <div class="col-md-6 form-group" id="MotherPhoneSection" style="display:none">
+                            <label asp-for="MotherPhone"></label>
+                            <input asp-for="MotherPhone" class="form-control" />
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="btn-wrapper mt-3">
+                        <input type="submit" value="Submit" class="btn-submit" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.getElementById('DateOfBirth').addEventListener('change', function () {
+            const dob = new Date(this.value);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+
+            const parentSections = ['FatherSection', 'FatherPhoneSection', 'MotherSection', 'MotherPhoneSection'];
+
+            if (age < 18) {
+                parentSections.forEach(id => document.getElementById(id).style.display = 'block');
+            } else {
+                parentSections.forEach(id => {
+                    document.getElementById(id).style.display = 'none';
+                    const input = document.getElementById(id).querySelector('input');
+                    if (input) input.value = '';
+                });
+            }
+        });
+             document.addEventListener("DOMContentLoaded", function () {
+
+            const nationalityRadios = document.querySelectorAll('input[name="Nationality"]');
+            const idInput = document.querySelector('[name="NationalID_PassportNumber"]');
+            const idLabel = document.querySelector('label[for="NationalID_PassportNumber"]');
+
+            function updateIDField() {
+                const selected = document.querySelector('input[name="Nationality"]:checked');
+                if (!selected) return;
+
+                if (selected.value === "1") {
+                    idLabel.innerText = "National ID";
+                    idInput.placeholder = "Enter National ID";
+                } else {
+                    idLabel.innerText = "Passport Number";
+                    idInput.placeholder = "Enter Passport Number";
+                }
+
+                idInput.value = "";
+            }
+
+            nationalityRadios.forEach(radio => {
+                radio.addEventListener("change", updateIDField);
+            });
+
+            updateIDField();
+        });
+    </script>
+    @* Flatpickr CSS *@
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    @* Flatpickr JS *@
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <script>
+        flatpickr("#appointmentDatePicker", {
+            dateFormat: "Y-m-d",
+            disable: [
+                function (date) {
+                    // 5 = Friday, 6 = Saturday
+                    return date.getDay() === 5 || date.getDay() === 6;
+                }
+            ],
+            minDate: "today"
+        });
+    </script>
+}

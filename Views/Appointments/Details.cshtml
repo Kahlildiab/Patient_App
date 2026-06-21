@@ -1,0 +1,116 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Appointment
+
+@{
+    ViewData["Title"] = "Appointment Details";
+}
+
+<link rel="stylesheet" href="~/css/all.min.css" />
+<link rel="stylesheet" href="~/css/RTE.css" />
+
+<style>
+    .details-wrapper { padding: 30px 20px; max-width: 900px; margin: 0 auto; }
+    .edit-link { text-align: right; margin-bottom: 8px; }
+    .edit-link a { color: #252468; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+    .edit-link a:hover { color: #daa328; }
+    .details-card { border: 1.5px solid #252468; background: #fff; padding: 30px 36px; display: flex; gap: 30px; align-items: flex-start; }
+    .details-body { flex: 1; }
+    .patient-name-en { font-size: 16px; font-weight: 700; color: #252468; margin-bottom: 18px; }
+    .details-info { font-size: 13px; color: #333; line-height: 2.2; }
+    .details-info .lbl { font-weight: 600; color: #252468; }
+    .details-icon { width: 130px; height: 130px; background: #e9e9e9; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .details-icon svg { width: 80px; height: 80px; fill: none; stroke: #252468; stroke-width: 5; }
+    .details-footer { display: flex; gap: 10px; padding: 0 20px; }
+    .footer-left { flex: 1; background: #252468; color: white; font-size: 13px; font-weight: 700; padding: 10px 16px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+    .footer-right { flex: 1; background: #daa328; color: white; font-size: 13px; font-weight: 700; padding: 10px 16px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+    .divider-sm { border: none; border-top: 1px solid #eee; margin: 8px 0; }
+</style>
+
+<div class="details-wrapper">
+
+    <div style="background-size:cover !important; background-position:center !important;">
+        <section id="title-wrapper" style="justify-content:End;">
+            <div class="lineleft"></div>
+            <h1 class="sectiontitle heading6">
+                <p style="text-align:center;"><span style="color:#252468;">APPOINTMENT DETAILS</span></p>
+            </h1>
+            <div class="lineright" style="display:block; background-color:#daa328;"></div>
+        </section>
+    </div>
+
+    <br />
+
+    <div class="edit-link">
+        <a asp-action="Edit" asp-route-id="@Model?.AppointmentID">
+            Edit <i class="fa-solid fa-pen-to-square"></i>
+        </a>
+    </div>
+
+    <div class="details-card">
+        <div class="details-body">
+            <div class="patient-name-en">
+                @Model.Patient?.FirstName
+                @Model.Patient?.SecondName
+                @Model.Patient?.ThirdName
+                @Model.Patient?.FourthName
+            </div>
+            <div class="details-info">
+                <div><span class="lbl">Clinic:</span> @Model.ClinicName</div>
+                <div><span class="lbl">Date:</span> @Model.AppointmentDate.ToString("yyyy/MM/dd")</div>
+                <div><span class="lbl">Day:</span> @Model.AppointmentDay</div>
+                <div class="divider-sm"></div>
+                <div>
+                    <span class="lbl">AM / PM:</span>
+                    @if (!string.IsNullOrEmpty(Model.Patient?.AppointmentTime))
+                    {
+                        <span style="font-weight:700;">@Model.Patient.AppointmentTime</span>
+                    }
+                    else
+                    {
+                        <span style="color:#aaa;">---</span>
+                    }
+                </div>
+                <div class="divider-sm"></div>
+                <div>
+                    <span class="lbl">Created:</span>
+                    @(Model.CreatedDate != default(DateTime) ? Model.CreatedDate.ToString("yyyy/MM/dd") : "---")
+                </div>
+            </div>
+        </div>
+
+        <div class="details-icon">
+            @if (Model.Patient?.Gender?.ToLower() == "female")
+            {
+                <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" style="stroke:rgb(38,76,159);">
+                    <circle cx="32" cy="22" r="16" />
+                    <line x1="32" y1="38" x2="32" y2="58" />
+                    <line x1="22" y1="50" x2="42" y2="50" />
+                </svg>
+            }
+            else
+            {
+                <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" style="stroke:rgb(38,76,159);">
+                    <circle cx="26" cy="38" r="16" />
+                    <line x1="37" y1="27" x2="58" y2="6" />
+                    <polyline points="44,6 58,6 58,20" fill="none" />
+                </svg>
+            }
+        </div>
+    </div>
+
+    <div class="details-footer">
+        <div class="footer-left">
+            <span style="color:white; font-weight:700;">
+                @(Model.Patient?.Nationality == 1 ? "Jordanian" : "Non-Jordanian")
+            </span>
+        </div>
+        <div class="footer-right">
+            <i class="fa-solid fa-id-card"></i>
+            ID: @Model.Patient?.NationalID_PassportNumber
+        </div>
+    </div>
+
+    <div style="text-align:center; margin-top:16px;">
+        <a asp-action="Index" style="color:#252468; font-size:13px; font-weight:600; text-decoration:none;">← Back to Appointments</a>
+    </div>
+
+</div>

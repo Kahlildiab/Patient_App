@@ -1,0 +1,157 @@
+﻿@using DentalCollegeManagementSystem_AAU.Models.ViewModels
+@model RegisterViewModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="~/css/all.min.css" />
+
+<main>
+    <div class="login-form" style="width:70%;margin:auto;margin-top:20px">
+
+        <div style="background:#daa328;color:#fff;padding:20px;">
+            <img class="image" style="width:10%;margin:auto" src="https://www.ammanu.edu.jo/media/1bgdv5he/aau-logo.png">
+            <h4 class="heading12" style="color:#fff;text-align:center">Al-Ahliyya Amman University</h4>
+        </div>
+
+        <div style="background:#edeceb;padding:20px;margin-bottom:20px">
+
+            <div class="row g-4">
+                <div class="umbraco-forms-form ntpregister Pre umbraco-forms-bootstrap3-horizontal">
+
+                    <form asp-controller="Account" asp-action="Register" method="post">
+                        @Html.AntiForgeryToken()
+
+                        @* رسائل الأخطاء *@
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div style="background:#fff5f5;border-left:3px solid #c0392b;padding:10px 14px;margin-bottom:16px;color:#c0392b;font-size:0.85rem;">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <div>@error.ErrorMessage</div>
+                                }
+                            </div>
+                        }
+
+                        
+
+                        <div class="umbraco-forms-page form-horizontal">
+
+                            @* ── ROW 1: Full Name + Email ── *@
+                            <fieldset class="umbraco-forms-fieldset">
+                                <div class="row-fluid">
+
+                                    <div class="umbraco-forms-container col-md-6">
+                                        <div class="form-group umbraco-forms-field fullname shortanswer mandatory">
+                                            <label class="col-sm-2 control-label umbraco-forms-label">
+                                                Full Name <span class="umbracoForms-Indicator">*</span>
+                                            </label>
+                                            <div class="col-sm-10 umbraco-forms-field-wrapper">
+                                                <input asp-for="FullName" class="text form-control" placeholder="Your full name" maxlength="255" />
+                                                <span asp-validation-for="FullName" class="field-validation-error text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="umbraco-forms-container col-md-6">
+                                        <div class="form-group umbraco-forms-field email shortanswer mandatory">
+                                            <label class="col-sm-2 control-label umbraco-forms-label">
+                                                Email <span class="umbracoForms-Indicator">*</span>
+                                            </label>
+                                            <div class="col-sm-10 umbraco-forms-field-wrapper">
+                                                <input asp-for="Email" type="email" class="text form-control" placeholder="your@email.com" maxlength="255" />
+                                                <span asp-validation-for="Email" class="field-validation-error text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </fieldset>
+
+                            @* ── ROW 2: Username + Phone ── *@
+                            <fieldset class="umbraco-forms-fieldset">
+                                <div class="row-fluid">
+
+                                    <div class="umbraco-forms-container col-md-6">
+                                        <div class="form-group umbraco-forms-field mandatory alternating">
+                                            <label class="col-sm-2 control-label umbraco-forms-label">
+                                                Username <span class="umbracoForms-Indicator">*</span>
+                                            </label>
+                                            <div class="col-sm-10 umbraco-forms-field-wrapper">
+                                                <input asp-for="Username" class="text form-control" placeholder="Choose a username" maxlength="255" />
+                                                <span asp-validation-for="Username" class="field-validation-error text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="umbraco-forms-container col-md-6">
+                                        <div class="form-group umbraco-forms-field mobilephone shortanswer">
+                                            <label class="col-sm-2 control-label umbraco-forms-label">
+                                                Mobile Phone
+                                            </label>
+                                            <div class="col-sm-10 umbraco-forms-field-wrapper">
+                                                <input asp-for="PhoneNumber" type="tel" class="text form-control" placeholder="07XXXXXXXX" maxlength="15" />
+                                                <span asp-validation-for="PhoneNumber" class="field-validation-error text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </fieldset>
+
+                            @* ── ROW 3: Password + Confirm Password ── *@
+                            <fieldset class="umbraco-forms-fieldset">
+                                <div class="row-fluid">
+
+                                    <div class="umbraco-forms-container col-md-6">
+                                        <div class="form-group umbraco-forms-field password mandatory alternating">
+                                            <label class="col-sm-2 control-label umbraco-forms-label">
+                                                Password <span class="umbracoForms-Indicator">*</span>
+                                            </label>
+                                            <div class="col-sm-10 umbraco-forms-field-wrapper">
+                                                <input asp-for="Password" type="password" class="form-control text" placeholder="Min 6 characters" />
+                                                <span asp-validation-for="Password" class="field-validation-error text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="umbraco-forms-container col-md-6">
+                                        <div class="form-group umbraco-forms-field password mandatory">
+                                            <label class="col-sm-2 control-label umbraco-forms-label">
+                                                Confirm Password <span class="umbracoForms-Indicator">*</span>
+                                            </label>
+                                            <div class="col-sm-10 umbraco-forms-field-wrapper">
+                                                <input asp-for="ConfirmPassword" type="password" class="form-control text" placeholder="Repeat password" />
+                                                <span asp-validation-for="ConfirmPassword" class="field-validation-error text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </fieldset>
+
+                            @* ── SUBMIT ── *@
+                            <div class="umbraco-forms-navigation row-fluid">
+                                <div class="col-sm-10 col-sm-offset-2" style="display:flex;gap:14px;align-items:center;">
+                                    <input type="submit" class="btn btn-primary" value="Submit Application"
+                                           style="background:#252468;border:none;padding:10px 28px;font-weight:600;" />
+                                    <a asp-controller="Account" asp-action="Login"
+                                       style="font-size:0.85rem;color:#252468;font-weight:600;text-decoration:none;">
+                                        ← Back to Login
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</main>

@@ -1,0 +1,296 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Patient
+
+@{
+   // 1. جلب القوالب الأصلية فقط (التي PatientID لها null)
+    var allCompsRaw = ViewBag.AllCompetencies as List<DentalCollegeManagementSystem_AAU.Models.Competency>;
+    var templates = allCompsRaw?.Where(c => c.PatientID == null).ToList() ?? new List<DentalCollegeManagementSystem_AAU.Models.Competency>();
+
+    // 2. جلب سجلات الإنجاز الخاصة بهذا المريض فقط
+    var patientComps = ViewBag.PatientCompetencies as List<DentalCollegeManagementSystem_AAU.Models.Competency>;
+    var currentPatientRecords = patientComps?.Where(pc => pc.PatientID == Model.PatientID).ToList() ?? new List<DentalCollegeManagementSystem_AAU.Models.Competency>();
+
+    // ✅ العدد الإجمالي سيكون دائماً 16 (عدد القوالب)
+    int totalItems = templates.Count;
+    
+    // حساب المنجز بناءً على الأسماء المطابقة للقوالب
+    int completedCount = currentPatientRecords.Count(pc => pc.IsCompleted);
+
+    int percentage = totalItems > 0 ? (int)Math.Round((double)completedCount / totalItems * 100) : 0;
+
+    // دالة للتحقق: هل المريض أنجز هذه الكفاءة؟ (نبحث بالاسم لضمان الربط الصحيح)
+    bool IsCompleted(string itemName) =>
+        currentPatientRecords.Any(pc => pc.ItemName == itemName && pc.IsCompleted);
+
+    // دالة لجلب التاريخ من سجل المريض
+    string? CompletedDate(string itemName) =>
+        currentPatientRecords.FirstOrDefault(pc => pc.ItemName == itemName && pc.IsCompleted)
+                             ?.CompletedDate?.ToString("yyyy-MM-dd");
+
+    // دالة لجلب الـ ID الصحيح للإرسال للكنترولر
+    // نرسل ID القالب، والكنترولر سيتكفل بالباقي
+    int GetTemplateId(string itemName) =>
+        templates.First(t => t.ItemName == itemName).CompetencyID;
+
+    // تجميع الفئات بناءً على القوالب الـ 16 فقط
+    var categories = templates
+        .GroupBy(c => new { c.CategoryName, c.CategoryOrder })
+        .OrderBy(g => g.Key.CategoryOrder)
+        .ToList();
+}
+
+<style>
+    .comp-progress-bar-wrap {
+        background: #e9ecef;
+        border-radius: 999px;
+        height: 10px;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+    .comp-progress-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #252468, #7b6fd4);
+        transition: width 0.5s ease;
+    }
+    .comp-category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8f9fc;
+        border: 1.5px solid #e0e4f0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        user-select: none;
+    }
+    .comp-category-header:hover { background: #f0f2fa; }
+    .comp-category-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 13px;
+        color: #252468;
+    }
+    .comp-badge {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 20px;
+        color: white;
+    }
+    .comp-items-list {
+        border: 1px solid #e8ecf5;
+        border-radius: 0 0 8px 8px;
+        border-top: none;
+        margin-bottom: 12px;
+        overflow: hidden;
+    }
+    .comp-item-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 18px;
+        border-bottom: 1px solid #f0f2f8;
+        font-size: 13px;
+        color: #333;
+        transition: background 0.15s;
+    }
+    .comp-item-row:last-child { border-bottom: none; }
+    .comp-item-row:hover { background: #f8f9fc; }
+    .comp-item-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .comp-circle {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid #c8cfe8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .comp-circle.done {
+        background: #27ae60;
+        border-color: #27ae60;
+    }
+    .comp-circle.done::after {
+        content: '';
+        width: 6px;
+        height: 10px;
+        border: 2px solid white;
+        border-top: none;
+        border-left: none;
+        transform: rotate(45deg) translateY(-1px);
+        display: block;
+    }
+    .comp-circle:not(.done):hover {
+        border-color: #252468;
+        background: #eef0fb;
+    }
+    .comp-date {
+        font-size: 11px;
+        color: #aaa;
+        white-space: nowrap;
+    }
+    .comp-item-name.done-text { color: #888; text-decoration: none; }
+</style>
+
+<div id="competency-wrapper" style="padding:4px 0;">
+
+    <div style="border:1.5px solid #e0e4f0; border-radius:10px; padding:18px 20px; margin-bottom:20px; background:#fff;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+                <div style="font-weight:700; font-size:14px; color:#252468;">Competency Progress</div>
+                <div style="font-size:12px; color:#888; margin-top:3px;">
+                    <span id="comp-count">@completedCount</span> of
+                    <span id="comp-total">@totalItems</span> competencies achieved
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <span id="comp-pct" style="font-size:22px; font-weight:800; color:#252468;">@percentage%</span>
+                <div style="font-size:11px; color:#aaa;">Complete</div>
+            </div>
+        </div>
+        <div class="comp-progress-bar-wrap">
+            <div id="comp-bar" class="comp-progress-bar-fill" style="width:@percentage%;"></div>
+        </div>
+    </div>
+
+    @if (categories != null)
+    {
+        @foreach (var group in categories)
+        {
+            int catTotal     = group.Count();
+            int catCompleted = group.Count(i => IsCompleted(i.ItemName));
+            int catPct        = catTotal > 0 ? (int)Math.Round((double)catCompleted / catTotal * 100) : 0;
+            string badgeColor = catPct == 100 ? "#27ae60" : "#252468";
+            string catKey    = group.Key.CategoryName.Replace(" ", "-").ToLower();
+
+            <div class="comp-category-header" onclick="toggleCategory('@catKey')">
+                <div class="comp-category-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                         stroke="#252468" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                    @group.Key.CategoryName
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span id="badge-@catKey" class="comp-badge" style="background:@badgeColor;">
+                        @catCompleted/@catTotal &nbsp; @catPct%
+                    </span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                         stroke="#aaa" stroke-width="2" stroke-linecap="round">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div id="@catKey" class="comp-items-list">
+                @foreach (var item in group.OrderBy(i => i.ItemOrder))
+                {
+                    bool done = IsCompleted(item.ItemName);
+                    string? dateStr = CompletedDate(item.ItemName);
+
+                    <div class="comp-item-row"
+                         id="row-@item.CompetencyID"
+                         data-item-id="@item.CompetencyID"
+                         data-cat-key="@catKey"
+                         data-cat-total="@catTotal">
+                        <div class="comp-item-left">
+                            <div class="comp-circle @(done ? "done" : "")"
+                                 id="circle-@item.CompetencyID"
+                                 onclick="toggleCompetency(@Model.PatientID, @item.CompetencyID)"
+                                 title="@(done ? "Mark as incomplete" : "Mark as complete")">
+                            </div>
+                            <span class="comp-item-name @(done ? "done-text" : "")">
+                                @item.ItemName
+                            </span>
+                        </div>
+                        <span class="comp-date" id="date-@item.CompetencyID">
+                            @(done && dateStr != null ? dateStr : "")
+                        </span>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@Html.AntiForgeryToken()
+
+<script>
+    function toggleCategory(key) {
+        const el = document.getElementById(key);
+        if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function toggleCompetency(patientId, competencyId) {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        try {
+            const res = await fetch('/Competencies/Toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `patientId=${patientId}&competencyId=${competencyId}`
+            });
+
+            const data = await res.json();
+            if (!data.success) return;
+
+            // تحديث العناصر المرئية
+            const circle  = document.getElementById(`circle-${competencyId}`);
+            const row     = document.getElementById(`row-${competencyId}`);
+            const nameEl  = row?.querySelector('.comp-item-name');
+            const dateEl  = document.getElementById(`date-${competencyId}`);
+            const catKey  = row?.dataset.catKey;
+            const catTotal = parseInt(row?.dataset.catTotal ?? '0');
+
+            if (data.isCompleted) {
+                circle?.classList.add('done');
+                nameEl?.classList.add('done-text');
+                if (dateEl) dateEl.textContent = data.completedDate ?? '';
+            } else {
+                circle?.classList.remove('done');
+                nameEl?.classList.remove('done-text');
+                if (dateEl) dateEl.textContent = '';
+            }
+
+            // تحديث الإحصائيات العامة (Overall)
+            document.getElementById('comp-count').textContent = data.totalCompleted;
+            document.getElementById('comp-pct').textContent   = data.percentage + '%';
+            document.getElementById('comp-bar').style.width   = data.percentage + '%';
+
+            // تحديث Badge القسم (Category)
+            if (catKey) {
+                const rows = document.querySelectorAll(`[data-cat-key="${catKey}"]`);
+                let catDone = 0;
+                rows.forEach(r => {
+                    const id = r.dataset.itemId;
+                    if (document.getElementById(`circle-${id}`)?.classList.contains('done')) {
+                        catDone++;
+                    }
+                });
+                
+                const catPct = catTotal > 0 ? Math.round((catDone / catTotal) * 100) : 0;
+                const badge = document.getElementById(`badge-${catKey}`);
+                if (badge) {
+                    badge.innerHTML = `${catDone}/${catTotal} &nbsp; ${catPct}%`;
+                    badge.style.background = catPct === 100 ? '#27ae60' : '#252468';
+                }
+            }
+
+        } catch (err) {
+            console.error('Toggle error:', err);
+        }
+    }
+</script>

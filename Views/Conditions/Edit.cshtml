@@ -1,0 +1,77 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Condition
+
+@{
+    ViewData["Title"] = "Edit Condition";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .edit-wrapper { max-width: 600px; margin: 32px auto; font-family: 'Segoe UI', sans-serif; }
+    .edit-wrapper h2 { font-size: 18px; font-weight: 700; color: #252468; margin-bottom: 20px; }
+    .edit-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 24px; background: #fafafa; }
+    .field-group { margin-bottom: 16px; }
+    .field-label { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 5px; display: block; }
+    .field-input { width: 100%; border: 1px solid #ddd; border-radius: 5px; padding: 8px 12px; font-size: 13px; background: white; box-sizing: border-box; }
+    .field-input:focus { outline: none; border-color: #252468; }
+    .field-textarea { width: 100%; border: 1px solid #ddd; border-radius: 5px; padding: 8px 12px; font-size: 13px; background: white; box-sizing: border-box; resize: vertical; min-height: 80px; }
+    .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #333; }
+    .checkbox-row input { accent-color: #252468; }
+    .flag-row { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #856404; background: #fff8e1; border: 1px solid #daa328; border-radius: 5px; padding: 10px 12px; }
+    .flag-row input { accent-color: #c0392b; width: 16px; height: 16px; cursor: pointer; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    .btn-save { background: #252468; color: white; border: none; padding: 10px 28px; font-size: 14px; font-weight: 600; border-radius: 5px; cursor: pointer; }
+    .btn-cancel { background: white; color: #555; border: 1px solid #ddd; padding: 10px 24px; font-size: 14px; border-radius: 5px; text-decoration: none; display: inline-flex; align-items: center; }
+</style>
+
+<div class="edit-wrapper">
+    <h2>Edit Condition</h2>
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="ConditionID" />
+        <input type="hidden" asp-for="PatientID" />
+        <input type="hidden" asp-for="CreatedDate" />
+
+        <div class="edit-card">
+            <div class="field-group">
+                <label class="field-label">Condition</label>
+                <input asp-for="ConditionName" class="field-input" />
+            </div>
+            <div class="field-group">
+                <label class="field-label">Year of Diagnosis</label>
+                <input asp-for="YearOfDiagnosis" type="number" class="field-input" />
+            </div>
+            <div class="field-group">
+                <div class="checkbox-row">
+                    <input asp-for="IsCurrentlyActive" type="checkbox" />
+                    <label asp-for="IsCurrentlyActive">Currently Active</label>
+                </div>
+            </div>
+<<<<<<< HEAD
+           <!-- ✅ Flag — كان فيه خطأ syntax، صار هيك -->
+<div class="field-group">
+    <div class="flag-row">
+        <input asp-for="IsFlagged" type="checkbox" value="true" />
+        <label asp-for="IsFlagged" style="cursor:pointer; color:#c0392b; font-weight:600;">
+            🚩 Red Flag
+        </label>
+    </div>
+</div>
+=======
+            <!-- ✅ Flag -->
+            <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px; font-size:13px;">
+                <input type="checkbox" id="editConditionFlagged" name="IsFlagged"
+                       value="true" style="accent-color:#c0392b;" />
+                <label style="color:#c0392b; font-weight:600; cursor:pointer;">🚩 Red Flag</label>
+            </div>
+>>>>>>> origin/main
+            <div class="field-group">
+                <label class="field-label">Notes</label>
+                <textarea asp-for="Notes" class="field-textarea"></textarea>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="@Url.Action("Details", "Patient", new { id = Model.PatientID })" class="btn-cancel">Cancel</a>
+            <button type="submit" class="btn-save">Save Changes</button>
+        </div>
+    </form>
+</div>

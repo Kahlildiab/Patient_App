@@ -1,0 +1,630 @@
+﻿@model List<DentalCollegeManagementSystem_AAU.Models.Order>
+
+@{
+    var patient = ViewBag.Patient as DentalCollegeManagementSystem_AAU.Models.Patient;
+    int patientId = patient?.PatientID ?? 0;
+}
+
+<style>
+    .orders-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .orders-title { font-size: 20px; font-weight: 700; color: #1a1a2e; }
+    .orders-subtitle { font-size: 13px; color: #888; margin-top: 2px; }
+    .btn-new-order {
+        background: #252468;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-new-order:hover { background: #1a1a50; }
+
+    /* Stats */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+    .stat-card {
+        background: white;
+        border: 1.5px solid #e8ecf5;
+        border-radius: 10px;
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .stat-icon {
+        width: 36px; height: 36px;
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .stat-label { font-size: 12px; color: #888; }
+    .stat-value { font-size: 22px; font-weight: 800; color: #1a1a2e; }
+
+    /* Order Cards */
+    .order-card {
+        background: white;
+        border: 1.5px solid #e8ecf5;
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin-bottom: 12px;
+        transition: box-shadow 0.2s;
+    }
+    .order-card:hover { box-shadow: 0 4px 16px rgba(37,36,104,0.08); }
+    .order-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+    .order-type-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .order-type-icon {
+        width: 38px; height: 38px;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .order-type-name { font-weight: 700; font-size: 15px; color: #1a1a2e; }
+    .order-number { font-size: 12px; color: #aaa; margin-left: 6px; }
+    .order-desc { font-size: 13px; color: #555; margin: 4px 0; }
+    .order-meta { font-size: 12px; color: #aaa; margin-top: 10px; display: flex; justify-content: space-between; }
+
+    .badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .badge-pending    { background: #fff3cd; color: #856404; }
+    .badge-completed  { background: #d1e7dd; color: #0a3622; }
+    .badge-active     { background: #e8d5ff; color: #5b21b6; }
+    .badge-signed     { background: #d0f0e8; color: #065f46; }
+    .badge-cancelled  { background: #f8d7da; color: #842029; }
+
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+        background: white;
+        border-radius: 14px;
+        padding: 28px;
+        width: 560px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-title { font-size: 17px; font-weight: 700; color: #1a1a2e; margin-bottom: 20px; }
+
+    /* Order Type Selector */
+    .order-types-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    .order-type-btn {
+        border: 2px solid #e8ecf5;
+        border-radius: 10px;
+        padding: 14px 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+        font-size: 13px;
+        font-weight: 600;
+        color: #444;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    .order-type-btn:hover { border-color: #252468; background: #f5f5ff; }
+    .order-type-btn.selected { border-color: #252468; background: #252468; color: white; }
+    .order-type-btn.selected svg { stroke: white !important; fill: none !important; }
+
+    /* Form */
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 5px; display: block; }
+    .form-control {
+        width: 100%;
+        border: 1.5px solid #e0e4f0;
+        border-radius: 8px;
+        padding: 9px 12px;
+        font-size: 13px;
+        outline: none;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+    }
+    .form-control:focus { border-color: #252468; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .btn-continue {
+        width: 100%;
+        background: #252468;
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+    .btn-continue:hover { background: #1a1a50; }
+    .btn-cancel-modal {
+        width: 100%;
+        background: #f5f5f5;
+        color: #444;
+        border: none;
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+
+    .section-step { display: none; }
+    .section-step.active { display: block; }
+</style>
+
+<!-- Header -->
+<div class="orders-header">
+    <div>
+        <div class="orders-title">Patient Orders</div>
+        <div class="orders-subtitle">Manage appointments, prescriptions, and referrals</div>
+    </div>
+    <button class="btn-new-order" onclick="openModal()">
+        <svg width="16" height="16" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New Order
+    </button>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div style="background:#d1e7dd;color:#0a3622;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;">
+        @TempData["Success"]
+    </div>
+}
+
+<!-- Stats -->
+<div class="stats-row">
+   @*  <div class="stat-card">
+        <div class="stat-icon" style="background:#fff3cd;">
+            <svg width="18" height="18" fill="none" stroke="#856404" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+        </div>
+        <div>
+            <div class="stat-label">Pending</div>
+            <div class="stat-value">@(ViewBag.Pending > 0 ? ViewBag.Pending.ToString() : "0")</div>
+        </div>
+    </div> *@
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#d1e7dd;">
+            <svg width="18" height="18" fill="none" stroke="#0a3622" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+        </div>
+        <div>
+            <div class="stat-label">Completed</div>
+            <div class="stat-value">@ViewBag.Completed</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#e8d5ff;">
+            <svg width="18" height="18" fill="none" stroke="#5b21b6" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="9" y1="21" x2="9" y2="9"/>
+            </svg>
+        </div>
+        <div>
+            <div class="stat-label">X-Rays</div>
+            <div class="stat-value">@ViewBag.XRays</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#fde8d0;">
+            <svg width="18" height="18" fill="none" stroke="#c2410c" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+        </div>
+        <div>
+            <div class="stat-label">Referrals</div>
+            <div class="stat-value">@ViewBag.Referrals</div>
+        </div>
+    </div>
+</div>
+
+<!-- Orders List -->
+@if (Model == null || !Model.Any())
+{
+    <div style="text-align:center;padding:60px;color:#aaa;background:white;border-radius:10px;border:1.5px solid #e8ecf5;">
+        <svg width="48" height="48" fill="none" stroke="#ddd" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom:12px;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <div style="font-size:15px;font-weight:600;color:#bbb;">No orders yet</div>
+        <div style="font-size:13px;margin-top:4px;">Click "New Order" to create the first order</div>
+    </div>
+}
+else
+{
+    foreach (var order in Model)
+    {
+        string iconBg = order.OrderType switch {
+            "XRay"      => "#e8d5ff",
+            "Medication" => "#d0e8ff",
+            "Referral"  => "#fde8d0",
+            "Consent"   => "#d0f0e8",
+            "Discharge" => "#d1e7dd",
+            _ => "#f0f0f0"
+        };
+        string iconColor = order.OrderType switch {
+            "XRay"      => "#5b21b6",
+            "Medication" => "#1d4ed8",
+            "Referral"  => "#c2410c",
+            "Consent"   => "#065f46",
+            "Discharge" => "#0a3622",
+            _ => "#555"
+        };
+        string badgeClass = order.Status switch {
+            "Completed" => "badge-completed",
+            "Active"    => "badge-active",
+            "Signed"    => "badge-signed",
+            "Cancelled" => "badge-cancelled",
+            _ => "badge-pending"
+        };
+
+        string description = order.OrderType switch {
+            "Consent"    => order.ConsentDetail?.ConsentType + " consent",
+            "Referral"   => $"Referral to {order.ReferralDetail?.Specialty} for {order.ReferralDetail?.Reason}",
+            "Medication" => $"{order.MedicationDetail?.MedicationName} {order.MedicationDetail?.Dosage} - {order.MedicationDetail?.Frequency} for {order.MedicationDetail?.DurationDays} days",
+            "XRay"       => $"{order.XRayDetail?.XRayType} radiograph{(order.XRayDetail?.ToothNumber != null ? " - Tooth " + order.XRayDetail.ToothNumber : "")}",
+            "Discharge"  => order.DischargeDetail?.DischargeReason,
+            _ => order.Notes
+        } ?? "";
+
+        <div class="order-card">
+            <div class="order-card-top">
+                <div class="order-type-row">
+                    <div class="order-type-icon" style="background:@iconBg;">
+                        @if (order.OrderType == "XRay")
+                        {
+                            <svg width="18" height="18" fill="none" stroke="@iconColor" stroke-width="2" viewBox="0 0 24 24">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
+                                <line x1="9" y1="21" x2="9" y2="9"/>
+                            </svg>
+                        }
+                        else if (order.OrderType == "Medication")
+                        {
+                            <svg width="18" height="18" fill="none" stroke="@iconColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M10.5 20H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H20a2 2 0 0 1 2 2v3"/>
+                                <circle cx="18" cy="18" r="3"/><path d="m22 22-1.5-1.5"/>
+                            </svg>
+                        }
+                        else if (order.OrderType == "Referral")
+                        {
+                            <svg width="18" height="18" fill="none" stroke="@iconColor" stroke-width="2" viewBox="0 0 24 24">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                        }
+                        else if (order.OrderType == "Consent")
+                        {
+                            <svg width="18" height="18" fill="none" stroke="@iconColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                        }
+                        else
+                        {
+                            <svg width="18" height="18" fill="none" stroke="@iconColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                        }
+                    </div>
+                    <div>
+                        <span class="order-type-name">@order.OrderType</span>
+                        <span class="order-number">(@order.OrderNumber)</span>
+                    </div>
+                </div>
+                @if (order.AdminApprovalStatus == "Pending")
+                {
+                    <span style="background:#fff3e0; color:#e65100; border:1px solid #ffb74d;
+                        border-radius:20px; padding:3px 12px; font-size:12px; font-weight:600;">
+                        ⏳ Pending Admin Approval
+                    </span>
+                }
+                else if (order.AdminApprovalStatus == "Approved" && order.AdminApprovedDate.HasValue)
+                {
+                    <span style="background:#d1e7dd; color:#0a3622; border:1px solid #a3cfbb;
+                        border-radius:20px; padding:3px 12px; font-size:12px; font-weight:600;">
+                        ✅ Approved by Admin
+                        <span style="font-weight:400; font-size:11px; margin-left:4px;">
+                            @order.AdminApprovedDate.Value.ToString("dd-MM-yyyy")
+                        </span>
+                    </span>
+                }
+            </div>
+
+            <div class="order-desc">@description</div>
+
+            @if (order.OrderType == "Referral" && order.ReferralDetail != null)
+            {
+                <div style="font-size:12px;color:#888;margin-top:4px;">
+                    ➤ @order.ReferralDetail.ReferredTo - @order.ReferralDetail.Specialty
+                </div>
+            }
+
+            <div class="order-meta">
+                <span>Created by @(order.CreatedByUser?.FullName ?? "Unknown")</span>
+                <span>@order.CreatedDate.ToString("yyyy-MM-dd")</span>
+            </div>
+        </div>
+    }
+}
+
+<!-- Modal -->
+<div class="modal-overlay" id="orderModal">
+    <div class="modal-box">
+
+        <!-- Step 1: اختيار النوع -->
+        <div class="section-step active" id="step1">
+            <div class="modal-title">Create New Order</div>
+            <div class="order-types-grid">
+                <button type="button" class="order-type-btn" onclick="selectType('XRay', this)">
+                    <svg width="22" height="22" fill="none" stroke="#5b21b6" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
+                        <line x1="9" y1="21" x2="9" y2="9"/>
+                    </svg>
+                    X-Ray
+                </button>
+                <button type="button" class="order-type-btn" onclick="selectType('Medication', this)">
+                    <svg width="22" height="22" fill="none" stroke="#1d4ed8" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M10.5 20H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H20a2 2 0 0 1 2 2v3"/>
+                        <circle cx="18" cy="18" r="3"/><path d="m22 22-1.5-1.5"/>
+                    </svg>
+                    Medication
+                </button>
+                <button type="button" class="order-type-btn" onclick="selectType('Referral', this)">
+                    <svg width="22" height="22" fill="none" stroke="#c2410c" stroke-width="2" viewBox="0 0 24 24">
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                    Referral
+                </button>
+                <button type="button" class="order-type-btn" onclick="selectType('Discharge', this)">
+                    <svg width="22" height="22" fill="none" stroke="#0a3622" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    Discharge
+                </button>
+                <button type="button" class="order-type-btn" onclick="selectType('Consent', this)">
+                    <svg width="22" height="22" fill="none" stroke="#065f46" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                    </svg>
+                    Consent
+                </button>
+            </div>
+            <button type="button" class="btn-continue" onclick="goToStep2()">Continue</button>
+            <button type="button" class="btn-cancel-modal" onclick="closeModal()">Cancel</button>
+        </div>
+
+        <!-- Step 2: الفورم -->
+        <div class="section-step" id="step2">
+            <form method="post" action="/Orders/Create">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="patientId" value="@patientId" />
+                <input type="hidden" name="orderType" id="hiddenOrderType" value="" />
+
+                <div class="modal-title" id="formTitle">New Order</div>
+
+                <!-- XRay Form -->
+                <div id="form-XRay" class="order-form" style="display:none;">
+                    <div class="form-group">
+                        <label class="form-label">X-Ray Type *</label>
+                        <select name="XRayType" class="form-control">
+                            <option value="Periapical">Periapical</option>
+                            <option value="Bitewing">Bitewing</option>
+                            <option value="Panoramic">Panoramic</option>
+                            <option value="CBCT">CBCT</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Tooth Number</label>
+                            <input name="ToothNumber" class="form-control" placeholder="e.g. 36" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Region</label>
+                            <input name="Region" class="form-control" placeholder="e.g. Upper Left" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Clinical Indication</label>
+                        <textarea name="ClinicalIndication" class="form-control" rows="2" placeholder="Reason for X-Ray..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Medication Form -->
+                <div id="form-Medication" class="order-form" style="display:none;">
+                    <div class="form-group">
+                        <label class="form-label">Medication Name *</label>
+                        <input name="MedicationName" class="form-control" placeholder="e.g. Amoxicillin" />
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Dosage *</label>
+                            <input name="Dosage" class="form-control" placeholder="e.g. 500mg" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Duration (Days) *</label>
+                            <input name="DurationDays" type="number" class="form-control" placeholder="7" min="1" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Frequency *</label>
+                        <select name="Frequency" class="form-control">
+                            <option value="Once daily">Once daily</option>
+                            <option value="Twice daily">Twice daily</option>
+                            <option value="3 times daily">3 times daily</option>
+                            <option value="4 times daily">4 times daily</option>
+                            <option value="As needed">As needed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Instructions</label>
+                        <textarea name="Instructions" class="form-control" rows="2" placeholder="Special instructions..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Referral Form -->
+                <div id="form-Referral" class="order-form" style="display:none;">
+                    <div class="form-group">
+                        <label class="form-label">Referred To (Doctor Name) *</label>
+                        <input name="ReferredTo" class="form-control" placeholder="e.g. Dr. Martinez" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Specialty *</label>
+                        <select name="Specialty" class="form-control">
+                            <option value="Oral Surgery">Oral Surgery</option>
+                            <option value="Orthodontics">Orthodontics</option>
+                            <option value="Periodontics">Periodontics</option>
+                            <option value="Endodontics">Endodontics</option>
+                            <option value="Prosthodontics">Prosthodontics</option>
+                            <option value="Radiology">Radiology</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reason for Referral</label>
+                        <textarea name="Reason" class="form-control" rows="2" placeholder="e.g. Wisdom tooth extraction..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Discharge Form -->
+                <div id="form-Discharge" class="order-form" style="display:none;">
+                    <div class="form-group">
+                        <label class="form-label">Discharge Reason *</label>
+                        <select name="DischargeReason" class="form-control">
+                            <option value="Treatment Completed">Treatment Completed</option>
+                            <option value="Patient Request">Patient Request</option>
+                            <option value="Referral">Referral</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">After Care Instructions</label>
+                        <textarea name="AfterCareInstructions" class="form-control" rows="2" placeholder="Instructions for patient..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Follow Up Plan</label>
+                        <textarea name="FollowUpPlan" class="form-control" rows="2" placeholder="Next steps..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Consent Form -->
+                <div id="form-Consent" class="order-form" style="display:none;">
+                    <div class="form-group">
+                        <label class="form-label">Consent Type *</label>
+                        <select name="ConsentType" class="form-control">
+                            <option value="Generic treatment consent">Generic treatment consent</option>
+                            <option value="Surgical consent">Surgical consent</option>
+                            <option value="Anesthesia consent">Anesthesia consent</option>
+                            <option value="Photography consent">Photography consent</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea name="Description" class="form-control" rows="3" placeholder="Additional details..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Notes (مشترك) -->
+                <div class="form-group">
+                    <label class="form-label">General Notes</label>
+                    <input name="Notes" class="form-control" placeholder="Optional notes..." />
+                </div>
+
+                <button type="submit" class="btn-continue">✅ Create Order</button>
+                <button type="button" class="btn-cancel-modal" onclick="backToStep1()">← Back</button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let selectedType = '';
+
+    function openModal() {
+        document.getElementById('orderModal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('orderModal').classList.remove('active');
+        selectedType = '';
+        document.querySelectorAll('.order-type-btn').forEach(b => b.classList.remove('selected'));
+        document.getElementById('step1').classList.add('active');
+        document.getElementById('step2').classList.remove('active');
+    }
+
+    function selectType(type, btn) {
+        selectedType = type;
+        document.querySelectorAll('.order-type-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+    }
+
+    function goToStep2() {
+        if (!selectedType) { alert('Please select an order type!'); return; }
+
+        document.querySelectorAll('.order-form').forEach(f => f.style.display = 'none');
+        document.getElementById(`form-${selectedType}`).style.display = 'block';
+        document.getElementById('hiddenOrderType').value = selectedType;
+        document.getElementById('formTitle').textContent = `New ${selectedType} Order`;
+
+        document.getElementById('step1').classList.remove('active');
+        document.getElementById('step2').classList.add('active');
+    }
+
+    function backToStep1() {
+        document.getElementById('step2').classList.remove('active');
+        document.getElementById('step1').classList.add('active');
+    }
+
+    window.onclick = function(e) {
+        if (e.target === document.getElementById('orderModal')) closeModal();
+    }
+</script>

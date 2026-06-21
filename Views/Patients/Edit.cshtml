@@ -1,0 +1,534 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Patient
+
+@{
+    ViewData["Title"] = "Edit Patient";
+    bool hasPhoto = !string.IsNullOrEmpty(Model.ProfilePhotoPath);
+}
+
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="~/css/all.min.css" />
+<link rel="stylesheet" href="~/css/RTE.css" />
+
+<style>
+    .edit-wrapper {
+        padding: 30px 20px;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .edit-card {
+        border: 1.5px solid #252468;
+        background: #fff;
+        padding: 30px 40px;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 14px;
+        align-items: flex-start;
+    }
+
+    .form-col {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .form-col label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #252468;
+            white-space: nowrap;
+            min-width: 120px;
+        }
+
+            .form-col label.required::before {
+                content: '* ';
+                color: #252468;
+            }
+
+        .form-col input,
+        .form-col select {
+            flex: 1;
+            border: 1px solid #ccc;
+            border-radius: 0;
+            padding: 6px 10px;
+            font-size: 13px;
+            outline: none;
+            height: 34px;
+        }
+
+            .form-col input:focus,
+            .form-col select:focus {
+                border-color: #252468;
+                box-shadow: 0 0 0 2px rgba(37,36,104,0.08);
+            }
+
+    .radio-group {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        flex: 1;
+    }
+
+        .radio-group label {
+            font-size: 13px;
+            color: #252468;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            min-width: unset;
+            cursor: pointer;
+        }
+
+        .radio-group input[type="radio"] {
+            width: 15px;
+            height: 15px;
+            flex: unset;
+            cursor: pointer;
+        }
+
+    .form-divider {
+        border: none;
+        border-top: 1px solid #e0e0e0;
+        margin: 16px 0;
+    }
+
+    .btn-save {
+        display: block;
+        width: 55%;
+        margin: 24px auto 0 auto;
+        background: #daa328;
+        color: white;
+        border: none;
+        padding: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        cursor: pointer;
+        text-align: center;
+    }
+
+        .btn-save:hover {
+            background: #c49020;
+        }
+
+    .validation-msg {
+        color: #c0392b;
+        font-size: 11px;
+        margin-top: 2px;
+    }
+
+    /* ===== Photo Section ===== */
+    .photo-section {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 16px 20px;
+        margin-bottom: 16px;
+        background: #fafafa;
+    }
+
+    .photo-section-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #252468;
+        margin-bottom: 14px;
+    }
+
+    .photo-preview-wrap {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .photo-circle {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 2px dashed #ccc;
+        flex-shrink: 0;
+        background: #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .photo-circle.has-photo {
+            border: 2px solid #252468;
+        }
+
+        .photo-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .photo-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .btn-upload-photo {
+        background: #252468;
+        color: #fff;
+        border: none;
+        padding: 7px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .btn-upload-photo:hover {
+            background: #1a1a50;
+        }
+
+    .btn-remove-photo {
+        background: none;
+        color: #c0392b;
+        border: 1px solid #c0392b;
+        padding: 6px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .btn-remove-photo:hover {
+            background: #fdecea;
+        }
+
+    .photo-hint {
+        font-size: 11px;
+        color: #888;
+        margin: 0;
+    }
+</style>
+
+<div class="edit-wrapper">
+    <div class="lineleft"></div>
+    <h1 class="sectiontitle heading6"></h1>
+    <div>
+        <section id="title-wrapper" style="justify-content:End;">
+            <div class="lineleft"></div>
+            <h1 class="sectiontitle heading6">
+                <p style="text-align:center;"><span style="color:#252468;">EDIT PATIENT</span></p>
+            </h1>
+            <div class="lineright" style="display:block; background-color:#daa328;"></div>
+        </section>
+    </div>
+    <br />
+
+    <div class="edit-card">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+
+            <div asp-validation-summary="All" class="text-danger" style="font-size:13px; margin-bottom:14px;"></div>
+            <input type="hidden" asp-for="PatientID" />
+            <input type="hidden" asp-for="ProfilePhotoPath" id="currentPhotoPath" />
+            <input type="hidden" name="RemovePhoto" id="removePhotoInput" value="false" />
+
+            @* ===== Personal Info ===== *@
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="required">First Name</label>
+                    <input asp-for="FirstName" />
+                    <span asp-validation-for="FirstName" class="validation-msg"></span>
+                </div>
+                <div class="form-col">
+                    <label class="required">Second Name</label>
+                    <input asp-for="SecondName" />
+                    <span asp-validation-for="SecondName" class="validation-msg"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="required">Third Name</label>
+                    <input asp-for="ThirdName" />
+                    <span asp-validation-for="ThirdName" class="validation-msg"></span>
+                </div>
+                <div class="form-col">
+                    <label class="required">Family Name</label>
+                    <input asp-for="FourthName" />
+                    <span asp-validation-for="FourthName" class="validation-msg"></span>
+                </div>
+            </div>
+
+            <hr class="form-divider" />
+            <br />
+
+            @* ===== Identity & Contact ===== *@
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="required">Nationality</label>
+                    <div class="radio-group">
+                        <label><input type="radio" asp-for="Nationality" value="1" /> Jordanian</label>
+                        <label><input type="radio" asp-for="Nationality" value="2" /> Not Jordanian</label>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <label id="idLabel" class="required">National ID</label>
+                    <input asp-for="NationalID_PassportNumber" id="idInput" />
+                    <span asp-validation-for="NationalID_PassportNumber" class="validation-msg"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="required">Gender</label>
+                    <div class="radio-group">
+                        <label><input type="radio" asp-for="Gender" value="Male" /> Male</label>
+                        <label><input type="radio" asp-for="Gender" value="Female" /> Female</label>
+                    </div>
+                </div>
+                <div class="form-col">
+                    <label class="required">Date of Birth</label>
+                    <input asp-for="DateOfBirth" type="date" />
+                    <span asp-validation-for="DateOfBirth" class="validation-msg"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="required">Phone Number</label>
+                    <input asp-for="PhoneNumber" />
+                    <span asp-validation-for="PhoneNumber" class="validation-msg"></span>
+                </div>
+                <div class="form-col">
+                    <label>Address</label>
+                    <input asp-for="Address" />
+                </div>
+            </div>
+
+            <hr class="form-divider" />
+            <br />
+
+            @* ===== Guardian Info ===== *@
+            @if (!string.IsNullOrEmpty(Model.FatherName) || !string.IsNullOrEmpty(Model.FatherPhone))
+            {
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Father Name</label>
+                        <input asp-for="FatherName" />
+                    </div>
+                    <div class="form-col">
+                        <label>Phone Number</label>
+                        <input asp-for="FatherPhone" />
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.MotherName) || !string.IsNullOrEmpty(Model.MotherPhone))
+            {
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Mother Name</label>
+                        <input asp-for="MotherName" />
+                    </div>
+                    <div class="form-col">
+                        <label>Phone Number</label>
+                        <input asp-for="MotherPhone" />
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.FatherName) || !string.IsNullOrEmpty(Model.FatherPhone) ||
+                 !string.IsNullOrEmpty(Model.MotherName) || !string.IsNullOrEmpty(Model.MotherPhone))
+            {
+                <hr class="form-divider" />
+                <br />
+            }
+
+            @* ===== Appointment ===== *@
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="required">Date of Appointment</label>
+                    <input asp-for="AppointmentDate" type="date" />
+                    <span asp-validation-for="AppointmentDate" class="validation-msg"></span>
+                </div>
+                <div class="form-col">
+                    <label class="required">Time</label>
+                    <div class="radio-group">
+                        <label><input type="radio" asp-for="AppointmentTime" value="AM" /> AM</label>
+                        <label><input type="radio" asp-for="AppointmentTime" value="PM" /> PM</label>
+                    </div>
+                    <span asp-validation-for="AppointmentTime" class="validation-msg"></span>
+                </div>
+            </div>
+
+            <hr class="form-divider" />
+            <br />
+
+            @* ===== Profile Photo — دايماً موجود ===== *@
+            <div class="photo-section">
+                <div class="photo-section-title">
+                    <i class="fa-solid fa-camera me-1"></i> Profile Photo
+                </div>
+                <div class="photo-preview-wrap">
+
+                    <!-- دائرة الصورة -->
+                    <div class="photo-circle @(hasPhoto ? "has-photo" : "")" id="photoCircle">
+                        @if (hasPhoto)
+                        {
+                            <img src="@Model.ProfilePhotoPath" id="photoPreviewImg" alt="Patient Photo" />
+                        }
+                        else
+                        {
+                            <!-- أيقونة افتراضية لما ما في صورة -->
+                            <i class="fa-solid fa-user" id="photoPlaceholderIcon"
+                               style="font-size:36px; color:#ccc;"></i>
+                        }
+                    </div>
+
+                    <!-- الأزرار -->
+                    <div class="photo-actions">
+
+                        <!-- زر الرفع — دايماً موجود -->
+                        <label for="ProfilePhotoFile" class="btn-upload-photo">
+                            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                            <span id="uploadBtnText">@(hasPhoto ? "Change Photo" : "Upload Photo")</span>
+                        </label>
+                        <input type="file" id="ProfilePhotoFile" name="ProfilePhotoFile"
+                               accept="image/jpeg,image/png,image/jpg" class="d-none" />
+
+                        <!-- زر الحذف — يظهر فقط إذا في صورة -->
+                        <button type="button" class="btn-remove-photo @(hasPhoto ? "" : "d-none")"
+                                id="removePhotoBtn">
+                            <i class="fa-solid fa-trash"></i> Remove Photo
+                        </button>
+
+                        <p class="photo-hint">JPG or PNG — max 2MB</p>
+                        <span id="photoError" class="text-danger" style="font-size:12px;"></span>
+                    </div>
+
+                </div>
+            </div>
+
+            <button type="submit" class="btn-save">Save</button>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // ===== Nationality Label =====
+        document.addEventListener("DOMContentLoaded", function () {
+            const radios  = document.querySelectorAll('input[name="Nationality"]');
+            const idInput = document.getElementById('idInput');
+            const idLabel = document.getElementById('idLabel');
+
+            function updateIDField(isUserChange = false) {
+                const selected = document.querySelector('input[name="Nationality"]:checked');
+                if (!selected) return;
+                if (isUserChange) idInput.value = "";
+                idLabel.innerText   = selected.value === "1" ? "National ID *"      : "Passport Number *";
+                idInput.placeholder = selected.value === "1" ? "Enter National ID"  : "Enter Passport Number";
+            }
+
+            radios.forEach(r => r.addEventListener('change', () => updateIDField(true)));
+            updateIDField(false);
+        });
+
+        // ===== Photo Preview & Validation =====
+        document.getElementById('ProfilePhotoFile').addEventListener('change', function () {
+            const file        = this.files[0];
+            const photoError  = document.getElementById('photoError');
+            const circle      = document.getElementById('photoCircle');
+            const removeBtn   = document.getElementById('removePhotoBtn');
+            const uploadText  = document.getElementById('uploadBtnText');
+
+            photoError.innerText = '';
+
+            if (!file) return;
+
+            // تحقق الحجم
+            if (file.size > 2 * 1024 * 1024) {
+                photoError.innerText = '⚠️ Image size must be less than 2MB.';
+                this.value = '';
+                return;
+            }
+
+            // تحقق النوع
+            const allowed = ['image/jpeg', 'image/png', 'image/jpg'];
+            if (!allowed.includes(file.type)) {
+                photoError.innerText = '⚠️ Only JPG or PNG files are supported.';
+                this.value = '';
+                return;
+            }
+
+            // أظهر البريفيو
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                // إذا ما في img موجود، أنشئه
+                let img = document.getElementById('photoPreviewImg');
+                if (!img) {
+                    img = document.createElement('img');
+                    img.id = 'photoPreviewImg';
+                    img.style.cssText = 'width:100%; height:100%; object-fit:cover;';
+
+                    // أزل أيقونة الـ placeholder لو موجودة
+                    const icon = document.getElementById('photoPlaceholderIcon');
+                    if (icon) icon.remove();
+
+                    circle.appendChild(img);
+                    circle.classList.add('has-photo');
+                }
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            // أظهر زر الحذف وغير نص الزر
+            removeBtn.classList.remove('d-none');
+            uploadText.innerText = 'Change Photo';
+
+            // تأكد إن RemovePhoto = false
+            document.getElementById('removePhotoInput').value = 'false';
+        });
+
+        // ===== Remove Photo =====
+        document.getElementById('removePhotoBtn').addEventListener('click', function () {
+            if (!confirm('Are you sure you want to remove the profile photo?')) return;
+
+            // أعلم الـ Controller بالحذف
+            document.getElementById('removePhotoInput').value  = 'true';
+            document.getElementById('currentPhotoPath').value  = '';
+
+            // أزل الصورة من الـ preview وأرجع الـ placeholder
+            const img = document.getElementById('photoPreviewImg');
+            if (img) img.remove();
+
+            const circle = document.getElementById('photoCircle');
+            circle.classList.remove('has-photo');
+
+            // أضف أيقونة الـ placeholder
+            if (!document.getElementById('photoPlaceholderIcon')) {
+                const icon    = document.createElement('i');
+                icon.id        = 'photoPlaceholderIcon';
+                icon.className = 'fa-solid fa-user';
+                icon.style.cssText = 'font-size:36px; color:#ccc;';
+                circle.appendChild(icon);
+            }
+
+            // أخفي زر الحذف وغير نص الرفع
+            this.classList.add('d-none');
+            document.getElementById('uploadBtnText').innerText = 'Upload Photo';
+
+            // reset الـ file input عشان يقدر يرفع صورة جديدة
+            const fileInput = document.getElementById('ProfilePhotoFile');
+            fileInput.value = '';
+        });
+    </script>
+}

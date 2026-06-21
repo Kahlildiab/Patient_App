@@ -1,0 +1,99 @@
+﻿@using DentalCollegeManagementSystem_AAU.Models.ViewModels
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = null;
+}
+
+<link rel="stylesheet" href="~/css/RTE.css" />
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="~/css/all.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" />
+
+<div class="containerfull">
+
+    <div class="row" style="margin-top:5%">
+        <div class="col-lg-12 d-flex align-items-center" style="justify-content:center;">
+            <img src="https://www.ammanu.edu.jo/media/1bgdv5he/aau-logo.png" class="loginlogo" style="width:80px; margin-right:10px;">
+            <div>
+                <p class="heading12" style="margin:0; font-weight:bold;">Al-Ahliyya Amman</p>
+                <p class="heading12" style="margin:0; font-weight:bold;">University</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="rowspacing"></div>
+
+    <div class="row">
+        <div class="col-lg-12 d-flex align-items-center" style="justify-content:center;">
+            <p class="heading8" style="margin:0; font-weight:bold; color:#3f8cca;">Dental College Management System</p>
+        </div>
+    </div>
+
+    <div class="rowspacing"></div>
+
+    <div class="row">
+        <div class="col-lg-12" style="background-color:#264C9F; height:4vh;"></div>
+        <div class="col-lg-12" style="background-color:#252468; height:8vh;"></div>
+    </div>
+
+    <div class="login-container">
+        <div class="login-box">
+            <h2 class="heading13">Sign In</h2>
+
+            <form asp-controller="Account" asp-action="Login" method="post">
+                @Html.AntiForgeryToken()
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div style="background:#fff5f5;border-left:3px solid #c0392b;padding:10px 14px;margin-bottom:16px;color:#c0392b;font-size:0.85rem;">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <div>@error.ErrorMessage</div>
+                        }
+                    </div>
+                }
+
+                <div class="row">
+                    <div class="col-lg-12" style="margin-top:30px;">
+
+                        <input asp-for="Username" type="text" class="form-control" placeholder="Enter your username" />
+                        <span asp-validation-for="Username" class="form-text text-danger"></span>
+
+                        <div class="rowspacing"></div>
+
+                        <input asp-for="Password" type="password" class="form-control" placeholder="Enter your password" />
+                        <span asp-validation-for="Password" class="form-text text-danger"></span>
+
+                        <div class="partspacing"></div>
+
+                        <div class="btnwrap" style="padding-top:22px; padding-bottom:16px;">
+                            <button type="submit" class="mybtn heading13"
+                                    style="background-color:#DAA328; border-radius:0px 10px 10px; width:100%; border:none;">
+                                Sign In
+                                <span class="line" style="border-left:6px solid #252468; border-top:6px solid #252468; left:-4px; top:-4px; border-bottom:none; border-right:none;"></span>
+                                <span class="areaborder" style="border:0px;"></span>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="container-fluid padding margin">
+    <div class="row">
+        <div class="col-lg-12">
+            <a href="https://www.ammanu.edu.jo/hec/" target="_blank" class="heading17"
+               style="text-align:center; display:block;">
+                Copyright © HEC - Al-Ahliyya Amman University
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>

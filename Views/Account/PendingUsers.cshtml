@@ -1,0 +1,75 @@
+﻿@model IEnumerable<DentalCollegeManagementSystem_AAU.Models.User>
+@{
+    ViewData["Title"] = "Pending Users";
+}
+<link rel="stylesheet" href="~/css/Site.css" />
+
+<div style="padding:30px;">
+    <h2 class="heading12" style="color:#252468;">⏳ Pending User Approvals</h2>
+    <hr />
+
+    @if (TempData["Success"] != null)
+    {
+        <div style="background:#f0fff4;border-left:3px solid #27ae60;padding:10px;margin-bottom:16px;color:#27ae60;">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div style="background:#f0f4ff;padding:20px;color:#252468;border-left:3px solid #252468;">
+            ✅ No pending users at the moment.
+        </div>
+    }
+    else
+    {
+        <table class="table table-bordered table-hover">
+            <thead style="background:#252468;color:#fff;">
+                <tr>
+                    <th>#</th>
+                    <th>Full Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Registered</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    <tr>
+                        <td>@user.UserID</td>
+                        <td>@user.FullName</td>
+                        <td>@user.Username</td>
+                        <td>@user.Email</td>
+                        <td>@user.PhoneNumber</td>
+                        <td>@user.CreatedDate.ToString("dd/MM/yyyy")</td>
+                        <td style="display:flex;gap:8px;">
+
+                            <form asp-action="ApproveUser" asp-controller="Account" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@user.UserID" />
+                                <button type="submit" class="btn btn-sm"
+                                        style="background:#27ae60;color:#fff;">
+                                    ✅ Approve
+                                </button>
+                            </form>
+
+                            <form asp-action="RejectUser" asp-controller="Account" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@user.UserID" />
+                                <button type="submit" class="btn btn-sm"
+                                        style="background:#c0392b;color:#fff;"
+                                        onclick="return confirm('Reject this user?')">
+                                    ❌ Reject
+                                </button>
+                            </form>
+
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

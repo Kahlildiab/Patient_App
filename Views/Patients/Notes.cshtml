@@ -1,0 +1,285 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Patient
+@using DentalCollegeManagementSystem_AAU.Models
+
+@{
+    var notes = ViewBag.Notes as List<DentalCollegeManagementSystem_AAU.Models.Note>
+                ?? new List<DentalCollegeManagementSystem_AAU.Models.Note>();
+}
+
+<style>
+    :root {
+        --vt-navy:       #1a237e;
+        --vt-navy-mid:   #283593;
+        --vt-blue:       #1565c0;
+        --vt-border:     #d0d7e3;
+        --vt-label:      #78909c;
+        --vt-success:    #2e7d32;
+        --vt-success-bg: #e8f5e9;
+    }
+
+    .vt-add-btn {
+        background: var(--vt-navy);
+        color: #fff;
+        border: none;
+        border-radius: 0;
+        padding: 10px 28px;
+        font-size: .95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .15s;
+    }
+    .vt-add-btn:hover { background: var(--vt-navy-mid); }
+
+    .vt-section {
+        background: #fff;
+        border: 1.5px solid var(--vt-border);
+        border-radius: 10px;
+        padding: 22px 24px 18px;
+        margin-bottom: 20px;
+    }
+
+    .vt-label {
+        font-size: .82rem;
+        color: var(--vt-label);
+        font-weight: 500;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .vt-input {
+        width: 100%;
+        border: 1px solid var(--vt-border);
+        border-radius: 6px;
+        padding: 9px 13px;
+        font-size: .88rem;
+        color: #333;
+        outline: none;
+        box-sizing: border-box;
+        transition: border-color .2s;
+        background: #fff;
+    }
+    .vt-input:focus { border-color: var(--vt-navy); }
+
+    .vt-textarea {
+        width: 100%;
+        border: 1px solid var(--vt-border);
+        border-radius: 6px;
+        padding: 9px 13px;
+        font-size: .88rem;
+        color: #333;
+        outline: none;
+        box-sizing: border-box;
+        resize: vertical;
+        min-height: 80px;
+        transition: border-color .2s;
+        background: #fff;
+    }
+    .vt-textarea:focus { border-color: var(--vt-navy); }
+
+    .vt-cancel-btn {
+        background: #fff;
+        color: #555;
+        border: 1px solid var(--vt-border);
+        border-radius: 6px;
+        padding: 9px 20px;
+        font-size: .88rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: border-color .15s;
+    }
+    .vt-cancel-btn:hover { border-color: #e53935; color: #e53935; }
+
+    .vt-past-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .vt-past-date {
+        font-size: .88rem;
+        font-weight: 700;
+        color: var(--vt-navy);
+    }
+
+    .vt-plabel { font-size: .78rem; color: var(--vt-label); }
+    .vt-pval   { font-size: .85rem; font-weight: 600; color: var(--vt-navy-mid); }
+
+    .vt-action-bar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid var(--vt-border);
+        flex-wrap: wrap;
+    }
+
+    .vt-del-btn {
+        background: #fff;
+        border: 0px;
+        color: #e53935;
+        font-size: .78rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 14px;
+        border-radius: 6px;
+        transition: background .15s, color .15s;
+    }
+    .vt-del-btn:hover { background: #ffebee; color: #c62828; }
+
+    .note-type-badge {
+        display: inline-block;
+        padding: 2px 12px;
+        border-radius: 20px;
+        font-size: .75rem;
+        font-weight: 700;
+    }
+    .badge-clinical   { background: #e8eaf6; color: #1a237e; }
+    .badge-followup   { background: #e8f5e9; color: #2e7d32; }
+    .badge-general    { background: #fff8e1; color: #e65100; }
+
+    .vt-modal-save-btn {
+        background: #daa328;
+        color: #fff;
+        border: none;
+        border-radius: 0px 8px 8px;
+        padding: 9px 28px;
+        font-size: .88rem;
+        font-weight: 700;
+        cursor: pointer;
+        position: relative;
+        transition: background .15s;
+    }
+    .vt-modal-save-btn:hover { background: #b8891e; }
+    .vt-modal-save-btn::after {
+        content: '';
+        position: absolute;
+        border-right: 4px solid #252468;
+        border-bottom: 4px solid #252468;
+        right: -3px; bottom: -3px;
+        width: 8px; height: 8px;
+    }
+</style>
+
+<div class="vt-container">
+
+    <!-- Add Note Button -->
+    <div class="d-flex justify-content-end mb-3">
+        <button class="vt-add-btn"
+                data-bs-toggle="modal"
+                data-bs-target="#addNoteModal">
+            + Add Note
+        </button>
+    </div>
+
+    <!-- Notes List -->
+    @if (!notes.Any())
+    {
+        <div class="vt-section">
+            <p style="color:var(--vt-label); font-size:.85rem; margin:0;">No notes recorded yet.</p>
+        </div>
+    }
+    else
+    {
+        foreach (var note in notes)
+        {
+            <div class="vt-section">
+
+                <!-- Header -->
+                <div class="vt-past-header">
+                    <span class="vt-past-date">
+                        📝 @note.CreatedAt.ToString("dd / MM / yyyy  HH:mm")
+                    </span>
+                    <div class="d-flex align-items-center gap-2">
+                        @{
+                            string badgeClass = note.NoteType switch
+                            {
+                                "Clinical"  => "badge-clinical",
+                                "Follow-up" => "badge-followup",
+                                _           => "badge-general"
+                            };
+                        }
+                        <span class="note-type-badge @badgeClass">@note.NoteType</span>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="mb-2">
+                    <span class="vt-plabel">Note: </span>
+                    <span class="vt-pval">@note.Content</span>
+                </div>
+                <div>
+                    <span class="vt-plabel">By: </span>
+                    <span class="vt-pval">@note.CreatedBy</span>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="vt-action-bar">
+                    <form asp-controller="Note" asp-action="Delete" method="post" class="m-0 p-0 d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="noteId"    value="@note.Id" />
+                        <input type="hidden" name="patientId" value="@Model.PatientID" />
+                        <button type="submit" class="vt-del-btn"
+                                onclick="return confirm('Delete this note?')">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6l-1 14H6L5 6"/>
+                                <path d="M10 11v6M14 11v6"/>
+                                <path d="M9 6V4h6v2"/>
+                            </svg>
+                            Delete
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        }
+    }
+</div>
+
+<!-- ADD NOTE MODAL -->
+<div class="modal fade" id="addNoteModal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" style="color:#1a237e;">Add New Note</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-controller="Note" asp-action="AddNote" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="PatientId" value="@Model.PatientID" />
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label class="vt-label">Note Type</label>
+                        <select name="NoteType" class="vt-input">
+                            <option value="Clinical">Clinical</option>
+                            <option value="Follow-up">Follow-up</option>
+                            <option value="General">General</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="vt-label">Note Content</label>
+                        <textarea name="Content" class="vt-textarea"
+                                  placeholder="Write your note here..." required></textarea>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="vt-cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="vt-modal-save-btn">Save Note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

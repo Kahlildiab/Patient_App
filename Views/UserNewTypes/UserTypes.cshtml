@@ -1,0 +1,54 @@
+﻿@model List<DentalCollegeManagementSystem_AAU.Models.UserType>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2 class="text-center mt-4" style="color:#252468;font-weight:700;">USER TYPE <span style="border-bottom:3px solid #daa328;display:inline-block;width:200px;"></span></h2>
+
+<div class="container mt-4" style="border:2px solid #daa328;border-radius:8px;padding:30px;">
+    <form method="post">
+        @Html.AntiForgeryToken()
+        <div class="row">
+            <div class="col-md-2 fw-bold">* Name En:</div>
+            <div class="col-md-4"><input name="NameEn" class="form-control" required /></div>
+            <div class="col-md-2 fw-bold">* Name Ar:</div>
+            <div class="col-md-4"><input name="NameAr" class="form-control" required /></div>
+        </div>
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-lg px-5" style="background:#c0006a;color:#fff;border-radius:4px;">Save</button>
+        </div>
+    </form>
+</div>
+
+<h2 class="text-center mt-5" style="color:#252468;font-weight:700;">USER TYPES <span style="border-bottom:3px solid #daa328;display:inline-block;width:200px;"></span></h2>
+
+<div class="container mt-3">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name (EN)</th>
+                <th>Name (AR)</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in Model)
+            {
+                <tr>
+                    <td>@t.Id</td>
+                    <td>@t.NameEn</td>
+                    <td>@t.NameAr</td>
+                    <td>@t.Status</td>
+                    <td>
+                        <form method="post" asp-action="Delete" asp-controller="UserNewTypes" asp-route-id="@t.Id" style="display:inline">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-sm btn-danger">🗑</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

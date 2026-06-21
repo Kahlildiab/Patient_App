@@ -1,0 +1,239 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Appointment
+
+@{
+    ViewData["Title"] = "Edit Appointment";
+}
+<link rel="stylesheet" href="~/css/RTE.css" />
+
+<style>
+    .form-section {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        padding: 30px 40px;
+        max-width: 860px;
+        margin: 0 auto;
+    }
+
+    .field-row {
+        display: flex;
+        gap: 40px;
+        margin-bottom: 20px;
+    }
+
+    .field-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+        .field-group label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #252468;
+        }
+
+            .field-group label.required::before {
+                content: '* ';
+                color: #252468;
+            }
+
+        .field-group input,
+        .field-group select {
+            border: 1px solid #ccc;
+            padding: 7px 10px;
+            font-size: 13px;
+            height: 36px;
+            border-radius: 0;
+            width: 100%;
+        }
+
+            .field-group input:focus,
+            .field-group select:focus {
+                outline: none;
+                border-color: #252468;
+                box-shadow: 0 0 0 2px rgba(37,36,104,0.08);
+            }
+
+    .radio-group {
+        display: flex;
+        gap: 24px;
+        margin-top: 4px;
+    }
+
+    .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #252468;
+        cursor: pointer;
+    }
+
+    input[type="radio"] {
+        accent-color: #252468;
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
+    }
+
+    .btn-save {
+        display: block;
+        width: 55%;
+        margin: 28px auto 0;
+        background: #daa328;
+        color: white;
+        border: none;
+        padding: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+    }
+
+        .btn-save:hover {
+            background: #c49020;
+        }
+
+    .validation-msg {
+        color: #c0392b;
+        font-size: 11px;
+        margin-top: 2px;
+    }
+
+    .section-divider {
+        border: none;
+        border-top: 1px solid #e0e0e0;
+        margin: 20px 0;
+    }
+</style>
+
+<div style="padding: 30px 20px;">
+
+    <div style="max-width:860px; margin: 0 auto;">
+        <section id="title-wrapper" style="justify-content:End;">
+            <div class="lineleft"></div>
+            <h1 class="sectiontitle heading6">
+                <p style="text-align:center;"><span style="color:#252468;">EDIT APPOINTMENT</span></p>
+            </h1>
+            <div class="lineright" style="display:block; background-color:#daa328;"></div>
+        </section>
+    </div>
+    <br />
+
+    <div class="form-section">
+        <form asp-action="Edit">
+
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <input type="hidden" asp-for="AppointmentID" />
+            <input type="hidden" asp-for="PatientID" />
+            <input type="hidden" asp-for="CreatedDate" />
+
+            @* ── Names ── *@
+            <div class="field-row">
+                <div class="field-group">
+                    <label>First Name</label>
+                    <input type="text" name="Patient.FirstName" value="@Model.Patient?.FirstName" />
+                </div>
+                <div class="field-group">
+                    <label>Second Name</label>
+                    <input type="text" name="Patient.SecondName" value="@Model.Patient?.SecondName" />
+                </div>
+            </div>
+
+            <div class="field-row">
+                <div class="field-group">
+                    <label>Third Name</label>
+                    <input type="text" name="Patient.ThirdName" value="@Model.Patient?.ThirdName" />
+                </div>
+                <div class="field-group">
+                    <label>Family Name</label>
+                    <input type="text" name="Patient.FourthName" value="@Model.Patient?.FourthName" />
+                </div>
+            </div>
+
+            <hr class="section-divider" />
+
+            @* ── Clinic ── *@
+            <div class="field-row">
+                <div class="field-group">
+                    <label class="required">Clinic Name</label>
+                    <input asp-for="ClinicName" />
+                    <span asp-validation-for="ClinicName" class="validation-msg"></span>
+                </div>
+                <div class="field-group"></div>
+            </div>
+
+            <hr class="section-divider" />
+
+            @* ── Date & Day ── *@
+            <div class="field-row">
+                <div class="field-group">
+                    <label class="required">Appointment Date</label>
+                    <input asp-for="AppointmentDate" type="date" id="appointmentDate" />
+                    <span asp-validation-for="AppointmentDate" class="validation-msg"></span>
+                </div>
+                <div class="field-group">
+                    <label class="required">Day</label>
+                    <select asp-for="AppointmentDay" id="appointmentDay">
+                        <option value="">-- Select Day --</option>
+                        <option>Sunday</option>
+                        <option>Monday</option>
+                        <option>Tuesday</option>
+                        <option>Wednesday</option>
+                        <option>Thursday</option>
+                        <option>Friday</option>
+                        <option>Saturday</option>
+                    </select>
+                    <span asp-validation-for="AppointmentDay" class="validation-msg"></span>
+                </div>
+            </div>
+
+            <hr class="section-divider" />
+
+            @* ── Status ── *@
+            <div class="field-row">
+                <div class="field-group">
+                    <label class="required">Appointment Status</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" asp-for="AppointmentStatus" value="Scheduled" />
+                            Active
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" asp-for="AppointmentStatus" value="Cancelled" />
+                            Cancelled
+                        </label>
+                    </div>
+                    <span asp-validation-for="AppointmentStatus" class="validation-msg"></span>
+                </div>
+                <div class="field-group"></div>
+            </div>
+
+            <button type="submit" class="btn-save">Save</button>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        document.getElementById('appointmentDate').addEventListener('change', function () {
+            const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            const date = new Date(this.value);
+            const dayName = days[date.getDay()];
+            const daySelect = document.getElementById('appointmentDay');
+            for (let i = 0; i < daySelect.options.length; i++) {
+                if (daySelect.options[i].value === dayName) {
+                    daySelect.selectedIndex = i;
+                    break;
+                }
+            }
+        });
+    </script>
+}

@@ -1,0 +1,703 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Patient
+
+@{
+    var exam = ViewBag.ExtraoralExam as DentalCollegeManagementSystem_AAU.Models.ExtraoralExam;
+
+    var facialSymmetry = exam?.FacialSymmetry.ToString() ?? "NormalSymmetrical";
+    var skinColor = exam?.SkinColor.ToString() ?? "Normal";
+    var facialProfile = exam?.FacialProfile.ToString() ?? "Straight";
+    var examId = exam?.ExtraoralExamID ?? 0;
+    var savedPhotos = ViewBag.ExtraoralPhotos as List<DentalCollegeManagementSystem_AAU.Models.ExtraoralExamPhoto>
+                      ?? new List<DentalCollegeManagementSystem_AAU.Models.ExtraoralExamPhoto>();
+
+    var photoSections = new (string Key, string Label, string Icon)[]
+    {
+        ("right",         "Right Side",          "◀"),
+        ("frontal",       "Frontal Side",        "👤"),
+        ("left",          "Left Side",           "▶"),
+        ("right_smile",   "Right Side Smile",    "😊"),
+        ("frontal_smile", "Frontal Smile",  "😁"),
+        ("left_smile",    "Left Side Smile",     "😄"),
+        ("other",         "Other",               "📷"),
+    };
+}
+
+<style>
+    .ee-section {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 18px 22px;
+        margin-bottom: 14px;
+        background: #fff;
+    }
+
+    .ee-section-title {
+        font-weight: 700;
+        font-size: 13px;
+        color: #252468;
+        margin-bottom: 12px;
+    }
+
+    .ee-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .ee-select, .ee-textarea {
+        width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 9px 13px;
+        font-size: 13px;
+        box-sizing: border-box;
+        color: #333;
+        outline: none;
+        transition: border-color .2s;
+        background: #fff;
+    }
+
+        .ee-select:focus, .ee-textarea:focus {
+            border-color: #252468;
+        }
+
+    .ee-textarea {
+        resize: vertical;
+        min-height: 90px;
+    }
+
+    .photo-drop-zone {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 30px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color .2s, background .2s;
+        margin-top: 14px;
+    }
+
+        .photo-drop-zone:hover {
+            border-color: #252468;
+            background: #f8f8ff;
+        }
+
+        .photo-drop-zone.drag-over {
+            border-color: #252468;
+            background: #f0f0ff;
+        }
+
+        .photo-drop-zone svg {
+            width: 40px;
+            height: 40px;
+            stroke: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .photo-drop-zone p {
+            font-size: 13px;
+            color: #888;
+            margin: 0 0 10px;
+        }
+
+    .ee-photo-gallery {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 12px;
+        overflow-x: auto;
+        padding: 10px 4px 14px;
+        scrollbar-width: thin;
+        scrollbar-color: #252468 #f0f0f0;
+    }
+
+        .ee-photo-gallery::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .ee-photo-gallery::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 3px;
+        }
+
+        .ee-photo-gallery::-webkit-scrollbar-thumb {
+            background: #252468;
+            border-radius: 3px;
+        }
+
+    .ee-photo-item {
+        position: relative;
+        flex-shrink: 0;
+        width: 160px;
+        height: 160px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        overflow: hidden;
+        background: #fafafa;
+    }
+
+        .ee-photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .ee-photo-item .delete-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(192,57,43,0.85);
+            border: none;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+    .ee-photo-uploading {
+        flex-shrink: 0;
+        width: 160px;
+        height: 160px;
+        border-radius: 8px;
+        border: 1px dashed #aaa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #aaa;
+        font-size: 13px;
+        gap: 6px;
+        background: #fafafa;
+    }
+
+    .ee-photo-sections-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+        .ee-photo-sections-grid .ee-photo-section-card:nth-child(7) {
+            grid-column: 2;
+        }
+
+    .ee-photo-section-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 14px;
+        background: #fff;
+    }
+
+    .ee-photo-section-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .ee-photo-section-icon {
+        font-size: 16px;
+    }
+
+    .ee-photo-section-label {
+        font-weight: 700;
+        font-size: 13px;
+        color: #252468;
+        flex: 1;
+    }
+
+    .ee-photo-section-count {
+        font-size: 11px;
+        color: #888;
+        background: #f0f0f0;
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+
+    .dz-btn {
+        background: #252468;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        padding: 6px 16px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+        .dz-btn:hover {
+            background: #1a1a5e;
+        }
+</style>
+
+@using (Html.BeginForm("Save", "ExtraoralExams", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="PatientID" value="@Model.PatientID" />
+    @if (exam != null)
+    {
+        <input type="hidden" name="ExtraoralExamID" value="@exam.ExtraoralExamID" />
+    }
+
+    <div class="ee-section">
+        <div class="ee-section-title">Extraoral Examination Findings</div>
+
+        <div style="margin-bottom:16px;">
+            <label class="ee-label">Facial Symmetry</label>
+            <select name="FacialSymmetry" class="ee-select">
+                <option value="NormalSymmetrical" selected="@(facialSymmetry == "NormalSymmetrical" ? "selected" : null)">Normal/Symmetrical</option>
+                <option value="Asymmetric" selected="@(facialSymmetry == "Asymmetric" ? "selected" : null)">Asymmetric</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label class="ee-label">Skin Color</label>
+            <select name="SkinColor" class="ee-select">
+                <option value="Normal" selected="@(skinColor == "Normal" ? "selected" : null)">Normal</option>
+                <option value="Pale" selected="@(skinColor == "Pale" ? "selected" : null)">Pale</option>
+                <option value="Cyanotic" selected="@(skinColor == "Cyanotic" ? "selected" : null)">Cyanotic</option>
+                <option value="Jaundiced" selected="@(skinColor == "Jaundiced" ? "selected" : null)">Jaundiced</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label class="ee-label">Facial Profile</label>
+            <select name="FacialProfile" class="ee-select">
+                <option value="Straight" selected="@(facialProfile == "Straight" ? "selected" : null)">Straight</option>
+                <option value="Convex" selected="@(facialProfile == "Convex" ? "selected" : null)">Convex</option>
+                <option value="Concave" selected="@(facialProfile == "Concave" ? "selected" : null)">Concave</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label class="ee-label">TMJ Examination</label>
+            <textarea name="TMJExamination" class="ee-textarea" placeholder="TMJ findings...">@(exam?.TMJExamination ?? "")</textarea>
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label class="ee-label">Lymph Nodes Palpation</label>
+            <textarea name="LymphNodesPalpation" class="ee-textarea" placeholder="Palpable/not palpable...">@(exam?.LymphNodesPalpation ?? "")</textarea>
+        </div>
+
+        <div>
+            <label class="ee-label">Other Findings</label>
+            <textarea name="OtherFindings" class="ee-textarea" placeholder="Any other findings...">@(exam?.OtherFindings ?? "")</textarea>
+        </div>
+    </div>
+
+    <!-- ─── Photo Documentation ─── -->
+    <div class="ee-section">
+        <div class="ee-section-title">Photo Documentation</div>
+
+        <div class="ee-photo-sections-grid">
+
+            @foreach (var photoSec in photoSections)
+            {
+                var sectionPhotos = savedPhotos.Where(x => x.PhotoSection == photoSec.Key).ToList();
+
+                <div class="ee-photo-section-card" id="eeCard_@photoSec.Key">
+                    <div class="ee-photo-section-header">
+                        <span class="ee-photo-section-icon">@photoSec.Icon</span>
+                        <span class="ee-photo-section-label">@photoSec.Label</span>
+                        <span class="ee-photo-section-count" id="eeCount_@photoSec.Key">
+                            @sectionPhotos.Count photo@(sectionPhotos.Count != 1 ? "s" : "")
+                        </span>
+                    </div>
+
+                    <div class="ee-photo-gallery" id="eePhotoGallery_@photoSec.Key">
+                        @foreach (var p in sectionPhotos)
+                        {
+                            <div class="ee-photo-item" id="eeExamPhoto_@p.ExtraoralExamPhotoID">
+                                <img src="@p.PhotoPath" alt="@photoSec.Label" />
+                                <button type="button" class="delete-btn"
+                                        onclick="deleteEEPhoto(@p.ExtraoralExamPhotoID, '@photoSec.Key')"
+                                        title="Delete">
+                                    ✕
+                                </button>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="photo-drop-zone"
+                         id="eeDropZone_@photoSec.Key"
+                         onclick="document.getElementById('eePhotoInput_@photoSec.Key').click()">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <polyline points="17 8 12 3 7 8"
+                                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <line x1="12" y1="3" x2="12" y2="15"
+                                  stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                        <p>Upload @photoSec.Label</p>
+                        <button type="button" class="dz-btn">Choose File</button>
+                    </div>
+
+                    <input type="file"
+                           id="eePhotoInput_@photoSec.Key"
+                           accept="image/*"
+                           multiple
+                           style="display:none;"
+                           data-section="@photoSec.Key"
+                           onchange="uploadEEPhotos(this, '@photoSec.Key')" />
+                </div>
+            }
+
+        </div>
+    </div>
+
+    <div class="btnwrap" style="padding-bottom:50px; display:flex; justify-content:center;">
+        <button type="submit" class="mybtn heading13"
+                style="background-color:#DAA328; border-radius:0px 10px 10px; width:200px; border:none;">
+            Save
+            <span class="line" style="border-right:6px solid #252468; border-bottom:6px solid #252468; right:-4px; bottom:-4px; border-top:none; border-left:none;"></span>
+            <span class="areaborder" style="border:0px;"></span>
+        </button>
+    </div>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div id="success-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;">
+        <div style="background:white;border-radius:12px;padding:36px 40px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.25);max-width:360px;width:90%;">
+            <div style="font-size:52px;margin-bottom:12px;">✅</div>
+            <div style="font-weight:700;font-size:18px;color:#252468;margin-bottom:8px;">Saved Successfully!</div>
+            <div style="font-size:13px;color:#555;margin-bottom:24px;">The information has been saved successfully.</div>
+            <button onclick="document.getElementById('success-overlay').remove()"
+                    style="background:#daa328;color:white;border:none;padding:10px 36px;font-size:14px;font-weight:700;border-radius:0px 10px 10px;cursor:pointer;position:relative;">
+                OK
+                <span style="position:absolute;border-right:4px solid #252468;border-bottom:4px solid #252468;right:-3px;bottom:-3px;width:8px;height:8px;"></span>
+            </button>
+        </div>
+    </div>
+    <script>
+        setTimeout(() => {
+            const el = document.getElementById('success-overlay');
+            if (el) { el.style.transition='opacity 0.4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }
+        }, 4000);
+    </script>
+}
+
+<script>
+    const EE_FORM_KEY = 'extraoralExamForm_@Model.PatientID';
+
+    // ─── Session Storage ───────────────────────────────────────
+    function restoreEEFormData() {
+        const saved = sessionStorage.getItem(EE_FORM_KEY);
+        if (!saved) return;
+        JSON.parse(saved).forEach(({ name, value, type, checked }) => {
+            document.querySelectorAll(`form[action*="ExtraoralExams"] [name="${name}"]`).forEach(el => {
+                if (type === 'file') return;
+                if (type === 'radio')         { if (el.value === value) el.checked = true; }
+                else if (type === 'checkbox') { if (el.value === value) el.checked = checked; }
+                else el.value = value;
+            });
+        });
+    }
+
+    function saveEEFormData() {
+        const form = document.querySelector('form[action*="ExtraoralExams"]');
+        if (!form) return;
+        const data = [];
+        form.querySelectorAll('input, select, textarea').forEach(el => {
+            if (!el.name || el.type === 'file' ||
+                ['__RequestVerificationToken', 'PatientID', 'ExtraoralExamID'].includes(el.name)) return;
+            data.push({ name: el.name, value: el.value, type: el.type, checked: el.checked });
+        });
+        sessionStorage.setItem(EE_FORM_KEY, JSON.stringify(data));
+    }
+
+    // ─── DOM Ready ─────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        restoreEEFormData();
+
+        const form = document.querySelector('form[action*="ExtraoralExams"]');
+        if (!form) return;
+
+        form.addEventListener('change', saveEEFormData);
+        form.addEventListener('input',  saveEEFormData);
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            saveExtraoralExam(form);
+        });
+
+        document.querySelectorAll('[id^="eeDropZone_"]').forEach(zone => {
+            const sectionKey = zone.id.replace('eeDropZone_', '');
+
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+            zone.addEventListener('dragleave', () => { zone.classList.remove('drag-over'); });
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                const input = document.getElementById(`eePhotoInput_${sectionKey}`);
+                if (input && e.dataTransfer.files.length) {
+                    const dt = new DataTransfer();
+                    Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+                    input.files = dt.files;
+                    uploadEEPhotos(input, sectionKey);
+                }
+            });
+        });
+    });
+
+    // ─── Save Exam (AJAX) ──────────────────────────────────────
+    function saveExtraoralExam(form) {
+        const saveBtn = form.querySelector('button[type="submit"]');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+        fetch('/ExtraoralExams/SaveAjax', { method: 'POST', body: new FormData(form) })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    sessionStorage.removeItem(EE_FORM_KEY);
+                    showToast('Extraoral Exam saved successfully.', 'success');
+                    if (result.examId) {
+                        let h = form.querySelector('[name="ExtraoralExamID"]');
+                        if (!h) {
+                            h = document.createElement('input');
+                            h.type = 'hidden'; h.name = 'ExtraoralExamID';
+                            form.appendChild(h);
+                        }
+                        h.value = result.examId;
+                    }
+                } else {
+                    showToast(result.message || 'Error saving.', 'error');
+                }
+            })
+            .catch(() => showToast('Server error.', 'error'))
+            .finally(() => { saveBtn.disabled = false; saveBtn.innerHTML = 'Save'; });
+    }
+
+    // ─── Upload Photos (per section) ──────────────────────────
+    function uploadEEPhotos(input, sectionKey) {
+        if (!input.files || input.files.length === 0) return;
+
+        const token   = document.querySelector('form[action*="ExtraoralExams"] [name="__RequestVerificationToken"]')?.value ?? '';
+        const gallery = document.getElementById(`eePhotoGallery_${sectionKey}`);
+        if (!gallery) return;
+
+        Array.from(input.files).forEach(file => {
+            const spinnerId = `ee_spinner_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+            const spinnerEl = document.createElement('div');
+            spinnerEl.className = 'ee-photo-uploading';
+            spinnerEl.id = spinnerId;
+            spinnerEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Uploading...</span>`;
+            gallery.appendChild(spinnerEl);
+
+            const formData = new FormData();
+            formData.append('patientId',    '@Model.PatientID');
+            formData.append('photo',        file);
+            formData.append('photoSection', sectionKey);
+            formData.append('__RequestVerificationToken', token);
+
+            fetch('/ExtraoralExams/UploadPhotoAjax', { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(result => {
+                    document.getElementById(spinnerId)?.remove();
+
+                    if (result.success) {
+                        const form = document.querySelector('form[action*="ExtraoralExams"]');
+                        let h = form.querySelector('[name="ExtraoralExamID"]');
+                        if (!h) {
+                            h = document.createElement('input');
+                            h.type = 'hidden'; h.name = 'ExtraoralExamID';
+                            form.appendChild(h);
+                        }
+                        h.value = result.examId;
+
+                        // أضف الصورة في هذا التاب
+                        const item = document.createElement('div');
+                        item.className = 'ee-photo-item';
+                        item.id = `eeExamPhoto_${result.photoId}`;
+                        item.innerHTML = `
+                            <img src="${result.photoPath}" alt="${sectionKey}" />
+                            <button type="button" class="delete-btn"
+                                    onclick="deleteEEPhoto(${result.photoId}, '${sectionKey}')"
+                                    title="Delete">✕</button>`;
+                        gallery.appendChild(item);
+                        item.scrollIntoView({ behavior: 'smooth', inline: 'end' });
+
+                        updateEESectionCount(sectionKey);
+
+                        // ✅ مزامنة مع تاب Photos
+                        syncPhotoToPhotosTab('ee', sectionKey, result.photoPath, result.photoId);
+
+                        showToast('Photo uploaded.', 'success');
+                    } else {
+                        showToast('Failed to upload: ' + file.name, 'error');
+                    }
+                })
+                .catch(() => {
+                    document.getElementById(spinnerId)?.remove();
+                    showToast('Server error uploading: ' + file.name, 'error');
+                });
+        });
+
+        input.value = ''; // reset
+    }
+
+    // ─── Delete Photo ──────────────────────────────────────────
+    function deleteEEPhoto(photoId, sectionKey) {
+        if (!confirm('Delete this photo?')) return;
+
+        const token = document.querySelector('form[action*="ExtraoralExams"] [name="__RequestVerificationToken"]')?.value ?? '';
+
+        fetch('/ExtraoralExams/DeletePhoto', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `photoId=${photoId}&__RequestVerificationToken=${encodeURIComponent(token)}`
+        })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    document.getElementById(`eeExamPhoto_${photoId}`)?.remove();
+                    updateEESectionCount(sectionKey);
+
+                    // ✅ احذف من تاب Photos
+                    removePhotoFromPhotosTab('ee', photoId);
+
+                    showToast('Photo deleted.', 'success');
+                } else {
+                    showToast('Error deleting.', 'error');
+                }
+            })
+            .catch(() => showToast('Server error.', 'error'));
+    }
+
+    function updateEESectionCount(sectionKey) {
+        const gallery    = document.getElementById(`eePhotoGallery_${sectionKey}`);
+        const countBadge = document.getElementById(`eeCount_${sectionKey}`);
+        if (!gallery || !countBadge) return;
+        const count = gallery.querySelectorAll('.ee-photo-item').length;
+        countBadge.textContent = `${count} photo${count !== 1 ? 's' : ''}`;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // ✅ مزامنة مع تاب Photos — يستهدف ph_extraoralGallery مباشرة
+    // ══════════════════════════════════════════════════════════
+    function syncPhotoToPhotosTab(prefix, sectionKey, photoPath, photoId) {
+
+        const map = {
+            galleryId  : { ee: 'ph_extraoralGallery', ie: 'ph_intraoralGallery' },
+            emptyId    : { ee: 'ph_extraoralEmpty',   ie: 'ph_intraoralEmpty'   },
+            wrapperId  : { ee: 'ph_extraoralWrapper',  ie: 'ph_intraoralWrapper' },
+            sourceLabel: { ee: 'Extraoral Exam',       ie: 'Intraoral Exam'      }
+        };
+
+        // ✅ تحقق من الـ wrapper أولاً
+        const wrapper = document.getElementById(map.wrapperId[prefix]);
+        if (!wrapper) return; // Photos tab مش موجود في DOM خالص
+
+        // ✅ أزل رسالة "No photos yet"
+        document.getElementById(map.emptyId[prefix])?.remove();
+
+        // ✅ اجلب الـ gallery، وإن ما كانت موجودة (0 صور عند التحميل) اصنعها
+        let gallery = document.getElementById(map.galleryId[prefix]);
+        if (!gallery) {
+            gallery = document.createElement('div');
+            gallery.className = 'ph-flat-gallery';
+            gallery.id        = map.galleryId[prefix];
+            wrapper.appendChild(gallery);
+        }
+
+        // اجمع المسارات للـ lightbox
+        const srcs = Array.from(gallery.querySelectorAll('img')).map(i => `'${i.src}'`);
+        srcs.push(`'${photoPath}'`);
+        const allPaths = `[${srcs.join(',')}]`;
+
+        // حدّث onclick للكاردات الموجودة
+        gallery.querySelectorAll('.ph-photo-card').forEach(c => {
+            const s   = c.querySelector('img')?.src;
+            const cap = c.querySelector('.ph-info-section-name')?.textContent ?? '';
+            const dt  = c.querySelector('.ph-info-date')?.textContent ?? '';
+            if (s) c.setAttribute('onclick', `openLightbox('${s}', ${allPaths}, '${cap} · ${dt}')`);
+        });
+
+        const today     = new Date().toLocaleDateString('en-GB');
+        const labelText = sectionKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+        const card = document.createElement('div');
+        card.className = 'ph-photo-card';
+        card.id        = `ph_${prefix}Photo_${photoId}`;
+        card.setAttribute('onclick',
+            `openLightbox('${photoPath}', ${allPaths}, '${labelText} · ${today}')`);
+
+        card.innerHTML = `
+            <div class="ph-img-wrap">
+                <img src="${photoPath}" alt="${labelText}" />
+                <div class="ph-type-pill">${labelText}</div>
+                <div class="ph-lock-icon">🔒</div>
+            </div>
+            <div class="ph-photo-info">
+                <div class="ph-info-row">
+                    <div class="ph-icon-sq">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                    <span class="ph-info-section-name">${labelText}</span>
+                </div>
+                <div class="ph-info-divider"></div>
+                <div class="ph-info-row">
+                    <div class="ph-icon-sq">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5">
+                            <rect x="3" y="4" width="18" height="18" rx="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8"  y1="2" x2="8"  y2="6"/>
+                            <line x1="3"  y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
+                    <span class="ph-info-date">${today}</span>
+                </div>
+                <div class="ph-source-tag">${map.sourceLabel[prefix]}</div>
+            </div>`;
+
+        gallery.appendChild(card);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // ✅ حذف من تاب Photos بـ ph_ prefix
+    // ══════════════════════════════════════════════════════════
+    function removePhotoFromPhotosTab(prefix, photoId) {
+
+        const map = {
+            galleryId : { ee: 'ph_extraoralGallery', ie: 'ph_intraoralGallery' },
+            emptyId   : { ee: 'ph_extraoralEmpty',   ie: 'ph_intraoralEmpty'   },
+            wrapperId : { ee: 'ph_extraoralWrapper',  ie: 'ph_intraoralWrapper' }
+        };
+
+        document.getElementById(`ph_${prefix}Photo_${photoId}`)?.remove();
+
+        const gallery = document.getElementById(map.galleryId[prefix]);
+        if (!gallery) return;
+
+        const remaining = gallery.querySelectorAll('.ph-photo-card').length;
+
+        if (remaining === 0) {
+            gallery.remove();
+            const wrapper = document.getElementById(map.wrapperId[prefix]);
+            if (wrapper && !document.getElementById(map.emptyId[prefix])) {
+                const p = document.createElement('p');
+                p.className   = 'ph-empty';
+                p.id          = map.emptyId[prefix];
+                p.textContent = 'No extraoral photos yet.';
+                wrapper.appendChild(p);
+            }
+        } else {
+            // حدّث مسارات الـ lightbox بعد الحذف
+            const srcs     = Array.from(gallery.querySelectorAll('img')).map(i => `'${i.src}'`);
+            const allPaths = `[${srcs.join(',')}]`;
+            gallery.querySelectorAll('.ph-photo-card').forEach(c => {
+                const s   = c.querySelector('img')?.src;
+                const cap = c.querySelector('.ph-info-section-name')?.textContent ?? '';
+                const dt  = c.querySelector('.ph-info-date')?.textContent ?? '';
+                if (s) c.setAttribute('onclick', `openLightbox('${s}', ${allPaths}, '${cap} · ${dt}')`);
+            });
+        }
+    }
+</script>

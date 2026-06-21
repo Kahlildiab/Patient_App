@@ -1,0 +1,116 @@
+﻿@model IEnumerable<DentalCollegeManagementSystem_AAU.Models.Medication>
+
+@{
+    ViewData["Title"] = "Medications";
+}
+
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="~/css/all.min.css" />
+
+<style>
+    .index-wrapper { padding: 30px 20px; max-width: 1100px; margin: 0 auto; }
+    .index-card { border: 1.5px solid #252468; background: #fff; padding: 24px 30px; }
+    .flag-badge { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
+    .flag-anticoagulant      { background: #ffe0e0; color: #c0392b; }
+    .flag-bisphosphonates    { background: #fff3cd; color: #856404; }
+    .flag-steroids           { background: #ffe8cc; color: #d35400; }
+    .flag-immunosuppressants { background: #e8d5f5; color: #6c3483; }
+    .med-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .med-table thead tr { background: #252468; color: white; }
+    .med-table thead th { padding: 10px 14px; font-weight: 600; font-size: 12px; text-align: left; }
+    .med-table tbody tr:nth-child(even) { background: #f8f8fc; }
+    .med-table tbody tr:hover { background: #eef0fa; }
+    .med-table tbody td { padding: 10px 14px; border-bottom: 1px solid #eee; color: #333; vertical-align: middle; }
+    .action-link { font-size: 12px; font-weight: 600; text-decoration: none; margin-right: 10px; }
+    .action-edit   { color: #252468; }
+    .action-detail { color: #2980b9; }
+    .action-delete { color: #c0392b; }
+    .action-link:hover { opacity: 0.75; }
+</style>
+
+<div class="index-wrapper">
+    <section id="title-wrapper" style="justify-content:center; margin-bottom:20px;">
+        <div class="lineleft"></div>
+        <h1 class="sectiontitle heading6">
+            <p style="text-align:center;"><span style="color:#252468;">MEDICATIONS</span></p>
+        </h1>
+        <div class="lineright" style="display:block; background-color:#daa328;"></div>
+    </section>
+
+    <div style="text-align:right; margin-bottom:14px;">
+        <a asp-action="Create"
+           style="background:#252468; color:white; padding:8px 20px; font-size:13px; font-weight:600; text-decoration:none; border-radius:4px;">
+            <i class="fa-solid fa-plus"></i> Add New
+        </a>
+    </div>
+
+    <div class="index-card">
+        @if (!Model.Any())
+        {
+            <div style="text-align:center; padding:40px; color:#888; font-size:13px;">
+                No medications recorded yet.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="med-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Drug Name</th>
+                            <th>Dose</th>
+                            <th>Frequency</th>
+                            <th>Duration</th>
+                            <th>Flag</th>
+                            <th>Patient</th>
+                            <th style="text-align:center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int i = 1; }
+                        @foreach (var item in Model)
+                        {
+                            var flagCls = item.FlagType switch {
+                                "Anticoagulant"      => "flag-anticoagulant",
+                                "Bisphosphonates"    => "flag-bisphosphonates",
+                                "Steroids"           => "flag-steroids",
+                                "Immunosuppressants" => "flag-immunosuppressants",
+                                _                    => null
+                            };
+                            <tr>
+                                <td style="color:#aaa; font-size:12px;">@(i++)</td>
+                                <td style="font-weight:600; color:#252468;">@item.DrugName</td>
+                                <td>@(string.IsNullOrEmpty(item.Dose)      ? "---" : item.Dose)</td>
+                                <td>@(string.IsNullOrEmpty(item.Frequency) ? "---" : item.Frequency)</td>
+                                <td>@(string.IsNullOrEmpty(item.Duration)  ? "---" : item.Duration)</td>
+                                <td>
+                                    @if (flagCls != null)
+                                    {
+                                        <span class="flag-badge @flagCls">@item.FlagType</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#aaa; font-size:11px;">---</span>
+                                    }
+                                </td>
+                                <td style="font-size:12px; color:#555;">@item.Patient?.AppointmentTime</td>
+                                <td style="text-align:center; white-space:nowrap;">
+                                    <a asp-action="Edit"    asp-route-id="@item.MedicationID" class="action-link action-edit">
+                                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                                    </a>
+                                    <a asp-action="Details" asp-route-id="@item.MedicationID" class="action-link action-detail">
+                                        <i class="fa-solid fa-eye"></i> Details
+                                    </a>
+                                    <a asp-action="Delete"  asp-route-id="@item.MedicationID" class="action-link action-delete">
+                                        <i class="fa-solid fa-trash"></i> Delete
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

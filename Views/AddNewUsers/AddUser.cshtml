@@ -1,0 +1,78 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.AppUser
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2 class="text-center mt-4" style="color:#252468;font-weight:700;">
+    ADD NEW USER
+    <span style="border-bottom:3px solid #daa328;display:inline-block;width:200px;"></span>
+</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success text-center">@TempData["Success"]</div>
+}
+
+@if (TempData["Errors"] != null)
+{
+    <div class="alert alert-danger text-center">@TempData["Errors"]</div>
+}
+
+<div class="container mt-4" style="border:2px solid #daa328;border-radius:8px;padding:30px;">
+    <form method="post" asp-controller="AddNewUsers" asp-action="AddUser">
+        @Html.AntiForgeryToken()
+
+        <div class="row mb-3">
+            <div class="col-md-2 fw-bold">* User Log:</div>
+            <div class="col-md-4">
+                <input name="UserLog" class="form-control" required />
+            </div>
+            <div class="col-md-2 fw-bold">* Email:</div>
+            <div class="col-md-4">
+                <input name="Email" type="email" class="form-control" required />
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-2 fw-bold">* Name in English:</div>
+            <div class="col-md-4">
+                <input name="NameEn" class="form-control" required />
+            </div>
+            <div class="col-md-2 fw-bold">* Name in Arabic:</div>
+            <div class="col-md-4">
+                <input name="NameAr" class="form-control" required />
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-2 fw-bold">* Mobile:</div>
+            <div class="col-md-4">
+                <input name="Mobile" class="form-control" required />
+            </div>
+            <div class="col-md-2 fw-bold">* User Type:</div>
+            <div class="col-md-4">
+                <select name="UserTypeId" class="form-control" required>
+                    <option value="">-- Select User Type --</option>
+                    @foreach (var t in ViewBag.UserTypes as List<DentalCollegeManagementSystem_AAU.Models.UserType>)
+                    {
+                        <option value="@t.Id">@t.NameEn</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-2 fw-bold">Notes:</div>
+            <div class="col-md-10">
+                <input name="Notes" class="form-control" />
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-lg px-5"
+                    style="background:#c0006a;color:#fff;border-radius:4px;">
+                Save
+            </button>
+        </div>
+    </form>
+</div>

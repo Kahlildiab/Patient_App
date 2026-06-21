@@ -1,0 +1,622 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Patient
+
+@{
+    ViewData["Title"] = "إضافة مريض جديد";
+    Layout = null;
+}
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="~/css/all.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+<style>
+    body {
+        background: #f5f5f5;
+    }
+
+    .flatpickr-input {
+        background-color: #fff !important;
+    }
+
+    .slot-btn {
+        border: 2px solid #252468;
+        color: #252468;
+        background: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 8px 24px;
+        border-radius: 0;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+        min-width: 110px;
+    }
+
+        .slot-btn:hover {
+            background: #eeedf7;
+        }
+
+        .slot-btn.selected {
+            background: #252468;
+            color: #fff;
+        }
+
+        .slot-btn:disabled,
+        .slot-btn.full {
+            border-color: #ccc;
+            color: #aaa;
+            background: #f5f5f5;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+</style>
+
+<!-- PAGE TITLE -->
+<div class="bg-white w-100 py-4 px-5 border-bottom mb-4">
+    <div class="container-xl">
+        <section id="title-wrapper" style="justify-content:flex-start;">
+            <div class="lineright" style="display:block; background-color:#daa328; max-width:650px;"></div>
+            <h1 class="sectiontitle heading6">
+                <p style="text-align:right; color:#252468; white-space:nowrap;">إضافة مريض جديد</p>
+            </h1>
+        </section>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container-xl pb-5" dir="rtl">
+
+    <form asp-action="SavePublic" method="post" enctype="multipart/form-data" id="mainForm">
+
+        <!-- المعلومات الشخصية -->
+        <div class="mb-4">
+            <p class="fw-bold fs-5 text-end mb-2" style="color:#252468;">المعلومات الشخصية</p>
+            <div class="bg-white p-3">
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* الاسم الأول</label>
+                            <div class="flex-fill">
+                                <input asp-for="FirstName" type="text" class="form-control rounded-0" />
+                                <span asp-validation-for="FirstName" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* الاسم الثاني</label>
+                            <div class="flex-fill">
+                                <input asp-for="SecondName" type="text" class="form-control rounded-0" />
+                                <span asp-validation-for="SecondName" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">الاسم الثالث</label>
+                            <div class="flex-fill">
+                                <input asp-for="ThirdName" type="text" class="form-control rounded-0" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* اسم العائلة</label>
+                            <div class="flex-fill">
+                                <input asp-for="FourthName" type="text" class="form-control rounded-0" />
+                                <span asp-validation-for="FourthName" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* الجنسية</label>
+                            <div class="d-flex gap-3 align-items-center">
+                                <label class="d-flex align-items-center gap-1 fw-medium" style="color:#252468;">
+                                    <input type="radio" asp-for="Nationality" value="1" class="form-check-input mt-0" style="accent-color:#252468;" /> أردني
+                                </label>
+                                <label class="d-flex align-items-center gap-1 fw-medium" style="color:#252468;">
+                                    <input type="radio" asp-for="Nationality" value="2" class="form-check-input mt-0" style="accent-color:#252468;" /> غير أردني
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* الجنس</label>
+                            <div class="flex-fill">
+                                <div class="d-flex gap-3 align-items-center">
+                                    <label class="d-flex align-items-center gap-1 fw-medium" style="color:#252468;">
+                                        <input type="radio" asp-for="Gender" value="Male" class="form-check-input mt-0" style="accent-color:#252468;" /> ذكر
+                                    </label>
+                                    <label class="d-flex align-items-center gap-1 fw-medium" style="color:#252468;">
+                                        <input type="radio" asp-for="Gender" value="Female" class="form-check-input mt-0" style="accent-color:#252468;" /> أنثى
+                                    </label>
+                                </div>
+                                <span asp-validation-for="Gender" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الهوية ومعلومات التواصل -->
+        <div class="mb-4">
+            <p class="fw-bold fs-5 text-end mb-2" style="color:#252468;">الهوية ومعلومات التواصل</p>
+            <div class="bg-white p-3">
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label id="idLabel" class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* الرقم الوطني</label>
+                            <div class="flex-fill">
+                                <input asp-for="NationalID_PassportNumber" id="idInput" type="text" class="form-control rounded-0" placeholder="أدخل الرقم الوطني" />
+                                <span asp-validation-for="NationalID_PassportNumber" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* رقم الهاتف</label>
+                            <div class="flex-fill">
+                                <input asp-for="PhoneNumber" type="text" class="form-control rounded-0" placeholder="07XXXXXXXX" />
+                                <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">تاريخ الميلاد</label>
+                            <div class="flex-fill">
+                                <input asp-for="DateOfBirth" type="date" id="DateOfBirth" class="form-control rounded-0" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">العنوان</label>
+                            <div class="flex-fill">
+                                <input asp-for="Address" type="text" class="form-control rounded-0" placeholder="المدينة، الشارع..." />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ولي الأمر -->
+        <div id="ParentBlock" class="mb-4 d-none">
+            <p class="fw-bold fs-5 text-end mb-2" style="color:#252468;">ولي الأمر / المسؤول</p>
+            <div class="bg-white p-3">
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">اسم الأب</label>
+                            <div class="flex-fill">
+                                <input asp-for="FatherName" type="text" class="form-control rounded-0" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">هاتف الأب</label>
+                            <div class="flex-fill">
+                                <input asp-for="FatherPhone" type="text" class="form-control rounded-0" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">اسم الأم</label>
+                            <div class="flex-fill">
+                                <input asp-for="MotherName" type="text" class="form-control rounded-0" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">هاتف الأم</label>
+                            <div class="flex-fill">
+                                <input asp-for="MotherPhone" type="text" class="form-control rounded-0" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الموعد الأول -->
+        <div class="mb-4">
+            <p class="fw-bold fs-5 text-end mb-2" style="color:#252468;">الموعد الأول</p>
+            <div class="bg-white p-3">
+
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* تاريخ الموعد</label>
+                            <div class="flex-fill">
+                                <input asp-for="AppointmentDate" type="text" id="appointmentDatePicker"
+                                       class="form-control rounded-0" placeholder="اختر التاريخ" />
+                                <span asp-validation-for="AppointmentDate" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* الفترة</label>
+                            <div class="flex-fill">
+                                <div class="d-flex gap-3 align-items-center">
+                                    <label class="d-flex align-items-center gap-1 fw-medium" style="color:#252468;">
+                                        <input type="radio" name="TimePeriod" value="AM"
+                                               class="form-check-input mt-0" style="accent-color:#252468;" /> صباحاً
+                                    </label>
+                                    <label class="d-flex align-items-center gap-1 fw-medium" style="color:#252468;">
+                                        <input type="radio" name="TimePeriod" value="PM"
+                                               class="form-check-input mt-0" style="accent-color:#252468;" /> مساءً
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-2" id="slotsRow" style="display:none;">
+                    <div class="col-md-6"></div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* الوقت</label>
+                            <div class="flex-fill">
+                                <select id="slotsContainer" class="form-select rounded-0"
+                                        style="color:#252468; border-color:#ced4da;">
+                                    <option value="">-- اختر الوقت --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <input asp-for="AppointmentTime" type="hidden" id="AppointmentTimeHidden" />
+                        <span asp-validation-for="AppointmentTime" class="text-danger small d-block mt-1"></span>
+                        <div id="capacityWarning" class="text-danger small mt-1 d-none">
+                            ⚠️ لا تتوفر حجوزات في هذا الوقت، الطاقة الاستيعابية ممتلئة (10/10)
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- الصورة الشخصية -->
+        <div class="mb-4">
+            <p class="fw-bold fs-5 text-end mb-2" style="color:#252468;">الصورة الشخصية</p>
+            <div class="bg-white p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div id="photoPreview"
+                         style="width:90px; height:90px; border:2px dashed #ccc; border-radius:50%;
+                        display:flex; align-items:center; justify-content:center;
+                        overflow:hidden; flex-shrink:0; background:#f5f5f5;">
+                        <i class="fa-solid fa-user" style="font-size:36px; color:#ccc;"></i>
+                    </div>
+                    <div>
+                        <label for="ProfilePhotoFile"
+                               class="btn rounded-0 fw-bold px-4 py-2 mb-1"
+                               style="background:#252468; color:#fff; font-size:14px; cursor:pointer;">
+                            <i class="fa-solid fa-camera me-1"></i> إضافة&nbsp;&nbsp;صورة&nbsp;&nbsp;شخصية
+                        </label>
+                        <input type="file" id="ProfilePhotoFile" name="ProfilePhotoFile"
+                               accept="image/*" class="d-none" />
+                        <p class="text-muted small mb-0">اختياري — JPG أو PNG، بحد أقصى 2MB</p>
+                        <span id="photoError" class="text-danger small d-none"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- التعهد -->
+        <div class="mb-4">
+            <p class="fw-bold fs-5 text-end mb-2" style="color:#252468;">تعهد</p>
+            <div class="bg-white p-3">
+                <div class="d-flex align-items-center gap-2">
+                    <input type="checkbox" id="pledge" name="pledge"
+                           class="form-check-input mt-0"
+                           style="width:16px; height:16px; accent-color:#252468;" />
+                    <label for="pledge" class="form-check-label small text-dark">
+                        أتعهد بأن جميع المعلومات الواردة في الطلب صحيحة
+                    </label>
+                </div>
+                <span id="pledgeError" class="text-danger small d-none">
+                    ⚠️ يجب الموافقة على التعهد قبل تقديم الطلب
+                </span>
+            </div>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="d-flex gap-3 justify-content-center align-items-center mt-4">
+            <button type="submit" id="submitBtn" class="btn rounded-0 fw-bold px-5 py-2"
+                    style="background:#252468; color:#fff; font-size:14px;">
+                تقديم الطلب &nbsp;<i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<!-- Modal: مريض مسجل مسبقاً -->
+<div class="modal fade" id="duplicateModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content rounded-0 border-0 shadow-lg">
+            <div style="height:6px; background:linear-gradient(90deg,#252468,#daa328);"></div>
+            <div class="modal-body text-center px-4 pt-4 pb-2">
+                <div class="mb-3">
+                    <div style="width:72px; height:72px; border-radius:50%;
+                        background:#fff8e6; border:2px solid #daa328;
+                        display:flex; align-items:center; justify-content:center; margin:0 auto;">
+                        <i class="fa-solid fa-user-clock" style="font-size:32px; color:#daa328;"></i>
+                    </div>
+                </div>
+                <h5 class="fw-bold mb-2" style="color:#252468; font-size:18px;">
+                    أنت مسجل لدينا مسبقاً
+                </h5>
+                <p class="text-muted mb-0" style="font-size:14px; line-height:1.8;">
+                    معلوماتك موجودة في قاعدة بيانات العيادة.<br>
+                    يُرجى <strong style="color:#252468;">التوجه إلى العيادة مباشرةً</strong>
+                    أو التواصل مع الاستقبال لتحديد موعدك.
+                </p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4 pt-2">
+                <button type="button"
+                        class="btn rounded-0 fw-bold px-5 py-2"
+                        style="background:#252468; color:#fff; font-size:14px;"
+                        data-bs-dismiss="modal">
+                    <i class="fa-solid fa-check me-1"></i> حسناً، فهمت
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+    /* =============================================
+    السلوتات — value = "AM|09:00"
+    =============================================== */
+    const SLOTS = {
+    AM: [
+    { value: "AM|09:00", label: "9:00 صباحاً" },
+    { value: "AM|11:00", label: "11:00 صباحاً" }
+    ],
+    PM: [
+    { value: "PM|13:00", label: "1:00 مساءً" },
+    { value: "PM|15:00", label: "3:00 مساءً" }
+    ]
+    };
+
+    function renderSlots(period) {
+    const select      = document.getElementById("slotsContainer");
+    const hiddenInput = document.getElementById("AppointmentTimeHidden");
+    const slotsRow    = document.getElementById("slotsRow");
+    const warning     = document.getElementById("capacityWarning");
+
+    select.innerHTML  = '<option value="">-- اختر الوقت --</option>';
+    hiddenInput.value = "";
+    warning.classList.add("d-none");
+    resetSubmitBtn();
+
+    SLOTS[period].forEach(function (slot) {
+    const option = document.createElement("option");
+    option.value = slot.value;
+    option.text  = slot.label;
+    select.appendChild(option);
+    });
+
+    slotsRow.style.removeProperty("display");
+
+    select.onchange = function () {
+    hiddenInput.value = this.value; // يحفظ "AM|09:00" كاملة
+    const actualTime  = this.value.split("|")[1]; // "09:00" للـ CheckSlot
+    if (actualTime) {
+    checkCapacity();
+    } else {
+    warning.classList.add("d-none");
+    resetSubmitBtn();
+    }
+    };
+    }
+
+    /* =============================================
+    التحقق من الطاقة الاستيعابية
+    =============================================== */
+    async function checkCapacity() {
+    const date      = document.getElementById("appointmentDatePicker").value;
+    const fullValue = document.getElementById("AppointmentTimeHidden").value;
+    const timeValue = fullValue.includes("|") ? fullValue.split("|")[1] : fullValue;
+    const warning   = document.getElementById("capacityWarning");
+
+    if (!date || !timeValue) return;
+
+    try {
+    const res  = await fetch(`/Patients/CheckSlot?date=${date}&time=${timeValue}`);
+    const data = await res.json();
+
+    if (!data.available) {
+    warning.classList.remove("d-none");
+    disableSubmitBtn();
+    } else {
+    warning.classList.add("d-none");
+    resetSubmitBtn();
+    }
+    } catch {
+    warning.classList.add("d-none");
+    resetSubmitBtn();
+    }
+    }
+
+    function disableSubmitBtn() {
+    const btn     = document.getElementById("submitBtn");
+    btn.disabled  = true;
+    btn.style.opacity = "0.6";
+    }
+
+    function resetSubmitBtn() {
+    const btn     = document.getElementById("submitBtn");
+    btn.disabled  = false;
+    btn.style.opacity = "1";
+    }
+
+    /* =============================================
+    Flatpickr
+    =============================================== */
+    flatpickr("#appointmentDatePicker", {
+    dateFormat: "Y-m-d",
+    minDate: "today",
+    disable: [function (date) {
+    return date.getDay() === 5 || date.getDay() === 6;
+    }],
+    onChange: function () {
+    checkCapacity();
+    }
+    });
+
+    /* =============================================
+    اختيار الفترة
+    =============================================== */
+    document.querySelectorAll('input[name="TimePeriod"]').forEach(function (radio) {
+    radio.addEventListener("change", function () {
+    renderSlots(this.value);
+    });
+    });
+
+    /* =============================================
+    ولي الأمر
+    =============================================== */
+    document.getElementById("DateOfBirth").addEventListener("change", function () {
+    const dob   = new Date(this.value);
+    const today = new Date();
+    let age     = today.getFullYear() - dob.getFullYear();
+    const m     = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+
+    const block = document.getElementById("ParentBlock");
+    if (age < 18) {
+    block.classList.remove("d-none");
+    } else {
+    block.classList.add("d-none");
+    block.querySelectorAll("input").forEach(function (i) { i.value = ""; });
+    }
+    });
+
+    /* =============================================
+    الجنسية
+    =============================================== */
+    document.addEventListener("DOMContentLoaded", function () {
+    const radios  = document.querySelectorAll('input[name="Nationality"]');
+    const idInput = document.getElementById("idInput");
+    const idLabel = document.getElementById("idLabel");
+
+    function updateIDField() {
+    const selected = document.querySelector('input[name="Nationality"]:checked');
+    if (!selected) return;
+    idLabel.innerText   = selected.value === "1" ? "* الرقم الوطني" : "* رقم الجواز";
+    idInput.placeholder = selected.value === "1" ? "أدخل الرقم الوطني" : "أدخل رقم الجواز";
+    idInput.value       = "";
+    }
+    radios.forEach(function (r) { r.addEventListener("change", updateIDField); });
+    });
+
+    /* =============================================
+    معاينة الصورة
+    =============================================== */
+    document.getElementById("ProfilePhotoFile").addEventListener("change", function () {
+    const file       = this.files[0];
+    const preview    = document.getElementById("photoPreview");
+    const photoError = document.getElementById("photoError");
+
+    photoError.classList.add("d-none");
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+    photoError.innerText = "⚠️ حجم الصورة يجب أن يكون أقل من 2MB";
+    photoError.classList.remove("d-none");
+    this.value = "";
+    return;
+    }
+
+    const reader  = new FileReader();
+    reader.onload = function (e) {
+    preview.innerHTML = `<img src="${e.target.result}"
+    style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`;
+    };
+    reader.readAsDataURL(file);
+    });
+
+    /* =============================================
+    إرسال النموذج
+    =============================================== */
+    document.getElementById("mainForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const pledge          = document.getElementById("pledge");
+    const pledgeError     = document.getElementById("pledgeError");
+    const capacityWarning = document.getElementById("capacityWarning");
+    const timeValue       = document.getElementById("AppointmentTimeHidden").value;
+
+    // 1) التحقق من التعهد
+    if (!pledge.checked) {
+    pledge.style.outline = "2px solid red";
+    pledgeError.classList.remove("d-none");
+    pledge.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+    }
+
+    // 2) التحقق من اختيار وقت
+    if (!timeValue) {
+    const slotsRow = document.getElementById("slotsRow");
+    if (slotsRow.style.display !== "none") {
+    slotsRow.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    return;
+    }
+
+    // 3) التحقق من الطاقة الاستيعابية
+    if (!capacityWarning.classList.contains("d-none")) return;
+
+    // 4) التحقق من التكرار
+    const idNumber  = document.getElementById("idInput").value.trim();
+    const firstName = document.querySelector('[name="FirstName"]').value.trim();
+    const lastName  = document.querySelector('[name="FourthName"]').value.trim();
+    const dob       = document.getElementById("DateOfBirth").value.trim();
+
+    if (idNumber || (firstName && lastName)) {
+    try {
+    const params = new URLSearchParams({ idNumber, firstName, lastName, dob });
+    const res    = await fetch(`/Patients/CheckDuplicate?${params.toString()}`);
+    const data   = await res.json();
+
+    if (data.isDuplicate) {
+    const modal = new bootstrap.Modal(document.getElementById("duplicateModal"));
+    modal.show();
+    return;
+    }
+    } catch (err) {
+    console.warn("Duplicate check failed, proceeding.", err);
+    }
+    }
+
+    this.submit();
+    });
+
+    document.getElementById("pledge").addEventListener("change", function () {
+    this.style.outline = "";
+    document.getElementById("pledgeError").classList.add("d-none");
+    });
+
+</script>

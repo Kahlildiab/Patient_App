@@ -1,0 +1,51 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.PatientAllocationViewModel
+
+<div class="two-cols" style="margin-top:12px;">
+
+    <!-- الطلاب المسندون -->
+    <div class="col-box col-assigned">
+        <div class="box-title" style="color:#16a34a;">✅ Assigned Students (@Model.AssignedStudents.Count)</div>
+        @if (!Model.AssignedStudents.Any())
+        {
+            <div class="empty-msg">No students assigned yet.</div>
+        }
+        @foreach (var s in Model.AssignedStudents)
+        {
+            <div class="student-row">
+                <div>
+                    <div class="student-name">@s.NameEn</div>
+                    <div style="font-size:12px;color:#6b7280;">@(s.UserType?.NameEn ?? "—")</div>
+                </div>
+                <button class="btn-remove"
+                        onclick="remove(@Model.Patient.PatientID, @s.Id)"
+                        title="Remove">
+                    −
+                </button>
+            </div>
+        }
+    </div>
+
+    <!-- الطلاب المتاحون -->
+    <div class="col-box col-available">
+        <div class="box-title" style="color:#2563eb;">👤 Available Students (@Model.AvailableStudents.Count)</div>
+        @if (!Model.AvailableStudents.Any())
+        {
+            <div class="empty-msg">All students are assigned.</div>
+        }
+        @foreach (var s in Model.AvailableStudents)
+        {
+            <div class="student-row">
+                <div>
+                    <div class="student-name">@s.NameEn</div>
+                    <div style="font-size:12px;color:#6b7280;">@(s.UserType?.NameEn ?? "—")</div>
+                </div>
+                <button class="btn-assign"
+                        onclick="assign(@Model.Patient.PatientID, @s.Id)"
+                        title="Assign">
+                    +
+                </button>
+            </div>
+        }
+    </div>
+
+</div>

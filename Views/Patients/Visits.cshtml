@@ -1,0 +1,886 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.Patient
+@using DentalCollegeManagementSystem_AAU.Models
+
+@{
+    var visits = ViewBag.Visits as List<DentalCollegeManagementSystem_AAU.Models.Visit>
+                 ?? new List<DentalCollegeManagementSystem_AAU.Models.Visit>();
+    var userRole = Context.Session.GetString("UserRole");
+}
+@if (TempData["VisitError"] != null)
+{
+    <div class="alert alert-warning">@TempData["VisitError"]</div>
+}
+
+<style>
+    :root {
+        --vt-navy: #1a237e;
+        --vt-navy-mid: #283593;
+        --vt-blue: #1565c0;
+        --vt-border: #d0d7e3;
+        --vt-label: #78909c;
+        --vt-success: #2e7d32;
+        --vt-success-bg: #e8f5e9;
+    }
+
+    .vt-add-btn {
+        background: var(--vt-navy);
+        color: #fff;
+        border: none;
+        border-radius: 0;
+        padding: 10px 28px;
+        font-size: .95rem;
+        font-weight: 700;
+        letter-spacing: .3px;
+        cursor: pointer;
+        transition: background .15s;
+    }
+
+        .vt-add-btn:hover {
+            background: var(--vt-navy-mid);
+        }
+
+    .vt-section {
+        background: #fff;
+        border: 1.5px solid var(--vt-border);
+        border-radius: 10px;
+        padding: 22px 24px 18px;
+        margin-bottom: 20px;
+    }
+
+    .vt-label {
+        font-size: .82rem;
+        color: var(--vt-label);
+        font-weight: 500;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .vt-input {
+        width: 100%;
+        border: 1px solid var(--vt-border);
+        border-radius: 6px;
+        padding: 9px 13px;
+        font-size: .88rem;
+        color: #333;
+        outline: none;
+        box-sizing: border-box;
+        transition: border-color .2s;
+        background: #fff;
+    }
+
+        .vt-input:focus {
+            border-color: var(--vt-navy);
+        }
+
+    .vt-input-readonly {
+        width: 100%;
+        border: 1px solid var(--vt-border);
+        border-radius: 6px;
+        padding: 9px 13px;
+        font-size: .88rem;
+        color: #888;
+        background: #f5f5f5;
+        cursor: not-allowed;
+        box-sizing: border-box;
+    }
+
+    .vt-textarea {
+        width: 100%;
+        border: 1px solid var(--vt-border);
+        border-radius: 6px;
+        padding: 9px 13px;
+        font-size: .88rem;
+        color: #333;
+        outline: none;
+        box-sizing: border-box;
+        resize: vertical;
+        min-height: 80px;
+        transition: border-color .2s;
+        background: #fff;
+    }
+
+        .vt-textarea:focus {
+            border-color: var(--vt-navy);
+        }
+
+    .vt-approval-banner {
+        background: var(--vt-success-bg);
+        border: 1px solid #a5d6a7;
+        border-radius: 8px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: .85rem;
+        color: var(--vt-success);
+        font-weight: 600;
+        margin-bottom: 14px;
+    }
+
+    .vt-approval-pending {
+        background: #fff8e1;
+        border-color: #ffe082;
+        color: #e65100;
+    }
+
+    .vt-cancel-btn {
+        background: #fff;
+        color: #555;
+        border: 1px solid var(--vt-border);
+        border-radius: 6px;
+        padding: 9px 20px;
+        font-size: .88rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: border-color .15s;
+    }
+
+        .vt-cancel-btn:hover {
+            border-color: #e53935;
+            color: #e53935;
+        }
+
+    .vt-past-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .vt-past-date {
+        font-size: .88rem;
+        font-weight: 700;
+        color: var(--vt-navy);
+    }
+
+    .vt-approved-badge {
+        background: var(--vt-success-bg);
+        color: var(--vt-success);
+        border: 1px solid #a5d6a7;
+        border-radius: 20px;
+        padding: 2px 12px;
+        font-size: .75rem;
+        font-weight: 700;
+    }
+
+    .vt-pending-badge {
+        background: #fff8e1;
+        color: #e65100;
+        border: 1px solid #ffe082;
+        border-radius: 20px;
+        padding: 2px 12px;
+        font-size: .75rem;
+        font-weight: 700;
+    }
+
+    .vt-admin-pending-badge {
+        background: #fff3e0;
+        color: #e65100;
+        border: 1px solid #ffb74d;
+        border-radius: 20px;
+        padding: 2px 12px;
+        font-size: .75rem;
+        font-weight: 700;
+    }
+
+    .vt-admin-approved-badge {
+        background: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #a5d6a7;
+        border-radius: 20px;
+        padding: 2px 12px;
+        font-size: .75rem;
+        font-weight: 700;
+    }
+
+    .vt-past-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+        margin-bottom: 5px;
+    }
+
+    .vt-past-col {
+        flex: 1 1 50%;
+        min-width: 200px;
+    }
+
+    .vt-plabel {
+        font-size: .78rem;
+        color: var(--vt-label);
+    }
+
+    .vt-pval {
+        font-size: .85rem;
+        font-weight: 600;
+        color: var(--vt-navy-mid);
+    }
+
+    .vt-action-bar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid var(--vt-border);
+        flex-wrap: wrap;
+    }
+
+    .vt-del-btn {
+        background: #fff;
+        border: 0px;
+        color: #e53935;
+        font-size: .78rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 14px;
+        border-radius: 6px;
+        transition: background .15s, color .15s;
+    }
+
+        .vt-del-btn:hover {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+    .vt-del-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .vt-edit-btn {
+        background: #fff;
+        border: 0px;
+        color: var(--vt-navy);
+        font-size: .78rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 14px;
+        border-radius: 6px;
+        transition: background .15s;
+    }
+
+        .vt-edit-btn:hover {
+            background: #e8eaf6;
+        }
+
+    .vt-approve-btn {
+        background: var(--vt-success);
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 5px 14px;
+        font-size: .78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .15s;
+    }
+
+        .vt-approve-btn:hover {
+            background: #1b5e20;
+        }
+
+    .vt-attend-btn {
+        border: none;
+        border-radius: 20px;
+        padding: 3px 14px;
+        font-size: .75rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .15s, color .15s;
+    }
+
+        .vt-attend-btn.not-attended {
+            background: #f3f4f6;
+            color: #555;
+            border: 1px solid #d0d7e3;
+        }
+
+            .vt-attend-btn.not-attended:hover {
+                background: #e8f5e9;
+                color: var(--vt-success);
+                border-color: #a5d6a7;
+            }
+
+        .vt-attend-btn.attended {
+            background: var(--vt-success-bg);
+            color: var(--vt-success);
+            border: 1px solid #a5d6a7;
+        }
+
+    .vt-details-btn {
+        background: var(--vt-navy);
+        color: #fff !important;
+        border: none;
+        border-radius: 0px 0px 7px 0px;
+        padding: 4px 16px;
+        font-size: .78rem;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none !important;
+        display: inline-block;
+        position: relative;
+        transition: background .15s;
+    }
+
+        .vt-details-btn:hover {
+            background: var(--vt-navy-mid);
+        }
+
+        .vt-details-btn::after {
+            content: '';
+            position: absolute;
+            border-right: 3px solid #daa328;
+            border-bottom: 3px solid #daa328;
+            right: -3px;
+            bottom: -3px;
+            width: 7px;
+            height: 7px;
+        }
+
+    .vt-modal-save-btn {
+        background: #daa328;
+        color: #fff;
+        border: none;
+        border-radius: 0px 8px 8px;
+        padding: 9px 28px;
+        font-size: .88rem;
+        font-weight: 700;
+        cursor: pointer;
+        position: relative;
+        transition: background .15s;
+    }
+
+        .vt-modal-save-btn:hover {
+            background: #b8891e;
+        }
+
+        .vt-modal-save-btn::after {
+            content: '';
+            position: absolute;
+            border-right: 4px solid #252468;
+            border-bottom: 4px solid #252468;
+            right: -3px;
+            bottom: -3px;
+            width: 8px;
+            height: 8px;
+        }
+
+    .vt-period-badge {
+        background: #e8eaf6;
+        color: #3949ab;
+        border-radius: 4px;
+        padding: 1px 8px;
+        font-size: .72rem;
+        font-weight: 700;
+        margin-left: 8px;
+        letter-spacing: .5px;
+    }
+
+    .vt-section-title {
+        font-weight: 700;
+        color: var(--vt-navy);
+        margin-bottom: 14px;
+        font-size: .95rem;
+    }
+
+    .vt-locked {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+</style>
+
+<div class="vt-container">
+
+    <!-- ── Add New Visit button ── -->
+    <div class="d-flex justify-content-end mb-3">
+        <button class="vt-add-btn"
+                data-bs-toggle="modal"
+                data-bs-target="#addVisitModal">
+            + Add Visit
+        </button>
+    </div>
+
+    <!-- ── Past Visits ── -->
+    @if (!visits.Any())
+    {
+        <div class="vt-section">
+            <p style="color:var(--vt-label);font-size:.85rem;margin:0;">No visits recorded yet.</p>
+        </div>
+    }
+    else
+    {
+        foreach (var v in visits.OrderByDescending(x => x.VisitDate))
+        {
+            bool isPendingAdmin = v.AdminApprovalStatus == "Pending";
+            bool isStudent = userRole == "Student";
+
+            <div class="vt-section @(isPendingAdmin && isStudent ? "vt-locked" : "")">
+
+                <!-- Header -->
+                <div class="vt-past-header">
+                    <span class="vt-past-date">
+                        📅 @v.VisitDate.ToString("dd / MM / yyyy")
+                        @if (!string.IsNullOrWhiteSpace(v.AppointmentPeriod))
+                        {
+                            <span class="vt-period-badge">@v.AppointmentPeriod</span>
+                        }
+                    </span>
+
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+
+                        @* ✅ Admin Approval Badge *@
+                        @if (isPendingAdmin)
+                        {
+                            <span class="vt-admin-pending-badge">⏳ Pending Admin Approval</span>
+                        }
+                        else
+                        {
+                            <span class="vt-admin-approved-badge">✓ Admin Approved</span>
+                        }
+
+                        @* Supervisor Approval Badge *@
+                        @if (v.IsApproved)
+                        {
+                            <span class="vt-approved-badge">✓ Supervisor Approved</span>
+                        }
+                        else
+                        {
+                            <span class="vt-pending-badge">⏳ Supervisor Pending</span>
+                        }
+
+                        @* Mark Attendance — مش متاح للطالب لو Pending Admin *@
+                        @if (!isPendingAdmin)
+                        {
+                            @if (!v.Attended)
+                            {
+                                <button type="button"
+                                        class="vt-attend-btn not-attended"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#addDetailsModal-@v.VisitID">
+                                    Mark Attended
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="vt-attend-btn attended" style="cursor:default;">
+                                    ✓ Attended
+                                </span>
+                                <button type="button"
+                                        class="vt-details-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#addDetailsModal-@v.VisitID">
+                                    Add Details
+                                </button>
+                            }
+                        }
+                    </div>
+                </div>
+
+                @* لو Pending Admin — أظهر رسالة للطالب *@
+                @if (isPendingAdmin && isStudent)
+                {
+                    <div style="background:#fff3e0; border:1px solid #ffb74d; border-radius:8px;
+                        padding:10px 14px; font-size:.83rem; color:#e65100; font-weight:600;">
+                        ⏳ This visit is awaiting Admin approval before you can interact with it.
+                    </div>
+                }
+                else
+                {
+                    <!-- Visit details rows -->
+                    @if (!string.IsNullOrWhiteSpace(v.ChiefComplaint))
+                    {
+                        <div class="mb-2">
+                            <span class="vt-plabel">Chief Complaint: </span>
+                            <span class="vt-pval">@v.ChiefComplaint</span>
+                        </div>
+                    }
+                    <div class="vt-past-row">
+                        @if (!string.IsNullOrWhiteSpace(v.ProceduresPerformed))
+                        {
+                            <div class="vt-past-col mb-2">
+                                <span class="vt-plabel">Procedures Performed: </span>
+                                <span class="vt-pval">@v.ProceduresPerformed</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(v.MaterialsUsed))
+                        {
+                            <div class="vt-past-col mb-2">
+                                <span class="vt-plabel">Materials Used: </span>
+                                <span class="vt-pval">@v.MaterialsUsed</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="vt-past-row">
+                        @if (!string.IsNullOrWhiteSpace(v.Complications))
+                        {
+                            <div class="vt-past-col mb-2">
+                                <span class="vt-plabel">Complications / Issues: </span>
+                                <span class="vt-pval">@v.Complications</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(v.StudentNotes))
+                        {
+                            <div class="vt-past-col mb-2">
+                                <span class="vt-plabel">Student Notes: </span>
+                                <span class="vt-pval">@v.StudentNotes</span>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Supervisor Approval -->
+                    @if (v.IsApproved)
+                    {
+                        <div class="vt-approval-banner mt-2">
+                            ✅ Approved by <strong>@v.ApprovedBy</strong>
+                            on @v.ApprovedDate?.ToString("dd-MM-yyyy")
+                            @if (!string.IsNullOrWhiteSpace(v.SupervisorComments))
+                            {
+                                <span> — "@v.SupervisorComments"</span>
+                            }
+                        </div>
+                    }
+                    else if (!isStudent)
+                    {
+                        <div class="vt-approval-banner vt-approval-pending mt-2">
+                            ⚠️ This visit requires supervisor approval before it can be signed off.
+                        </div>
+                        <form asp-controller="Visits" asp-action="Approve" method="post"
+                              class="mt-2 d-flex align-items-end gap-2 flex-wrap">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="visitId" value="@v.VisitID" />
+                            <input type="hidden" name="patientId" value="@Model.PatientID" />
+                            <div>
+                                <label class="vt-label">Supervisor Name</label>
+                                <input type="text" name="approvedBy" class="vt-input"
+                                       style="width:200px;" placeholder="Dr. Name" />
+                            </div>
+                            <div style="flex:1; min-width:200px;">
+                                <label class="vt-label">Supervisor Comments (optional)</label>
+                                <input type="text" name="supervisorComments" class="vt-input"
+                                       placeholder="Comments..." />
+                            </div>
+                            <button type="submit" class="vt-approve-btn mb-1">✓ Approve</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="vt-approval-banner vt-approval-pending mt-2">
+                            ⚠️ This visit requires supervisor approval before it can be signed off.
+                        </div>
+                    }
+
+                    <!-- ── Bottom Action Bar ── -->
+                    <div class="vt-action-bar">
+                        <button type="button"
+                                class="vt-edit-btn"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editVisitModal-@v.VisitID">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2.5"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                            Edit
+                        </button>
+
+                        <form asp-controller="Visits" asp-action="Delete" method="post"
+                              class="m-0 p-0 d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="visitId" value="@v.VisitID" />
+                            <input type="hidden" name="patientId" value="@Model.PatientID" />
+                            <button type="submit" class="vt-del-btn"
+                                    onclick="return confirm('Delete this visit?')">
+                                <svg class="vt-del-icon" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path d="M19 6l-1 14H6L5 6" />
+                                    <path d="M10 11v6M14 11v6" />
+                                    <path d="M9 6V4h6v2" />
+                                </svg>
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
+
+            @if (!isPendingAdmin)
+            {
+                <!-- ===== ADD DETAILS MODAL ===== -->
+                <div class="modal fade" id="addDetailsModal-@v.VisitID" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold" style="color:#1a237e;">Add Visit Details</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form asp-controller="Visits" asp-action="SaveDetails" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="VisitID" value="@v.VisitID" />
+                                <input type="hidden" name="PatientID" value="@Model.PatientID" />
+                                <input type="hidden" name="VisitDate" value="@v.VisitDate.ToString("yyyy-MM-dd")" />
+                                <div class="modal-body">
+
+                                    <div class="vt-section mb-3">
+                                        <div style="background:#f0f4ff; border:1px solid #c5cae9; border-radius:8px; padding:12px 16px; display:flex; align-items:center; gap:12px;">
+                                            <input type="checkbox" name="Attended" value="true"
+                                                   id="attendedCheck-@v.VisitID"
+                                            @(v.Attended ? "checked" : "")
+                                                   style="width:18px; height:18px; accent-color:#1a237e; cursor:pointer;"
+                                                   onclick="handleAttendedCheck(this)" />
+                                            <label for="attendedCheck-@v.VisitID"
+                                                   style="font-weight:700; color:#1a237e; font-size:.9rem; cursor:pointer; margin:0;">
+                                                ✓ Patient Attended this visit
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="vt-section mb-3">
+                                        <p class="vt-section-title">Visit Details</p>
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <label class="vt-label">Chief Complaint</label>
+                                                <textarea name="ChiefComplaint" class="vt-textarea"
+                                                          placeholder="Patient's main concern...">@v.ChiefComplaint</textarea>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="vt-label">Procedures Performed</label>
+                                                <textarea name="ProceduresPerformed" class="vt-textarea"
+                                                          placeholder="List all procedures...">@v.ProceduresPerformed</textarea>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="vt-label">Materials Used</label>
+                                                <textarea name="MaterialsUsed" class="vt-textarea"
+                                                          placeholder="Materials and equipment...">@v.MaterialsUsed</textarea>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="vt-label">Complications / Issues</label>
+                                                <textarea name="Complications" class="vt-textarea"
+                                                          placeholder="Any complications...">@v.Complications</textarea>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="vt-label">Student Notes</label>
+                                                <textarea name="StudentNotes" class="vt-textarea"
+                                                          placeholder="Additional notes...">@v.StudentNotes</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="vt-section">
+                                        <p class="vt-section-title">Supervisor Approval</p>
+                                        @if (v.IsApproved)
+                                        {
+                                            <div class="vt-approval-banner">
+                                                ✅ Approved by <strong>@v.ApprovedBy</strong>
+                                                on @v.ApprovedDate?.ToString("dd-MM-yyyy")
+                                            </div>
+                                        }
+                                        else if (!isStudent)
+                                        {
+                                            <div class="vt-approval-banner vt-approval-pending mb-3">
+                                                ⚠️ This visit requires supervisor approval.
+                                            </div>
+                                            <form asp-controller="Visits" asp-action="Approve" method="post"
+                                                  class="d-flex align-items-end gap-2 flex-wrap">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="visitId" value="@v.VisitID" />
+                                                <input type="hidden" name="patientId" value="@Model.PatientID" />
+                                                <div>
+                                                    <label class="vt-label">Supervisor Name</label>
+                                                    <input type="text" name="approvedBy" class="vt-input"
+                                                           style="width:200px;" placeholder="Dr. Name" />
+                                                </div>
+                                                <div style="flex:1; min-width:200px;">
+                                                    <label class="vt-label">Comments (optional)</label>
+                                                    <input type="text" name="supervisorComments" class="vt-input"
+                                                           placeholder="Comments..." />
+                                                </div>
+                                                <button type="submit" class="vt-approve-btn mb-1">✓ Approve</button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <div class="vt-approval-banner vt-approval-pending">
+                                                ⚠️ Awaiting supervisor approval.
+                                            </div>
+                                        }
+                                    </div>
+
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="vt-cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="vt-modal-save-btn">Save Details</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== EDIT VISIT MODAL ===== -->
+                <div class="modal fade" id="editVisitModal-@v.VisitID" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header" style="background:#1a237e;">
+                                <h5 class="modal-title fw-bold text-white">
+                                    ✏️ Edit Visit — @v.VisitDate.ToString("dd / MM / yyyy")
+                                    @if (!string.IsNullOrWhiteSpace(v.AppointmentPeriod))
+                                    {
+                                        <span style="background:#e8eaf6; color:#3949ab; border-radius:4px;
+                                            padding:1px 8px; font-size:.72rem; font-weight:700; margin-left:8px;">
+                                            @v.AppointmentPeriod
+                                        </span>
+                                    }
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form asp-controller="Visits" asp-action="SaveDetails" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="VisitID" value="@v.VisitID" />
+                                <input type="hidden" name="PatientID" value="@Model.PatientID" />
+                                <input type="hidden" name="VisitDate" value="@v.VisitDate.ToString("yyyy-MM-dd")" />
+                                <div class="modal-body">
+                                    <div class="vt-section mb-3">
+                                        <p class="vt-section-title">Visit Info</p>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="vt-label">Date</label>
+                                                <div class="vt-input-readonly">📅 @v.VisitDate.ToString("dd / MM / yyyy")</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="vt-label">Period</label>
+                                                <div class="vt-input-readonly">@(string.IsNullOrWhiteSpace(v.AppointmentPeriod) ? "—" : v.AppointmentPeriod)</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="vt-section mb-3">
+                                        <p class="vt-section-title">Visit Details</p>
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <label class="vt-label">Chief Complaint</label>
+                                                <textarea name="ChiefComplaint" class="vt-textarea">@v.ChiefComplaint</textarea>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="vt-label">Procedures Performed</label>
+                                                <textarea name="ProceduresPerformed" class="vt-textarea">@v.ProceduresPerformed</textarea>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="vt-label">Materials Used</label>
+                                                <textarea name="MaterialsUsed" class="vt-textarea">@v.MaterialsUsed</textarea>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="vt-label">Complications / Issues</label>
+                                                <textarea name="Complications" class="vt-textarea">@v.Complications</textarea>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="vt-label">Student Notes</label>
+                                                <textarea name="StudentNotes" class="vt-textarea">@v.StudentNotes</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="vt-section">
+                                        <p class="vt-section-title">Supervisor Approval</p>
+                                        @if (v.IsApproved)
+                                        {
+                                            <div class="vt-approval-banner">
+                                                ✅ Approved by <strong>@v.ApprovedBy</strong>
+                                                on @v.ApprovedDate?.ToString("dd-MM-yyyy")
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="vt-approval-banner vt-approval-pending">
+                                                ⚠️ Awaiting supervisor approval.
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="vt-cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="vt-modal-save-btn">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    }
+</div>
+
+<!-- ===== ADD VISIT MODAL ===== -->
+<div class="modal fade" id="addVisitModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" style="color:#1a237e;">Add New Visit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-controller="Visits" asp-action="Save" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="PatientID" value="@Model.PatientID" />
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label class="vt-label" style="font-size:.88rem; font-weight:600; color:#555;">Date</label>
+                        <input type="date" name="VisitDate" class="vt-input"
+                               value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="mb-2">
+                        <label class="vt-label" style="font-size:.88rem; font-weight:600; color:#555;">AM / PM</label>
+                        <div style="display:flex; gap:32px; align-items:center; padding:8px 4px;">
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:.92rem; font-weight:500; color:#333;">
+                                <input type="radio" name="AppointmentPeriod" value="AM"
+                                       checked style="accent-color:#1a237e; width:16px; height:16px;" /> AM
+                            </label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:.92rem; font-weight:500; color:#333;">
+                                <input type="radio" name="AppointmentPeriod" value="PM"
+                                       style="accent-color:#1a237e; width:16px; height:16px;" /> PM
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="vt-cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="vt-modal-save-btn">Save Visit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function handleAttendedCheck(checkbox) {
+        if (!checkbox.checked) {
+            checkbox.checked = true;
+            let existingMsg = document.getElementById('attended-warning-' + checkbox.id);
+            if (!existingMsg) {
+                const msg = document.createElement('div');
+                msg.id = 'attended-warning-' + checkbox.id;
+                msg.style.cssText = `
+                    margin-top: 6px;
+                    padding: 8px 12px;
+                    background: #fff3e0;
+                    border: 1px solid #ffb74d;
+                    border-radius: 6px;
+                    color: #e65100;
+                    font-size: .82rem;
+                    font-weight: 600;
+                `;
+                msg.innerHTML = '⚠️ Cannot unmark attendance. Use the delete button to remove this visit.';
+                checkbox.closest('.vt-section').appendChild(msg);
+                setTimeout(() => msg.remove(), 3000);
+            }
+        }
+    }
+</script>

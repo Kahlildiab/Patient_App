@@ -1,0 +1,559 @@
+﻿@model List<DentalCollegeManagementSystem_AAU.Models.Patient>
+@{
+    ViewData["Title"] = "Allocated Students";
+    
+    var userRole = Context.Session.GetString("UserRole");
+
+    int pageSize = 10;
+    int pageNumber = Context.Request.Query.ContainsKey("page")
+        ? int.Parse(Context.Request.Query["page"]) : 1;
+
+    string searchName = Context.Request.Query["searchName"].ToString().Trim().ToLower();
+    string searchID   = Context.Request.Query["searchID"].ToString().Trim().ToLower();
+
+    var filtered = Model.AsEnumerable();
+
+    if (!string.IsNullOrEmpty(searchName))
+        filtered = filtered.Where(p =>
+            (p.FirstName + " " + p.SecondName + " " + p.ThirdName + " " + p.FourthName)
+            .ToLower().Contains(searchName));
+
+    if (!string.IsNullOrEmpty(searchID))
+        filtered = filtered.Where(p =>
+            p.NationalID_PassportNumber != null &&
+            p.NationalID_PassportNumber.ToLower().Contains(searchID));
+
+    int totalItems = filtered.Count();
+    int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+    var pagedModel = filtered.OrderByDescending(p => p.PatientID)
+                             .Skip((pageNumber - 1) * pageSize)
+                             .Take(pageSize)
+                             .ToList();
+}
+
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="~/css/RTE.css" />
+
+<style>
+    .active-filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+    .filter-tag {
+        background:#e8eaf6; color:#252468; border-radius:20px;
+        padding:4px 12px; font-size:12px; font-weight:600;
+        display:inline-flex; align-items:center; gap:6px;
+    }
+    /* ── Student rows ── */
+    .stu-row {
+        display:flex; align-items:center; justify-content:space-between;
+        background:#f8fafc; border:1px solid #e5e7eb;
+        border-radius:8px; padding:8px 12px; margin-bottom:6px;
+    }
+    .stu-name { font-size:14px; font-weight:600; }
+    .stu-type { font-size:12px; color:#6b7280; }
+    .btn-assign { background:#16a34a; color:#fff; border:none; border-radius:6px; width:30px; height:30px; font-size:18px; cursor:pointer; }
+    .btn-remove { background:#dc2626; color:#fff; border:none; border-radius:6px; width:30px; height:30px; font-size:18px; cursor:pointer; }
+    .col-assigned  { border:1px solid #bbf7d0; border-radius:10px; padding:12px; background:#f0fdf4; }
+    .col-available { border:1px solid #bfdbfe; border-radius:10px; padding:12px; background:#eff6ff; }
+    .empty-msg { color:#9ca3af; font-size:13px; text-align:center; padding:12px; }
+    .stu-search {
+        width:100%; border:1px solid #ddd; border-radius:6px;
+        padding:7px 12px; font-size:13px; margin-bottom:10px;
+    }
+    .col-title { font-weight:700; font-size:14px; margin-bottom:8px; }
+    .count-badge {
+        display:inline-block; background:#e0f2fe; color:#0369a1;
+        border-radius:20px; font-size:11px; font-weight:700;
+        padding:1px 7px; margin-left:4px; vertical-align:middle;
+    }
+    /* ── Modal Pagination ── */
+    .modal-pg { display:flex; justify-content:center; align-items:center; gap:5px; margin-top:12px; flex-wrap:wrap; }
+    .modal-pg button {
+        border:1px solid #ddd; background:#fff; border-radius:6px;
+        padding:3px 11px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s;
+    }
+    .modal-pg button:hover:not(:disabled) { background:#f0f0f0; }
+    .modal-pg button:disabled { opacity:.4; cursor:default; }
+    .modal-pg button.pg-active { background:#252468; color:#fff; border-color:#252468; }
+    .modal-pg-info { font-size:12px; color:#6b7280; margin-left:6px; }
+
+    /* ── History Timeline ── */
+    .hist-timeline { position:relative; padding-left:28px; }
+    .hist-timeline::before {
+        content:''; position:absolute; left:10px; top:0; bottom:0;
+        width:2px; background:#e5e7eb;
+    }
+    .hist-row {
+        position:relative; margin-bottom:16px;
+    }
+    .hist-row::before {
+        content:''; position:absolute; left:-22px; top:6px;
+        width:10px; height:10px; border-radius:50%;
+        background:#252468; border:2px solid white;
+        box-shadow:0 0 0 2px #252468;
+    }
+    .hist-date { font-size:11px; color:#9ca3af; margin-bottom:3px; }
+    .hist-badges { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .hist-badge {
+        border-radius:4px; padding:2px 10px;
+        font-size:.72rem; font-weight:700; white-space:nowrap;
+    }
+    .hist-badge-screening  { background:#fff3cd; color:#856404; border:1px solid #ffc107; }
+    .hist-badge-allocated  { background:#d1e7dd; color:#0f5132; border:1px solid #a3cfbb; }
+    .hist-badge-discharged { background:#e2e3e5; color:#383d41; border:1px solid #d6d8db; }
+</style>
+
+<!-- ════ SEARCH ════ -->
+<div style="background:#e9e8e8; width:100vw; position:relative; left:50%; right:50%; margin-left:-50vw; margin-right:-50vw; padding:30px 40px;">
+    <div style="max-width:1300px; margin:0 auto;">
+        <section id="title-wrapper" style="justify-content:flex-start;">
+            <div class="lineright" style="display:block; background-color:#daa328; max-width:650px;"></div>
+            <h1 class="sectiontitle heading6">
+                <p style="text-align:left;"><span style="color:#252468;">SEARCH</span></p>
+            </h1>
+        </section>
+        <br />
+        <form method="get">
+            <div style="background:white; padding:16px 20px;">
+                <div class="row align-items-center mb-2">
+                    <div class="col-md-2">
+                        <label style="font-weight:600; font-size:13px; color:#252468; margin:0;">Search by Name</label>
+                    </div>
+                    <div class="col-md-10">
+                        <input type="text" name="searchName" value="@searchName"
+                               placeholder="e.g. Ahmad Mohammad"
+                               class="form-control" style="border:1px solid #ddd; border-radius:0;" />
+                    </div>
+                </div>
+                <br />
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                        <label style="font-weight:600; font-size:13px; color:#252468; margin:0;">National ID / Passport</label>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" name="searchID" value="@searchID"
+                               placeholder="e.g. 9876543210"
+                               class="form-control" style="border:1px solid #ddd; border-radius:0;" />
+                    </div>
+                </div>
+            </div>
+            <div style="text-align:center;">
+                <button type="submit"
+                        style="width:90%; background:#c81589; color:white; border:none; padding:12px; font-size:15px; font-weight:600; cursor:pointer; margin-top:3px; letter-spacing:1px;">
+                    Search &nbsp;<i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<br />
+
+<!-- ════ TABLE ════ -->
+<div class="page-wrapper">
+    <div class="container">
+
+        <section id="title-wrapper" style="justify-content:End;">
+            <div class="lineleft"></div>
+            <h1 class="sectiontitle heading6">
+                <p style="text-align:center;"><span style="color:#252468;">PATIENTS</span></p>
+            </h1>
+            <div class="lineright" style="display:block; background-color:#daa328;"></div>
+        </section>
+
+        <br />
+
+        <div class="custom-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 style="color:rgb(38,76,159); font-weight:600; margin:0;">
+                    Total Patients
+                    <span style="background-color:#daa328; color:white; padding:4px 12px; font-weight:600;">@totalItems</span>
+                </h5>
+            </div>
+
+            @if (!string.IsNullOrEmpty(searchName) || !string.IsNullOrEmpty(searchID))
+            {
+                <div class="active-filters">
+                    <span style="font-size:12px;font-weight:600;color:#C81587;align-self:center;">Active filters:</span>
+                    @if (!string.IsNullOrEmpty(searchName))
+                    { <span class="filter-tag"><i class="fa-solid fa-user me-1"></i> @searchName</span> }
+                    @if (!string.IsNullOrEmpty(searchID))
+                    { <span class="filter-tag"><i class="fa-solid fa-id-card me-1"></i> @searchID</span> }
+                </div>
+            }
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>National ID</th>
+                            <th>Gender</th>
+                            <th>Age</th>
+                            <th>Phone</th>
+                            <th style="white-space:nowrap; text-align:center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!pagedModel.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fa-solid fa-circle-exclamation me-2"></i>
+                                    No patients found.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in pagedModel)
+                            {
+                                <tr>
+                                    <td>@item.FirstName @item.SecondName @item.ThirdName @item.FourthName</td>
+                                    <td>@item.NationalID_PassportNumber</td>
+                                    <td>@item.Gender?.Substring(0, 1)</td>
+                                    <td>
+                                        @if (item.DateOfBirth.HasValue)
+                                        {
+                                            int age = DateTime.Today.Year - item.DateOfBirth.Value.Year;
+                                            if (item.DateOfBirth.Value.Date > DateTime.Today.AddYears(-age)) age--;
+                                            @age
+                                        }
+                                        else { <span style="color:#aaa;">—</span> }
+                                    </td>
+                                    <td>@item.PhoneNumber</td>
+                                    <td style="white-space:nowrap; text-align:center;">
+
+                                        @* ── More button ── *@
+                                        @if (userRole != "Student")
+                                        {
+                                            <button type="button"
+                                                    onclick="openModal(@item.PatientID, '@item.FirstName @item.FourthName', 'available')"
+                                                    style="background:none; color:#2563eb; border:none; padding:5px 6px;
+                                                font-size:13px; font-weight:600; cursor:pointer;">
+                                                <i class="fa-solid fa-users me-1"></i> More...
+                                            </button>
+                                        }
+                                        @* ── History button ── *@
+                                        <button type="button"
+                                                onclick="openHistory(@item.PatientID, '@item.FirstName @item.FourthName')"
+                                                style="background:none; color:#7c3aed; border:none; padding:5px 6px;
+                                                       font-size:13px; font-weight:600; cursor:pointer;">
+                                            <i class="fa-solid fa-clock-rotate-left me-1"></i> History
+                                        </button>
+
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (totalPages > 1)
+            {
+                <nav class="mt-3">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(pageNumber == 1 ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(pageNumber-1)&searchName=@searchName&searchID=@searchID">←</a>
+                        </li>
+                        @for (int pg = 1; pg <= totalPages; pg++)
+                        {
+                            <li class="page-item @(pg == pageNumber ? "active" : "")">
+                                <a class="page-link"
+                                   href="?page=@pg&searchName=@searchName&searchID=@searchID"
+                                   style="border-radius:0 !important; border:none !important; font-weight:600;">
+                                    @pg
+                                </a>
+                            </li>
+                        }
+                        <li class="page-item @(pageNumber == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(pageNumber+1)&searchName=@searchName&searchID=@searchID">→</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>
+
+
+<!-- ════ STUDENT ALLOCATION MODAL ════ -->
+<div class="modal fade" id="studentModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1a237e;">
+                <h5 class="modal-title fw-bold text-white">
+                    <i class="fa-solid fa-users me-2"></i>
+                    Student Allocation — <span id="modalPatientName"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs mb-3" id="allocTabs">
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab-assigned" href="#"
+                           onclick="switchTab('assigned'); return false;"
+                           style="font-weight:600; color:#16a34a;">
+                            <i class="fa-solid fa-user-check me-1"></i>
+                            Assigned Students
+                            <span class="count-badge" id="assignedCount">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="tab-available" href="#"
+                           onclick="switchTab('available'); return false;"
+                           style="font-weight:600; color:#2563eb;">
+                            <i class="fa-solid fa-user-plus me-1"></i>
+                            Available Students
+                            <span class="count-badge" id="availableCount">0</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div id="modalLoading" class="text-center text-muted py-4">
+                    <i class="fa-solid fa-spinner fa-spin me-2"></i> Loading...
+                </div>
+                <div id="panel-assigned" style="display:none;">
+                    <div class="col-assigned">
+                        <div class="col-title" style="color:#16a34a;">
+                            <i class="fa-solid fa-user-check me-1"></i> Assigned Students
+                        </div>
+                        <input class="stu-search" id="searchAssigned"
+                               placeholder="Search assigned students..."
+                               oninput="filterList('assigned')" />
+                        <div id="list-assigned"><div class="empty-msg">No students assigned yet.</div></div>
+                    </div>
+                </div>
+                <div id="panel-available" style="display:none;">
+                    <div class="col-available">
+                        <div class="col-title" style="color:#2563eb;">Available Students</div>
+                        <input class="stu-search" id="searchAvailable"
+                               placeholder="Search available students..."
+                               oninput="filterList('available')" />
+                        <div id="list-available"><div class="empty-msg">All students are assigned.</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ════ HISTORY MODAL ════ -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1a237e;">
+                <h5 class="modal-title fw-bold text-white">
+                    <i class="fa-solid fa-clock-rotate-left me-2"></i>
+                    Status History — <span id="histPatientName"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="histModalBody">
+                <div class="text-center py-5">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x text-muted"></i>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+// ══════════════════════════════════════════════════════
+//  HISTORY MODAL
+// ══════════════════════════════════════════════════════
+async function openHistory(patientId, patientName) {
+    document.getElementById('histPatientName').textContent = patientName;
+    document.getElementById('histModalBody').innerHTML =
+        '<div class="text-center py-5"><i class="fa-solid fa-spinner fa-spin fa-2x text-muted"></i></div>';
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById('historyModal'))
+                  || new bootstrap.Modal(document.getElementById('historyModal'));
+    modal.show();
+
+    const res  = await fetch(`/AllocatedStudent/GetStatusHistory?patientId=${patientId}`);
+    const data = await res.json();
+
+    if (!data.length) {
+        document.getElementById('histModalBody').innerHTML =
+            '<div class="text-center text-muted py-5"><i class="fa-solid fa-circle-info me-2"></i>No status changes recorded yet.</div>';
+        return;
+    }
+
+    const badgeClass = s =>
+        s === 'Allocated'  ? 'hist-badge-allocated'  :
+        s === 'Discharged' ? 'hist-badge-discharged' :
+                             'hist-badge-screening';
+
+    const icon = s =>
+        s === 'Allocated'  ? 'fa-user-check'  :
+        s === 'Discharged' ? 'fa-door-open'   :
+                             'fa-microscope';
+
+    const rows = data.map(h => `
+        <div class="hist-row">
+            <div class="hist-date"><i class="fa-solid fa-calendar-clock me-1"></i>${h.changedAt}</div>
+            <div class="hist-badges">
+                <span class="hist-badge ${badgeClass(h.oldStatus)}">
+                    <i class="fa-solid ${icon(h.oldStatus)} me-1"></i>${h.oldStatus}
+                </span>
+                <i class="fa-solid fa-arrow-right" style="color:#252468;font-size:.8rem;"></i>
+                <span class="hist-badge ${badgeClass(h.newStatus)}">
+                    <i class="fa-solid ${icon(h.newStatus)} me-1"></i>${h.newStatus}
+                </span>
+            </div>
+        </div>`).join('');
+
+    document.getElementById('histModalBody').innerHTML =
+        `<div class="hist-timeline">${rows}</div>`;
+}
+
+// ══════════════════════════════════════════════════════
+//  STUDENT ALLOCATION MODAL (unchanged logic)
+// ══════════════════════════════════════════════════════
+let _currentPatientId = null;
+let _assignedData     = [];
+let _availableData    = [];
+
+const MODAL_PAGE_SIZE = 10;
+let _assignedPage  = 1;
+let _availablePage = 1;
+
+function openModal(patientId, patientName, tab) {
+    _currentPatientId = patientId;
+    _assignedPage  = 1;
+    _availablePage = 1;
+
+    document.getElementById('modalPatientName').textContent = patientName;
+    document.getElementById('modalLoading').style.display   = 'block';
+    document.getElementById('panel-assigned').style.display  = 'none';
+    document.getElementById('panel-available').style.display = 'none';
+    document.getElementById('searchAssigned').value  = '';
+    document.getElementById('searchAvailable').value = '';
+
+    const modal = new bootstrap.Modal(document.getElementById('studentModal'));
+    modal.show();
+
+    fetch('/AllocatedStudent/GetPatientDetailsJson?patientId=' + patientId)
+        .then(r => r.json())
+        .then(data => {
+            _assignedData  = data.assigned;
+            _availableData = data.available;
+            renderList('assigned');
+            renderList('available');
+            updateCounts();
+            document.getElementById('modalLoading').style.display = 'none';
+            switchTab(tab);
+        });
+}
+
+function switchTab(tab) {
+    document.getElementById('panel-assigned').style.display  = tab === 'assigned'  ? 'block' : 'none';
+    document.getElementById('panel-available').style.display = tab === 'available' ? 'block' : 'none';
+    document.getElementById('tab-assigned').classList.toggle('active',  tab === 'assigned');
+    document.getElementById('tab-available').classList.toggle('active', tab === 'available');
+}
+
+function renderList(type) {
+    const q    = document.getElementById('search' + (type === 'assigned' ? 'Assigned' : 'Available')).value.toLowerCase();
+    const data = type === 'assigned' ? _assignedData : _availableData;
+    const el   = document.getElementById('list-' + type);
+
+    const filtered = data.filter(s =>
+        s.nameEn.toLowerCase().includes(q) ||
+        (s.userTypeEn || '').toLowerCase().includes(q));
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / MODAL_PAGE_SIZE));
+    let   page = type === 'assigned' ? _assignedPage : _availablePage;
+    if (page > totalPages) {
+        page = 1;
+        if (type === 'assigned') _assignedPage = 1;
+        else                     _availablePage = 1;
+    }
+
+    if (!filtered.length) {
+        el.innerHTML = `<div class="empty-msg">${type === 'assigned' ? 'No students assigned yet.' : 'No students available.'}</div>`;
+        return;
+    }
+
+    const paged = filtered.slice((page - 1) * MODAL_PAGE_SIZE, page * MODAL_PAGE_SIZE);
+
+    let html = paged.map(s => `
+        <div class="stu-row">
+            <div>
+                <div class="stu-name">${s.nameEn}</div>
+                <div class="stu-type">${s.userTypeEn || '—'}</div>
+            </div>
+            ${type === 'assigned'
+                ? `<button class="btn-remove" onclick="doRemove(${s.id})" title="Remove">−</button>`
+                : `<button class="btn-assign" onclick="doAssign(${s.id})" title="Assign">+</button>`
+            }
+        </div>`).join('');
+
+    if (totalPages > 1) {
+        html += `<div class="modal-pg">`;
+        html += `<button onclick="changePage('${type}', ${page - 1})" ${page === 1 ? 'disabled' : ''}>←</button>`;
+        for (let pg = 1; pg <= totalPages; pg++) {
+            html += `<button onclick="changePage('${type}', ${pg})" class="${pg === page ? 'pg-active' : ''}">${pg}</button>`;
+        }
+        html += `<button onclick="changePage('${type}', ${page + 1})" ${page === totalPages ? 'disabled' : ''}>→</button>`;
+        html += `<span class="modal-pg-info">${filtered.length} total</span>`;
+        html += `</div>`;
+    }
+
+    el.innerHTML = html;
+}
+
+function changePage(type, page) {
+    if (type === 'assigned') _assignedPage  = page;
+    else                     _availablePage = page;
+    renderList(type);
+}
+
+function filterList(type) {
+    if (type === 'assigned') _assignedPage  = 1;
+    else                     _availablePage = 1;
+    renderList(type);
+}
+
+function updateCounts() {
+    document.getElementById('assignedCount').textContent  = _assignedData.length;
+    document.getElementById('availableCount').textContent = _availableData.length;
+}
+
+function doAssign(appUserId) {
+    fetch('/AllocatedStudent/Assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'patientId=' + _currentPatientId + '&appUserId=' + appUserId
+    }).then(r => r.json()).then(data => {
+        _assignedData  = data.assigned;
+        _availableData = data.available;
+        _assignedPage  = 1;
+        _availablePage = 1;
+        renderList('assigned');
+        renderList('available');
+        updateCounts();
+    });
+}
+
+function doRemove(appUserId) {
+    fetch('/AllocatedStudent/Remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'patientId=' + _currentPatientId + '&appUserId=' + appUserId
+    }).then(r => r.json()).then(data => {
+        _assignedData  = data.assigned;
+        _availableData = data.available;
+        _assignedPage  = 1;
+        _availablePage = 1;
+        renderList('assigned');
+        renderList('available');
+        updateCounts();
+    });
+}
+</script>

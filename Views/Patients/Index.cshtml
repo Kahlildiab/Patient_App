@@ -1,0 +1,386 @@
+﻿@model IEnumerable<DentalCollegeManagementSystem_AAU.Models.Patient>
+
+@{
+    ViewData["Title"] = "Patients";
+    int pageSize = 10;
+    int pageNumber = Context.Request.Query.ContainsKey("page") ? int.Parse(Context.Request.Query["page"]) : 1;
+
+    string searchName = Context.Request.Query["searchName"].ToString().Trim().ToLower();
+    string searchID = Context.Request.Query["searchID"].ToString().Trim().ToLower();
+    string filterDate = Context.Request.Query["filterDate"].ToString().Trim();
+    string filterTime = Context.Request.Query["filterTime"].ToString().Trim();
+
+    var filtered = Model.AsEnumerable();
+
+    if (!string.IsNullOrEmpty(searchName))
+        filtered = filtered.Where(p =>
+            (p.FirstName + " " + p.SecondName + " " + p.ThirdName + " " + p.FourthName)
+            .ToLower().Contains(searchName));
+
+    if (!string.IsNullOrEmpty(searchID))
+        filtered = filtered.Where(p =>
+            p.NationalID_PassportNumber != null &&
+            p.NationalID_PassportNumber.ToLower().Contains(searchID));
+
+    if (!string.IsNullOrEmpty(filterDate) && DateTime.TryParse(filterDate, out DateTime parsedDate))
+        filtered = filtered.Where(p =>
+            p.AppointmentDate != null &&
+            p.AppointmentDate.Date == parsedDate.Date);
+
+    if (!string.IsNullOrEmpty(filterTime))
+        filtered = filtered.Where(p =>
+            p.AppointmentTime != null &&
+            p.AppointmentTime.Equals(filterTime, StringComparison.OrdinalIgnoreCase));
+
+    int totalItems = filtered.Count();
+    int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+    var pagedModel = filtered.OrderByDescending(p => p.PatientID)
+                             .Skip((pageNumber - 1) * pageSize)
+                             .Take(pageSize)
+                             .ToList();
+
+    // ✅ FIX 3: جلب خريطة المواعيد القادمة من ViewBag
+    var nextApptMap = ViewBag.NextAppointments as Dictionary<int, DentalCollegeManagementSystem_AAU.Models.Appointment>;
+}
+
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="~/css/all.min.css" />
+<link rel="stylesheet" href="~/css/RTE.css" />
+
+<style>
+    .badge {
+        border-radius: 0;
+    }
+
+    .active-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .filter-tag {
+        background: #e8eaf6;
+        color: #252468;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* ✅ تنسيق بادج الموعد القادم */
+    .next-appt-badge {
+        display: inline-block;
+        background: #e8eaf6;
+        color: #252468;
+        border-radius: 4px;
+        padding: 3px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .next-appt-time {
+        display: inline-block;
+        margin-top: 3px;
+        background: #daa328;
+        color: white;
+        border-radius: 4px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+</style>
+
+@* ===== SEARCH BAR ===== *@
+<div style="background:#e9e8e8; width:100vw; position:relative; left:50%; right:50%; margin-left:-50vw; margin-right:-50vw; padding:30px 40px;">
+    <div style="max-width:1300px; margin:0 auto;">
+
+        <div style="background-size:cover !important; background-position:center !important;">
+            <section id="title-wrapper" style="justify-content:flex-start;">
+                <div class="lineright" style="display:block; background-color:#daa328; max-width:650px;"></div>
+                <h1 class="sectiontitle heading6">
+                    <p style="text-align:left;"><span style="color:#252468;">SEARCH</span></p>
+                </h1>
+            </section>
+        </div>
+
+        <br />
+
+        <form method="get">
+            <div style="background:white; padding:16px 20px;">
+                <div class="row align-items-center mb-2">
+                    <div class="col-md-2">
+                        <label style="font-weight:600; font-size:13px; color:#252468; margin:0;">Search by Name</label>
+                    </div>
+                    <div class="col-md-10">
+                        <input type="text" name="searchName" value="@searchName" placeholder="e.g. Ahmad Mohammad"
+                               class="form-control" style="border:1px solid #ddd; border-radius:0;" />
+                    </div>
+                </div>
+                <br />
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                        <label style="font-weight:600; font-size:13px; color:#252468; margin:0;">National ID / Passport</label>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" name="searchID" value="@searchID" placeholder="e.g. 9876543210"
+                               class="form-control" style="border:1px solid #ddd; border-radius:0;" />
+                    </div>
+                    <div class="col-md-2 text-center">
+                        <label style="font-weight:600; font-size:13px; color:#252468; margin:0;">Appointment Date</label>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" name="filterDate" value="@filterDate"
+                               class="form-control" style="border:1px solid #ddd; border-radius:0;" />
+                    </div>
+                    <div class="col-md-1 text-center">
+                        <label style="font-weight:600; font-size:13px; color:#252468; margin:0;">AM / PM</label>
+                    </div>
+                    <div class="col-md-1">
+                        <select name="filterTime" class="form-control" style="border:1px solid #ddd; border-radius:0;">
+                            <option value="">-- All --</option>
+                            <option value="AM" selected="@(filterTime == "AM" ? "selected" : null)">AM</option>
+                            <option value="PM" selected="@(filterTime == "PM" ? "selected" : null)">PM</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align:center;">
+                <button type="submit"
+                        style="width:90%; background:#c81589; color:white; border:none; padding:12px; font-size:15px; font-weight:600; cursor:pointer; margin-top:3px; letter-spacing:1px;">
+                    Search &nbsp;<i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<br />
+
+@* ===== TABLE SECTION ===== *@
+<div class="page-wrapper">
+    <div class="container">
+        <div class="custom-card">
+            <div style="background-size:cover !important; background-position:center !important;">
+                <section id="title-wrapper" style="justify-content:End;">
+                    <div class="lineleft"></div>
+                    <h1 class="sectiontitle heading6">
+                        <p style="text-align:center;"><span style="color:#252468;">ACCEPTED PATIENTS</span></p>
+                    </h1>
+                    <div class="lineright" style="display:block; background-color:#daa328;"></div>
+                </section>
+            </div>
+            <br />
+            <h5 class="mb-0" style="color:rgb(38, 76, 159); font-weight:600; text-align:left;">
+                All Registered Patients
+                <span style="background-color:#daa328; color:white; padding:4px 12px; font-weight:600;">@totalItems</span>
+            </h5>
+            <br />
+
+            @* Active Filters *@
+            @if (!string.IsNullOrEmpty(searchName) || !string.IsNullOrEmpty(searchID) || !string.IsNullOrEmpty(filterDate) || !string.IsNullOrEmpty(filterTime))
+            {
+                <div class="active-filters">
+                    <span style="font-size:12px;font-weight:600;color:#C81587;align-self:center;">Active filters:</span>
+                    @if (!string.IsNullOrEmpty(searchName))
+                    {
+                        <span class="filter-tag"><i class="fa-solid fa-user me-1"></i> Name</span>
+                    }
+                    @if (!string.IsNullOrEmpty(searchID))
+                    {
+                        <span class="filter-tag"><i class="fa-solid fa-id-card me-1"></i> National ID</span>
+                    }
+                    @if (!string.IsNullOrEmpty(filterDate))
+                    {
+                        <span class="filter-tag"><i class="fa-solid fa-calendar me-1"></i> Date</span>
+                    }
+                    @if (!string.IsNullOrEmpty(filterTime))
+                    {
+                        <span class="filter-tag"><i class="fa-solid fa-clock me-1"></i> @filterTime</span>
+                    }
+                </div>
+            }
+
+            @* Toast *@
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">@TempData["Error"]</div>
+            }
+
+            @* Table *@
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>National ID</th>
+                            <th>Gender</th>
+                            <th>Age</th>
+                            <th>Registered Appointment</th>
+                            @* ✅ FIX 3: عمود الموعد القادم *@
+                            <th>Next Appointment</th>
+                            <th>Phone</th>
+                            <th style="white-space:nowrap;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!pagedModel.Any())
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">
+                                    <i class="fa-solid fa-circle-exclamation me-2"></i>
+                                    No patients found matching your search.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in pagedModel)
+                            {
+                                <tr>
+                                    <td>@item.FirstName @item.SecondName @item.ThirdName @item.FourthName</td>
+                                    <td>@item.NationalID_PassportNumber</td>
+                                    <td>@item.Gender?.Substring(0, 1)</td>
+                                    <td>
+                                        @if (item.DateOfBirth.HasValue)
+                                        {
+                                            int age = DateTime.Today.Year - item.DateOfBirth.Value.Year;
+                                            if (item.DateOfBirth.Value.Date > DateTime.Today.AddYears(-age)) age--;
+                                            @age
+                                        }
+                                        else
+                                        {
+                                            <span style="color:#aaa;">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.AppointmentDate != null && !string.IsNullOrEmpty(item.AppointmentTime))
+                                        {
+                                            @item.AppointmentDate.ToString("yyyy-MM-dd")
+                                            <text> </text>
+                                            @item.AppointmentTime
+                                        }
+                                        else
+                                        {
+                                            <span style="color:#aaa;">Not scheduled</span>
+                                        }
+                                    </td>
+
+                                    @* ✅ FIX 3: إظهار الموعد القادم من جدول Appointments *@
+                                    <td>
+                                        @if (nextApptMap != null && nextApptMap.ContainsKey(item.PatientID))
+                                        {
+                                            var appt = nextApptMap[item.PatientID];
+                                            <span class="next-appt-badge">
+                                                <i class="fa-solid fa-calendar-check me-1"></i>
+                                                @appt.AppointmentDate.ToString("yyyy-MM-dd")
+                                            </span>
+                                            <br />
+                                            @if (!string.IsNullOrEmpty(item.AppointmentTime))
+                                            {
+                                                <span class="next-appt-time">@item.AppointmentTime</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span style="color:#aaa; font-size:12px;">
+                                                <i class="fa-solid fa-calendar-xmark me-1"></i> No upcoming
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <td>@item.PhoneNumber</td>
+                                    <td style="white-space:nowrap;">
+                                        <a asp-controller="Patients" asp-action="Edit" asp-route-id="@item.PatientID"
+                                               style="background:none;color:#3F8CCA;border:none;padding:5px 6px;font-size:13px;font-weight:600;margin:2px;cursor:pointer;text-decoration:none;display:inline-block;">
+                                            <i class="fa-solid fa-pen"></i> Edit
+                                        </a>
+                                        <a asp-controller="Patients" asp-action="Details" asp-route-id="@item.PatientID"
+                                               style="background:none;color:#3F8CCA;border:none;padding:5px 6px;font-size:13px;font-weight:600;margin:2px;cursor:pointer;text-decoration:none;display:inline-block;">
+                                            <i class="fa-solid fa-eye"></i> Details
+                                        </a>
+                                        @if (item.StatusID == 1)
+                                        {
+                                            <form asp-controller="Patients" asp-action="Accepted" asp-route-id="@item.PatientID" method="post" style="display:inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" onclick="return confirm('Are you sure you want to accept this patient?')"
+                                                        style="background:none;color:#3F8CCA;border:none;padding:5px 6px;font-size:13px;font-weight:600;margin:2px;cursor:pointer;">
+                                                    <i class="fa-solid fa-user-check"></i> Accepted
+                                                </button>
+                                            </form>
+                                        }
+                                        @if (item.StatusID == 3)
+                                        {
+                                            <form asp-controller="Patients" asp-action="SetInTreatment" asp-route-id="@item.PatientID" method="post" style="display:inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit"
+                                                        style="background:none;color:#264C9F;border:none;padding:5px 6px;font-size:13px;font-weight:600;margin:2px;cursor:pointer;">
+                                                    <i class="fa-solid fa-stethoscope"></i> In Treatment
+                                                </button>
+                                            </form>
+                                        }
+                                        @if (item.StatusID == 4)
+                                        {
+                                            <form asp-controller="Patients" asp-action="SetCompleted" asp-route-id="@item.PatientID" method="post" style="display:inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit"
+                                                        style="background:none;color:#17a2b8;border:none;padding:5px 6px;font-size:13px;font-weight:600;margin:2px;cursor:pointer;">
+                                                    <i class="fa-solid fa-circle-check"></i> Completed
+                                                </button>
+                                            </form>
+                                        }
+                                        @if (item.StatusID != 5)
+                                        {
+                                            <form asp-controller="Patients" asp-action="Reject" asp-route-id="@item.PatientID" method="post" style="display:inline">
+                                                @Html.AntiForgeryToken()
+                                                @* <button type="submit" onclick="return confirm('Are you sure you want to reject this patient?')"
+                                                        style="background:none;color:#3F8CCA;border:none;padding:5px 6px;font-size:13px;font-weight:600;margin:2px;cursor:pointer;">
+                                                    <i class="fa-solid fa-user-xmark"></i> Reject
+                                                </button> *@
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @* Pagination *@
+            @if (totalPages > 1)
+            {
+                <nav class="mt-3">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(pageNumber == 1 ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(pageNumber - 1)&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime">←</a>
+                        </li>
+                        @for (int p = 1; p <= totalPages; p++)
+                        {
+                            <li class="page-item @(p == pageNumber ? "active" : "")">
+                                <a class="page-link"
+                                       href="?page=@p&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime"
+                                       style="border-radius:0 !important;border:none !important;box-shadow:none !important;font-weight:600;">
+                                    @p
+                                </a>
+                            </li>
+                        }
+                        <li class="page-item @(pageNumber == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(pageNumber + 1)&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime">→</a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,57 @@
+﻿@model DentalCollegeManagementSystem_AAU.Models.ViewModels.SearchUserViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2 class="text-center mt-4" style="color:#252468;font-weight:700;">SEARCH USER <span style="border-bottom:3px solid #daa328;display:inline-block;width:200px;"></span></h2>
+
+<div class="container mt-4" style="border:2px solid #daa328;border-radius:8px;padding:30px;">
+    <form method="get">
+        <div class="row">
+            <div class="col-md-2 fw-bold">Search by Name:</div>
+            <div class="col-md-10"><input name="search" value="@Model.SearchTerm" class="form-control" placeholder="Type name or email..." /></div>
+        </div>
+        <div class="text-center mt-3">
+            <button type="submit" class="btn btn-lg px-5" style="background:#c0006a;color:#fff;">Search 🔍</button>
+        </div>
+    </form>
+</div>
+
+<h2 class="text-center mt-5" style="color:#252468;font-weight:700;">SEARCH RESULT <span style="border-bottom:3px solid #daa328;display:inline-block;width:200px;"></span></h2>
+
+<div class="container mt-3">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>User Log</th>
+                <th>Email</th>
+                <th>Name (EN)</th>
+                <th>Name (AR)</th>
+                <th>Type</th>
+                <th>Notes</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model.Results)
+            {
+                <tr>
+                    <td>@u.Id</td>
+                    <td>@u.UserLog</td>
+                    <td>@u.Email</td>
+                    <td>@u.NameEn</td>
+                    <td>@u.NameAr</td>
+                    <td>@u.UserType?.NameEn</td>
+                    <td>@u.Notes</td>
+                    <td>@u.Status</td>
+                    <td>
+                        <a href="/SearchNewUsers/Details/@u.Id"
+                           style="color:#252468;font-weight:bold;">More...</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
