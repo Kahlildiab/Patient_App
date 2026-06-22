@@ -2,45 +2,115 @@
 
 @{
     ViewData["Title"] = "Patient Details";
+
     int age = 0;
+
     if (Model.DateOfBirth.HasValue)
     {
         age = DateTime.Today.Year - Model.DateOfBirth.Value.Year;
-        if (Model.DateOfBirth.Value.Date > DateTime.Today.AddYears(-age)) age--;
+
+        if (Model.DateOfBirth.Value.Date > DateTime.Today.AddYears(-age))
+        {
+            age--;
+        }
     }
 
-    var mh = ViewBag.MedicalHistory as DentalCollegeManagementSystem_AAU.Models.MedicalHistory;
-    var conditions = ViewBag.Conditions as List<DentalCollegeManagementSystem_AAU.Models.Condition>;
-    var meds = ViewBag.Medications as List<DentalCollegeManagementSystem_AAU.Models.Medication>;
+    var mh = ViewBag.MedicalHistory
+        as DentalCollegeManagementSystem_AAU.Models.MedicalHistory;
 
-    // ✅ هون بعد ما اتعرّفوا mh و conditions
-    bool hasAllergies = mh?.Allergies == true && !string.IsNullOrEmpty(mh?.AllergyNotes);
-    bool hasRedFlags = conditions != null && conditions.Any(c => c.IsFlagged);
+    var conditions = ViewBag.Conditions
+        as List<DentalCollegeManagementSystem_AAU.Models.Condition>;
 
-    var activeTab = Context.Request.Query["tab"].ToString();
-    if (string.IsNullOrEmpty(activeTab)) activeTab = "medical-history";
-    var complexity = mh?.CaseComplexity.HasValue == true ? mh.CaseComplexity.ToString() : "---";
+    var meds = ViewBag.Medications
+        as List<DentalCollegeManagementSystem_AAU.Models.Medication>;
 
-    // ✅ Next Appointment من Appointments جدول
-    var nextAppt = ViewBag.NextAppointment as DentalCollegeManagementSystem_AAU.Models.Appointment;
+    bool hasAllergies =
+        mh?.Allergies == true &&
+        !string.IsNullOrWhiteSpace(mh.AllergyNotes);
 
-    // ✅ عدد المواعيد الكلي لهاد المريض (1st, 2nd...)
-    var allAppts = ViewBag.AllAppointments as List<DentalCollegeManagementSystem_AAU.Models.Appointment>
-                  ?? new List<DentalCollegeManagementSystem_AAU.Models.Appointment>();
+    bool hasRedFlags =
+        conditions != null &&
+        conditions.Any(c => c.IsFlagged);
+
+    string activeTab = Context.Request.Query["tab"].ToString();
+
+    if (string.IsNullOrWhiteSpace(activeTab))
+    {
+        activeTab = "medical-history";
+    }
+
+    string complexity =
+        mh?.CaseComplexity.HasValue == true
+            ? mh.CaseComplexity.ToString()
+            : "---";
+
+    var nextAppt = ViewBag.NextAppointment
+        as DentalCollegeManagementSystem_AAU.Models.Appointment;
+
+    var allAppts = ViewBag.AllAppointments
+        as List<DentalCollegeManagementSystem_AAU.Models.Appointment>
+        ?? new List<DentalCollegeManagementSystem_AAU.Models.Appointment>();
+
     int apptCount = allAppts.Count;
-    string[] suffixes = { "th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th" };
+
+    string[] suffixes =
+    {
+        "th", "st", "nd", "rd", "th",
+        "th", "th", "th", "th", "th"
+    };
+
     string Ordinal(int n)
     {
-        if (n % 100 >= 11 && n % 100 <= 13) return n + "th";
+        if (n % 100 >= 11 && n % 100 <= 13)
+        {
+            return n + "th";
+        }
+
         return n + suffixes[n % 10];
     }
-    string apptLabel = apptCount == 0 ? "No appointments yet" : Ordinal(apptCount) + " Appointment";
-}
 
-@{
-    string GetTabClass(string tab) => activeTab == tab ? "tab-active" : "";
-    string dentalDisabled = mh?.MedicalHistoryVerified == true ? "" : "disabled-link";
-    string dentalStyle = mh?.MedicalHistoryVerified == true ? "" : "pointer-events:none; opacity:0.4; cursor:not-allowed;";
+    string apptLabel =
+        apptCount == 0
+            ? "No appointments yet"
+            : Ordinal(apptCount) + " Appointment";
+
+    // حالة التبويب النشط
+    string GetTabClass(string tab)
+    {
+        return activeTab == tab ? "tab-active" : "";
+    }
+
+    // إنشاء رابط التبويب
+    string currentAction =
+        ViewContext.RouteData.Values["action"]?.ToString() ?? "Details";
+
+    string currentController =
+        ViewContext.RouteData.Values["controller"]?.ToString() ?? "Patients";
+
+    string TabUrl(string tab)
+    {
+        return Url.Action(
+            currentAction,
+            currentController,
+            new
+            {
+                id = Model.PatientID,
+                tab = tab
+            }) ?? "#";
+    }
+
+    // فتح وإغلاق التبويبات
+    bool tabsUnlocked =
+        mh == null ||
+        mh.MedicalHistoryVerified == true;
+
+    string dentalDisabled =
+        tabsUnlocked ? "" : "disabled-link";
+
+    string dentalStyle =
+        tabsUnlocked
+            ? ""
+            : "pointer-events:none; opacity:0.4; cursor:not-allowed;";
 }
 
 <link rel="stylesheet" href="~/css/Site.css" />
@@ -160,25 +230,41 @@
         margin-right: auto;
     }
 
-    .sidebar-link:hover {
-        background-color: #2f4f8f;
-        color: #fff;
+    #sidebar {
+        position: relative;
+        border-left: 4px solid #daa328;
+        padding-left: 8px;
     }
 
-        .sidebar-link:hover::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 5px;
-            height: 100%;
-            background-color: #e8a020;
+        #sidebar ul {
+            border-left: none !important;
+            margin: 0;
+            padding: 0;
         }
 
+        #sidebar > .line {
+            display: none !important;
+        }
+
+        /* لا تنشئ خطاً عمودياً إضافياً */
+        #sidebar .sidebar-link::before,
+        #sidebar .sidebar-link:hover::before,
+        #sidebar .sidebar-link.tab-active::before {
+            content: none !important;
+            display: none !important;
+        }
+
+    .sidebar-link:hover {
+        background-color: #2f4f8f;
+        color: white !important;
+    }
+
         .sidebar-link:hover span {
+            color: white !important;
             position: relative;
         }
 
+            /* فقط خط تحت النص */
             .sidebar-link:hover span::after {
                 content: '';
                 position: absolute;
@@ -188,16 +274,6 @@
                 height: 3px;
                 background-color: #e8a020;
             }
-
-    .sidebar-link:hover {
-        background-color: #2f4f8f;
-        color: #fff !important;
-    }
-
-        .sidebar-link:hover span {
-            color: #fff !important;
-            position: relative;
-        }
 
     .flag-badge {
         display: inline-block;
@@ -398,20 +474,126 @@
     <div class="col-lg-4" style="margin-top:60px;">
         <nav id="sidebar">
             <ul class="list-unstyled">
-                <li><a href="#" class="dropdown LinkFontStyle sidebar-link @GetTabClass("medical-history")" data-target="medical-history"><span>Medical History</span></a></li>
-                <li><a href="#" class="dropdown LinkFontStyle sidebar-link @GetTabClass("dental-history")   @dentalDisabled" data-target="dental-history" style="@dentalStyle"><span>Dental History</span></a></li>
-                <li><a href="#" class="dropdown LinkFontStyle sidebar-link @GetTabClass("social-history")   @dentalDisabled" data-target="social-history" style="@dentalStyle"><span>Social History</span></a></li>
-                <li><a href="#" class="dropdown LinkFontStyle sidebar-link @GetTabClass("extraoral-exam")   @dentalDisabled" data-target="extraoral-exam" style="@dentalStyle"><span>Extraoral Exam</span></a></li>
-                <li><a href="#" class="dropdown LinkFontStyle sidebar-link @GetTabClass("intraoral-exam")   @dentalDisabled" data-target="intraoral-exam" style="@dentalStyle"><span>Intraoral Exam</span></a></li>
-                <li><a href="#" class="dropdown LinkFontStyle sidebar-link @GetTabClass("dental-charting")  @dentalDisabled" data-target="dental-charting" style="@dentalStyle"><span>Dental Charting</span></a></li>
-                <li><a href="#" class="dropdown LinkFontStyle sidebar-link @GetTabClass("treatment-plan")   @dentalDisabled" data-target="treatment-plan" style="@dentalStyle"><span>Treatment Plan</span></a></li>
-                <li><a href="#" class="dropdown LinkFontStyle sidebar-link @GetTabClass("todays-visit")     @dentalDisabled" data-target="todays-visit" style="@dentalStyle"><span>Visits</span></a></li>
-                <li><a href="#" class="dropdown LinkFontStyle sidebar-link @GetTabClass("notes")            @dentalDisabled" data-target="notes" style="@dentalStyle"><span>Notes</span></a></li>
-                <li><a href="#" class="dropdown LinkFontStyle sidebar-link @GetTabClass("radiographs")      @dentalDisabled" data-target="radiographs" style="@dentalStyle"><span>Radiographs</span></a></li>
-                <li><a href="#" class="dropdown LinkFontStyle sidebar-link @GetTabClass("photos")           @dentalDisabled" data-target="photos" style="@dentalStyle"><span>Photos</span></a></li>
-                <li><a href="#" class="dropdown LinkFontStyle sidebar-link @GetTabClass("competencies")     @dentalDisabled" data-target="competencies" style="@dentalStyle"><span>Competencies</span></a></li>
-                <li><a href="#" class="dropdown LinkFontStyle sidebar-link @GetTabClass("orders")           @dentalDisabled" data-target="orders" style="@dentalStyle"><span>Orders</span></a></li>
+
+                <li>
+                    <a href="@TabUrl("medical-history")"
+                       class="LinkFontStyle sidebar-link @GetTabClass("medical-history")"
+                       data-target="medical-history">
+                        <span>Medical History</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="@TabUrl("dental-history")"
+                       class="LinkFontStyle sidebar-link @GetTabClass("dental-history") @dentalDisabled"
+                       data-target="dental-history"
+                       style="@dentalStyle">
+                        <span>Dental History</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="@TabUrl("social-history")"
+                       class="LinkFontStyle sidebar-link @GetTabClass("social-history") @dentalDisabled"
+                       data-target="social-history"
+                       style="@dentalStyle">
+                        <span>Social History</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="@TabUrl("extraoral-exam")"
+                       class="LinkFontStyle sidebar-link @GetTabClass("extraoral-exam") @dentalDisabled"
+                       data-target="extraoral-exam"
+                       style="@dentalStyle">
+                        <span>Extraoral Exam</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="@TabUrl("intraoral-exam")"
+                       class="LinkFontStyle sidebar-link @GetTabClass("intraoral-exam") @dentalDisabled"
+                       data-target="intraoral-exam"
+                       style="@dentalStyle">
+                        <span>Intraoral Exam</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a id="dentalChartLink"
+                       href="@Url.Action("Index", "DentalChartPage", new { patientId = Model.PatientID })"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="LinkFontStyle sidebar-link dental-chart-link">
+                        <span>Dental Charting</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="@TabUrl("treatment-plan")"
+                       class="LinkFontStyle sidebar-link @GetTabClass("treatment-plan") @dentalDisabled"
+                       data-target="treatment-plan"
+                       style="@dentalStyle">
+                        <span>Treatment Plan</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="@TabUrl("todays-visit")"
+                       class="LinkFontStyle sidebar-link @GetTabClass("todays-visit") @dentalDisabled"
+                       data-target="todays-visit"
+                       style="@dentalStyle">
+                        <span>Visits</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="@TabUrl("notes")"
+                       class="LinkFontStyle sidebar-link @GetTabClass("notes") @dentalDisabled"
+                       data-target="notes"
+                       style="@dentalStyle">
+                        <span>Notes</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="@TabUrl("radiographs")"
+                       class="LinkFontStyle sidebar-link @GetTabClass("radiographs") @dentalDisabled"
+                       data-target="radiographs"
+                       style="@dentalStyle">
+                        <span>Radiographs</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="@TabUrl("photos")"
+                       class="LinkFontStyle sidebar-link @GetTabClass("photos") @dentalDisabled"
+                       data-target="photos"
+                       style="@dentalStyle">
+                        <span>Photos</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="@TabUrl("competencies")"
+                       class="LinkFontStyle sidebar-link @GetTabClass("competencies") @dentalDisabled"
+                       data-target="competencies"
+                       style="@dentalStyle">
+                        <span>Competencies</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="@TabUrl("orders")"
+                       class="LinkFontStyle sidebar-link @GetTabClass("orders") @dentalDisabled"
+                       data-target="orders"
+                       style="@dentalStyle">
+                        <span>Orders</span>
+                    </a>
+                </li>
+
             </ul>
+
             <span class="line"></span>
         </nav>
     </div>
@@ -765,12 +947,6 @@
         <div id="social-history" class="content-section @(activeTab == "social-history" ? "active" : "")">@await Html.PartialAsync("SocialHistory", Model)</div>
         <div id="extraoral-exam" class="content-section @(activeTab == "extraoral-exam" ? "active" : "")">@await Html.PartialAsync("Extraoralexam", Model)</div>
         <div id="intraoral-exam" class="content-section @(activeTab == "intraoral-exam" ? "active" : "")">@await Html.PartialAsync("Intraoralexam", Model)</div>
-        <div id="dental-charting" class="content-section @(activeTab == "dental-charting" ? "active" : "")">
-            <a href="/DentalChartPage/Index?patientId=@Model.PatientID" target="_blank"
-               style="display:inline-block; padding:12px 24px; background:#252468; color:#fff; border-radius:10px; text-decoration:none; font-weight:bold;">
-                🦷 Open Dental Charting
-            </a>
-        </div>
         <div id="treatment-plan" class="content-section @(activeTab == "treatment-plan" ? "active" : "")">@await Html.PartialAsync("Treatment-plan", Model)</div>
         <div id="notes" class="content-section @(activeTab == "notes" ? "active" : "")">@await Html.PartialAsync("Notes", Model)</div>
         <div id="radiographs" class="content-section @(activeTab == "radiographs" ? "active" : "")">@await Html.PartialAsync("Radiographs", Model)</div>
@@ -920,5 +1096,259 @@
 </div>
 
 @section Scripts {
+
     <script src="~/Patientjs/Patient-details.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+        // =====================================================
+        // 1. رابط Dental Charting
+        // يمنع أي JavaScript قديم من اعتباره Tab داخلي
+        // =====================================================
+
+        const dentalChartLink =
+        document.getElementById("dentalChartLink");
+
+        if (dentalChartLink) {
+
+        dentalChartLink.addEventListener(
+        "click",
+        function (event) {
+
+        event.preventDefault();
+
+        // منع أي Event قديم موجود داخل Patient-details.js
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        const chartUrl =
+        dentalChartLink.getAttribute("href");
+
+        if (
+        chartUrl &&
+        chartUrl !== "#" &&
+        chartUrl !== "javascript:void(0)"
+        ) {
+        window.open(
+        chartUrl,
+        "_blank",
+        "noopener,noreferrer"
+        );
+        }
+        },
+        true
+        );
+        }
+
+        // =====================================================
+        // 2. روابط التبويبات الداخلية فقط
+        // Dental Charting لا يحتوي data-target
+        // لذلك لن يدخل هنا
+        // =====================================================
+
+        const sidebarLinks =
+        document.querySelectorAll(
+        "#sidebar .sidebar-link[data-target]"
+        );
+
+        const contentSections =
+        document.querySelectorAll(".content-section");
+
+        const sectionTitle =
+        document.getElementById(
+        "content-section-title"
+        );
+
+        const sectionTitles = {
+        "medical-history": "MEDICAL HISTORY",
+        "dental-history": "DENTAL HISTORY",
+        "social-history": "SOCIAL HISTORY",
+        "extraoral-exam": "EXTRAORAL EXAM",
+        "intraoral-exam": "INTRAORAL EXAM",
+        "treatment-plan": "TREATMENT PLAN",
+        "todays-visit": "VISITS",
+        "notes": "NOTES",
+        "radiographs": "RADIOGRAPHS",
+        "photos": "PHOTOS",
+        "competencies": "COMPETENCIES",
+        "orders": "ORDERS"
+        };
+
+        // =====================================================
+        // 3. فتح Tab داخلي
+        // =====================================================
+
+        function openPatientTab(targetName, updateUrl) {
+
+        // منع undefined أو tab غير موجود
+        if (
+        !targetName ||
+        targetName === "undefined" ||
+        targetName === "null"
+        ) {
+        targetName = "medical-history";
+        }
+
+        const targetSection =
+        document.getElementById(targetName);
+
+        if (!targetSection) {
+        console.error(
+        "The requested content section was not found:",
+        targetName
+        );
+
+        targetName = "medical-history";
+        }
+
+        const validTargetSection =
+        document.getElementById(targetName);
+
+        if (!validTargetSection) {
+        return;
+        }
+
+        // إخفاء جميع الأقسام
+        contentSections.forEach(function (section) {
+        section.classList.remove("active");
+        });
+
+        // إزالة حالة Active من جميع الروابط الداخلية
+        sidebarLinks.forEach(function (link) {
+        link.classList.remove("tab-active");
+        });
+
+        // إظهار القسم المطلوب
+        validTargetSection.classList.add("active");
+
+        // تحديد الرابط المختار
+        const selectedLink =
+        Array.from(sidebarLinks).find(
+        function (link) {
+        return link.getAttribute(
+        "data-target"
+        ) === targetName;
+        }
+        );
+
+        if (selectedLink) {
+        selectedLink.classList.add(
+        "tab-active"
+        );
+        }
+
+        // تغيير عنوان القسم
+        if (sectionTitle) {
+        sectionTitle.textContent =
+        sectionTitles[targetName] ||
+        targetName
+        .replaceAll("-", " ")
+        .toUpperCase();
+        }
+
+        // تحديث URL بدون Reload
+        if (updateUrl === true) {
+
+        const currentUrl =
+        new URL(window.location.href);
+
+        currentUrl.searchParams.set(
+        "tab",
+        targetName
+        );
+
+        window.history.replaceState(
+        {},
+        "",
+        currentUrl.toString()
+        );
+        }
+        }
+
+        // =====================================================
+        // 4. معالجة الضغط على التبويبات الداخلية
+        // =====================================================
+
+        sidebarLinks.forEach(function (link) {
+
+        link.addEventListener(
+        "click",
+        function (event) {
+
+        const targetName =
+        link.getAttribute(
+        "data-target"
+        );
+
+        // هذا الشرط يمنع tab=undefined
+        if (
+        !targetName ||
+        targetName === "undefined"
+        ) {
+        return;
+        }
+
+        // منع فتح التبويب إذا كان مقفلًا
+        if (
+        link.classList.contains(
+        "disabled-link"
+        )
+        ) {
+        event.preventDefault();
+        return;
+        }
+
+        event.preventDefault();
+
+        openPatientTab(
+        targetName,
+        true
+        );
+        }
+        );
+        });
+
+        // =====================================================
+        // 5. فتح التبويب الموجود في URL عند تحميل الصفحة
+        // =====================================================
+
+        const queryParameters =
+        new URLSearchParams(
+        window.location.search
+        );
+
+        let initialTab =
+        queryParameters.get("tab");
+
+        // تنظيف tab=undefined أو قيمة غير صحيحة
+        if (
+        !initialTab ||
+        initialTab === "undefined" ||
+        initialTab === "null" ||
+        !document.getElementById(initialTab)
+        ) {
+        initialTab = "medical-history";
+
+        const cleanUrl =
+        new URL(window.location.href);
+
+        cleanUrl.searchParams.set(
+        "tab",
+        initialTab
+        );
+
+        window.history.replaceState(
+        {},
+        "",
+        cleanUrl.toString()
+        );
+        }
+
+        openPatientTab(
+        initialTab,
+        false
+        );
+        });
+    </script>
 }

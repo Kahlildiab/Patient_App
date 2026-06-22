@@ -386,66 +386,7 @@
             </div>
         }
 
-        <div class="ie-photo-sections-grid">
-
-            @foreach (var photoSec in photoSections)
-            {
-                var sectionPhotos = savedPhotos.Where(x => x.PhotoSection == photoSec.Key).ToList();
-
-                <div class="ie-photo-section-card" id="ieCard_@photoSec.Key">
-
-                    <!-- Section Header -->
-                    <div class="ie-photo-section-header">
-                        <span class="ie-photo-section-icon">@photoSec.Icon</span>
-                        <span class="ie-photo-section-label">@photoSec.Label</span>
-                        <span class="ie-photo-section-count" id="ieCount_@photoSec.Key">
-                            @sectionPhotos.Count photo@(sectionPhotos.Count != 1 ? "s" : "")
-                        </span>
-                    </div>
-
-                    <!-- Gallery -->
-                    <div class="ie-photo-gallery" id="iePhotoGallery_@photoSec.Key">
-                        @foreach (var p in sectionPhotos)
-                        {
-                            <div class="ie-photo-item" id="iePhoto_@p.IntraoralExamPhotoID">
-                                <img src="@p.PhotoPath" alt="@photoSec.Label" />
-                                <button type="button" class="delete-btn"
-                                        onclick="deleteIEPhoto(@p.IntraoralExamPhotoID, '@photoSec.Key')"
-                                        title="Delete">
-                                    ✕
-                                </button>
-                            </div>
-                        }
-                    </div>
-
-                    <!-- Drop Zone -->
-                    <div class="photo-drop-zone"
-                         id="ieDropZone_@photoSec.Key"
-                         onclick="document.getElementById('iePhotoInput_@photoSec.Key').click()">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
-                                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <polyline points="17 8 12 3 7 8"
-                                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <line x1="12" y1="3" x2="12" y2="15"
-                                  stroke-width="2" stroke-linecap="round" />
-                        </svg>
-                        <p>Upload @photoSec.Label</p>
-                        <button type="button" class="dz-btn">Choose File</button>
-                    </div>
-
-                    <!-- Hidden file input -->
-                    <input type="file"
-                           id="iePhotoInput_@photoSec.Key"
-                           accept="image/*"
-                           multiple
-                           style="display:none;"
-                           data-section="@photoSec.Key"
-                           onchange="uploadIEPhotos(this, '@photoSec.Key')" />
-                </div>
-            }
-
-        </div>
+        
     </div>
 
     <div class="btnwrap" style="padding-bottom:50px;display:flex;justify-content:center;">

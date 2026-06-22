@@ -48,50 +48,6 @@
     $checkbox.on('change', updateDentalHistoryState);
     updateDentalHistoryState();
 
-<<<<<<< HEAD
-    // ✅ Save Button — Allergy + Hospitalization validation
-    $('#saveBtn').on('click', function (e) {
-        let hasError = false;
-
-        // Allergy validation
-        const isAllergyYes = document.querySelector('input[name="Allergies"][value="true"]')?.checked;
-        const allergyTa = document.getElementById('allergyNotesText');
-        const allergyError = document.getElementById('allergyNotesError');
-        if (isAllergyYes && !allergyTa?.value?.trim()) {
-            e.preventDefault();
-            hasError = true;
-            if (allergyError) allergyError.style.display = 'block';
-            if (allergyTa) allergyTa.style.border = '1.5px solid #c0392b';
-        } else {
-            if (allergyError) allergyError.style.display = 'none';
-            if (allergyTa) allergyTa.style.border = '1px solid #ddd';
-        }
-
-        // Hospitalization validation
-        const isHospYes = document.querySelector('input[name="RecentHospitalization"][value="true"]')?.checked;
-        const hospTa = document.getElementById('hospitalizationNotesText');
-        const hospError = document.getElementById('hospitalizationNotesError');
-        if (isHospYes && !hospTa?.value?.trim()) {
-            e.preventDefault();
-            hasError = true;
-            if (hospError) hospError.style.display = 'block';
-            if (hospTa) hospTa.style.border = '1.5px solid #c0392b';
-        } else {
-            if (hospError) hospError.style.display = 'none';
-            if (hospTa) hospTa.style.border = '1px solid #ddd';
-        }
-
-        // Focus على أول حقل فيه error
-        if (hasError) {
-            document.querySelector('textarea[style*="1.5px solid #c0392b"]')?.focus();
-            return;
-        }
-
-        setTimeout(() => { window.isDirty = false; }, 300);
-    });
-
-    // ✅ Edit Condition
-=======
     $('#saveBtn').on('click', function (e) {
         // ✅ Allergy validation
         const isYesAllergy = document.querySelector('input[name="Allergies"][value="true"]')?.checked;
@@ -121,7 +77,6 @@
         setTimeout(() => { window.isDirty = false; }, 300);
     });
 
->>>>>>> origin/main
     $(document).on('click', '.edit-condition-btn', function () {
         const btn = $(this);
         document.getElementById('editConditionID').value = btn.data('id');
@@ -133,10 +88,6 @@
         document.getElementById('editConditionModal').style.display = 'flex';
     });
 
-<<<<<<< HEAD
-    // ✅ Edit Medication
-=======
->>>>>>> origin/main
     $(document).on('click', '.edit-med-btn', function () {
         const btn = $(this);
         document.getElementById('editMedID').value = btn.data('id');
@@ -148,10 +99,6 @@
         document.getElementById('editMedicationModal').style.display = 'flex';
     });
 
-<<<<<<< HEAD
-    // ✅ فتح Modals
-=======
->>>>>>> origin/main
     openConditionModal = function () {
         document.getElementById('conditions-modal-list').innerHTML = buildConditionRowHTML(0);
         conditionRowIndex = 1;
@@ -172,17 +119,6 @@ function showUnsavedWarning() {
     const w = document.createElement('div');
     w.id = 'unsaved-warning';
     w.innerHTML = `
-<<<<<<< HEAD
-    <div style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99999;display:flex;align-items:center;justify-content:center;">
-        <div style="background:white;border:2px solid #daa328;border-radius:10px;padding:24px 28px;max-width:360px;width:90%;text-align:center;">
-            <div style="font-size:36px;margin-bottom:10px;">⚠️</div>
-            <div style="font-weight:700;font-size:15px;color:#252468;margin-bottom:8px;">Unsaved Changes</div>
-            <div style="font-size:13px;color:#555;margin-bottom:20px;">You have unsaved changes in Medical History.<br>Please save before continuing.</div>
-            <button onclick="document.getElementById('unsaved-warning').remove()"
-                style="background:#252468;color:white;border:none;padding:8px 28px;font-size:13px;font-weight:600;border-radius:5px;cursor:pointer;">OK</button>
-        </div>
-    </div>`;
-=======
         <div style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:99999; display:flex; align-items:center; justify-content:center;">
             <div style="background:white; border:2px solid #daa328; border-radius:10px; padding:24px 28px; max-width:360px; width:90%; text-align:center;">
                 <div style="font-size:36px; margin-bottom:10px;">⚠️</div>
@@ -192,23 +128,10 @@ function showUnsavedWarning() {
                     style="background:#252468; color:white; border:none; padding:8px 28px; font-size:13px; font-weight:600; border-radius:5px; cursor:pointer;">OK</button>
             </div>
         </div>`;
->>>>>>> origin/main
     document.body.appendChild(w);
     setTimeout(() => { const x = document.getElementById('unsaved-warning'); if (x) x.remove(); }, 5000);
 }
 
-<<<<<<< HEAD
-// ✅ UPDATED — مع clear للـ error لما يختار NO
-function toggleAllergyNotes(show) {
-    const box = document.getElementById('allergyNotesBox');
-    const ta = document.getElementById('allergyNotesText');
-    const errorEl = document.getElementById('allergyNotesError');
-    if (box) box.style.display = show ? 'block' : 'none';
-    if (!show) {
-        if (ta) { ta.value = ''; ta.style.border = '1px solid #ddd'; }
-        if (errorEl) errorEl.style.display = 'none';
-    }
-=======
 function toggleAllergyNotes(show) {
     const box = document.getElementById('allergyNotesBox');
     if (box) box.style.display = show ? 'block' : 'none';
@@ -223,7 +146,6 @@ function toggleAllergyNotes(show) {
         box?.appendChild(errorEl);
     }
     if (!show) errorEl.style.display = 'none';
->>>>>>> origin/main
 }
 
 function toggleHospitalizationNotes(show) {
@@ -238,8 +160,6 @@ function toggleHospitalizationNotes(show) {
 }
 
 // ═══════════════════════════════════════════════
-<<<<<<< HEAD
-=======
 //  Info Bar — Red Flags updater
 // ═══════════════════════════════════════════════
 function updateRedFlagsInfoBar() {
@@ -264,49 +184,12 @@ function updateRedFlagsInfoBar() {
 }
 
 // ═══════════════════════════════════════════════
->>>>>>> origin/main
 //  CONDITION — buildRowHTML
 // ═══════════════════════════════════════════════
 let conditionRowIndex = 1;
 
 function buildConditionRowHTML(i, removable = false) {
     return `
-<<<<<<< HEAD
-    <div class="condition-row-modal" style="${removable ? 'border-top:1px dashed #ddd;padding-top:12px;margin-top:12px;' : ''}">
-        ${removable ? `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
-            <button type="button" onclick="this.closest('.condition-row-modal').remove()"
-                style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:13px;">✕ Remove</button>
-        </div>` : ''}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;">
-            <div>
-                <label style="font-size:12px;font-weight:600;color:#555;margin-bottom:5px;display:block;">Condition</label>
-                <input type="text" name="Conditions[${i}].ConditionName"
-                    style="width:100%;border:1px solid #ddd;border-radius:5px;padding:8px 12px;font-size:13px;box-sizing:border-box;"
-                    placeholder="e.g. Hypertension" />
-            </div>
-            <div>
-                <label style="font-size:12px;font-weight:600;color:#555;margin-bottom:5px;display:block;">Year of Diagnosis</label>
-                <input type="number" name="Conditions[${i}].YearOfDiagnosis" min="1900" max="2100"
-                    maxlength="4" oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4);"
-                    style="width:100%;border:1px solid #ddd;border-radius:5px;padding:8px 12px;font-size:13px;box-sizing:border-box;"
-                    placeholder="e.g. 2020" />
-                <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-top:8px;cursor:pointer;color:#c0392b;font-weight:600;">
-                    <input type="checkbox" name="Conditions[${i}].IsFlagged" value="true" style="accent-color:#c0392b;" />
-                    🚩 Red Flag
-                </label>
-            </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;">
-            <input type="checkbox" name="Conditions[${i}].IsCurrentlyActive" value="true" checked style="accent-color:#252468;" /> Currently Active
-        </div>
-        <div>
-            <label style="font-size:12px;font-weight:600;color:#555;margin-bottom:5px;display:block;">Notes</label>
-            <textarea name="Conditions[${i}].Notes"
-                style="width:100%;border:1px solid #ddd;border-radius:5px;padding:8px 12px;font-size:13px;box-sizing:border-box;resize:vertical;min-height:70px;"
-                placeholder="Any additional notes..."></textarea>
-        </div>
-    </div>`;
-=======
         <div class="condition-row-modal" style="${removable ? 'border-top:1px dashed #ddd; padding-top:12px; margin-top:12px;' : ''}">
             ${removable ? `<div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
                 <button type="button" onclick="this.closest('.condition-row-modal').remove()"
@@ -341,7 +224,6 @@ function buildConditionRowHTML(i, removable = false) {
                     placeholder="Any additional notes..."></textarea>
             </div>
         </div>`;
->>>>>>> origin/main
 }
 
 function addModalRow() {
@@ -358,12 +240,7 @@ function saveConditions() {
     if (!data.get('Conditions[0].ConditionName')?.trim()) {
         showModalAlert('conditionModal', 'Please enter at least one condition name.'); return;
     }
-<<<<<<< HEAD
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
-=======
     saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
->>>>>>> origin/main
     fetch('/Conditions/Create', { method: 'POST', body: data })
         .then(res => res.json())
         .then(result => {
@@ -372,13 +249,7 @@ function saveConditions() {
                 appendConditionsToTable(result.conditions);
                 window.isDirty = true;
                 showToast('Condition saved successfully.', 'success');
-<<<<<<< HEAD
-            } else {
-                showModalAlert('conditionModal', result.message || 'Error saving conditions.');
-            }
-=======
             } else { showModalAlert('conditionModal', result.message || 'Error saving conditions.'); }
->>>>>>> origin/main
         })
         .catch(() => showModalAlert('conditionModal', 'Server error. Please try again.'))
         .finally(() => { saveBtn.disabled = false; saveBtn.textContent = 'Save Conditions'; });
@@ -395,30 +266,6 @@ function appendConditionsToTable(conditions) {
     conditions.forEach(c => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-<<<<<<< HEAD
-        <td style="padding:6px 10px;font-weight:600;color:#252468;">${c.conditionName}</td>
-        <td style="padding:6px 10px;">${c.yearOfDiagnosis ?? '---'}</td>
-        <td style="padding:6px 10px;">${c.notes ?? '---'}</td>
-        <td style="padding:6px 10px;">${c.isFlagged ? '<span style="color:#c0392b;font-weight:700;">🚩 Yes</span>' : '<span style="color:#aaa;font-size:11px;">---</span>'}</td>
-        <td style="padding:6px 10px;text-align:center;white-space:nowrap;">
-            <button type="button" class="edit-condition-btn"
-                data-id="${c.conditionID}"
-                data-name="${(c.conditionName || '').replace(/"/g, '&quot;')}"
-                data-year="${c.yearOfDiagnosis ?? ''}"
-                data-active="${c.isCurrentlyActive ?? false}"
-                data-flagged="${c.isFlagged ?? false}"
-                data-notes="${(c.notes || '').replace(/"/g, '&quot;')}"
-                style="background:none;border:none;color:#252468;cursor:pointer;margin-right:8px;" title="Edit">
-                <i class="fa-solid fa-pen-to-square"></i>
-            </button>
-            <button type="button" onclick="deleteCondition(this, ${c.conditionID})"
-                style="background:none;border:none;color:#c0392b;cursor:pointer;" title="Delete">
-                <i class="fa-solid fa-trash"></i>
-            </button>
-        </td>`;
-        tbody.appendChild(tr);
-    });
-=======
             <td style="padding:6px 10px; font-weight:600; color:#252468;">${c.conditionName}</td>
             <td style="padding:6px 10px;">${c.yearOfDiagnosis ?? '---'}</td>
             <td style="padding:6px 10px;">${c.notes ?? '---'}</td>
@@ -443,7 +290,6 @@ function appendConditionsToTable(conditions) {
     });
 
     updateRedFlagsInfoBar();
->>>>>>> origin/main
 }
 
 function closeConditionModal() { document.getElementById('conditionModal').style.display = 'none'; }
@@ -468,16 +314,9 @@ function deleteCondition(btn, conditionId) {
                     if (noMsg) noMsg.style.display = '';
                     if (table) table.style.display = 'none';
                 }
-<<<<<<< HEAD
-                showToast('Condition deleted successfully.', 'success');
-            } else {
-                showToast('Error deleting condition.', 'error');
-            }
-=======
                 updateRedFlagsInfoBar();
                 showToast('Condition deleted successfully.', 'success');
             } else { showToast('Error deleting condition.', 'error'); }
->>>>>>> origin/main
         })
         .catch(() => showToast('Server error.', 'error'));
 }
@@ -486,12 +325,7 @@ function submitEditCondition() {
     const form = document.getElementById('editConditionForm');
     const data = new FormData(form);
     const saveBtn = document.getElementById('editConditionSaveBtn');
-<<<<<<< HEAD
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
-=======
     saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
->>>>>>> origin/main
     fetch('/Conditions/EditAjax', { method: 'POST', body: data })
         .then(res => res.json())
         .then(result => {
@@ -499,72 +333,19 @@ function submitEditCondition() {
                 closeEditConditionModal();
                 showToast('Condition updated successfully.', 'success');
                 setTimeout(() => location.reload(), 1200);
-<<<<<<< HEAD
-            } else {
-                showToast(result.message || 'Error updating condition.', 'error');
-            }
-=======
             } else { showToast(result.message || 'Error updating condition.', 'error'); }
->>>>>>> origin/main
         })
         .catch(() => showToast('Server error.', 'error'))
         .finally(() => { saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; });
 }
 
 // ═══════════════════════════════════════════════
-<<<<<<< HEAD
-//  MEDICATION — buildRowHTML
-=======
 //  MEDICATION
->>>>>>> origin/main
 // ═══════════════════════════════════════════════
 let medicationRowIndex = 1;
 
 function buildMedicationRowHTML(i, removable = false) {
     return `
-<<<<<<< HEAD
-    <div class="medication-row-modal" style="${removable ? 'border-top:1px dashed #ddd;padding-top:12px;margin-top:12px;' : ''}">
-        ${removable ? `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
-            <button type="button" onclick="this.closest('.medication-row-modal').remove()"
-                style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:13px;">✕ Remove</button>
-        </div>` : ''}
-        <div style="margin-bottom:12px;">
-            <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px;">Flag Type</label>
-            <select name="Medications[${i}].FlagType"
-                style="width:100%;border:1px solid #ddd;border-radius:5px;padding:8px 12px;font-size:13px;box-sizing:border-box;">
-                <option value="">-- None --</option>
-                <option value="Anticoagulant">Anticoagulant</option>
-                <option value="Bisphosphonates">Bisphosphonates / Antiresorptive</option>
-                <option value="Steroids">Steroids (Systemic)</option>
-                <option value="Immunosuppressants">Immunosuppressants</option>
-            </select>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;">
-            <div>
-                <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px;">Drug Name</label>
-                <input type="text" name="Medications[${i}].DrugName"
-                    style="width:100%;border:1px solid #ddd;border-radius:5px;padding:8px 12px;font-size:13px;box-sizing:border-box;" placeholder="e.g. Aspirin" />
-            </div>
-            <div>
-                <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px;">Dose</label>
-                <input type="text" name="Medications[${i}].Dose"
-                    style="width:100%;border:1px solid #ddd;border-radius:5px;padding:8px 12px;font-size:13px;box-sizing:border-box;" placeholder="e.g. 100mg" />
-            </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;">
-            <div>
-                <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px;">Frequency</label>
-                <input type="text" name="Medications[${i}].Frequency"
-                    style="width:100%;border:1px solid #ddd;border-radius:5px;padding:8px 12px;font-size:13px;box-sizing:border-box;" placeholder="e.g. Once daily" />
-            </div>
-            <div>
-                <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px;">Duration</label>
-                <input type="text" name="Medications[${i}].Duration"
-                    style="width:100%;border:1px solid #ddd;border-radius:5px;padding:8px 12px;font-size:13px;box-sizing:border-box;" placeholder="e.g. 3 months" />
-            </div>
-        </div>
-    </div>`;
-=======
         <div class="medication-row-modal" style="${removable ? 'border-top:1px dashed #ddd; padding-top:12px; margin-top:12px;' : ''}">
             ${removable ? `<div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
                 <button type="button" onclick="this.closest('.medication-row-modal').remove()"
@@ -606,7 +387,6 @@ function buildMedicationRowHTML(i, removable = false) {
                 </div>
             </div>
         </div>`;
->>>>>>> origin/main
 }
 
 function addMedicationRow() {
@@ -623,12 +403,7 @@ function saveMedications() {
     if (!data.get('Medications[0].DrugName')?.trim()) {
         showModalAlert('medicationModal', 'Please enter at least one drug name.'); return;
     }
-<<<<<<< HEAD
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
-=======
     saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
->>>>>>> origin/main
     fetch('/Medications/CreateAjax', { method: 'POST', body: data })
         .then(res => res.json())
         .then(result => {
@@ -637,13 +412,7 @@ function saveMedications() {
                 appendMedicationsToTable(result.medications);
                 window.isDirty = true;
                 showToast('Medication saved successfully.', 'success');
-<<<<<<< HEAD
-            } else {
-                showModalAlert('medicationModal', result.message || 'Error saving medications.');
-            }
-=======
             } else { showModalAlert('medicationModal', result.message || 'Error saving medications.'); }
->>>>>>> origin/main
         })
         .catch(() => showModalAlert('medicationModal', 'Server error. Please try again.'))
         .finally(() => { saveBtn.disabled = false; saveBtn.textContent = 'Save Medications'; });
@@ -667,38 +436,11 @@ function appendMedicationsToTable(medications) {
     medications.forEach(m => {
         const flagHtml = m.flagType && flagMap[m.flagType]
             ? flagMap[m.flagType]
-<<<<<<< HEAD
-            : '<span style="color:#aaa;font-size:11px;">---</span>';
-=======
             : '<span style="color:#aaa; font-size:11px;">---</span>';
->>>>>>> origin/main
 
         const tr = document.createElement('tr');
         tr.style.borderBottom = '1px solid #eee';
         tr.innerHTML = `
-<<<<<<< HEAD
-        <td style="padding:6px 10px;">${m.drugName}</td>
-        <td style="padding:6px 10px;">${m.dose ?? '---'}</td>
-        <td style="padding:6px 10px;">${m.frequency ?? '---'}</td>
-        <td style="padding:6px 10px;">${m.duration ?? '---'}</td>
-        <td style="padding:6px 10px;">${flagHtml}</td>
-        <td style="padding:6px 10px;text-align:center;white-space:nowrap;">
-            <button type="button" class="edit-med-btn"
-                data-id="${m.medicationID}"
-                data-drug="${(m.drugName || '').replace(/"/g, '&quot;')}"
-                data-dose="${(m.dose || '').replace(/"/g, '&quot;')}"
-                data-frequency="${(m.frequency || '').replace(/"/g, '&quot;')}"
-                data-duration="${(m.duration || '').replace(/"/g, '&quot;')}"
-                data-flag="${m.flagType || ''}"
-                style="background:none;border:none;color:#252468;cursor:pointer;margin-right:8px;" title="Edit">
-                <i class="fa-solid fa-pen-to-square"></i>
-            </button>
-            <button type="button" onclick="deleteMedication(this, ${m.medicationID})"
-                style="background:none;border:none;color:#c0392b;cursor:pointer;" title="Delete">
-                <i class="fa-solid fa-trash"></i>
-            </button>
-        </td>`;
-=======
             <td style="padding:6px 10px;">${m.drugName}</td>
             <td style="padding:6px 10px;">${m.dose ?? '---'}</td>
             <td style="padding:6px 10px;">${m.frequency ?? '---'}</td>
@@ -720,7 +462,6 @@ function appendMedicationsToTable(medications) {
                     <i class="fa-solid fa-trash"></i>
                 </button>
             </td>`;
->>>>>>> origin/main
         tbody.appendChild(tr);
     });
 }
@@ -748,13 +489,7 @@ function deleteMedication(btn, medicationId) {
                     if (table) table.style.display = 'none';
                 }
                 showToast('Medication deleted successfully.', 'success');
-<<<<<<< HEAD
-            } else {
-                showToast('Error deleting medication.', 'error');
-            }
-=======
             } else { showToast('Error deleting medication.', 'error'); }
->>>>>>> origin/main
         })
         .catch(() => showToast('Server error.', 'error'));
 }
@@ -763,12 +498,7 @@ function submitEditMedication() {
     const form = document.getElementById('editMedicationForm');
     const data = new FormData(form);
     const saveBtn = document.getElementById('editMedSaveBtn');
-<<<<<<< HEAD
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
-=======
     saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
->>>>>>> origin/main
     fetch('/Medications/EditAjax', { method: 'POST', body: data })
         .then(res => res.json())
         .then(result => {
@@ -776,13 +506,7 @@ function submitEditMedication() {
                 closeEditMedicationModal();
                 showToast('Medication updated successfully.', 'success');
                 setTimeout(() => location.reload(), 1200);
-<<<<<<< HEAD
-            } else {
-                showToast(result.message || 'Error updating medication.', 'error');
-            }
-=======
             } else { showToast(result.message || 'Error updating medication.', 'error'); }
->>>>>>> origin/main
         })
         .catch(() => showToast('Server error.', 'error'))
         .finally(() => { saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; });
@@ -796,16 +520,7 @@ function showToast(message, type = 'success') {
     if (existing) existing.remove();
     const toast = document.createElement('div');
     toast.id = 'toast-notification';
-<<<<<<< HEAD
-    toast.style.cssText = `
-        position:fixed; bottom:30px; right:30px;
-        background:${type === 'success' ? '#252468' : '#c0392b'}; color:white;
-        padding:14px 22px; border-radius:8px; font-size:13px; font-weight:600;
-        z-index:999999; display:flex; align-items:center; gap:10px;
-        box-shadow:0 4px 20px rgba(0,0,0,0.3);`;
-=======
     toast.style.cssText = `position:fixed; bottom:30px; right:30px; background:${type === 'success' ? '#252468' : '#c0392b'}; color:white; padding:14px 22px; border-radius:8px; font-size:13px; font-weight:600; z-index:999999; display:flex; align-items:center; gap:10px; box-shadow:0 4px 20px rgba(0,0,0,0.3);`;
->>>>>>> origin/main
     toast.innerHTML = `${type === 'success' ? '✅' : '❌'} ${message}`;
     document.body.appendChild(toast);
     setTimeout(() => {
@@ -825,13 +540,7 @@ function showModalAlert(modalId, message) {
     if (!alertEl) {
         alertEl = document.createElement('div');
         alertEl.className = 'modal-alert';
-<<<<<<< HEAD
-        alertEl.style.cssText = `background:#fff3cd;border:1px solid #daa328;border-radius:5px;
-            padding:10px 14px;font-size:13px;color:#856404;margin-bottom:12px;
-            display:flex;align-items:center;gap:8px;`;
-=======
         alertEl.style.cssText = `background:#fff3cd; border:1px solid #daa328; border-radius:5px; padding:10px 14px; font-size:13px; color:#856404; margin-bottom:12px; display:flex; align-items:center; gap:8px;`;
->>>>>>> origin/main
         modal.querySelector('form').insertAdjacentElement('afterbegin', alertEl);
     }
     alertEl.innerHTML = `⚠️ ${message}`;

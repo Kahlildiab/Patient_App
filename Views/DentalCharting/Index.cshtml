@@ -39,11 +39,8 @@
     }
 
     .topbar {
-        position: sticky;
-        top: 0;
-        z-index: 30;
-        background: rgba(244,246,251,.96);
-        backdrop-filter: blur(4px);
+        position: static;
+        background: transparent;
         padding-bottom: 12px;
     }
 
@@ -85,6 +82,7 @@
         }
 
     .toolbar {
+        position: static;
         background: var(--panel);
         border: 1px solid var(--line);
         border-radius: 16px;
@@ -155,13 +153,13 @@
 
         .tool-btn:hover {
             transform: translateY(-1px);
-    background: #f0f4ff;
+            background: #f0f4ff;
         }
 
         .tool-btn.active {
             background: #e8f0ff;
-    box-shadow: 0 0 0 3px rgba(17,24,39,.12);
-    border-radius: 12px;
+            box-shadow: 0 0 0 3px rgba(17,24,39,.12);
+            border-radius: 12px;
         }
 
         .tool-btn .tip {
@@ -356,6 +354,11 @@
         height: auto;
         display: block;
         cursor: pointer;
+        /*
+                            Bridge and Space Maintainer connector lines extend slightly
+                            outside the SVG so adjacent teeth can be visually connected.
+                        */
+        overflow: visible;
     }
 
     .mid-rl {
@@ -548,6 +551,58 @@
             font-size: 15px;
         }
     }
+    /* Permanent / Deciduous switch */
+    .dentition-switch {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 7px 11px;
+        cursor: pointer;
+        user-select: none;
+        transition: .15s;
+    }
+
+        .dentition-switch:hover {
+            background: #eef2ff;
+            border-color: #c7d2fe;
+        }
+
+        .dentition-switch input {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            cursor: pointer;
+            accent-color: #2563eb;
+        }
+
+    .dentition-switch-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+
+        .dentition-switch-text strong {
+            font-size: 13px;
+            color: #111827;
+        }
+
+        .dentition-switch-text span {
+            margin-top: 2px;
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+    /*
+                نخفي السن مع الاحتفاظ بمكانه داخل Grid،
+                حتى تبقى الأسنان 1-5 في مكانها الصحيح.
+            */
+    .dentition-hidden {
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
 </style>
 
 <div id="toastContainer"></div>
@@ -587,22 +642,68 @@
 </div>
 <div class="app">
     <div class="topbar">
+
         <div class="header">
             <div>
                 <h1>🦷 Dental Chart</h1>
-                <small>Patient ID: <strong>@patientId</strong> — SVG Interactive Chart</small>
+
+                <small>
+                    Patient ID:
+                    <strong>@patientId</strong>
+                    — SVG Interactive Chart
+                </small>
             </div>
+
             <div class="db-bar">
-                <button class="btn btn-primary" onclick="loadChartFromDb()">📥 Load</button>
-                <button class="btn btn-green" onclick="saveChartToDb()">💾 Save</button>
-                <button class="btn btn-warning" onclick="saveNewSession()">🗂️ New Session</button>
-                <button class="btn btn-secondary" onclick="openHistory()">🕐 History</button>
+
+                <label class="dentition-switch">
+                    <input type="checkbox"
+                           id="deciduousModeCheckbox"
+                           onchange="changeDentitionMode(this.checked)" />
+
+                    <span class="dentition-switch-text">
+                        <strong id="dentitionModeLabel">
+                            Permanent Teeth
+                        </strong>
+
+                        <span id="dentitionModeDescription">
+                            Showing teeth 1–8
+                        </span>
+                    </span>
+                </label>
+
+                <button class="btn btn-primary"
+                        type="button"
+                        onclick="loadChartFromDb()">
+                    📥 Load
+                </button>
+
+                <button class="btn btn-green"
+                        type="button"
+                        onclick="saveChartToDb()">
+                    💾 Save
+                </button>
+
+                <button class="btn btn-warning"
+                        type="button"
+                        onclick="saveNewSession()">
+                    🗂️ New Session
+                </button>
+
+                <button class="btn btn-secondary"
+                        type="button"
+                        onclick="openHistory()">
+                    🕐 History
+                </button>
+
                 <span class="db-status" id="dbStatus">—</span>
             </div>
         </div>
 
-        <div class="toolbar" id="toolbar"></div>
     </div>
+
+    <!-- تكون خارج topbar حتى تبقى Sticky طوال الصفحة -->
+    <div class="toolbar" id="toolbar"></div>
 
     <div class="main">
         <div class="chart-panel">
@@ -614,7 +715,7 @@
         </div>
 
         <div class="side-panel">
-            
+
             <div class="status-box">
                 <div><b>Selected Tool:</b>  <span id="selectedToolLabel">—</span></div>
                 <div><b>Selected Tooth:</b> <span id="selectedToothLabel">—</span></div>
@@ -651,15 +752,12 @@
                 Whole = Entire tooth in all views
             </div>
 
-            <div style="margin-top:12px;font-weight:bold;">Selected Details</div>
-            <div class="mini-list" id="detailList">
-                <div style="margin-top:12px;font-weight:bold;">Tool Report</div>
-                <div id="reportPanel" style="margin-top:8px;"></div>
+            <div style="margin-top:12px;font-weight:bold;">Tool Report</div>
+            <div id="reportPanel" style="margin-top:8px;"></div>
 
-                <div style="margin-top:12px;font-weight:bold;">Selected Details</div>
-                <div class="mini-list" id="detailList">
-                    <div style="color:#6b7280;font-size:13px;">Nothing selected.</div>
-                </div>
+            <div style="margin-top:14px;font-weight:bold;">Selected Details</div>
+            <div class="mini-list" id="detailList">
+                <div style="color:#6b7280;font-size:13px;">Nothing selected.</div>
             </div>
         </div>
     </div>
@@ -692,10 +790,10 @@
     const TOOLS = [
         { id:"caries",                      label:"Caries",                             group:"disease",  glyph:"caries",           scope:"surface" },
         { id:"secondary_caries",            label:"Secondary Caries",                   group:"disease",  glyph:"secondary",        scope:"surface" },
-        { id:"periapical_lesion",           label:"Periapical Lesion",                  group:"disease",  glyph:"periapical",       scope:"surface" },
-        { id:"crack_tooth",                 label:"Crack Tooth",                        group:"disease",  glyph:"crack",            scope:"surface" },
-        { id:"tooth_mobility",              label:"Tooth Mobility",                     group:"disease",  glyph:"mobility",         scope:"surface" },
-        { id:"remaining_root",              label:"Remaining Root",                     group:"disease",  glyph:"remainingRoot",    scope:"surface" },
+        { id:"periapical_lesion",           label:"Periapical Lesion",                  group:"disease",  glyph:"periapical",       scope:"whole" },
+        { id:"crack_tooth",                 label:"Crack Tooth",                        group:"disease",  glyph:"crack",            scope:"whole" },
+        { id:"tooth_mobility",              label:"Tooth Mobility",                     group:"disease",  glyph:"mobility",         scope:"whole" },
+        { id:"remaining_root",              label:"Remaining Root",                     group:"disease",  glyph:"remainingRoot",    scope:"root" },
         { id:"surface_loss",                label:"Tooth Surface Loss",                 group:"disease",  glyph:"surfaceLoss",      scope:"surface" },
 
         { id:"amalgam_prev",                label:"Amalgam",                            group:"previous", glyph:"resto1",           scope:"surface" },
@@ -709,7 +807,7 @@
         { id:"pfm_crown_prev",              label:"PFM Crown",                          group:"previous", glyph:"crown4",           scope:"surface" },
         {id:"temporary_crown_prev",         label:"Temporary Crown",                    group:"previous", glyph:"tempCrown",        scope:"surface" },
         { id:"stainless_crown_prev",        label:"Stainless Steel Crown",              group:"previous", glyph:"crown6",           scope:"surface" },
-        { id:"resin_bonded_bridge_prev",    label:"Resin Bonded Bridge",                group:"previous", glyph:"bridge",           scope:"surface" },
+        { id:"resin_bonded_bridge_prev",    label:"Bridge",                             group:"previous", glyph:"bridge",           scope:"whole" },
         { id:"root_canal_prev",             label:"Root Canal Treatment",               group:"previous", glyph:"rct",              scope:"surface" },
         { id:"vital_pulp_therapy_prev",     label:"Vital Pulp Therapy",                 group:"previous", glyph:"vpt",              scope:"surface" },
         { id:"post_prev",                   label:"Post",                               group:"previous", glyph:"post",             scope:"surface" },
@@ -717,7 +815,7 @@
         { id:"partial_acrylic_denture_prev",label:"Partial Acrylic Denture",            group:"previous", glyph:"denture",          scope:"surface" },
         { id:"cc_denture_prev",             label:"Cobalt Chromium Partial Denture",    group:"previous", glyph:"ccDenture",        scope:"surface" },
         { id:"complete_denture_prev",       label:"Complete Denture",                   group:"previous", glyph:"completeDenture",  scope:"surface" },
-        { id:"space_maintainer_prev",       label:"Space Maintainer",                   group:"previous", glyph:"spaceMaintainer",  scope:"surface" },
+        { id:"space_maintainer_prev",       label:"Space Maintainer",                   group:"previous", glyph:"spaceMaintainer",  scope:"whole" },
         { id:"pulpotomy_prev",              label:"Pulpotomy",                          group:"previous", glyph:"pulpotomy",        scope:"surface" },
         { id:"pulpectomy_prev",             label:"Pulpectomy",                         group:"previous", glyph:"pulpectomy",       scope:"surface" },
 
@@ -732,7 +830,7 @@
         { id:"pfm_crown_in",                label:"PFM Crown",                          group:"inside",   glyph:"crown4",           scope:"surface" },
         { id:"temporary_crown_in",          label:"Temporary Crown",                    group:"inside",   glyph:"tempCrown",        scope:"surface" },
         { id:"stainless_crown_in",          label:"Stainless Steel Crown",              group:"inside",   glyph:"crown6",           scope:"surface" },
-        { id:"resin_bonded_bridge_in",      label:"Resin Bonded Bridge",                group:"inside",   glyph:"bridge",           scope:"surface" },
+        { id:"resin_bonded_bridge_in",      label:"Bridge",                             group:"inside",   glyph:"bridge",           scope:"whole" },
         { id:"root_canal_in",               label:"Root Canal Treatment",               group:"inside",   glyph:"rct",              scope:"surface" },
         { id:"vpt_in",                      label:"Vital Pulp Therapy",                 group:"inside",   glyph:"vpt",              scope:"surface" },
         { id:"post_in",                     label:"Post",                               group:"inside",   glyph:"post",             scope:"surface" },
@@ -748,7 +846,7 @@
         { id:"impacted_tooth",              label:"Impacted Tooth",                     group:"others",   glyph:"impacted",         scope:"surface" },
         { id:"soft_tissue_impacted",        label:"Soft Tissue Impacted Tooth",         group:"others",   glyph:"softImpacted",     scope:"surface" },
         { id:"partially_erupted",           label:"Partially Erupted Tooth",            group:"others",   glyph:"partiallyErupted", scope:"surface" },
-        { id:"teeth_transposition",         label:"Teeth Transposition",                group:"others",   glyph:"transposition",    scope:"surface" },
+        { id:"teeth_transposition",         label:"Teeth Transposition",                group:"others",   glyph:"transposition",    scope:"whole" },
         { id:"teeth_change",                label:"Teeth Change Permanent/Deciduous",   group:"others",   glyph:"teethChange",      scope:"surface" },
         { id:"extracted_tooth",             label:"Extracted Tooth",                    group:"others",   glyph:"extracted",        scope:"surface" },
         { id:"others_text",                 label:"Others / Text",                      group:"others",   glyph:"note",             scope:"surface" }
@@ -769,19 +867,36 @@
     let selectedToolId   = null;
     let selectedTarget   = null;
     let currentSessionId = null;
-    let reportToolId     = null;   
+    let reportToolId     = null;
     let pendingSwapToothId = null;
+
+    /*
+        Surface selection highlighting is temporary.
+
+        When the user clicks one of the Lingual / Palatal surface sections,
+        it stays highlighted only while the user is interacting with that
+        surface chart. Clicking anywhere outside the surface chart removes
+        the visual highlight without deleting the applied treatment.
+    */
+    let lastSelectionSource = null;
+    let hideSurfaceSelectionHighlight = false;
 
     function makeSlot() { return { disease:[], previous:[], inside:[], others:[], note:"" }; }
 
-        function makeTooth(id) {
+    function makeTooth(id) {
         return {
+            // id = the current chart position.
             id,
-            isDeciduous: false,   // ⬅️ جديد: false = دائم (Permanent) / true = لبني (Deciduous)
+
+            // sourceId = the real tooth image currently occupying this position.
+            // This value moves with the tooth when Teeth Change is used.
+            sourceId: id,
+
+            isDeciduous: false,
             whole: makeSlot(),
             areas: {
                 buccal: makeSlot(), lingual: makeSlot(), palatal: makeSlot(),
-                mesial: makeSlot(), distal:  makeSlot(), occlusal: makeSlot(), root: makeSlot()
+                mesial: makeSlot(), distal: makeSlot(), occlusal: makeSlot(), root: makeSlot()
             }
         };
     }
@@ -797,6 +912,1605 @@
 
     function getTool(id)      { return TOOLS.find(t => t.id === id) || null; }
     function getToothType(id) { return TOOTH_TYPES[parseInt(id.slice(1), 10)]; }
+
+    function getSourceToothId(positionId) {
+        const tooth = chartData[positionId];
+        return tooth && tooth.sourceId ? tooth.sourceId : positionId;
+    }
+        /*
+        false = Permanent Teeth: show positions 1-8.
+        true  = Deciduous Teeth: hide positions 6, 7 and 8.
+    */
+    let isDeciduousChartView = false;
+
+        
+
+    function shouldHideToothForDentition(toothId) {
+        if (!isDeciduousChartView) {
+            return false;
+        }
+
+        const positionNumber =
+            getToothPositionNumber(toothId);
+
+        return (
+            positionNumber === 6 ||
+            positionNumber === 7 ||
+            positionNumber === 8
+        );
+    }
+
+    function getDentitionToothClass(toothId) {
+        return shouldHideToothForDentition(toothId)
+            ? "dentition-hidden"
+            : "";
+    }
+
+    function getDentitionNumberClass(positionNumber) {
+        return (
+            isDeciduousChartView &&
+            (
+                positionNumber === 6 ||
+                positionNumber === 7 ||
+                positionNumber === 8
+            )
+        )
+            ? "dentition-hidden"
+            : "";
+    }
+        function changeDentitionMode(isChecked) {
+
+        /*
+            Checked   = Deciduous Teeth
+            Unchecked = Permanent Teeth
+        */
+        isDeciduousChartView = isChecked === true;
+
+        const label =
+            document.getElementById("dentitionModeLabel");
+
+        const description =
+            document.getElementById("dentitionModeDescription");
+
+        const allTeeth = [
+            ...UPPER_IDS,
+            ...LOWER_IDS
+        ];
+
+        /*
+            الأسنان من 1 إلى 5:
+            عند التشييك تصبح لبنية مثل Teeth Transposition.
+            عند إزالة التشييك تعود دائمة.
+        */
+        allTeeth.forEach(function (toothId) {
+
+            if (canBeDeciduousTooth(toothId)) {
+
+                setToothDeciduousState(
+                    toothId,
+                    isDeciduousChartView
+                );
+
+            } else {
+
+                /*
+                    الأسنان 6 و7 و8 تظل دائمة دائماً.
+                */
+                setToothDeciduousState(
+                    toothId,
+                    false
+                );
+            }
+        });
+
+        if (isDeciduousChartView) {
+
+            if (label) {
+                label.textContent = "Deciduous Teeth";
+            }
+
+            if (description) {
+                description.textContent = "Showing teeth 1–5";
+            }
+
+            showToast(
+                "تم تحويل الأسنان 1–5 إلى أسنان لبنية.",
+                "success"
+            );
+
+        } else {
+
+            if (label) {
+                label.textContent = "Permanent Teeth";
+            }
+
+            if (description) {
+                description.textContent = "Showing teeth 1–8";
+            }
+
+            showToast(
+                "تم تحويل الأسنان 1–5 إلى أسنان دائمة.",
+                "success"
+            );
+        }
+
+        /*
+            إلغاء التحديد إذا كان السن المحدد من 6 أو 7 أو 8
+            وأصبح مخفياً.
+        */
+        if (
+            selectedTarget &&
+            shouldHideToothForDentition(
+                selectedTarget.toothId
+            )
+        ) {
+            selectedTarget = null;
+        }
+
+        pendingSwapToothId = null;
+
+        renderAll();
+    }
+    /*
+        Deciduous / temporary teeth exist only in positions 1 through 5
+        in every quadrant. Positions 6, 7, and 8 must remain permanent.
+    */
+    function getToothPositionNumber(tid) {
+        const index = parseInt(tid.slice(1), 10);
+
+        if (
+            Number.isNaN(index) ||
+            index < 0 ||
+            index >= POS_LABELS.length
+        ) {
+            return null;
+        }
+
+        return POS_LABELS[index];
+    }
+
+    function canBeDeciduousTooth(tid) {
+        const toothNumber = getToothPositionNumber(tid);
+
+        return toothNumber !== null &&
+               toothNumber >= 1 &&
+               toothNumber <= 5;
+    }
+
+    const AREA_ICON_LOCK_GROUPS = [
+        "disease",
+        "previous",
+        "inside"
+    ];
+
+    function isAreaIconLockGroup(group) {
+        return AREA_ICON_LOCK_GROUPS.includes(group);
+    }
+
+    /*
+        One icon only inside the SAME area from:
+        - Disease
+        - Previous Treatment
+        - In-Hospital
+
+        The tooth itself may still contain different icons in different areas.
+        Example: Buccal, Lingual/Palatal, Mesial, Distal and Occlusal may each
+        contain one different filling/treatment.
+    */
+    function getToolStorageArea(tool, requestedArea) {
+        if (!tool) {
+            return requestedArea;
+        }
+
+        if (isExtractedTool(tool.id)) {
+            return "whole";
+        }
+
+        if (isRemainingRootTool(tool.id)) {
+            return "root";
+        }
+
+        if (
+            isWholeToothDiseaseTool(tool.id) ||
+            isToothApplianceTool(tool.id) ||
+            tool.scope === "whole"
+        ) {
+            return "whole";
+        }
+
+        if (tool.scope === "root") {
+            return "root";
+        }
+
+        return requestedArea;
+    }
+
+    function getAreaSlot(tid, area) {
+        const tooth = chartData[tid];
+
+        if (!tooth) {
+            return null;
+        }
+
+        if (area === "whole") {
+            return tooth.whole;
+        }
+
+        return tooth.areas?.[area] || null;
+    }
+
+    function getAreaLockedMark(tid, area) {
+        const slot = getAreaSlot(tid, area);
+
+        if (!slot) {
+            return null;
+        }
+
+        for (const group of AREA_ICON_LOCK_GROUPS) {
+            const toolId = (slot[group] || [])[0];
+
+            if (toolId) {
+                return {
+                    toolId,
+                    group,
+                    area,
+                    tool: getTool(toolId)
+                };
+            }
+        }
+
+        return null;
+    }
+
+    function getAreaIconConflict(tid, area, incomingTool) {
+        if (
+            !incomingTool ||
+            !isAreaIconLockGroup(incomingTool.group)
+        ) {
+            return null;
+        }
+
+        const existing = getAreaLockedMark(tid, area);
+
+        if (!existing) {
+            return null;
+        }
+
+        // Re-clicking the same icon does not add a duplicate.
+        if (existing.toolId === incomingTool.id) {
+            return null;
+        }
+
+        return existing;
+    }
+
+    function getAreaDisplayName(area) {
+        const names = {
+            whole: "Whole Tooth",
+            root: "Root",
+            buccal: "Buccal",
+            lingual: "Lingual",
+            palatal: "Palatal",
+            mesial: "Mesial",
+            distal: "Distal",
+            occlusal: "Occlusal"
+        };
+
+        return names[area] || area;
+    }
+
+    function showAreaIconConflict(tid, area, incomingTool, existing) {
+        const existingLabel = existing?.tool?.label || "أداة أخرى";
+        const incomingLabel = incomingTool?.label || "الأداة الحالية";
+        const areaLabel = getAreaDisplayName(area);
+
+        showToast(
+            `منطقة ${areaLabel} في السن ${tid} تحتوي بالفعل على "${existingLabel}". لا يمكن إضافة "${incomingLabel}" فوقها. اختر منطقة أخرى أو احذف الموجود أولًا.`,
+            "warning"
+        );
+    }
+
+    function canApplyLockedToolToArea(tid, area, tool) {
+        const conflict = getAreaIconConflict(
+            tid,
+            area,
+            tool
+        );
+
+        if (!conflict) {
+            return true;
+        }
+
+        showAreaIconConflict(
+            tid,
+            area,
+            tool,
+            conflict
+        );
+
+        return false;
+    }
+
+    const BRIDGE_TOOL_IDS = [
+        "resin_bonded_bridge_prev",
+        "resin_bonded_bridge_in"
+    ];
+
+    const SPACE_MAINTAINER_TOOL_IDS = [
+        "space_maintainer_prev",
+        "space_maintainer_in"
+    ];
+
+    const TOOTH_APPLIANCE_TOOL_IDS = [
+        ...BRIDGE_TOOL_IDS,
+        ...SPACE_MAINTAINER_TOOL_IDS
+    ];
+
+    function isBridgeTool(toolId = selectedToolId) {
+        return BRIDGE_TOOL_IDS.includes(toolId);
+    }
+
+    function isSpaceMaintainerTool(toolId = selectedToolId) {
+        return SPACE_MAINTAINER_TOOL_IDS.includes(toolId);
+    }
+
+    function isToothApplianceTool(toolId = selectedToolId) {
+        return TOOTH_APPLIANCE_TOOL_IDS.includes(toolId);
+    }
+
+    function getToothApplianceFamily(toolId) {
+        if (BRIDGE_TOOL_IDS.includes(toolId)) return "bridge";
+        if (SPACE_MAINTAINER_TOOL_IDS.includes(toolId)) return "spaceMaintainer";
+        return null;
+    }
+
+    const TEETH_TRANSPOSITION_TOOL_ID = "teeth_transposition";
+
+    function isTeethTranspositionTool(toolId = selectedToolId) {
+        return toolId === TEETH_TRANSPOSITION_TOOL_ID;
+    }
+
+    /*
+        In this chart, Teeth Transposition is used to mark a permanent tooth
+        as a deciduous / temporary tooth.
+
+        The state is stored once on the whole tooth and the front tooth image
+        is rendered slightly smaller. No treatment pattern is added to the
+        Lingual / Palatal diagram.
+    */
+    function setToothDeciduousState(tid, makeDeciduous = true) {
+        const tooth = chartData[tid];
+        if (!tooth) return false;
+
+        /*
+            Only tooth positions 1-5 can become deciduous.
+            Positions 6-8 remain permanent and are never resized.
+        */
+        if (
+            makeDeciduous === true &&
+            !canBeDeciduousTooth(tid)
+        ) {
+            return false;
+        }
+
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas = [
+            "buccal", "lingual", "palatal",
+            "mesial", "distal", "occlusal", "root"
+        ];
+
+        // Remove old/duplicate Transposition entries from whole and surfaces.
+        groups.forEach(group => {
+            tooth.whole[group] = (tooth.whole[group] || [])
+                .filter(id => id !== TEETH_TRANSPOSITION_TOOL_ID);
+        });
+
+        areas.forEach(area => {
+            const slot = tooth.areas?.[area];
+            if (!slot) return;
+
+            groups.forEach(group => {
+                slot[group] = (slot[group] || [])
+                    .filter(id => id !== TEETH_TRANSPOSITION_TOOL_ID);
+            });
+        });
+
+        tooth.isDeciduous = makeDeciduous === true;
+
+        if (tooth.isDeciduous) {
+            if (!Array.isArray(tooth.whole.others)) {
+                tooth.whole.others = [];
+            }
+
+            tooth.whole.others.push(TEETH_TRANSPOSITION_TOOL_ID);
+        }
+
+        return true;
+    }
+
+    function normalizeTeethTransposition(tid) {
+        const tooth = chartData[tid];
+        if (!tooth) return;
+
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas = [
+            "buccal", "lingual", "palatal",
+            "mesial", "distal", "occlusal", "root"
+        ];
+
+        let found = tooth.isDeciduous === true;
+
+        groups.forEach(group => {
+            if ((tooth.whole?.[group] || []).includes(TEETH_TRANSPOSITION_TOOL_ID)) {
+                found = true;
+            }
+        });
+
+        areas.forEach(area => {
+            const slot = tooth.areas?.[area];
+            if (!slot) return;
+
+            groups.forEach(group => {
+                if ((slot[group] || []).includes(TEETH_TRANSPOSITION_TOOL_ID)) {
+                    found = true;
+                }
+            });
+        });
+
+        /*
+            Old sessions may contain Teeth Transposition on positions 6-8.
+            Remove that invalid state during normalization.
+        */
+        setToothDeciduousState(
+            tid,
+            found && canBeDeciduousTooth(tid)
+        );
+    }
+
+    const REMAINING_ROOT_TOOL_ID = "remaining_root";
+
+    function isRemainingRootTool(toolId = selectedToolId) {
+        return toolId === REMAINING_ROOT_TOOL_ID;
+    }
+
+    function getRemainingRootMark(tid) {
+        const marks = getAreaMarks(tid, "root");
+
+        return marks.find(mark =>
+            mark.tool &&
+            mark.tool.id === REMAINING_ROOT_TOOL_ID
+        ) || null;
+    }
+
+    /*
+        Remaining Root is displayed only over the anatomical root half
+        of the front tooth image.
+
+        Upper jaw root = upper half.
+        Lower jaw root = lower half.
+    */
+    function remainingRootOverlay(tid, arch) {
+        const mark = getRemainingRootMark(tid);
+
+        if (!mark || !mark.tool) {
+            return "";
+        }
+
+        const color = GROUP_COLORS[mark.group] || GROUP_COLORS.disease;
+        const iconTop = arch === "upper" ? 0.75 : 11.15;
+        const iconSize = 7.35;
+        const scale = iconSize / 24;
+
+        return `
+            <g class="remaining-root-icon"
+               pointer-events="none"
+               transform="translate(1.82,${iconTop})">
+                <g transform="scale(${scale})">
+                    ${iconSvg(
+                        "remainingRoot",
+                        color,
+                        24,
+                        mark.group
+                    )}
+                </g>
+            </g>`;
+    }
+
+    /*
+        Remaining Root means the crown/tooth part is broken away.
+        When it exists, hide the opposite half of the front tooth image:
+
+        Upper jaw  -> keep root (upper half), hide lower half.
+        Lower jaw  -> keep root (lower half), hide upper half.
+    */
+    function remainingRootHideOtherHalfOverlay(tid, arch, splitY) {
+        const mark = getRemainingRootMark(tid);
+
+        if (!mark) {
+            return "";
+        }
+
+        const hideY = arch === "upper" ? splitY : 0;
+
+        return `
+            <rect x="0"
+                  y="${hideY}"
+                  width="11"
+                  height="${splitY}"
+                  fill="#ffffff"
+                  opacity="1"
+                  pointer-events="none"/>`;
+    }
+
+    function rejectRemainingRootOutsideRoot() {
+        showToast(
+            "Remaining Root مسموح فقط على الجذر أو على الجزء المقابل له داخل Lingual / Palatal.",
+            "warning"
+        );
+    }
+
+    const WHOLE_TOOTH_DISEASE_TOOL_IDS = [
+        "periapical_lesion",
+        "crack_tooth",
+        "tooth_mobility"
+    ];
+
+    function isWholeToothDiseaseTool(toolId = selectedToolId) {
+        return WHOLE_TOOTH_DISEASE_TOOL_IDS.includes(toolId);
+    }
+
+    /*
+        Return the active whole-tooth disease mark.
+
+        Only one of these three visual whole-tooth conditions is kept at
+        a time, preventing their large overlays from becoming cluttered.
+    */
+    function getWholeToothDiseaseMark(tid) {
+        const tooth = chartData[tid];
+        if (!tooth) return null;
+
+        const toolId = (tooth.whole?.disease || [])
+            .find(id => WHOLE_TOOTH_DISEASE_TOOL_IDS.includes(id));
+
+        if (!toolId) return null;
+
+        return {
+            group: "disease",
+            toolId,
+            tool: getTool(toolId)
+        };
+    }
+
+    function removeWholeToothDiseaseMarks(tid) {
+        const tooth = chartData[tid];
+        if (!tooth) return;
+
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas = [
+            "buccal", "lingual", "palatal",
+            "mesial", "distal", "occlusal", "root"
+        ];
+
+        groups.forEach(group => {
+            tooth.whole[group] = (tooth.whole[group] || [])
+                .filter(id => !WHOLE_TOOTH_DISEASE_TOOL_IDS.includes(id));
+        });
+
+        areas.forEach(area => {
+            const slot = tooth.areas?.[area];
+            if (!slot) return;
+
+            groups.forEach(group => {
+                slot[group] = (slot[group] || [])
+                    .filter(id => !WHOLE_TOOTH_DISEASE_TOOL_IDS.includes(id));
+            });
+        });
+    }
+
+    function applyWholeToothDisease(tid, tool) {
+        const tooth = chartData[tid];
+
+        if (
+            !tooth ||
+            !tool ||
+            !isWholeToothDiseaseTool(tool.id)
+        ) {
+            return false;
+        }
+
+        if (
+            !canApplyLockedToolToArea(
+                tid,
+                "whole",
+                tool
+            )
+        ) {
+            return false;
+        }
+
+        /*
+            Periapical Lesion, Crack Tooth, and Tooth Mobility use large
+            whole-tooth graphics. Keep only the most recently selected one.
+        */
+        removeWholeToothDiseaseMarks(tid);
+
+        if (!Array.isArray(tooth.whole.disease)) {
+            tooth.whole.disease = [];
+        }
+
+        tooth.whole.disease.push(tool.id);
+        return true;
+    }
+
+    /*
+        Upgrade old sessions where one of these tools was stored on an
+        individual surface. Move the final located one to the whole tooth.
+    */
+    function normalizeWholeToothDisease(tid) {
+        const tooth = chartData[tid];
+        if (!tooth) return;
+
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas = [
+            "buccal", "lingual", "palatal",
+            "mesial", "distal", "occlusal", "root"
+        ];
+
+        const found = [];
+
+        groups.forEach(group => {
+            (tooth.whole?.[group] || []).forEach(toolId => {
+                if (WHOLE_TOOTH_DISEASE_TOOL_IDS.includes(toolId)) {
+                    found.push(toolId);
+                }
+            });
+        });
+
+        areas.forEach(area => {
+            const slot = tooth.areas?.[area];
+            if (!slot) return;
+
+            groups.forEach(group => {
+                (slot[group] || []).forEach(toolId => {
+                    if (WHOLE_TOOTH_DISEASE_TOOL_IDS.includes(toolId)) {
+                        found.push(toolId);
+                    }
+                });
+            });
+        });
+
+        if (!found.length) return;
+
+        const selectedToolId = found[found.length - 1];
+
+        removeWholeToothDiseaseMarks(tid);
+        tooth.whole.disease.push(selectedToolId);
+    }
+
+    const EXTRACTED_TOOL_IDS = [
+        "extracted_tooth",
+        "extracted_tooth_in"
+    ];
+
+    function isExtractedTool(toolId = selectedToolId) {
+        return EXTRACTED_TOOL_IDS.includes(toolId);
+    }
+
+    /*
+        Return the single Bridge / Space Maintainer selected for a tooth.
+
+        New values are stored in tooth.whole. Area scanning remains for
+        compatibility with previously saved sessions.
+    */
+    function getToothApplianceMark(tid, requestedFamily = null) {
+        const tooth = chartData[tid];
+        if (!tooth) return null;
+
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas = [
+            "buccal", "lingual", "palatal",
+            "mesial", "distal", "occlusal", "root"
+        ];
+
+        const matchesFamily = toolId => {
+            if (!TOOTH_APPLIANCE_TOOL_IDS.includes(toolId)) return false;
+            return !requestedFamily ||
+                   getToothApplianceFamily(toolId) === requestedFamily;
+        };
+
+        // Prefer the new whole-tooth storage.
+        for (const group of groups) {
+            const toolId = (tooth.whole?.[group] || []).find(matchesFamily);
+
+            if (toolId) {
+                return {
+                    group,
+                    toolId,
+                    tool: getTool(toolId),
+                    family: getToothApplianceFamily(toolId),
+                    storageArea: "whole"
+                };
+            }
+        }
+
+        // Backward compatibility for old Root/Surface records.
+        for (const area of areas) {
+            const slot = tooth.areas?.[area];
+            if (!slot) continue;
+
+            for (const group of groups) {
+                const toolId = (slot[group] || []).find(matchesFamily);
+
+                if (toolId) {
+                    return {
+                        group,
+                        area,
+                        toolId,
+                        tool: getTool(toolId),
+                        family: getToothApplianceFamily(toolId),
+                        storageArea: area
+                    };
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function removeAllToothAppliances(tid) {
+        const tooth = chartData[tid];
+        if (!tooth) return;
+
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas = [
+            "buccal", "lingual", "palatal",
+            "mesial", "distal", "occlusal", "root"
+        ];
+
+        groups.forEach(group => {
+            tooth.whole[group] = (tooth.whole[group] || [])
+                .filter(id => !TOOTH_APPLIANCE_TOOL_IDS.includes(id));
+        });
+
+        areas.forEach(area => {
+            const slot = tooth.areas?.[area];
+            if (!slot) return;
+
+            groups.forEach(group => {
+                slot[group] = (slot[group] || [])
+                    .filter(id => !TOOTH_APPLIANCE_TOOL_IDS.includes(id));
+            });
+        });
+    }
+
+    /*
+        Only one appliance is allowed on a tooth.
+
+        Selecting Previous Treatment after In-Hospital, or the opposite,
+        replaces the old value instead of drawing both on top of each other.
+
+        Selecting Bridge after Space Maintainer, or the opposite, also
+        replaces the old appliance so the tooth never receives two icons.
+    */
+    function applyToothAppliance(tid, tool) {
+        const tooth = chartData[tid];
+
+        if (!tooth || !tool || !isToothApplianceTool(tool.id)) {
+            return false;
+        }
+
+        if (
+            !canApplyLockedToolToArea(
+                tid,
+                "whole",
+                tool
+            )
+        ) {
+            return false;
+        }
+
+        removeAllToothAppliances(tid);
+
+        if (!Array.isArray(tooth.whole[tool.group])) {
+            tooth.whole[tool.group] = [];
+        }
+
+        tooth.whole[tool.group].push(tool.id);
+        return true;
+    }
+
+    /*
+        Normalize old saved sessions:
+        - Move old Root/Surface Bridge or Space Maintainer to the whole tooth.
+        - Keep one appliance only.
+    */
+    function normalizeSingleToothLockedMark(tid) {
+        const tooth = chartData[tid];
+        if (!tooth) return;
+
+        const areas = [
+            "buccal", "lingual", "palatal",
+            "mesial", "distal", "occlusal", "root"
+        ];
+
+        function normalizeOneAreaSlot(slot) {
+            if (!slot) return;
+
+            let hasKeptIcon = false;
+
+            AREA_ICON_LOCK_GROUPS.forEach(group => {
+                const oldValues = Array.isArray(slot[group])
+                    ? slot[group]
+                    : [];
+
+                if (hasKeptIcon) {
+                    slot[group] = [];
+                    return;
+                }
+
+                if (oldValues.length > 0) {
+                    slot[group] = [oldValues[0]];
+                    hasKeptIcon = true;
+                } else {
+                    slot[group] = [];
+                }
+            });
+        }
+
+        /*
+            Keep one icon in Whole Tooth, and independently keep one icon
+            in each surface area. Different surface areas do not affect
+            one another.
+        */
+        normalizeOneAreaSlot(tooth.whole);
+
+        areas.forEach(area => {
+            normalizeOneAreaSlot(tooth.areas?.[area]);
+        });
+    }
+
+    function normalizeToothAppliance(tid) {
+        const tooth = chartData[tid];
+        if (!tooth) return;
+
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas = [
+            "buccal", "lingual", "palatal",
+            "mesial", "distal", "occlusal", "root"
+        ];
+
+        const found = [];
+
+        groups.forEach(group => {
+            (tooth.whole?.[group] || []).forEach(toolId => {
+                if (TOOTH_APPLIANCE_TOOL_IDS.includes(toolId)) {
+                    found.push({ group, toolId });
+                }
+            });
+        });
+
+        areas.forEach(area => {
+            const slot = tooth.areas?.[area];
+            if (!slot) return;
+
+            groups.forEach(group => {
+                (slot[group] || []).forEach(toolId => {
+                    if (TOOTH_APPLIANCE_TOOL_IDS.includes(toolId)) {
+                        found.push({ group, toolId });
+                    }
+                });
+            });
+        });
+
+        if (!found.length) return;
+
+        /*
+            When an old session contains both Previous and In-Hospital values,
+            retain only one. The final located value is used.
+        */
+        const chosen = found[found.length - 1];
+
+        removeAllToothAppliances(tid);
+
+        if (!Array.isArray(tooth.whole[chosen.group])) {
+            tooth.whole[chosen.group] = [];
+        }
+
+        tooth.whole[chosen.group].push(chosen.toolId);
+    }
+
+    function getPairConnectorColor(leftMark, rightMark) {
+        if (!leftMark || !rightMark) {
+            return "#64748b";
+        }
+
+        if (leftMark.group === rightMark.group) {
+            return GROUP_COLORS[leftMark.group];
+        }
+
+        return "#64748b";
+    }
+
+    function connectorCurveSvg(x1, x2, y, curveAmount, color) {
+        const middleX = (x1 + x2) / 2;
+        const controlY = y - curveAmount;
+        const path = `M ${x1} ${y} Q ${middleX} ${controlY} ${x2} ${y}`;
+
+        return `
+            <path d="${path}"
+                  fill="none"
+                  stroke="#ffffff"
+                  stroke-width="1.55"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"/>
+
+            <path d="${path}"
+                  fill="none"
+                  stroke="${color}"
+                  stroke-width="0.68"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"/>`;
+    }
+
+    /*
+        Bridge chain connectors for normal teeth:
+        If adjacent teeth both have Bridge, draw a clean connector segment
+        between them even when there is no extracted tooth in the middle.
+
+        This allows:
+        - Bridge + Bridge  => line between them
+        - Bridge + Bridge + Bridge => one continuous shared line
+    */
+    function getDirectBridgeSegments(tid, arch) {
+        if (isToothExtracted(tid)) {
+            return [];
+        }
+
+        const currentMark = getToothApplianceMark(tid, "bridge");
+
+        if (!currentMark) {
+            return [];
+        }
+
+        const archIds = tid.startsWith("U")
+            ? UPPER_IDS
+            : LOWER_IDS;
+
+        const index = archIds.indexOf(tid);
+
+        if (index < 0) {
+            return [];
+        }
+
+        const baseY = arch === "upper"
+            ? 15.0
+            : 6.0;
+
+        const segments = [];
+
+        // Left adjacent Bridge tooth
+        if (index > 0) {
+            const leftId = archIds[index - 1];
+
+            if (!isToothExtracted(leftId)) {
+                const leftMark = getToothApplianceMark(leftId, "bridge");
+
+                if (leftMark) {
+                    segments.push({
+                        x1: -2.4,
+                        x2: 5.6,
+                        y: baseY,
+                        curve: 0.34,
+                        color: getPairConnectorColor(leftMark, currentMark)
+                    });
+                }
+            }
+        }
+
+        // Right adjacent Bridge tooth
+        if (index < archIds.length - 1) {
+            const rightId = archIds[index + 1];
+
+            if (!isToothExtracted(rightId)) {
+                const rightMark = getToothApplianceMark(rightId, "bridge");
+
+                if (rightMark) {
+                    segments.push({
+                        x1: 5.4,
+                        x2: 13.4,
+                        y: baseY,
+                        curve: 0.34,
+                        color: getPairConnectorColor(currentMark, rightMark)
+                    });
+                }
+            }
+        }
+
+        return segments;
+    }
+
+    /*
+        Gap connector exists only for the extracted middle tooth:
+
+            appliance + extracted tooth + same appliance family
+
+        This is kept for both Bridge and Space Maintainer.
+    */
+    function getGapConnectorInfo(tid) {
+        if (!isToothExtracted(tid)) {
+            return null;
+        }
+
+        const archIds = tid.startsWith("U")
+            ? UPPER_IDS
+            : LOWER_IDS;
+
+        const index = archIds.indexOf(tid);
+
+        if (
+            index <= 0 ||
+            index >= archIds.length - 1
+        ) {
+            return null;
+        }
+
+        const leftId  = archIds[index - 1];
+        const rightId = archIds[index + 1];
+
+        if (
+            isToothExtracted(leftId) ||
+            isToothExtracted(rightId)
+        ) {
+            return null;
+        }
+
+        const leftMark  = getToothApplianceMark(leftId);
+        const rightMark = getToothApplianceMark(rightId);
+
+        if (
+            !leftMark ||
+            !rightMark ||
+            leftMark.family !== rightMark.family
+        ) {
+            return null;
+        }
+
+        return {
+            family: leftMark.family,
+            leftMark,
+            rightMark
+        };
+    }
+
+    /*
+        Draw front connector overlays.
+
+        Rules:
+        1. Bridge on normal adjacent teeth => draw connecting line(s).
+        2. 3 consecutive Bridge teeth share one continuous line visually.
+        3. appliance + extracted + same appliance => draw gap connector
+           from the extracted middle tooth.
+        4. If a supporting tooth becomes extracted, the connector disappears.
+    */
+    function frontToothConnectorOverlay(tid, arch) {
+        const baseY = arch === "upper"
+            ? 15.0
+            : 6.0;
+
+        let svg = "";
+
+        // Extracted middle-tooth connector for Bridge / Space Maintainer.
+        const gapInfo = getGapConnectorInfo(tid);
+
+        if (gapInfo) {
+            const color = getPairConnectorColor(
+                gapInfo.leftMark,
+                gapInfo.rightMark
+            );
+
+            if (gapInfo.family === "spaceMaintainer") {
+                svg += connectorCurveSvg(-4.0, 15.0, baseY - 0.72, 0.55, color);
+                svg += connectorCurveSvg(-4.0, 15.0, baseY + 0.72, 0.55, color);
+            } else {
+                svg += connectorCurveSvg(-4.0, 15.0, baseY, 0.75, color);
+            }
+        }
+
+        // Normal Bridge chain connectors on non-extracted teeth.
+        const bridgeSegments = getDirectBridgeSegments(tid, arch);
+
+        bridgeSegments.forEach(seg => {
+            svg += connectorCurveSvg(
+                seg.x1,
+                seg.x2,
+                seg.y,
+                seg.curve,
+                seg.color
+            );
+        });
+
+        if (!svg) {
+            return "";
+        }
+
+        return `
+            <g class="tooth-connector-overlay"
+               pointer-events="none">
+                ${svg}
+            </g>`;
+    }
+
+    /*
+        Draw exactly one Bridge or Space Maintainer icon on the tooth crown.
+
+        Upper jaw crown = lower half of the image.
+        Lower jaw crown = upper half of the image.
+    */
+    function toothApplianceOverlay(tid, arch) {
+        const mark = getToothApplianceMark(tid);
+        if (!mark || !mark.tool) return "";
+
+        const color = GROUP_COLORS[mark.group];
+        const iconTop = arch === "upper" ? 12.0 : 1.5;
+        const iconSize = 7.1;
+        const scale = iconSize / 24;
+
+        return `
+            <g class="tooth-appliance-icon" pointer-events="none"
+               transform="translate(1.95,${iconTop})">
+                <g transform="scale(${scale})">
+                    ${iconSvg(mark.tool.glyph, color, 24, mark.group)}
+                </g>
+            </g>`;
+    }
+
+    function rejectToothApplianceOnRoot(label) {
+        showToast(
+            `${label} ممنوع على الجذر. اختاره على جسم السن في الاتجاه الصحيح داخل Lingual / Palatal.`,
+            "warning"
+        );
+    }
+
+    /*
+        Return the first Extracted Tooth mark found for this tooth.
+
+        New selections are stored on the whole tooth. Area checks are kept
+        for backward compatibility with sessions saved by older versions.
+    */
+    function getExtractedMark(tid) {
+        const tooth = chartData[tid];
+        if (!tooth) return null;
+
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas = [
+            "buccal", "lingual", "palatal",
+            "mesial", "distal", "occlusal", "root"
+        ];
+
+        for (const group of groups) {
+            const toolId = (tooth.whole?.[group] || [])
+                .find(id => EXTRACTED_TOOL_IDS.includes(id));
+
+            if (toolId) {
+                return {
+                    group,
+                    toolId,
+                    tool: getTool(toolId)
+                };
+            }
+        }
+
+        for (const area of areas) {
+            const slot = tooth.areas?.[area];
+            if (!slot) continue;
+
+            for (const group of groups) {
+                const toolId = (slot[group] || [])
+                    .find(id => EXTRACTED_TOOL_IDS.includes(id));
+
+                if (toolId) {
+                    return {
+                        group,
+                        area,
+                        toolId,
+                        tool: getTool(toolId)
+                    };
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function isToothExtracted(tid) {
+        return !!getExtractedMark(tid);
+    }
+
+    /*
+        Store Extracted Tooth once on the whole tooth.
+
+        Any old Extracted Tooth entries saved on individual areas are removed
+        first to prevent duplicate report entries.
+    */
+    function applyExtractedToWholeTooth(tid, tool) {
+        const tooth = chartData[tid];
+        if (!tooth || !tool) return false;
+
+        /*
+            An extracted tooth cannot remain a Bridge or Space Maintainer
+            supporting tooth. Remove the appliance first so every connector
+            disappears immediately.
+        */
+        removeAllToothAppliances(tid);
+
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas = [
+            "buccal", "lingual", "palatal",
+            "mesial", "distal", "occlusal", "root"
+        ];
+
+        groups.forEach(group => {
+            tooth.whole[group] = (tooth.whole[group] || [])
+                .filter(id => !EXTRACTED_TOOL_IDS.includes(id));
+        });
+
+        areas.forEach(area => {
+            const slot = tooth.areas?.[area];
+            if (!slot) return;
+
+            groups.forEach(group => {
+                slot[group] = (slot[group] || [])
+                    .filter(id => !EXTRACTED_TOOL_IDS.includes(id));
+            });
+        });
+
+        if (!Array.isArray(tooth.whole[tool.group])) {
+            tooth.whole[tool.group] = [];
+        }
+
+        tooth.whole[tool.group].push(tool.id);
+        return true;
+    }
+
+    function removeExtractedFromTooth(tid) {
+        const tooth = chartData[tid];
+        if (!tooth) return;
+
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas = [
+            "buccal", "lingual", "palatal",
+            "mesial", "distal", "occlusal", "root"
+        ];
+
+        groups.forEach(group => {
+            tooth.whole[group] = (tooth.whole[group] || [])
+                .filter(id => !EXTRACTED_TOOL_IDS.includes(id));
+        });
+
+        areas.forEach(area => {
+            const slot = tooth.areas?.[area];
+            if (!slot) return;
+
+            groups.forEach(group => {
+                slot[group] = (slot[group] || [])
+                    .filter(id => !EXTRACTED_TOOL_IDS.includes(id));
+            });
+        });
+    }
+
+    function rejectExtractedToothAction(tid) {
+        showToast(
+            `السن ${tid} مخلوع. احذف Extracted Tooth أو استخدم Clear Tooth قبل إجراء أي تعديل.`,
+            "warning"
+        );
+    }
+
+    /*
+        Draw Periapical Lesion, Crack Tooth, or Tooth Mobility over the
+        complete front tooth image.
+
+        Tooth Mobility uses only its tooth-shaped patterned path.
+        No horizontal arrow is rendered.
+    */
+    function wholeToothDiseaseFrontOverlay(tid, arch) {
+        const mark = getWholeToothDiseaseMark(tid);
+        if (!mark || !mark.tool) return "";
+
+        const color = GROUP_COLORS[mark.group] || GROUP_COLORS.disease;
+        const glyph = mark.tool.glyph;
+
+        if (glyph === "mobility") {
+            const patternId = `front_mobility_${tid}`;
+            const mobilityTransform =
+                "translate(-2.0,2.5) scale(0.46,0.48)";
+
+            return `
+                <g class="whole-disease-front mobility"
+                   pointer-events="none"
+                   opacity="0.92">
+                    <defs>
+                        ${glyphPattern(patternId, "mobility", color)}
+                    </defs>
+
+                    <!--
+                        Thin outline only: no white fill, so the original
+                        tooth image remains clearly visible.
+                    -->
+                    <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z"
+                          transform="${mobilityTransform}"
+                          fill="none"
+                          stroke="#ffffff"
+                          stroke-width="3"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"/>
+
+                    <!-- Small and tidy applied Tooth Mobility mark -->
+                    <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z"
+                          transform="${mobilityTransform}"
+                          fill="url(#${patternId})"
+                          stroke="${color}"
+                          stroke-width="1.55"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </g>`;
+        }
+
+        if (glyph === "crack") {
+            return `
+                <g class="whole-disease-front crack" pointer-events="none">
+                    <!-- White halo -->
+                    <path d="M6.25 1.25
+                             L4.35 5.25
+                             L6.25 8.15
+                             L4.15 11.45
+                             L6.35 14.55
+                             L4.65 19.75"
+                          fill="none"
+                          stroke="#ffffff"
+                          stroke-width="1.65"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"/>
+
+                    <!-- Crack -->
+                    <path d="M6.25 1.25
+                             L4.35 5.25
+                             L6.25 8.15
+                             L4.15 11.45
+                             L6.35 14.55
+                             L4.65 19.75"
+                          fill="none"
+                          stroke="${color}"
+                          stroke-width="0.88"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </g>`;
+        }
+
+        if (glyph === "periapical") {
+            const lesionY = arch === "upper" ? 2.35 : 18.65;
+            const stemStart = arch === "upper" ? 3.9 : 17.1;
+            const stemEnd = arch === "upper" ? 10.8 : 10.2;
+
+            return `
+                <g class="whole-disease-front periapical" pointer-events="none">
+                    <!-- White halo around the root canal/lesion symbol -->
+                    <path d="M5.5 ${stemStart} V${stemEnd}"
+                          stroke="#ffffff"
+                          stroke-width="1.75"
+                          stroke-linecap="round"/>
+                    <ellipse cx="5.5"
+                             cy="${lesionY}"
+                             rx="2.35"
+                             ry="1.55"
+                             fill="#ffffff"
+                             stroke="#ffffff"
+                             stroke-width="1.15"/>
+
+                    <!-- Periapical lesion -->
+                    <path d="M5.5 ${stemStart} V${stemEnd}"
+                          stroke="${color}"
+                          stroke-width="0.88"
+                          stroke-linecap="round"/>
+                    <ellipse cx="5.5"
+                             cy="${lesionY}"
+                             rx="2.05"
+                             ry="1.25"
+                             fill="${hexToRgba(color, .24)}"
+                             stroke="${color}"
+                             stroke-width="0.72"/>
+                </g>`;
+        }
+
+        return "";
+    }
+
+    /*
+        Draw the same clean X used in the Lingual / Palatal surface diagram
+        directly over the front tooth image.
+    */
+    function extractedToothOverlay(tid) {
+        const mark = getExtractedMark(tid);
+        if (!mark) return "";
+
+        const color = GROUP_COLORS[mark.group] || GROUP_COLORS.others;
+
+        return `
+            <g class="extracted-tooth-overlay" pointer-events="none">
+                <!-- White underlay keeps the X readable over every tooth image -->
+                <path d="M1.55 1.45 L9.45 19.55"
+                      stroke="#ffffff"
+                      stroke-width="1.55"
+                      stroke-linecap="round"/>
+                <path d="M9.45 1.45 L1.55 19.55"
+                      stroke="#ffffff"
+                      stroke-width="1.55"
+                      stroke-linecap="round"/>
+
+                <!-- Actual Extracted Tooth icon -->
+                <path d="M1.55 1.45 L9.45 19.55"
+                      stroke="${color}"
+                      stroke-width="0.92"
+                      stroke-linecap="round"/>
+                <path d="M9.45 1.45 L1.55 19.55"
+                      stroke="${color}"
+                      stroke-width="0.92"
+                      stroke-linecap="round"/>
+            </g>`;
+    }
+
+    /*
+        Bridge and Space Maintainer are stored on the whole tooth and appear
+        in the matching tooth/crown segment inside Lingual / Palatal.
+    */
+    function getApplianceVisualArea(arch, insideArea) {
+        /*
+            Match the same anatomical tooth/crown direction used by
+            the front tooth image:
+
+            Upper jaw  -> tooth/crown is the lower segment  -> Buccal
+            Lower jaw  -> tooth/crown is the upper segment  -> Lingual
+        */
+        return arch === "upper"
+            ? "buccal"
+            : insideArea;
+    }
+
+    /*
+        Remaining Root follows the opposite direction:
+
+        Upper jaw root -> upper Lingual / Palatal segment.
+        Lower jaw root -> lower Lingual / Palatal segment.
+    */
+    function getRemainingRootVisualArea(arch, insideArea) {
+        return arch === "upper"
+            ? insideArea
+            : "buccal";
+    }
+
+    function getOcclusalAreaMarks(
+        tid,
+        area,
+        applianceVisualArea,
+        remainingRootVisualArea
+    ) {
+        const directMarks = getAreaMarks(tid, area);
+        const result = [];
+
+        /*
+            Remaining Root is displayed first in its matching root segment,
+            so its root icon/pattern remains visible there.
+        */
+        if (area === remainingRootVisualArea) {
+            const remainingRootMark = getRemainingRootMark(tid);
+
+            if (remainingRootMark && remainingRootMark.tool) {
+                result.push({
+                    group: remainingRootMark.group,
+                    tool: remainingRootMark.tool
+                });
+            }
+        }
+
+        /*
+            A whole-tooth disease is shown across all areas.
+        */
+        const wholeDisease = getWholeToothDiseaseMark(tid);
+
+        if (wholeDisease && wholeDisease.tool) {
+            const alreadyExists = result.some(existing =>
+                existing.tool &&
+                existing.tool.id === wholeDisease.tool.id
+            );
+
+            if (!alreadyExists) {
+                result.push({
+                    group: wholeDisease.group,
+                    tool: wholeDisease.tool
+                });
+            }
+        }
+
+        if (area === applianceVisualArea) {
+            const applianceMark = getToothApplianceMark(tid);
+
+            if (applianceMark && applianceMark.tool) {
+                result.push({
+                    group: applianceMark.group,
+                    tool: applianceMark.tool
+                });
+            }
+        }
+
+        directMarks.forEach(mark => {
+            const alreadyExists = result.some(existing =>
+                existing.group === mark.group &&
+                existing.tool &&
+                mark.tool &&
+                existing.tool.id === mark.tool.id
+            );
+
+            if (!alreadyExists) {
+                result.push(mark);
+            }
+        });
+
+        return result;
+    }
+
+    function isOcclusalAreaSelected(
+        tid,
+        area,
+        applianceVisualArea,
+        remainingRootVisualArea
+    ) {
+        /*
+            The applied pattern/treatment remains visible, but the dark
+            selection border disappears after clicking outside Surface.
+        */
+        if (hideSurfaceSelectionHighlight) {
+            return false;
+        }
+
+        if (isSelected(tid, area)) {
+            return true;
+        }
+
+        const sameTooth =
+            selectedTarget &&
+            selectedTarget.toothId === tid;
+
+        const selectedWhole =
+            sameTooth &&
+            selectedTarget.area === "whole";
+
+        const selectedRoot =
+            sameTooth &&
+            selectedTarget.area === "root";
+
+        if (
+            selectedWhole &&
+            isWholeToothDiseaseTool()
+        ) {
+            return true;
+        }
+
+        /*
+            Clicking Root on the tooth image highlights the matching segment
+            below, and clicking that segment selects Root on the tooth image.
+        */
+        if (
+            area === remainingRootVisualArea &&
+            isRemainingRootTool() &&
+            selectedRoot
+        ) {
+            return true;
+        }
+
+        return area === applianceVisualArea &&
+               isToothApplianceTool() &&
+               selectedWhole;
+    }
+
     function isSelected(tid, area) {
         return selectedTarget && selectedTarget.toothId === tid && selectedTarget.area === area;
     }
@@ -957,6 +2671,20 @@
     // ════════════════════════════════════════════════════════════════
     //  TOOLBAR
     // ════════════════════════════════════════════════════════════════
+
+    /*
+        Soft Tissue Impacted Tooth:
+        In the toolbar only, show the tooth icon without the curved tissue line.
+        Applied chart marks keep their existing Soft Tissue appearance.
+    */
+    function toolbarToolIconSvg(tool, color) {
+        const toolbarGlyph = tool.id === "soft_tissue_impacted"
+            ? "impacted"
+            : tool.glyph;
+
+        return iconSvg(toolbarGlyph, color, 36, tool.group);
+    }
+
     function renderToolbar() {
         const order = ["previous", "inside", "disease", "others"];
         const fullWidth = ["previous", "inside"];
@@ -978,7 +2706,7 @@
                     ${grouped[group].map(tool => `
                       <button class="tool-btn ${selectedToolId===tool.id?'active':''}"
                               onclick="selectTool('${tool.id}')" title="${escapeHtml(tool.label)}">
-                        ${iconSvg(tool.glyph, GROUP_COLORS[group], 36)}
+                        ${toolbarToolIconSvg(tool, GROUP_COLORS[group])}
                         <span class="tip">${escapeHtml(tool.label)}</span>
                       </button>
                     `).join("")}
@@ -990,16 +2718,40 @@
 
     function selectTool(toolId) {
         selectedToolId = toolId;
-        pendingSwapToothId = null;   // ⬅️ جديد
+        pendingSwapToothId = null;
+
+        if (toolId === "teeth_change") {
+            showToast("🔁 اختر السن الأول ثم اختر السن الثاني لتبديل مكانهما", "info");
+        }
+
+        if (toolId === TEETH_TRANSPOSITION_TOOL_ID) {
+            showToast("🦷 اختر صورة السن لتحويله إلى سن لبني أصغر حجماً.", "info");
+        }
+
         renderAll();
     }
-        function swapTeeth(tid1, tid2) {
-        const temp = chartData[tid1];
-        chartData[tid1] = chartData[tid2];
-        chartData[tid2] = temp;
-        // حافظ على الـ id الصحيح بعد التبديل لأن كل كائن كان عنده id القديم بداخله
+
+    function swapTeeth(tid1, tid2) {
+        if (!tid1 || !tid2 || tid1 === tid2) return false;
+        if (!chartData[tid1] || !chartData[tid2]) return false;
+
+        const firstTooth  = chartData[tid1];
+        const secondTooth = chartData[tid2];
+
+        // Swap the complete tooth objects so the image identity, surfaces,
+        // treatments, notes, and permanent/deciduous status move together.
+        chartData[tid1] = secondTooth;
+        chartData[tid2] = firstTooth;
+
+        // id always represents the current chart position.
         chartData[tid1].id = tid1;
         chartData[tid2].id = tid2;
+
+        // Backward compatibility for sessions created before sourceId existed.
+        if (!chartData[tid1].sourceId) chartData[tid1].sourceId = tid2;
+        if (!chartData[tid2].sourceId) chartData[tid2].sourceId = tid1;
+
+        return true;
     }
     // ════════════════════════════════════════════════════════════════
     //  TOOTH IMAGE MAP
@@ -1096,7 +2848,18 @@
     }
 
     function wholeToothOverlayOcclusal(tid) {
-        const wm = getWholeMarks(tid);
+        /*
+            Bridge and Space Maintainer are rendered in the upper
+            Lingual / Palatal segment, so remove them from the normal
+            whole-tooth badge/overlay renderer.
+        */
+        const wm = getWholeMarks(tid)
+            .filter(mark =>
+                !isToothApplianceTool(mark.tool.id) &&
+                !isWholeToothDiseaseTool(mark.tool.id) &&
+                !isTeethTranspositionTool(mark.tool.id)
+            );
+
         if (!wm.length && !chartData[tid].whole.note) return "";
         let p = "";
         const extracted = wm.find(m=>m.tool.glyph==="extracted");
@@ -1116,6 +2879,50 @@
         });
         if (chartData[tid].whole.note) { p+=`<g transform="translate(44,30)"><rect x="0" y="0" width="14" height="14" rx="4" fill="#ffffff" stroke="#6b7280" stroke-width="1.3"/><g transform="translate(-1,-1)">${iconSvg("note","#6b7280",16)}</g></g>`; }
         return p;
+    }
+
+    function wholeToothDiseaseOcclusalOverlay(tid) {
+        const mark = getWholeToothDiseaseMark(tid);
+
+        if (
+            !mark ||
+            !mark.tool ||
+            mark.tool.glyph !== "mobility"
+        ) {
+            return "";
+        }
+
+        const color = GROUP_COLORS[mark.group] || GROUP_COLORS.disease;
+        const patternId = `occ_mobility_icon_${tid}`;
+        const mobilityTransform =
+            "translate(19.2,12.8) scale(0.8)";
+
+        return `
+            <g class="whole-disease-occlusal mobility"
+               pointer-events="none"
+               opacity="0.92">
+                <defs>
+                    ${glyphPattern(patternId, "mobility", color)}
+                </defs>
+
+                <!-- Small outline without an opaque white fill -->
+                <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z"
+                      transform="${mobilityTransform}"
+                      fill="none"
+                      stroke="#ffffff"
+                      stroke-width="3.2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"/>
+
+                <!-- Compact Tooth Mobility marker -->
+                <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z"
+                      transform="${mobilityTransform}"
+                      fill="url(#${patternId})"
+                      stroke="${color}"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"/>
+            </g>`;
     }
 
     function areaBadges(tid, area, points, showIcons = true) {
@@ -1189,19 +2996,32 @@
             default: return `<pattern id="${patId}" patternUnits="userSpaceOnUse" width="5" height="5"><line x1="0" y1="5" x2="5" y2="0" stroke="${color}" stroke-width="1.1" stroke-opacity="0.75"/></pattern>`;
         }
     }
-        function getExtractedColor(tid) {
-        const allAreas = ["buccal","lingual","palatal","mesial","distal","occlusal","root"];
-        const groups   = ["disease","previous","inside","others"];
+    function getExtractedColor(tid, view = "all") {
+        const groups = ["disease", "previous", "inside", "others"];
+        const tooth = chartData[tid];
 
+        if (!tooth) return null;
+
+        // Whole-tooth extraction is allowed to appear in every view.
         for (const g of groups) {
-            const tools = chartData[tid].whole[g] || [];
+            const tools = tooth.whole[g] || [];
             if (tools.includes("extracted_tooth") || tools.includes("extracted_tooth_in")) {
                 return GROUP_COLORS[g];
             }
         }
 
-        for (const area of allAreas) {
-            const slot = chartData[tid].areas[area];
+        // Important:
+        // The front tooth image must not display marks coming from Buccal,
+        // Lingual, Palatal, Mesial, Distal, or Occlusal surfaces.
+        // Root marks may still appear on the front tooth image.
+        const areasToCheck = view === "front"
+            ? ["root"]
+            : ["buccal", "lingual", "palatal", "mesial", "distal", "occlusal", "root"];
+
+        for (const area of areasToCheck) {
+            const slot = tooth.areas?.[area];
+            if (!slot) continue;
+
             for (const g of groups) {
                 const tools = slot[g] || [];
                 if (tools.includes("extracted_tooth") || tools.includes("extracted_tooth_in")) {
@@ -1212,114 +3032,273 @@
 
         return null;
     }
+    // ════════════════════════════════════════════════════════════════
+    //  FRONT TOOTH IMAGE CLICK MAPPING
+    //
+    //  Top half of the tooth image:
+    //      Upper arch  -> Palatal
+    //      Lower arch  -> Lingual
+    //
+    //  Bottom half of the tooth image:
+    //      Upper/Lower -> Buccal
+    //
+    //  No treatment icon/pattern is drawn over the tooth image itself.
+    //  The selected treatment is displayed only in the surface diagram.
+    // ════════════════════════════════════════════════════════════════
+    function buildFrontToothSvg(tid, arch, useUnflippedImage) {
+        const insideArea = arch === "upper" ? "palatal" : "lingual";
+        const sourceId   = getSourceToothId(tid);
 
-               function frontToothSvg(tid, arch) {
-        const isLower = arch === "lower";
-        const imgSrc = (chartData[tid].isDeciduous
-            ? TOOTH_IMAGES_DECIDUOUS[tid]
-            : TOOTH_IMAGES[tid]) || TOOTH_IMAGES[tid] || "/images/teeth/U-8R-F.svg";   // ⬅️ معدّل
-        const splitY      = 10.5;
+        /*
+            Teeth Transposition keeps the same anatomical tooth image and
+            distinguishes a deciduous tooth by size only.
+        */
+        const imgSrc =
+            TOOTH_IMAGES[sourceId] ||
+            TOOTH_IMAGES[tid] ||
+            "/images/teeth/U-8R-F.svg";
 
-        const extractedColor = getExtractedColor(tid);
+        const splitY = 10.5;
 
-        const buccalMarks = extractedColor ? [] : getAreaMarks(tid, "buccal");
-        const rootMarks   = extractedColor ? [] : getAreaMarks(tid, "root");
+        const isDeciduous =
+            chartData[tid].isDeciduous === true;
 
-        const buccalGlyph = buccalMarks.length ? buccalMarks[0].tool.glyph : null;
-        const rootGlyph   = rootMarks.length   ? rootMarks[0].tool.glyph   : null;
-        const buccalCol   = buccalMarks.length ? GROUP_COLORS[buccalMarks[0].tool.group] : null;
-        const rootCol     = rootMarks.length   ? GROUP_COLORS[rootMarks[0].tool.group]   : null;
-        const crownFill   = buccalGlyph ? `url(#fp_${tid}_b)` : "transparent";
-        const rootFill    = rootGlyph   ? `url(#fp_${tid}_r)` : "transparent";
-        const imgTransform = isLower ? `` : `transform="translate(0,21) scale(1,-1)"`;
+        /*
+            Shrink only tooth positions 1-5.
+            Teeth 6-8 always remain at their normal permanent size.
+        */
+        const shouldShrinkDeciduous =
+            isDeciduous &&
+            canBeDeciduousTooth(tid);
 
-        const extractedX = extractedColor ? `
-            <line x1="0.5" y1="0.5" x2="10.5" y2="20.5"
-                  stroke="${extractedColor}" stroke-width="1.2" stroke-linecap="round"/>
-            <line x1="10.5" y1="0.5" x2="0.5" y2="20.5"
-                  stroke="${extractedColor}" stroke-width="1.2" stroke-linecap="round"/>
-        ` : "";
+        const toothScale = shouldShrinkDeciduous
+            ? 0.86
+            : 1;
+
+        const toothOffsetX =
+            (11 - (11 * toothScale)) / 2;
+
+        const toothOffsetY =
+            (21 - (21 * toothScale)) / 2;
+
+        const toothVisualTransform = shouldShrinkDeciduous
+            ? `translate(${toothOffsetX} ${toothOffsetY}) scale(${toothScale})`
+            : "";
+
+        // Preserve the original image orientation behavior.
+        const imgTransform = (!useUnflippedImage && arch === "upper")
+            ? `transform="translate(0,21) scale(1,-1)"`
+            : "";
+
+        const applianceMode    = isToothApplianceTool();
+        const remainingRootMode = isRemainingRootTool();
+        const extractedMode     = isToothExtracted(tid);
+
+        /*
+            Appliance mode:
+            - Upper arch root = upper half, crown/tooth = lower half.
+            - Lower arch root = lower half, crown/tooth = upper half.
+            - Bridge and Space Maintainer are allowed on the crown/tooth only.
+        */
+        const rootY  = arch === "upper" ? 0 : splitY;
+        const toothY = arch === "upper" ? splitY : 0;
+
+        const normalHitAreas = `
+              <rect x="0.5"
+                    y="0"
+                    width="10"
+                    height="${splitY}"
+                    fill="transparent"
+                    pointer-events="all"
+                    stroke="${isSelected(tid, insideArea) ? '#111827' : 'none'}"
+                    stroke-width="0.35"
+                    rx="1.2"
+                    onclick="selectArea('${tid}','${insideArea}','front')"
+                    style="cursor:pointer">
+                <title>${insideArea}</title>
+              </rect>
+
+              <rect x="0.5"
+                    y="${splitY}"
+                    width="10"
+                    height="${splitY}"
+                    fill="transparent"
+                    pointer-events="all"
+                    stroke="${isSelected(tid, 'buccal') ? '#111827' : 'none'}"
+                    stroke-width="0.35"
+                    rx="1.2"
+                    onclick="selectArea('${tid}','buccal','front')"
+                    style="cursor:pointer">
+                <title>buccal</title>
+              </rect>`;
+
+        const applianceLabel = selectedToolId && getTool(selectedToolId)
+            ? getTool(selectedToolId).label
+            : "Bridge / Space Maintainer";
+
+        const applianceHitAreas = `
+              <!-- Tooth/crown half accepts Bridge or Space Maintainer -->
+              <rect x="0.5"
+                    y="${toothY}"
+                    width="10"
+                    height="${splitY}"
+                    fill="transparent"
+                    pointer-events="all"
+                    stroke="${isSelected(tid, 'whole') ? '#111827' : 'none'}"
+                    stroke-width="0.42"
+                    rx="1.2"
+                    onclick="selectArea('${tid}','whole','front')"
+                    style="cursor:pointer">
+                <title>${applianceLabel} — Tooth only</title>
+              </rect>
+
+              <!-- Root is always blocked for these appliances -->
+              <rect x="0.5"
+                    y="${rootY}"
+                    width="10"
+                    height="${splitY}"
+                    fill="transparent"
+                    pointer-events="all"
+                    stroke="none"
+                    rx="1.2"
+                    onclick="rejectToothApplianceOnRoot('${applianceLabel}')"
+                    style="cursor:not-allowed">
+                <title>${applianceLabel} is not allowed on Root</title>
+              </rect>`;
+
+        const remainingRootHitAreas = `
+              <!-- Anatomical root half accepts Remaining Root -->
+              <rect x="0.5"
+                    y="${rootY}"
+                    width="10"
+                    height="${splitY}"
+                    fill="transparent"
+                    pointer-events="all"
+                    stroke="${isSelected(tid, 'root') ? '#111827' : 'none'}"
+                    stroke-width="0.42"
+                    rx="1.2"
+                    onclick="selectArea('${tid}','root','front')"
+                    style="cursor:pointer">
+                <title>Remaining Root — Root only</title>
+              </rect>
+
+              <!-- Tooth/crown half is blocked -->
+              <rect x="0.5"
+                    y="${toothY}"
+                    width="10"
+                    height="${splitY}"
+                    fill="transparent"
+                    pointer-events="all"
+                    stroke="none"
+                    rx="1.2"
+                    onclick="rejectRemainingRootOutsideRoot()"
+                    style="cursor:not-allowed">
+                <title>Remaining Root is allowed on Root only</title>
+              </rect>`;
+
+        const extractedHitArea = `
+              <rect x="0"
+                    y="0"
+                    width="11"
+                    height="21"
+                    fill="transparent"
+                    pointer-events="all"
+                    stroke="none"
+                    onclick="rejectExtractedToothAction('${tid}')"
+                    style="cursor:not-allowed">
+                <title>This tooth is extracted</title>
+              </rect>`;
 
         return `
-            <svg class="tooth-svg" viewBox="0 0 11 21" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-              <defs>
-                ${buccalGlyph ? glyphPattern(`fp_${tid}_b`, buccalGlyph, buccalCol) : ""}
-                ${rootGlyph   ? glyphPattern(`fp_${tid}_r`, rootGlyph,   rootCol)   : ""}
-              </defs>
-              <image href="${imgSrc}" x="0" y="0" width="11" height="21" ${imgTransform}/>
-              <rect x="0.5" y="${isLower ? 0 : splitY}" width="10" height="${splitY}"
-                    fill="${crownFill}" fill-opacity="0.75"
-                    stroke="${isSelected(tid,'buccal') ? '#111827' : 'none'}"
-                    stroke-width="0.35" rx="1.2"
-                    onclick="selectArea('${tid}','buccal')" style="cursor:pointer"/>
-              <rect x="2" y="${isLower ? splitY : 0}" width="7" height="${splitY}"
-                    fill="${rootFill}" fill-opacity="0.75"
-                    stroke="${isSelected(tid,'root') ? '#111827' : 'none'}"
-                    stroke-width="0.35" rx="0.8"
-                    onclick="selectArea('${tid}','root')" style="cursor:pointer"/>
-              ${wholeToothOverlayFront(tid)}
-              ${extractedX}
+            <svg class="tooth-svg"
+                 viewBox="0 0 11 21"
+                 xmlns="http://www.w3.org/2000/svg"
+                 xmlns:xlink="http://www.w3.org/1999/xlink">
+
+              <!--
+                  Bridge / Space Maintainer connectors keep their normal row
+                  alignment even when the selected tooth is deciduous.
+              -->
+              ${frontToothConnectorOverlay(tid, arch)}
+
+              <!--
+                  The tooth image and all tooth-bound overlays shrink together
+                  when Teeth Transposition marks it as deciduous.
+              -->
+              <g class="tooth-visual ${shouldShrinkDeciduous ? 'deciduous-tooth' : 'permanent-tooth'}"
+                 ${toothVisualTransform ? `transform="${toothVisualTransform}"` : ""}>
+
+                <image href="${imgSrc}"
+                       x="0"
+                       y="0"
+                       width="11"
+                       height="21"
+                       ${imgTransform}/>
+
+                ${extractedMode
+                      ? extractedToothOverlay(tid)
+                      : `
+                          ${wholeToothDiseaseFrontOverlay(tid, arch)}
+                          ${toothApplianceOverlay(tid, arch)}
+                          ${remainingRootHideOtherHalfOverlay(tid, arch, splitY)}
+                          ${remainingRootOverlay(tid, arch)}
+                        `}
+              </g>
+
+              ${extractedMode
+                    ? extractedHitArea
+                    : (
+                        remainingRootMode
+                            ? remainingRootHitAreas
+                            : (
+                                applianceMode
+                                    ? applianceHitAreas
+                                    : normalHitAreas
+                              )
+                      )}
             </svg>`;
     }
 
-             function frontToothSvgFlipped(tid, arch) {
-        const imgSrc = (chartData[tid].isDeciduous
-            ? TOOTH_IMAGES_DECIDUOUS[tid]
-            : TOOTH_IMAGES[tid]) || TOOTH_IMAGES[tid] || "/images/teeth/U-8R-F.svg";   
-        const splitY      = 10.5;
+    function frontToothSvg(tid, arch) {
+        return buildFrontToothSvg(tid, arch, false);
+    }
 
-        const extractedColor = getExtractedColor(tid);
-
-        const buccalMarks = extractedColor ? [] : getAreaMarks(tid, "buccal");
-        const rootMarks   = extractedColor ? [] : getAreaMarks(tid, "root");
-
-        const buccalGlyph = buccalMarks.length ? buccalMarks[0].tool.glyph : null;
-        const rootGlyph   = rootMarks.length   ? rootMarks[0].tool.glyph   : null;
-        const buccalCol   = buccalMarks.length ? GROUP_COLORS[buccalMarks[0].tool.group] : null;
-        const rootCol     = rootMarks.length   ? GROUP_COLORS[rootMarks[0].tool.group]   : null;
-        const crownFill   = buccalGlyph ? `url(#fp_${tid}_b)` : "transparent";
-        const rootFill    = rootGlyph   ? `url(#fp_${tid}_r)` : "transparent";
-
-        const extractedX = extractedColor ? `
-            <line x1="0.5" y1="0.5" x2="10.5" y2="20.5"
-                  stroke="${extractedColor}" stroke-width="1.2" stroke-linecap="round"/>
-            <line x1="10.5" y1="0.5" x2="0.5" y2="20.5"
-                  stroke="${extractedColor}" stroke-width="1.2" stroke-linecap="round"/>
-        ` : "";
-
-        return `
-            <svg class="tooth-svg" viewBox="0 0 11 21" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-              <defs>
-                ${buccalGlyph ? glyphPattern(`fp_${tid}_b`, buccalGlyph, buccalCol) : ""}
-                ${rootGlyph   ? glyphPattern(`fp_${tid}_r`, rootGlyph,   rootCol)   : ""}
-              </defs>
-              <image href="${imgSrc}" x="0" y="0" width="11" height="21"/>
-              <rect x="0.5" y="0" width="10" height="${splitY}"
-                    fill="${crownFill}" fill-opacity="0.75"
-                    stroke="${isSelected(tid,'buccal') ? '#111827' : 'none'}"
-                    stroke-width="0.35" rx="1.2"
-                    onclick="selectArea('${tid}','buccal')" style="cursor:pointer"/>
-              <rect x="2" y="${splitY}" width="7" height="${splitY}"
-                    fill="${rootFill}" fill-opacity="0.75"
-                    stroke="${isSelected(tid,'root') ? '#111827' : 'none'}"
-                    stroke-width="0.35" rx="0.8"
-                    onclick="selectArea('${tid}','root')" style="cursor:pointer"/>
-              ${wholeToothOverlayFront(tid)}
-              ${extractedX}
-            </svg>`;
+    function frontToothSvgFlipped(tid, arch) {
+        return buildFrontToothSvg(tid, arch, true);
     }
 
     function renderToothFront(tid, arch) {
-        const toothIndex = parseInt(tid.slice(1), 10);
+        // Use the real tooth identity after a Teeth Change swap, not only
+        // the chart position, so teeth 2 1 1 2 keep their correct orientation.
+        const sourceId   = getSourceToothId(tid);
+        const toothIndex = parseInt(sourceId.slice(1), 10);
         const isFlipped  = [6, 7, 8, 9].includes(toothIndex);
-        return isFlipped ? frontToothSvgFlipped(tid, arch) : frontToothSvg(tid, arch);
+
+        return isFlipped
+            ? frontToothSvgFlipped(tid, arch)
+            : frontToothSvg(tid, arch);
     }
 
         function occlusalToothSvg(tid, arch) {
         const insideName = arch === "upper" ? "palatal" : "lingual";
+
+        /*
+            Bridge / Space Maintainer follows the tooth/crown direction:
+            upper jaw = lower segment, lower jaw = upper segment.
+        */
+        const applianceVisualArea = getApplianceVisualArea(
+            arch,
+            insideName
+        );
+
+        const remainingRootVisualArea = getRemainingRootVisualArea(
+            arch,
+            insideName
+        );
+
         const cx = 32, cy = 26, rx = 26, ry = 20, irx = 13, iry = 10;
 
-        const extractedColor = getExtractedColor(tid);   // ⬅️ نتحقق أول شي
+        const extractedColor = getExtractedColor(tid, "occlusal");   // Surface diagram keeps its normal patterns
 
         function ptOuter(a) { const r=a*Math.PI/180; return {x:cx+rx*Math.cos(r),y:cy+ry*Math.sin(r)}; }
         function ptInner(a) { const r=a*Math.PI/180; return {x:cx+irx*Math.cos(r),y:cy+iry*Math.sin(r)}; }
@@ -1346,22 +3325,68 @@
         };
         const allKeys = [...segments.map(s=>s.key), "occlusal"];
 
-        const defsContent = extractedColor ? "" : allKeys.map(key => {     // ⬅️ بدون patterns لو مخلوع
-            const marks = getAreaMarks(tid, key);
+        const defsContent = extractedColor ? "" : allKeys.map(key => {
+            const marks = key === "occlusal"
+                ? getAreaMarks(tid, key)
+                : getOcclusalAreaMarks(
+                    tid,
+                    key,
+                    applianceVisualArea,
+                    remainingRootVisualArea
+                );
+
             if (!marks.length) return "";
-            return glyphPattern(`occ_${tid}_${key}`, marks[0].tool.glyph, GROUP_COLORS[marks[0].tool.group]);
+
+            return glyphPattern(
+                `occ_${tid}_${key}`,
+                marks[0].tool.glyph,
+                GROUP_COLORS[marks[0].group]
+            );
         }).join("");
 
         const segmentsSvg = segments.map(s => {
-            const marks  = extractedColor ? [] : getAreaMarks(tid, s.key);   // ⬅️ فاضي لو مخلوع
-            const fill   = marks.length ? `url(#occ_${tid}_${s.key})` : "transparent";
-            const stroke = isSelected(tid, s.key) ? "#111827" : "#c4ccd7";
-            const sw     = isSelected(tid, s.key) ? 2.0 : 0.9;
-            return `<path d="${segmentPath(s.startAngle, s.endAngle)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" onclick="selectArea('${tid}','${s.key}')" style="cursor:pointer"/>`;
+            const marks = extractedColor
+                ? []
+                : getOcclusalAreaMarks(
+                    tid,
+                    s.key,
+                    applianceVisualArea,
+                    remainingRootVisualArea
+                );
+
+            const fill = marks.length
+                ? `url(#occ_${tid}_${s.key})`
+                : "transparent";
+
+            const selected = isOcclusalAreaSelected(
+                tid,
+                s.key,
+                applianceVisualArea,
+                remainingRootVisualArea
+            );
+            const stroke = selected ? "#111827" : "#c4ccd7";
+            const sw = selected ? 2.0 : 0.9;
+
+            return `<path d="${segmentPath(s.startAngle, s.endAngle)}"
+                          fill="${fill}"
+                          stroke="${stroke}"
+                          stroke-width="${sw}"
+                          onclick="selectArea('${tid}','${s.key}','surface')"
+                          style="cursor:pointer"/>`;
         }).join("");
 
-        const occlusalMarks = extractedColor ? [] : getAreaMarks(tid, "occlusal");  // ⬅️ فاضي لو مخلوع
-        const occlusalFill  = occlusalMarks.length ? `url(#occ_${tid}_occlusal)` : "transparent";
+        const occlusalMarks = extractedColor
+            ? []
+            : getOcclusalAreaMarks(
+                tid,
+                "occlusal",
+                applianceVisualArea,
+                remainingRootVisualArea
+            );
+
+        const occlusalFill = occlusalMarks.length
+            ? `url(#occ_${tid}_occlusal)`
+            : "transparent";
 
         const xLines = xAngles.map(a => {
             const o=ptOuter(a), i=ptInner(a);
@@ -1377,42 +3402,338 @@
         ` : "";
 
         return `
-            <svg class="tooth-svg" viewBox="0 0 64 52" xmlns="http://www.w3.org/2000/svg">
+            <svg class="tooth-svg lingual-palatal-surface-svg"
+                 data-surface-chart="true"
+                 viewBox="0 0 64 52"
+                 xmlns="http://www.w3.org/2000/svg">
               <defs>${defsContent}</defs>
               <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#fafafa" stroke="#d0d6df" stroke-width="1.4"/>
               ${segmentsSvg}
               ${xLines}
               <ellipse cx="${cx}" cy="${cy}" rx="${irx}" ry="${iry}"
                        fill="${occlusalFill}"
-                       stroke="${isSelected(tid,'occlusal') ? '#111827' : '#c4ccd7'}"
-                       stroke-width="${isSelected(tid,'occlusal') ? 2.0 : 0.9}"
-                       onclick="selectArea('${tid}','occlusal')" style="cursor:pointer"/>
+                       stroke="${isOcclusalAreaSelected(
+                           tid,
+                           'occlusal',
+                           applianceVisualArea,
+                           remainingRootVisualArea
+                       ) ? '#111827' : '#c4ccd7'}"
+                       stroke-width="${isOcclusalAreaSelected(
+                           tid,
+                           'occlusal',
+                           applianceVisualArea,
+                           remainingRootVisualArea
+                       ) ? 2.0 : 0.9}"
+                       onclick="selectArea('${tid}','occlusal','surface')"
+                       style="cursor:pointer"/>
               <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="#c4ccd7" stroke-width="1.3"/>
-              ${wholeToothOverlayOcclusal(tid)}
-              ${segments.map(s=>areaBadges(tid,s.key,badgeSpots[s.key]||badgeSpots.occlusal)).join("")}
-              ${areaBadges(tid,'occlusal',badgeSpots.occlusal,false)}
+              <!--
+                  Extracted Tooth:
+                  Show exactly one large X only.
+                  Do not render the whole-tooth overlay or the small badges,
+                  because they create the duplicated X and the small extra icon.
+              -->
+              ${extractedColor ? "" : wholeToothOverlayOcclusal(tid)}
+              ${extractedColor ? "" : wholeToothDiseaseOcclusalOverlay(tid)}
+              ${extractedColor ? "" : segments.map(s=>areaBadges(tid,s.key,badgeSpots[s.key]||badgeSpots.occlusal)).join("")}
+              ${extractedColor ? "" : areaBadges(tid,'occlusal',badgeSpots.occlusal,false)}
               ${extractedBigX}
             </svg>`;
     }
-        function toggleToothVariant(tid) {
+    function toggleToothVariant(tid) {
         const tooth = chartData[tid];
         if (!tooth) return;
-        tooth.isDeciduous = !tooth.isDeciduous;
 
-        // سجّل/امسح الأداة بالـ whole.others عشان تنعكس بالـ Tool Report تلقائياً
-        const arr = tooth.whole.others;
-        const idx = arr.indexOf("teeth_change");
-        if (tooth.isDeciduous) {
-            if (idx === -1) arr.push("teeth_change");
-        } else {
-            if (idx > -1) arr.splice(idx, 1);
-        }
+        setToothDeciduousState(
+            tid,
+            tooth.isDeciduous !== true
+        );
     }
     // ════════════════════════════════════════════════════════════════
     //  INTERACTIONS
     // ════════════════════════════════════════════════════════════════
 
-              function selectArea(tid, area) {
+              function selectArea(tid, area, source = "surface") {
+        const currentTool = selectedToolId ? getTool(selectedToolId) : null;
+
+        /*
+            A new click starts a new visual selection.
+            "surface" means the Lingual / Palatal five-part diagram.
+        */
+        lastSelectionSource = source;
+        hideSurfaceSelectionHighlight = false;
+
+        /*
+            Once a tooth is marked as Extracted Tooth, no chart action is
+            allowed on it until the extraction mark is cleared.
+        */
+        if (isToothExtracted(tid)) {
+            rejectExtractedToothAction(tid);
+            return;
+        }
+
+        /*
+            Teeth Transposition rules:
+            1. It is applied by clicking the front tooth image only.
+            2. It is allowed only for tooth positions 1 through 5.
+            3. The tooth becomes deciduous / temporary.
+            4. The same tooth image is shown slightly smaller.
+            5. Teeth 6, 7, and 8 always remain permanent.
+            6. It is stored once on the whole tooth for saving/reporting.
+        */
+        if (
+            currentTool &&
+            isTeethTranspositionTool(currentTool.id)
+        ) {
+            if (source !== "front") {
+                showToast(
+                    "Teeth Transposition يُطبّق من صورة السن فقط، وليس من Lingual / Palatal.",
+                    "warning"
+                );
+                return;
+            }
+
+            if (!canBeDeciduousTooth(tid)) {
+                const toothNumber = getToothPositionNumber(tid);
+
+                showToast(
+                    `Teeth Transposition مسموح فقط للأسنان من 1 إلى 5. السن رقم ${toothNumber} يبقى دائمًا.`,
+                    "warning"
+                );
+                return;
+            }
+
+            const applied = setToothDeciduousState(
+                tid,
+                true
+            );
+
+            if (applied) {
+                selectedTarget = {
+                    toothId: tid,
+                    area: "whole"
+                };
+
+                showToast(
+                    `تم تحويل السن ${tid} إلى سن لبني وتصغير حجمه.`,
+                    "success"
+                );
+            }
+
+            renderAll();
+            return;
+        }
+
+        /*
+            Extracted Tooth rules:
+            1. It can be applied by clicking anywhere on the front tooth image.
+            2. It can also be applied from Lingual / Palatal.
+            3. It is stored once on the whole tooth.
+            4. After that, the tooth is locked against further actions.
+        */
+        if (currentTool && currentTool.glyph === "extracted") {
+            const allowedFromFront = source === "front";
+
+            /*
+                The complete lower SVG represents the Lingual / Palatal view.
+                Therefore, while Extracted Tooth is selected, clicking any
+                section of that diagram must mark the entire tooth as extracted.
+
+                This includes:
+                Lingual / Palatal, Buccal, Mesial, Distal, and Occlusal.
+            */
+            const allowedFromLingualPalatalDiagram = source === "surface";
+
+            if (!allowedFromFront && !allowedFromLingualPalatalDiagram) {
+                showToast(
+                    "Extracted Tooth مسموح من صورة السن أو من مخطط Lingual / Palatal فقط.",
+                    "warning"
+                );
+                return;
+            }
+
+            const applied = applyExtractedToWholeTooth(tid, currentTool);
+
+            if (applied) {
+                /*
+                    Keep the clicked section selected for the side information,
+                    but the Extracted Tooth state itself is saved once on the
+                    whole tooth. This immediately updates both:
+                    1. The front tooth image.
+                    2. The Lingual / Palatal diagram.
+                */
+                selectedTarget = {
+                    toothId: tid,
+                    area: area
+                };
+
+                showToast(`تم تحديد السن ${tid} كمخلوع.`, "success");
+            }
+
+            renderAll();
+            return;
+        }
+
+        /*
+            Remaining Root rules:
+            1. It is allowed on the anatomical Root half of the front image.
+            2. It is also allowed on the matching Root segment in
+               Lingual / Palatal:
+                   Upper jaw = upper segment.
+                   Lower jaw = lower segment.
+            3. Clicking either view synchronizes the other view.
+            4. The value is always stored in Root only.
+        */
+        if (
+            currentTool &&
+            isRemainingRootTool(currentTool.id)
+        ) {
+            const arch = tid.startsWith("U")
+                ? "upper"
+                : "lower";
+
+            const insideArea = arch === "upper"
+                ? "palatal"
+                : "lingual";
+
+            const remainingRootVisualArea =
+                getRemainingRootVisualArea(
+                    arch,
+                    insideArea
+                );
+
+            const allowedFromFrontRoot =
+                source === "front" &&
+                area === "root";
+
+            const allowedFromLingualPalatalRoot =
+                source === "surface" &&
+                area === remainingRootVisualArea;
+
+            if (
+                !allowedFromFrontRoot &&
+                !allowedFromLingualPalatalRoot
+            ) {
+                rejectRemainingRootOutsideRoot();
+                return;
+            }
+
+            /*
+                Always save in Root, regardless of which synchronized view
+                the user clicked.
+            */
+            selectedTarget = {
+                toothId: tid,
+                area: "root"
+            };
+
+            applyToolToSelectedTarget();
+
+            showToast(
+                `Remaining Root تم وضعه على جذر السن ${tid}.`,
+                "success"
+            );
+
+            renderAll();
+            return;
+        }
+
+        /*
+            Whole-tooth disease rules:
+            Periapical Lesion, Crack Tooth, and Tooth Mobility may be applied
+            from any part of the front tooth image or any part of the
+            Lingual / Palatal diagram.
+
+            The mark is stored once on the whole tooth.
+        */
+        if (
+            currentTool &&
+            isWholeToothDiseaseTool(currentTool.id)
+        ) {
+            const applied = applyWholeToothDisease(
+                tid,
+                currentTool
+            );
+
+            if (applied) {
+                selectedTarget = {
+                    toothId: tid,
+                    area: "whole"
+                };
+
+                showToast(
+                    `${currentTool.label} تم تطبيقه على السن كاملًا.`,
+                    "success"
+                );
+            }
+
+            renderAll();
+            return;
+        }
+
+        /*
+            Bridge / Space Maintainer rules:
+            1. Apply from the crown/tooth half of the front image.
+            2. Or apply from the upper Lingual / Palatal segment.
+            3. Root is forbidden.
+            4. Only one appliance is retained on each tooth.
+        */
+        if (currentTool && isToothApplianceTool(currentTool.id)) {
+            const arch = tid.startsWith("U")
+                ? "upper"
+                : "lower";
+
+            const insideArea = arch === "upper"
+                ? "palatal"
+                : "lingual";
+
+            /*
+                Match the front image tooth/crown direction:
+                upper jaw -> lower Buccal segment
+                lower jaw -> upper Lingual segment
+            */
+            const applianceArea = getApplianceVisualArea(
+                arch,
+                insideArea
+            );
+
+            const allowedFromFrontTooth =
+                source === "front" &&
+                area === "whole";
+
+            const allowedFromLingualPalatalToothPart =
+                source === "surface" &&
+                area === applianceArea;
+
+            if (
+                !allowedFromFrontTooth &&
+                !allowedFromLingualPalatalToothPart
+            ) {
+                showToast(
+                    `${currentTool.label} مسموح فقط على جسم السن، وليس على الجذر.`,
+                    "warning"
+                );
+                return;
+            }
+
+            const applied = applyToothAppliance(tid, currentTool);
+
+            if (applied) {
+                selectedTarget = {
+                    toothId: tid,
+                    area: "whole"
+                };
+
+                showToast(
+                    `${currentTool.label} تم وضعه على السن ${tid}.`,
+                    "success"
+                );
+            }
+
+            renderAll();
+            return;
+        }
+
         selectedTarget = { toothId: tid, area };
 
         if (selectedToolId === "others_text") {
@@ -1421,22 +3742,35 @@
         }
 
         if (selectedToolId === "teeth_change") {
+            // First click: remember the first tooth position.
             if (!pendingSwapToothId) {
                 pendingSwapToothId = tid;
-                showToast(`🔁 اختر السن الثاني للتبديل مع ${tid}`, "info");
+                showToast(`🔁 تم اختيار ${tid} — اختر السن الثاني`, "info");
                 renderAll();
                 return;
             }
+
+            // Clicking the same tooth cancels the pending operation.
             if (pendingSwapToothId === tid) {
                 pendingSwapToothId = null;
-                showToast("❌ تم إلغاء التبديل", "info");
+                showToast("❌ تم إلغاء تبديل الأسنان", "info");
                 renderAll();
                 return;
             }
-            const firstId = pendingSwapToothId;
-            swapTeeth(firstId, tid);
+
+            const firstId  = pendingSwapToothId;
+            const secondId = tid;
+            const changed  = swapTeeth(firstId, secondId);
+
             pendingSwapToothId = null;
-            showToast(`✅ تم تبديل ${firstId} مع ${tid}`, "success");
+            selectedTarget = { toothId: secondId, area };
+
+            if (changed) {
+                showToast(`✅ تم تبديل مكان ${firstId} مع ${secondId}`, "success");
+            } else {
+                showToast("❌ لم يتم تبديل الأسنان", "error");
+            }
+
             renderAll();
             return;
         }
@@ -1447,9 +3781,28 @@
 
     function applyToolToSelectedTarget() {
         if (!selectedToolId || !selectedTarget) return;
-        const tool  = getTool(selectedToolId);
-        const tooth = chartData[selectedTarget.toothId];
+
+        const tool = getTool(selectedToolId);
+        const toothId = selectedTarget.toothId;
+        const tooth = chartData[toothId];
+
         if (!tool) return;
+
+        const storageArea = getToolStorageArea(
+            tool,
+            selectedTarget.area
+        );
+
+        if (
+            !canApplyLockedToolToArea(
+                toothId,
+                storageArea,
+                tool
+            )
+        ) {
+            return;
+        }
+
         if (tool.scope === "whole") {
             if (!Array.isArray(tooth.whole[tool.group])) tooth.whole[tool.group] = [];
             if (!tooth.whole[tool.group].includes(tool.id)) tooth.whole[tool.group].push(tool.id);
@@ -1465,26 +3818,73 @@
 
     function clearSelectedTarget() {
         if (!selectedTarget) return;
-        chartData[selectedTarget.toothId].areas[selectedTarget.area] = makeSlot();
+
+        const tid = selectedTarget.toothId;
+
+        /*
+            Extracted Tooth is a whole-tooth state. Clearing the selected
+            target removes that state and unlocks the tooth.
+        */
+        if (isToothExtracted(tid)) {
+            removeExtractedFromTooth(tid);
+            showToast(`تم إلغاء Extracted Tooth عن السن ${tid}.`, "success");
+            renderAll();
+            return;
+        }
+
+        if (selectedTarget.area === "whole") {
+            chartData[tid].whole = makeSlot();
+            chartData[tid].isDeciduous = false;
+        } else {
+            chartData[tid].areas[selectedTarget.area] = makeSlot();
+        }
+
         renderAll();
     }
 
     function clearSelectedTooth() {
         if (!selectedTarget) return;
+
         const id = selectedTarget.toothId;
+        const currentTooth = chartData[id];
+        const sourceId = currentTooth?.sourceId || id;
         chartData[id] = makeTooth(id);
+
+        // Clear treatments/notes and permanent/deciduous status without
+        // undoing a Teeth Change position swap.
+        chartData[id].sourceId = sourceId;
+        chartData[id].isDeciduous = false;
+
         renderAll();
     }
 
     function clearAllChart() {
         [...UPPER_IDS, ...LOWER_IDS].forEach(id => { chartData[id] = makeTooth(id); });
+
+        lastSelectionSource = null;
+        hideSurfaceSelectionHighlight = false;
+
         renderAll();
     }
 
     function saveNote() {
         if (!selectedTarget) return;
+
+        const tid = selectedTarget.toothId;
+
+        if (isToothExtracted(tid)) {
+            rejectExtractedToothAction(tid);
+            return;
+        }
+
         const text = document.getElementById("noteBox").value.trim();
-        chartData[selectedTarget.toothId].areas[selectedTarget.area].note = text;
+
+        if (selectedTarget.area === "whole") {
+            chartData[tid].whole.note = text;
+        } else {
+            chartData[tid].areas[selectedTarget.area].note = text;
+        }
+
         renderAll();
     }
 
@@ -1498,10 +3898,16 @@
 
     function removeWholeGroup(tid, group, toolId) {
         const arr = chartData[tid].whole[group];
+
         if (Array.isArray(arr)) {
             const idx = arr.indexOf(toolId);
             if (idx > -1) arr.splice(idx, 1);
         }
+
+        if (isTeethTranspositionTool(toolId)) {
+            setToothDeciduousState(tid, false);
+        }
+
         renderAll();
     }
 
@@ -1519,7 +3925,18 @@
     }
 
     function clearAreaNoteFor(toothId, areaKey) {
-        chartData[toothId].areas[areaKey].note = "";
+        const tooth = chartData[toothId];
+
+        if (!tooth) {
+            return;
+        }
+
+        if (areaKey === "whole") {
+            tooth.whole.note = "";
+        } else if (tooth.areas?.[areaKey]) {
+            tooth.areas[areaKey].note = "";
+        }
+
         renderAll();
     }
 
@@ -1546,36 +3963,572 @@
     // ════════════════════════════════════════════════════════════════
     //  REPORT
     // ════════════════════════════════════════════════════════════════
+    const REPORT_AREA_ORDER = [
+        "whole",
+        "buccal",
+        "lingual",
+        "palatal",
+        "mesial",
+        "distal",
+        "occlusal",
+        "root"
+    ];
+
+    function sortReportAreas(areas) {
+        return [...new Set(areas)].sort((a, b) => {
+            const aIndex = REPORT_AREA_ORDER.indexOf(a);
+            const bIndex = REPORT_AREA_ORDER.indexOf(b);
+
+            return (
+                (aIndex < 0 ? 999 : aIndex) -
+                (bIndex < 0 ? 999 : bIndex)
+            );
+        });
+    }
+
+    function getReportAreaLabel(area) {
+        return area === "whole"
+            ? "whole tooth"
+            : area;
+    }
+
+    function getReportAreasText(areas) {
+        return sortReportAreas(areas)
+            .map(getReportAreaLabel)
+            .join(", ");
+    }
+
+    /*
+        Report grouping rule:
+
+        The same tool applied to several areas of the same tooth is shown as
+        ONE report item.
+
+        Example:
+        Partial Restoration + U3 +
+        buccal, mesial, distal, palatal, occlusal
+    */
     function buildToolReport() {
-        const report   = {};
-        const allAreas = ["buccal","lingual","palatal","mesial","distal","occlusal","root"];
-        const grps     = ["disease","previous","inside","others"];
-        [...UPPER_IDS, ...LOWER_IDS].forEach(tid => {
-            const tooth = chartData[tid];
-            if (!tooth) return;
-            grps.forEach(g => {
-                (tooth.whole[g] || []).forEach(toolId => {
-                    if (!report[toolId]) report[toolId] = [];
-                    report[toolId].push({ toothId: tid, area: "whole", group: g });
+        const groupedReport = {};
+        const allAreas = [
+            "buccal",
+            "lingual",
+            "palatal",
+            "mesial",
+            "distal",
+            "occlusal",
+            "root"
+        ];
+        const groups = [
+            "disease",
+            "previous",
+            "inside",
+            "others"
+        ];
+
+        function addUsage(toolId, toothId, area, group) {
+            if (!groupedReport[toolId]) {
+                groupedReport[toolId] = {};
+            }
+
+            /*
+                Tool IDs already identify Previous/In-Hospital variants,
+                but the group remains part of the key for safe old-session
+                compatibility.
+            */
+            const usageKey = `${toothId}|${group}`;
+
+            if (!groupedReport[toolId][usageKey]) {
+                groupedReport[toolId][usageKey] = {
+                    toolId,
+                    toothId,
+                    group,
+                    areas: []
+                };
+            }
+
+            if (
+                !groupedReport[toolId][usageKey].areas.includes(area)
+            ) {
+                groupedReport[toolId][usageKey].areas.push(area);
+            }
+        }
+
+        [...UPPER_IDS, ...LOWER_IDS].forEach(toothId => {
+            const tooth = chartData[toothId];
+
+            if (!tooth) {
+                return;
+            }
+
+            groups.forEach(group => {
+                (tooth.whole?.[group] || []).forEach(toolId => {
+                    addUsage(
+                        toolId,
+                        toothId,
+                        "whole",
+                        group
+                    );
                 });
             });
+
             allAreas.forEach(area => {
-                const slot = tooth.areas[area];
-                if (!slot) return;
-                grps.forEach(g => {
-                    (slot[g] || []).forEach(toolId => {
-                        if (!report[toolId]) report[toolId] = [];
-                        report[toolId].push({ toothId: tid, area, group: g });
+                const slot = tooth.areas?.[area];
+
+                if (!slot) {
+                    return;
+                }
+
+                groups.forEach(group => {
+                    (slot[group] || []).forEach(toolId => {
+                        addUsage(
+                            toolId,
+                            toothId,
+                            area,
+                            group
+                        );
                     });
                 });
             });
         });
+
+        const report = {};
+
+        Object.keys(groupedReport).forEach(toolId => {
+            report[toolId] = Object
+                .values(groupedReport[toolId])
+                .map(usage => ({
+                    ...usage,
+                    areas: sortReportAreas(usage.areas)
+                }))
+                .sort((a, b) => {
+                    const allToothIds = [
+                        ...UPPER_IDS,
+                        ...LOWER_IDS
+                    ];
+
+                    return (
+                        allToothIds.indexOf(a.toothId) -
+                        allToothIds.indexOf(b.toothId)
+                    );
+                });
+        });
+
         return report;
     }
 
+    /*
+        JSON saved in DentalChartSession.ReportJson.
+
+        DentalToothData remains stored per area, while ReportJson stores
+        a grouped, readable report.
+    */
+    function buildGroupedReportJson() {
+        const report = buildToolReport();
+        const items = [];
+
+        Object.keys(report).forEach(toolId => {
+            const tool = getTool(toolId);
+
+            if (!tool) {
+                return;
+            }
+
+            report[toolId].forEach(usage => {
+                items.push({
+                    selectedTool: tool.label,
+                    toolId: tool.id,
+                    group: usage.group,
+                    selectedTooth: usage.toothId,
+                    selectedAreas: usage.areas.map(
+                        getReportAreaLabel
+                    )
+                });
+            });
+        });
+
+        return JSON.stringify({
+            generatedAt: new Date().toISOString(),
+            totalItems: items.length,
+            items
+        });
+    }
+
     function selectReportTool(toolId) {
-        reportToolId = (reportToolId === toolId) ? null : toolId;
+        reportToolId =
+            reportToolId === toolId
+                ? null
+                : toolId;
+
         renderSideInfo();
+    }
+
+    function selectGroupedReportUsage(
+        toolId,
+        toothId,
+        encodedAreas
+    ) {
+        let areas = [];
+
+        try {
+            areas = JSON.parse(
+                decodeURIComponent(encodedAreas)
+            );
+        } catch {
+            areas = [];
+        }
+
+        selectedToolId = toolId;
+        selectedTarget = {
+            toothId,
+            area: areas[0] || "whole"
+        };
+        reportToolId = null;
+
+        renderAll();
+    }
+
+    /*
+        Remove one grouped action from every area where that same tool was
+        applied on the selected tooth.
+    */
+    function removeGroupedToolUsage(
+        toothId,
+        toolId,
+        group,
+        encodedAreas
+    ) {
+        let areas = [];
+
+        try {
+            areas = JSON.parse(
+                decodeURIComponent(encodedAreas)
+            );
+        } catch {
+            areas = [];
+        }
+
+        const tooth = chartData[toothId];
+
+        if (!tooth) {
+            return;
+        }
+
+        areas.forEach(area => {
+            const slot = area === "whole"
+                ? tooth.whole
+                : tooth.areas?.[area];
+
+            if (!slot || !Array.isArray(slot[group])) {
+                return;
+            }
+
+            slot[group] = slot[group]
+                .filter(id => id !== toolId);
+        });
+
+        if (isTeethTranspositionTool(toolId)) {
+            setToothDeciduousState(
+                toothId,
+                false
+            );
+        }
+
+        if (isExtractedTool(toolId)) {
+            removeExtractedFromTooth(toothId);
+        }
+
+        renderAll();
+    }
+
+    function getSelectedToothActionRows(toothId) {
+        const report = buildToolReport();
+        const rows = [];
+
+        Object.keys(report).forEach(toolId => {
+            const tool = getTool(toolId);
+
+            if (!tool) {
+                return;
+            }
+
+            report[toolId]
+                .filter(usage =>
+                    usage.toothId === toothId
+                )
+                .forEach(usage => {
+                    rows.push({
+                        type: "tool",
+                        tool,
+                        toolId,
+                        group: usage.group,
+                        toothId,
+                        areas: usage.areas
+                    });
+                });
+        });
+
+        /*
+            Teeth Change swaps the actual tooth image/position and therefore
+            does not live in a normal surface slot. Add it as a derived action
+            whenever the current position contains a different source tooth.
+        */
+        const sourceToothId =
+            getSourceToothId(toothId);
+
+        if (
+            sourceToothId &&
+            sourceToothId !== toothId
+        ) {
+            const teethChangeTool =
+                getTool("teeth_change");
+
+            if (teethChangeTool) {
+                rows.push({
+                    type: "swap",
+                    tool: teethChangeTool,
+                    toolId: teethChangeTool.id,
+                    group: "others",
+                    toothId,
+                    sourceToothId,
+                    areas: ["whole"]
+                });
+            }
+        }
+
+        const tooth = chartData[toothId];
+        const noteAreas = [
+            "whole",
+            "buccal",
+            "lingual",
+            "palatal",
+            "mesial",
+            "distal",
+            "occlusal",
+            "root"
+        ];
+
+        noteAreas.forEach(area => {
+            const slot = area === "whole"
+                ? tooth?.whole
+                : tooth?.areas?.[area];
+
+            if (slot?.note) {
+                rows.push({
+                    type: "note",
+                    toothId,
+                    area,
+                    note: slot.note
+                });
+            }
+        });
+
+        return rows.sort((a, b) => {
+            const aTool = a.tool?.label || "Note";
+            const bTool = b.tool?.label || "Note";
+
+            return aTool.localeCompare(bTool);
+        });
+    }
+
+    function renderSelectedToothActions(toothId) {
+        const rows = getSelectedToothActionRows(
+            toothId
+        );
+
+        if (!rows.length) {
+            return `
+                <div style="color:#6b7280;font-size:13px;">
+                    No actions have been applied to this tooth.
+                </div>`;
+        }
+
+        return rows.map(row => {
+            if (row.type === "note") {
+                const areaLabel =
+                    getReportAreaLabel(row.area);
+
+                return `
+                    <div class="mini-item"
+                         style="margin-bottom:7px;align-items:flex-start;
+                                border-left:3px solid #6b7280;">
+                        <div class="mini-icon">
+                            ${iconSvg(
+                                "note",
+                                "#6b7280",
+                                22
+                            )}
+                        </div>
+
+                        <div class="mini-text">
+                            <div class="key">
+                                Action
+                            </div>
+                            <div class="value"
+                                 style="margin-bottom:6px;">
+                                Area Note
+                            </div>
+
+                            <div class="key">
+                                Selected Tooth
+                            </div>
+                            <div class="value"
+                                 style="margin-bottom:6px;">
+                                ${escapeHtml(row.toothId)}
+                            </div>
+
+                            <div class="key">
+                                Selected Area
+                            </div>
+                            <div class="value"
+                                 style="margin-bottom:6px;">
+                                ${escapeHtml(areaLabel)}
+                            </div>
+
+                            <div class="key">
+                                Note
+                            </div>
+                            <div class="value">
+                                ${escapeHtml(row.note)}
+                            </div>
+                        </div>
+
+                        <button type="button"
+                                title="Delete note"
+                                onclick="clearAreaNoteFor(
+                                    '${row.toothId}',
+                                    '${row.area}'
+                                )">
+                            ✕
+                        </button>
+                    </div>`;
+            }
+
+            const tool = row.tool;
+            const color =
+                GROUP_COLORS[row.group] ||
+                GROUP_COLORS.others;
+
+            const areasText =
+                getReportAreasText(
+                    row.areas || []
+                );
+
+            if (row.type === "swap") {
+                return `
+                    <div class="mini-item"
+                         style="margin-bottom:7px;align-items:flex-start;
+                                border-left:3px solid ${color};">
+                        <div class="mini-icon">
+                            ${iconSvg(
+                                tool.glyph,
+                                color,
+                                22,
+                                row.group
+                            )}
+                        </div>
+
+                        <div class="mini-text">
+                            <div class="key">
+                                Selected Tool
+                            </div>
+                            <div class="value"
+                                 style="color:${color};margin-bottom:6px;">
+                                ${escapeHtml(tool.label)}
+                            </div>
+
+                            <div class="key">
+                                Selected Tooth
+                            </div>
+                            <div class="value"
+                                 style="margin-bottom:6px;">
+                                ${escapeHtml(row.toothId)}
+                            </div>
+
+                            <div class="key">
+                                Selected Area
+                            </div>
+                            <div class="value"
+                                 style="margin-bottom:6px;">
+                                Whole Tooth
+                            </div>
+
+                            <div class="key">
+                                Current Source Tooth
+                            </div>
+                            <div class="value">
+                                ${escapeHtml(row.sourceToothId)}
+                            </div>
+                        </div>
+                    </div>`;
+            }
+
+            const encodedAreas =
+                encodeURIComponent(
+                    JSON.stringify(row.areas)
+                );
+
+            return `
+                <div class="mini-item"
+                     style="margin-bottom:7px;align-items:flex-start;
+                            border-left:3px solid ${color};">
+                    <div class="mini-icon">
+                        ${iconSvg(
+                            tool.glyph,
+                            color,
+                            22,
+                            row.group
+                        )}
+                    </div>
+
+                    <div class="mini-text">
+                        <div class="key">
+                            Selected Tool
+                        </div>
+                        <div class="value"
+                             style="color:${color};margin-bottom:6px;">
+                            ${escapeHtml(tool.label)}
+                        </div>
+
+                        <div class="key">
+                            Group
+                        </div>
+                        <div class="value"
+                             style="margin-bottom:6px;">
+                            ${escapeHtml(
+                                GROUP_LABELS[row.group] ||
+                                row.group
+                            )}
+                        </div>
+
+                        <div class="key">
+                            Selected Tooth
+                        </div>
+                        <div class="value"
+                             style="margin-bottom:6px;">
+                            ${escapeHtml(row.toothId)}
+                        </div>
+
+                        <div class="key">
+                            Selected Area
+                        </div>
+                        <div class="value">
+                            ${escapeHtml(areasText)}
+                        </div>
+                    </div>
+
+                    <button type="button"
+                            title="Delete this action"
+                            onclick="removeGroupedToolUsage(
+                                '${row.toothId}',
+                                '${row.toolId}',
+                                '${row.group}',
+                                '${encodedAreas}'
+                            )">
+                        ✕
+                    </button>
+                </div>`;
+        }).join("");
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -1585,9 +4538,54 @@
         const AREA_NAMES = ["buccal","lingual","palatal","mesial","distal","occlusal","root"];
         const GRPS       = ["disease","previous","inside","others"];
 
-        document.getElementById("selectedToolLabel").textContent  = selectedToolId ? getTool(selectedToolId).label : "—";
-        document.getElementById("selectedToothLabel").textContent = selectedTarget  ? selectedTarget.toothId        : "—";
-        document.getElementById("selectedAreaLabel").textContent  = selectedTarget  ? selectedTarget.area           : "—";
+        const selectedTool = selectedToolId
+            ? getTool(selectedToolId)
+            : null;
+
+        document.getElementById(
+            "selectedToolLabel"
+        ).textContent = selectedTool
+            ? selectedTool.label
+            : "—";
+
+        document.getElementById(
+            "selectedToothLabel"
+        ).textContent = selectedTarget
+            ? selectedTarget.toothId
+            : "—";
+
+        let selectedAreasText = "—";
+
+        if (selectedTarget) {
+            selectedAreasText = getReportAreaLabel(
+                selectedTarget.area
+            );
+
+            if (selectedToolId) {
+                const selectedToolReport =
+                    buildToolReport()[selectedToolId] || [];
+
+                const groupedUsage =
+                    selectedToolReport.find(usage =>
+                        usage.toothId ===
+                        selectedTarget.toothId
+                    );
+
+                if (
+                    groupedUsage &&
+                    groupedUsage.areas.length
+                ) {
+                    selectedAreasText =
+                        getReportAreasText(
+                            groupedUsage.areas
+                        );
+                }
+            }
+        }
+
+        document.getElementById(
+            "selectedAreaLabel"
+        ).textContent = selectedAreasText;
 
         // ── Report Panel ──
         const report      = buildToolReport();
@@ -1600,9 +4598,16 @@
                 reportPanel.innerHTML = reportKeys.map(toolId => {
                     const tool     = getTool(toolId);
                     if (!tool) return "";
-                    const color    = GROUP_COLORS[tool.group];
-                    const usages   = report[toolId];
-                    const isActive = reportToolId === toolId;
+                    const color = GROUP_COLORS[tool.group];
+                    const usages = report[toolId];
+                    const groupedAreaCount = usages.reduce(
+                        (total, usage) =>
+                            total + usage.areas.length,
+                        0
+                    );
+                    const isActive =
+                        reportToolId === toolId;
+
                     return `
                     <div onclick="selectReportTool('${toolId}')"
                          style="display:flex;align-items:center;gap:8px;padding:8px 10px;
@@ -1617,7 +4622,9 @@
                                 ${escapeHtml(tool.label)}
                             </div>
                             <div style="font-size:11px;color:var(--muted);">
-                                ${GROUP_LABELS[tool.group]} · ${usages.length} location${usages.length>1?'s':''}
+                                ${GROUP_LABELS[tool.group]} ·
+                                ${usages.length} report${usages.length !== 1 ? 's' : ''} ·
+                                ${groupedAreaCount} area${groupedAreaCount !== 1 ? 's' : ''}
                             </div>
                         </div>
                         <div style="font-size:16px;font-weight:bold;color:${color};flex:0 0 auto;
@@ -1645,102 +4652,122 @@
                             margin-bottom:8px;display:flex;align-items:center;gap:6px;">
                     ${iconSvg(tool.glyph, color, 18)}
                     ${escapeHtml(tool.label)}
+
                     <span style="margin-left:auto;background:${hexToRgba(color,.12)};
                                  color:${color};border-radius:6px;padding:1px 8px;font-size:11px;">
-                        ${usages.length} location${usages.length>1?'s':''}
+                        ${usages.length} report${usages.length !== 1 ? 's' : ''}
                     </span>
                 </div>
-                ${usages.map(u => `
-                    <div class="mini-item" style="margin-bottom:5px;cursor:pointer;
-                                border-left:3px solid ${GROUP_COLORS[u.group]};"
-                         onclick="selectArea('${u.toothId}','${u.area==='whole'?'buccal':u.area}');
-                                  reportToolId=null;renderSideInfo();">
-                        <div class="mini-icon">${iconSvg(tool.glyph, GROUP_COLORS[u.group], 22)}</div>
-                        <div class="mini-text">
-                            <div class="key">Tooth ${u.toothId} · ${u.area} · ${u.group}</div>
-                            <div class="value" style="color:${GROUP_COLORS[u.group]};">
-                                ${u.toothId} — ${u.area}
+
+                ${usages.map(usage => {
+                    const encodedAreas =
+                        encodeURIComponent(
+                            JSON.stringify(usage.areas)
+                        );
+
+                    const areasText =
+                        getReportAreasText(
+                            usage.areas
+                        );
+
+                    return `
+                        <div class="mini-item"
+                             style="margin-bottom:7px;
+                                    cursor:pointer;
+                                    align-items:flex-start;
+                                    border-left:3px solid ${GROUP_COLORS[usage.group]};"
+                             onclick="selectGroupedReportUsage(
+                                '${tool.id}',
+                                '${usage.toothId}',
+                                '${encodedAreas}'
+                             )">
+
+                            <div class="mini-icon">
+                                ${iconSvg(
+                                    tool.glyph,
+                                    GROUP_COLORS[usage.group],
+                                    22,
+                                    usage.group
+                                )}
                             </div>
-                        </div>
-                    </div>
-                `).join("")}`;
+
+                            <div class="mini-text">
+                                <div class="key">
+                                    Selected Tool
+                                </div>
+                                <div class="value"
+                                     style="color:${GROUP_COLORS[usage.group]};margin-bottom:6px;">
+                                    ${escapeHtml(tool.label)}
+                                </div>
+
+                                <div class="key">
+                                    Selected Tooth
+                                </div>
+                                <div class="value"
+                                     style="margin-bottom:6px;">
+                                    ${escapeHtml(usage.toothId)}
+                                </div>
+
+                                <div class="key">
+                                    Selected Area
+                                </div>
+                                <div class="value">
+                                    ${escapeHtml(areasText)}
+                                </div>
+                            </div>
+                        </div>`;
+                }).join("")}`;
             return;
         }
 
         if (!selectedTarget) {
-            detailList.innerHTML = `<div style="color:#6b7280;font-size:13px;">Nothing selected.</div>`;
-            document.getElementById("noteBox").value = "";
-            return;
-        }
-
-        const { toothId, area } = selectedTarget;
-        const areaSlot  = chartData[toothId].areas[area];
-        const wholeSlot = chartData[toothId].whole;
-        document.getElementById("noteBox").value = areaSlot.note || "";
-
-        const reportRows = [];
-        AREA_NAMES.forEach(areaKey => {
-            const slot  = chartData[toothId].areas[areaKey];
-            const marks = [];
-            GRPS.forEach(g => {
-                (slot[g] || []).forEach(tid => {
-                    const t = getTool(tid);
-                    if (t) marks.push({ group: g, tool: t });
-                });
-            });
-            if (marks.length || slot.note) reportRows.push({ areaKey, marks, note: slot.note });
-        });
-
-        const wholeMarks = [];
-        GRPS.forEach(g => {
-            (wholeSlot[g] || []).forEach(tid => {
-                const t = getTool(tid);
-                if (t) wholeMarks.push({ group: g, tool: t });
-            });
-        });
-        if (wholeMarks.length || wholeSlot.note) {
-            reportRows.push({ areaKey: "whole tooth", marks: wholeMarks, note: wholeSlot.note });
-        }
-
-        if (!reportRows.length) {
-            detailList.innerHTML = `<div style="color:#6b7280;font-size:13px;">Area is empty.</div>`;
-            return;
-        }
-
-        detailList.innerHTML = reportRows.map(row => {
-            const toolsHtml = row.marks.map(m => `
-                <div class="mini-item" style="margin-bottom:4px;">
-                    <div class="mini-icon">${iconSvg(m.tool.glyph, GROUP_COLORS[m.group], 22)}</div>
-                    <div class="mini-text">
-                        <div class="key">Tooth ${toothId} · ${row.areaKey} · ${m.group}</div>
-                        <div class="value">${escapeHtml(m.tool.label)}</div>
-                    </div>
-                    <button onclick="${row.areaKey==='whole tooth'
-                        ? `removeWholeGroup('${toothId}','${m.group}','${m.tool.id}')`
-                        : `removeFromArea('${toothId}','${row.areaKey}','${m.group}','${m.tool.id}')`
-                    }">✕</button>
-                </div>`).join("");
-
-            const noteHtml = row.note ? `
-                <div class="mini-item" style="margin-bottom:4px;">
-                    <div class="mini-icon">${iconSvg("note","#6b7280",22)}</div>
-                    <div class="mini-text">
-                        <div class="key">Tooth ${toothId} · ${row.areaKey} · note</div>
-                        <div class="value">${escapeHtml(row.note)}</div>
-                    </div>
-                    <button onclick="clearAreaNoteFor('${toothId}','${row.areaKey}')">✕</button>
-                </div>` : "";
-
-            return `
-                <div style="border:1px solid var(--line);border-radius:12px;padding:8px;
-                            margin-bottom:8px;background:#f8fafc;">
-                    <div style="font-size:12px;font-weight:bold;color:#374151;margin-bottom:6px;
-                                text-transform:uppercase;letter-spacing:.5px;">
-                        📍 ${row.areaKey}
-                    </div>
-                    ${toolsHtml}${noteHtml}
+            detailList.innerHTML = `
+                <div style="color:#6b7280;font-size:13px;">
+                    Nothing selected.
                 </div>`;
-        }).join("");
+
+            document.getElementById(
+                "noteBox"
+            ).value = "";
+
+            return;
+        }
+
+        const {
+            toothId,
+            area
+        } = selectedTarget;
+
+        const tooth =
+            chartData[toothId];
+
+        const selectedSlot =
+            area === "whole"
+                ? tooth?.whole
+                : tooth?.areas?.[area];
+
+        /*
+            This fixes whole-tooth actions such as:
+            Bridge, Tooth Mobility, Periapical Lesion, Crack Tooth,
+            Extracted Tooth and Teeth Transposition.
+        */
+        document.getElementById(
+            "noteBox"
+        ).value = selectedSlot?.note || "";
+
+        /*
+            Selected Details now always includes every action applied to the
+            selected tooth, regardless of whether it is stored on:
+            - Whole Tooth
+            - Root
+            - Any surface area
+            - Others / transformation actions
+            - Notes
+        */
+        detailList.innerHTML =
+            renderSelectedToothActions(
+                toothId
+            );
     }
         function openOthersTextModal(tid, area) {
         const existing = chartData[tid].areas[area].note || "";
@@ -1772,28 +4799,88 @@
     function closeOthersTextModal() {
         document.getElementById("othersTextModal").classList.remove("open");
     }
-        function renderChart() {
+            function renderChart() {
+
         function cellStyle(id) {
             return id === pendingSwapToothId
                 ? 'style="background:#fef3c7;border-radius:10px;box-shadow:0 0 0 2px #f59e0b inset;"'
                 : '';
         }
+
+        function renderNumber(positionNumber) {
+            return `
+                <div class="number-cell ${getDentitionNumberClass(positionNumber)}">
+                    ${positionNumber}
+                </div>`;
+        }
+
+        function renderUpperFrontTooth(id) {
+            return `
+                <div class="tooth-cell ${getDentitionToothClass(id)}"
+                     ${cellStyle(id)}>
+                    ${renderToothFront(id, "upper")}
+                </div>`;
+        }
+
+        function renderUpperInsideTooth(id) {
+            return `
+                <div class="tooth-cell ${getDentitionToothClass(id)}"
+                     ${cellStyle(id)}>
+                    ${occlusalToothSvg(id, "upper")}
+                </div>`;
+        }
+
+        function renderLowerInsideTooth(id) {
+            return `
+                <div class="tooth-cell ${getDentitionToothClass(id)}"
+                     ${cellStyle(id)}>
+                    ${occlusalToothSvg(id, "lower")}
+                </div>`;
+        }
+
+        function renderLowerFrontTooth(id) {
+            return `
+                <div class="tooth-cell ${getDentitionToothClass(id)}"
+                     ${cellStyle(id)}>
+                    ${renderToothFront(id, "lower")}
+                </div>`;
+        }
+
         document.getElementById("chartHost").innerHTML = `
             <div class="chart-grid">
-              <div></div>
-              ${POS_LABELS.map(n=>`<div class="number-cell">${n}</div>`).join("")}
-              <div class="side-label">Buccal</div>
-              ${UPPER_IDS.map(id=>`<div class="tooth-cell" ${cellStyle(id)}>${renderToothFront(id,"upper")}</div>`).join("")}
-              <div class="side-label">Lingual - Palatal</div>
-              ${UPPER_IDS.map(id=>`<div class="tooth-cell" ${cellStyle(id)}>${occlusalToothSvg(id,"upper")}</div>`).join("")}
-              <div></div>
-              <div class="mid-rl"><span>R</span><span>L</span></div>
-              <div class="side-label">Lingual - Palatal</div>
-              ${LOWER_IDS.map(id=>`<div class="tooth-cell" ${cellStyle(id)}>${occlusalToothSvg(id,"lower")}</div>`).join("")}
-              <div class="side-label">Buccal</div>
-              ${LOWER_IDS.map(id=>`<div class="tooth-cell" ${cellStyle(id)}>${renderToothFront(id,"lower")}</div>`).join("")}
-              <div></div>
-              ${POS_LABELS.map(n=>`<div class="number-cell">${n}</div>`).join("")}
+
+                <!-- Upper numbers -->
+                <div></div>
+                ${POS_LABELS.map(renderNumber).join("")}
+
+                <!-- Upper Buccal -->
+                <div class="side-label">Buccal</div>
+                ${UPPER_IDS.map(renderUpperFrontTooth).join("")}
+
+                <!-- Upper Lingual / Palatal -->
+                <div class="side-label">Lingual - Palatal</div>
+                ${UPPER_IDS.map(renderUpperInsideTooth).join("")}
+
+                <!-- Middle right / left -->
+                <div></div>
+
+                <div class="mid-rl">
+                    <span>R</span>
+                    <span>L</span>
+                </div>
+
+                <!-- Lower Lingual / Palatal -->
+                <div class="side-label">Lingual - Palatal</div>
+                ${LOWER_IDS.map(renderLowerInsideTooth).join("")}
+
+                <!-- Lower Buccal -->
+                <div class="side-label">Buccal</div>
+                ${LOWER_IDS.map(renderLowerFrontTooth).join("")}
+
+                <!-- Lower numbers -->
+                <div></div>
+                ${POS_LABELS.map(renderNumber).join("")}
+
             </div>`;
     }
 
@@ -1808,42 +4895,153 @@
     let _pendingSessionId = null;
 
     function buildSummaryFromData(data) {
-        const groups   = ["disease","previous","inside","others"];
-        const allAreas = ["buccal","lingual","palatal","mesial","distal","occlusal","root"];
-        const FDI_MAP  = {
-            U:{ 0:18,1:17,2:16,3:15,4:14,5:13,6:12,7:11,8:21,9:22,10:23,11:24,12:25,13:26,14:27,15:28 },
-            L:{ 0:48,1:47,2:46,3:45,4:44,5:43,6:42,7:41,8:31,9:32,10:33,11:34,12:35,13:36,14:37,15:38 }
+        const groups = [
+            "disease",
+            "previous",
+            "inside",
+            "others"
+        ];
+        const allAreas = [
+            "buccal",
+            "lingual",
+            "palatal",
+            "mesial",
+            "distal",
+            "occlusal",
+            "root"
+        ];
+        const FDI_MAP = {
+            U:{
+                0:18,1:17,2:16,3:15,
+                4:14,5:13,6:12,7:11,
+                8:21,9:22,10:23,11:24,
+                12:25,13:26,14:27,15:28
+            },
+            L:{
+                0:48,1:47,2:46,3:45,
+                4:44,5:43,6:42,7:41,
+                8:31,9:32,10:33,11:34,
+                12:35,13:36,14:37,15:38
+            }
         };
-        const rows = [];
-        Object.keys(data).forEach(tid => {
-            const tooth  = data[tid];
-            if (!tooth)  return;
-            const arch   = tid[0];
-            const idx    = parseInt(tid.slice(1), 10);
-            const fdi    = FDI_MAP[arch]?.[idx] ?? tid;
-            // whole-tooth marks
-            groups.forEach(g => {
-                (tooth.whole?.[g] || []).forEach(toolId => {
-                    const t = getTool(toolId);
-                    if (t) rows.push({ fdi, tid, area:"whole tooth", group:g, label:t.label, glyph:t.glyph });
-                });
+
+        const grouped = {};
+        const noteRows = [];
+
+        function addToolRow(
+            fdi,
+            toothId,
+            area,
+            group,
+            toolId
+        ) {
+            const tool = getTool(toolId);
+
+            if (!tool) {
+                return;
+            }
+
+            const key =
+                `${toothId}|${group}|${toolId}`;
+
+            if (!grouped[key]) {
+                grouped[key] = {
+                    fdi,
+                    tid: toothId,
+                    group,
+                    toolId,
+                    label: tool.label,
+                    glyph: tool.glyph,
+                    areas: []
+                };
+            }
+
+            if (!grouped[key].areas.includes(area)) {
+                grouped[key].areas.push(area);
+            }
+        }
+
+        Object.keys(data).forEach(toothId => {
+            const tooth = data[toothId];
+
+            if (!tooth) {
+                return;
+            }
+
+            const arch = toothId[0];
+            const index = parseInt(
+                toothId.slice(1),
+                10
+            );
+            const fdi =
+                FDI_MAP[arch]?.[index] ??
+                toothId;
+
+            groups.forEach(group => {
+                (tooth.whole?.[group] || [])
+                    .forEach(toolId => {
+                        addToolRow(
+                            fdi,
+                            toothId,
+                            "whole",
+                            group,
+                            toolId
+                        );
+                    });
             });
-            // area marks
+
             allAreas.forEach(area => {
                 const slot = tooth.areas?.[area];
-                if (!slot) return;
-                groups.forEach(g => {
-                    (slot[g] || []).forEach(toolId => {
-                        const t = getTool(toolId);
-                        if (t) rows.push({ fdi, tid, area, group:g, label:t.label, glyph:t.glyph });
-                    });
+
+                if (!slot) {
+                    return;
+                }
+
+                groups.forEach(group => {
+                    (slot[group] || [])
+                        .forEach(toolId => {
+                            addToolRow(
+                                fdi,
+                                toothId,
+                                area,
+                                group,
+                                toolId
+                            );
+                        });
                 });
+
                 if (slot.note) {
-                    rows.push({ fdi, tid, area, group:"note", label: slot.note, glyph:"note" });
+                    noteRows.push({
+                        fdi,
+                        tid: toothId,
+                        areas: [area],
+                        group: "note",
+                        label: slot.note,
+                        glyph: "note",
+                        isNote: true
+                    });
                 }
             });
         });
-        return rows.sort((a,b) => a.fdi - b.fdi);
+
+        const toolRows = Object
+            .values(grouped)
+            .map(row => ({
+                ...row,
+                areas: sortReportAreas(row.areas)
+            }));
+
+        return [
+            ...toolRows,
+            ...noteRows
+        ].sort((a, b) => {
+            if (a.fdi !== b.fdi) {
+                return a.fdi - b.fdi;
+            }
+
+            return String(a.label)
+                .localeCompare(String(b.label));
+        });
     }
 
     function buildSummaryTable(rows) {
@@ -1874,7 +5072,9 @@
                         ${iconSvg(r.glyph, GROUP_COLORS[r.group] || "#6b7280", 18)}
                     </td>
                     <td style="padding:5px 8px;font-size:13px;color:#374151;
-                               text-transform:capitalize;">${escapeHtml(r.area)}</td>
+                               text-transform:capitalize;">${escapeHtml(
+                                   getReportAreasText(r.areas || [])
+                               )}</td>
                     <td style="padding:5px 8px;">${badge(r.group)}</td>
                     <td style="padding:5px 8px;font-size:13px;color:#111827;">${escapeHtml(r.label)}</td>
                 </tr>`).join("");
@@ -1999,22 +5199,64 @@
     }
 
     function normalizeChartData() {
-        const groups = ["disease","previous","inside","others"];
-        const areas  = ["buccal","lingual","palatal","mesial","distal","occlusal","root"];
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas  = ["buccal", "lingual", "palatal", "mesial", "distal", "occlusal", "root"];
+
         [...UPPER_IDS, ...LOWER_IDS].forEach(tid => {
+            if (!chartData[tid]) {
+                chartData[tid] = makeTooth(tid);
+                return;
+            }
+
             const tooth = chartData[tid];
-            if (!tooth) return;
+
+            // Old saved sessions did not contain sourceId.
+            if (!tooth.sourceId) tooth.sourceId = tid;
+
+            // id always reflects the current chart position.
+            tooth.id = tid;
+
+            if (typeof tooth.isDeciduous !== "boolean") {
+                tooth.isDeciduous = false;
+            }
+
+            if (!tooth.whole) tooth.whole = makeSlot();
+
             groups.forEach(g => {
-                if (!Array.isArray(tooth.whole[g]))
+                if (!Array.isArray(tooth.whole[g])) {
                     tooth.whole[g] = tooth.whole[g] ? [tooth.whole[g]] : [];
+                }
             });
+
+            if (!tooth.areas) tooth.areas = {};
+
             areas.forEach(area => {
-                if (!tooth.areas[area]) return;
+                if (!tooth.areas[area]) tooth.areas[area] = makeSlot();
+
                 groups.forEach(g => {
-                    if (!Array.isArray(tooth.areas[area][g]))
-                        tooth.areas[area][g] = tooth.areas[area][g] ? [tooth.areas[area][g]] : [];
+                    if (!Array.isArray(tooth.areas[area][g])) {
+                        tooth.areas[area][g] = tooth.areas[area][g]
+                            ? [tooth.areas[area][g]]
+                            : [];
+                    }
                 });
+
+                if (typeof tooth.areas[area].note !== "string") {
+                    tooth.areas[area].note = "";
+                }
             });
+
+            // Upgrade old Root/Surface Bridge and Space Maintainer records.
+            normalizeToothAppliance(tid);
+
+            // Upgrade old surface records for the three whole-tooth diseases.
+            normalizeWholeToothDisease(tid);
+
+            // Keep one icon per area from Disease / Previous / In-Hospital.
+            normalizeSingleToothLockedMark(tid);
+
+            // Keep Teeth Transposition and the deciduous-size state synchronized.
+            normalizeTeethTransposition(tid);
         });
     }
 
@@ -2027,9 +5269,16 @@
         }
         setDbStatus("⏳ Saving...");
         const payload = {
-            patientId:     PATIENT_ID,
+            patientId: PATIENT_ID,
             chartDataJson: JSON.stringify(chartData),
-            sessionNote:   document.getElementById("sessionNoteGlobal").value.trim()
+            sessionNote:
+                document
+                    .getElementById(
+                        "sessionNoteGlobal"
+                    )
+                    .value
+                    .trim(),
+            reportJson: buildGroupedReportJson()
         };
         try {
             const res    = await fetch(`${API_BASE}/update/${currentSessionId}`, {
@@ -2056,7 +5305,10 @@
         const note = document.getElementById("sessionNoteGlobal").value.trim()
                    || prompt("Session note (optional):") || "";
         const payload = {
-            patientId: PATIENT_ID, chartDataJson: JSON.stringify(chartData), sessionNote: note
+            patientId: PATIENT_ID,
+            chartDataJson: JSON.stringify(chartData),
+            sessionNote: note,
+            reportJson: buildGroupedReportJson()
         };
         try {
             const res    = await fetch(`${API_BASE}/save-session`, {
@@ -2100,7 +5352,7 @@
                       <div class="hi-meta">${new Date(updatedAt).toLocaleString("en-GB")} &bull; ID: ${id}</div>
                       <div class="hi-note">${escapeHtml(noteText)}</div>
                     </div>
-    <button class="btn btn-primary" onclick="previewSessionById(${id})">📊 Preview</button>  
+    <button class="btn btn-primary" onclick="previewSessionById(${id})">📊 Preview</button>
     </div>`;
             }).join("");
         } catch (err) {
@@ -2154,6 +5406,49 @@
         setTimeout(() => { el.style.opacity = "0"; }, 2800);
         setTimeout(() => el.remove(), 3200);
     }
+
+    // ════════════════════════════════════════════════════════════════
+    //  SURFACE OUTSIDE-CLICK BEHAVIOR
+    // ════════════════════════════════════════════════════════════════
+    document.addEventListener("click", function (event) {
+        /*
+            Apply this behavior only when the most recent tooth click came
+            from the Lingual / Palatal Surface diagram.
+        */
+        if (
+            lastSelectionSource !== "surface" ||
+            hideSurfaceSelectionHighlight
+        ) {
+            return;
+        }
+
+        const clickedInsideSurface =
+            event.target.closest(
+                ".lingual-palatal-surface-svg"
+            );
+
+        if (clickedInsideSurface) {
+            return;
+        }
+
+        /*
+            Hide the selected dark border only.
+            Do not clear:
+            - selectedTarget
+            - selectedToolId
+            - treatments
+            - notes
+            - reports
+            - database data
+        */
+        hideSurfaceSelectionHighlight = true;
+
+        /*
+            Only the chart needs to be redrawn. Selected Details and the
+            selected labels remain available on the right side.
+        */
+        renderChart();
+    });
 
     // ════════════════════════════════════════════════════════════════
     //  INIT
