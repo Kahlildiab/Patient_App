@@ -355,9 +355,9 @@
         display: block;
         cursor: pointer;
         /*
-                            Bridge and Space Maintainer connector lines extend slightly
-                            outside the SVG so adjacent teeth can be visually connected.
-                        */
+                                Bridge and Space Maintainer connector lines extend slightly
+                                outside the SVG so adjacent teeth can be visually connected.
+                            */
         overflow: visible;
     }
 
@@ -596,9 +596,9 @@
         }
 
     /*
-                نخفي السن مع الاحتفاظ بمكانه داخل Grid،
-                حتى تبقى الأسنان 1-5 في مكانها الصحيح.
-            */
+                    نخفي السن مع الاحتفاظ بمكانه داخل Grid،
+                    حتى تبقى الأسنان 1-5 في مكانها الصحيح.
+                */
     .dentition-hidden {
         visibility: hidden !important;
         pointer-events: none !important;
@@ -801,12 +801,12 @@
         { id:"gic_prev",                    label:"GIC",                                group:"previous", glyph:"resto3",           scope:"surface" },
         { id:"temporary_restoration_prev",  label:"Temporary Restoration",              group:"previous", glyph:"resto4",           scope:"surface" },
         { id:"partial_restoration_prev",    label:"Partial Restoration",                group:"previous", glyph:"resto5",           scope:"surface" },
-        { id:"metal_crown_prev",            label:"Metal Crown",                        group:"previous", glyph:"crown1",           scope:"surface" },
-        { id:"zirconia_crown_prev",         label:"Zirconia Crown",                     group:"previous", glyph:"crown2",           scope:"surface" },
-        { id:"emax_crown_prev",             label:"Emax Crown",                         group:"previous", glyph:"crown3",           scope:"surface" },
-        { id:"pfm_crown_prev",              label:"PFM Crown",                          group:"previous", glyph:"crown4",           scope:"surface" },
-        {id:"temporary_crown_prev",         label:"Temporary Crown",                    group:"previous", glyph:"tempCrown",        scope:"surface" },
-        { id:"stainless_crown_prev",        label:"Stainless Steel Crown",              group:"previous", glyph:"crown6",           scope:"surface" },
+        { id:"metal_crown_prev",            label:"Metal Crown",                        group:"previous", glyph:"crown1",           scope:"whole" },
+        { id:"zirconia_crown_prev",         label:"Zirconia Crown",                     group:"previous", glyph:"crown2",           scope:"whole" },
+        { id:"emax_crown_prev",             label:"Emax Crown",                         group:"previous", glyph:"crown3",           scope:"whole" },
+        { id:"pfm_crown_prev",              label:"PFM Crown",                          group:"previous", glyph:"crown4",           scope:"whole" },
+        {id:"temporary_crown_prev",         label:"Temporary Crown",                    group:"previous", glyph:"tempCrown",        scope:"whole" },
+        { id:"stainless_crown_prev",        label:"Stainless Steel Crown",              group:"previous", glyph:"crown6",           scope:"whole" },
         { id:"resin_bonded_bridge_prev",    label:"Bridge",                             group:"previous", glyph:"bridge",           scope:"whole" },
         { id:"root_canal_prev",             label:"Root Canal Treatment",               group:"previous", glyph:"rct",              scope:"surface" },
         { id:"vital_pulp_therapy_prev",     label:"Vital Pulp Therapy",                 group:"previous", glyph:"vpt",              scope:"surface" },
@@ -824,12 +824,12 @@
         { id:"gic_in",                      label:"GIC",                                group:"inside",   glyph:"resto3",           scope:"surface" },
         { id:"temporary_restoration_in",    label:"Temporary Restoration",              group:"inside",   glyph:"resto4",           scope:"surface" },
         { id:"partial_restoration_in",      label:"Partial Restoration",                group:"inside",   glyph:"resto5",           scope:"surface" },
-        { id:"metal_crown_in",              label:"Metal Crown",                        group:"inside",   glyph:"crown1",           scope:"surface" },
-        { id:"ceramic_crown_in",            label:"Ceramic Crown",                      group:"inside",   glyph:"crown2",           scope:"surface" },
-        { id:"emax_crown_in",               label:"Emax Crown",                         group:"inside",   glyph:"crown3",           scope:"surface" },
-        { id:"pfm_crown_in",                label:"PFM Crown",                          group:"inside",   glyph:"crown4",           scope:"surface" },
-        { id:"temporary_crown_in",          label:"Temporary Crown",                    group:"inside",   glyph:"tempCrown",        scope:"surface" },
-        { id:"stainless_crown_in",          label:"Stainless Steel Crown",              group:"inside",   glyph:"crown6",           scope:"surface" },
+        { id:"metal_crown_in",              label:"Metal Crown",                        group:"inside",   glyph:"crown1",           scope:"whole" },
+        { id:"ceramic_crown_in",            label:"Ceramic Crown",                      group:"inside",   glyph:"crown2",           scope:"whole" },
+        { id:"emax_crown_in",               label:"Emax Crown",                         group:"inside",   glyph:"crown3",           scope:"whole" },
+        { id:"pfm_crown_in",                label:"PFM Crown",                          group:"inside",   glyph:"crown4",           scope:"whole" },
+        { id:"temporary_crown_in",          label:"Temporary Crown",                    group:"inside",   glyph:"tempCrown",        scope:"whole" },
+        { id:"stainless_crown_in",          label:"Stainless Steel Crown",              group:"inside",   glyph:"crown6",           scope:"whole" },
         { id:"resin_bonded_bridge_in",      label:"Bridge",                             group:"inside",   glyph:"bridge",           scope:"whole" },
         { id:"root_canal_in",               label:"Root Canal Treatment",               group:"inside",   glyph:"rct",              scope:"surface" },
         { id:"vpt_in",                      label:"Vital Pulp Therapy",                 group:"inside",   glyph:"vpt",              scope:"surface" },
@@ -847,12 +847,28 @@
         { id:"soft_tissue_impacted",        label:"Soft Tissue Impacted Tooth",         group:"others",   glyph:"softImpacted",     scope:"surface" },
         { id:"partially_erupted",           label:"Partially Erupted Tooth",            group:"others",   glyph:"partiallyErupted", scope:"surface" },
         { id:"teeth_transposition",         label:"Teeth Transposition",                group:"others",   glyph:"transposition",    scope:"whole" },
-        { id:"teeth_change",                label:"Teeth Change Permanent/Deciduous",   group:"others",   glyph:"teethChange",      scope:"surface" },
+        { id:"teeth_change",                label:"Teeth Change Permanent/Deciduous",   group:"others",   glyph:"teethChange",      scope:"whole" },
         { id:"extracted_tooth",             label:"Extracted Tooth",                    group:"others",   glyph:"extracted",        scope:"surface" },
         { id:"others_text",                 label:"Others / Text",                      group:"others",   glyph:"note",             scope:"surface" }
     ];
 
     const POS_LABELS  = [8,7,6,5,4,3,2,1,1,2,3,4,5,6,7,8];
+
+    /*
+        Permanent view:
+            8 7 6 5 4 3 2 1 | 1 2 3 4 5 6 7 8
+
+        Deciduous view:
+            hidden hidden hidden E D C B A | A B C D E hidden hidden hidden
+
+        This keeps the same 16 grid positions, hides 6/7/8, and relabels
+        positions 1-5 into A-E.
+    */
+    const DECIDUOUS_POS_LABELS = [
+        "", "", "", "E", "D", "C", "B", "A",
+        "A", "B", "C", "D", "E", "", "", ""
+    ];
+
     const TOOTH_TYPES = [
         "molar3","molar2","molar1","premolar2","premolar1","canine","lateral","central",
         "central","lateral","canine","premolar1","premolar2","molar1","molar2","molar3"
@@ -913,13 +929,92 @@
     function getTool(id)      { return TOOLS.find(t => t.id === id) || null; }
     function getToothType(id) { return TOOTH_TYPES[parseInt(id.slice(1), 10)]; }
 
+    function getDisplayedPositionLabel(index) {
+        if (isDeciduousChartView) {
+            return DECIDUOUS_POS_LABELS[index] || "";
+        }
+
+        return String(POS_LABELS[index]);
+    }
+
+    function getChartHalf(index) {
+        return index >= 8 ? "right" : "left";
+    }
+
+    function getChartArch(toothId) {
+        return toothId[0];
+    }
+
+    function findToothIdByNumberAndHalf(archPrefix, half, toothNumber) {
+        const start = half === "left" ? 0 : 8;
+        const end   = half === "left" ? 8 : 16;
+
+        for (let i = start; i < end; i++) {
+            if (POS_LABELS[i] === toothNumber) {
+                return `${archPrefix}${i}`;
+            }
+        }
+
+        return `${archPrefix}${half === "left" ? 0 : 8}`;
+    }
+
+    /*
+        In Deciduous chart view, the visible 5-tooth set should look like:
+            E D C B A | A B C D E
+
+        To achieve that, the visible permanent positions are remapped as:
+            5 -> E -> use current 7 image
+            4 -> D -> use current 6 image
+            3 -> C -> use current 3 image
+            2 -> B -> use current 2 image
+            1 -> A -> use current 1 image
+
+        This is a visual-only mapping for the chart mode.
+    */
+    function getDentitionVisualSourceId(positionId) {
+        const sourceId = getSourceToothId(positionId);
+
+        if (!isDeciduousChartView) {
+            return sourceId;
+        }
+
+        if (!canBeDeciduousTooth(positionId)) {
+            return sourceId;
+        }
+
+        const positionNumber = getToothPositionNumber(positionId);
+        const archPrefix = getChartArch(positionId);
+        const half = getChartHalf(parseInt(positionId.slice(1), 10));
+
+        const deciduousVisualMap = {
+            5: 7, // E
+            4: 6, // D
+            3: 3, // C
+            2: 2, // B
+            1: 1  // A
+        };
+
+        const mappedPermanentNumber =
+            deciduousVisualMap[positionNumber];
+
+        if (!mappedPermanentNumber) {
+            return sourceId;
+        }
+
+        return findToothIdByNumberAndHalf(
+            archPrefix,
+            half,
+            mappedPermanentNumber
+        );
+    }
+
     function getSourceToothId(positionId) {
         const tooth = chartData[positionId];
         return tooth && tooth.sourceId ? tooth.sourceId : positionId;
     }
         /*
         false = Permanent Teeth: show positions 1-8.
-        true  = Deciduous Teeth: hide positions 6, 7 and 8.
+        true  = Deciduous Teeth: show positions A-E and hide 6, 7 and 8.
     */
     let isDeciduousChartView = false;
 
@@ -979,8 +1074,10 @@
 
         /*
             الأسنان من 1 إلى 5:
-            عند التشييك تصبح لبنية مثل Teeth Transposition.
-            عند إزالة التشييك تعود دائمة.
+            - عند التشييك تصبح لبنية ويصغر شكلها.
+            - تتغيّر التسميات إلى A-E.
+            - المواضع 4 و5 تعرض بصريًا صور 6 و7 لتصبح D وE.
+            - عند إزالة التشييك تعود دائمة 1-8.
         */
         allTeeth.forEach(function (toothId) {
 
@@ -1010,11 +1107,11 @@
             }
 
             if (description) {
-                description.textContent = "Showing teeth 1–5";
+                description.textContent = "Showing teeth A–E";
             }
 
             showToast(
-                "تم تحويل الأسنان 1–5 إلى أسنان لبنية.",
+                "تم تحويل عرض الأسنان إلى النظام اللبني A–E.",
                 "success"
             );
 
@@ -1029,7 +1126,7 @@
             }
 
             showToast(
-                "تم تحويل الأسنان 1–5 إلى أسنان دائمة.",
+                "تم تحويل عرض الأسنان إلى النظام الدائم 1–8.",
                 "success"
             );
         }
@@ -1231,6 +1328,332 @@
         return false;
     }
 
+    const CROWN_TOOL_IDS = [
+        "metal_crown_prev",
+        "zirconia_crown_prev",
+        "emax_crown_prev",
+        "pfm_crown_prev",
+        "temporary_crown_prev",
+        "stainless_crown_prev",
+
+        "metal_crown_in",
+        "ceramic_crown_in",
+        "emax_crown_in",
+        "pfm_crown_in",
+        "temporary_crown_in",
+        "stainless_crown_in"
+    ];
+
+    function isCrownTool(toolId = selectedToolId) {
+        return CROWN_TOOL_IDS.includes(toolId);
+    }
+
+    /*
+        A Crown covers exactly five Surface areas.
+
+        Upper jaw:
+            buccal, palatal, mesial, distal, occlusal
+
+        Lower jaw:
+            buccal, lingual, mesial, distal, occlusal
+    */
+    function getCrownSurfaceAreas(tid) {
+        const insideArea = tid.startsWith("U")
+            ? "palatal"
+            : "lingual";
+
+        return [
+            "buccal",
+            insideArea,
+            "mesial",
+            "distal",
+            "occlusal"
+        ];
+    }
+
+    function getCrownMark(tid) {
+        const tooth = chartData[tid];
+
+        if (!tooth) {
+            return null;
+        }
+
+        const groups = [
+            "previous",
+            "inside"
+        ];
+
+        /*
+            New storage:
+            Crown is written into all five Surface areas so ChartDataJson,
+            ReportJson and DentalToothData all contain the five areas.
+        */
+        const crownAreas = getCrownSurfaceAreas(tid);
+
+        for (const area of crownAreas) {
+            const slot = tooth.areas?.[area];
+
+            if (!slot) {
+                continue;
+            }
+
+            for (const group of groups) {
+                const toolId = (slot[group] || [])
+                    .find(id => isCrownTool(id));
+
+                if (toolId) {
+                    return {
+                        group,
+                        area,
+                        toolId,
+                        tool: getTool(toolId),
+                        storageArea: area
+                    };
+                }
+            }
+        }
+
+        /*
+            Backward compatibility:
+            older sessions may have stored Crown on Whole Tooth or on only
+            one Surface area.
+        */
+        for (const group of groups) {
+            const toolId = (tooth.whole?.[group] || [])
+                .find(id => isCrownTool(id));
+
+            if (toolId) {
+                return {
+                    group,
+                    toolId,
+                    tool: getTool(toolId),
+                    storageArea: "whole"
+                };
+            }
+        }
+
+        const areas = [
+            "buccal",
+            "lingual",
+            "palatal",
+            "mesial",
+            "distal",
+            "occlusal",
+            "root"
+        ];
+
+        for (const area of areas) {
+            const slot = tooth.areas?.[area];
+
+            if (!slot) {
+                continue;
+            }
+
+            for (const group of groups) {
+                const toolId = (slot[group] || [])
+                    .find(id => isCrownTool(id));
+
+                if (toolId) {
+                    return {
+                        group,
+                        area,
+                        toolId,
+                        tool: getTool(toolId),
+                        storageArea: area
+                    };
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function removeAllCrownMarks(tid) {
+        const tooth = chartData[tid];
+
+        if (!tooth) {
+            return;
+        }
+
+        const groups = [
+            "disease",
+            "previous",
+            "inside",
+            "others"
+        ];
+
+        const areas = [
+            "buccal",
+            "lingual",
+            "palatal",
+            "mesial",
+            "distal",
+            "occlusal",
+            "root"
+        ];
+
+        groups.forEach(group => {
+            tooth.whole[group] = (tooth.whole[group] || [])
+                .filter(id => !isCrownTool(id));
+        });
+
+        areas.forEach(area => {
+            const slot = tooth.areas?.[area];
+
+            if (!slot) {
+                return;
+            }
+
+            groups.forEach(group => {
+                slot[group] = (slot[group] || [])
+                    .filter(id => !isCrownTool(id));
+            });
+        });
+    }
+
+    function applyCrownToTooth(tid, tool) {
+        const tooth = chartData[tid];
+
+        if (
+            !tooth ||
+            !tool ||
+            !isCrownTool(tool.id)
+        ) {
+            return false;
+        }
+
+        const crownAreas =
+            getCrownSurfaceAreas(tid);
+
+        /*
+            Crown occupies all five Surface areas.
+
+            Before applying, verify that none of those areas already contains
+            another Disease / Previous Treatment / In-Hospital action.
+        */
+        for (const area of crownAreas) {
+            const conflict = getAreaIconConflict(
+                tid,
+                area,
+                tool
+            );
+
+            if (conflict) {
+                showAreaIconConflict(
+                    tid,
+                    area,
+                    tool,
+                    conflict
+                );
+                return false;
+            }
+        }
+
+        removeAllCrownMarks(tid);
+
+        crownAreas.forEach(area => {
+            const slot = tooth.areas?.[area];
+
+            if (!slot) {
+                return;
+            }
+
+            if (!Array.isArray(slot[tool.group])) {
+                slot[tool.group] = [];
+            }
+
+            if (!slot[tool.group].includes(tool.id)) {
+                slot[tool.group].push(tool.id);
+            }
+        });
+
+        return true;
+    }
+
+    function normalizeCrownMark(tid) {
+        const tooth = chartData[tid];
+
+        if (!tooth) {
+            return;
+        }
+
+        const found = [];
+        const groups = [
+            "previous",
+            "inside"
+        ];
+        const scanAreas = [
+            "buccal",
+            "lingual",
+            "palatal",
+            "mesial",
+            "distal",
+            "occlusal",
+            "root"
+        ];
+
+        groups.forEach(group => {
+            (tooth.whole?.[group] || []).forEach(toolId => {
+                if (isCrownTool(toolId)) {
+                    found.push({
+                        group,
+                        toolId
+                    });
+                }
+            });
+        });
+
+        scanAreas.forEach(area => {
+            const slot = tooth.areas?.[area];
+
+            if (!slot) {
+                return;
+            }
+
+            groups.forEach(group => {
+                (slot[group] || []).forEach(toolId => {
+                    if (isCrownTool(toolId)) {
+                        found.push({
+                            group,
+                            toolId
+                        });
+                    }
+                });
+            });
+        });
+
+        if (!found.length) {
+            return;
+        }
+
+        /*
+            Use the final Crown found, remove duplicate/legacy values, then
+            write the same Crown into the five correct Surface areas.
+        */
+        const chosen =
+            found[found.length - 1];
+
+        removeAllCrownMarks(tid);
+
+        getCrownSurfaceAreas(tid).forEach(area => {
+            const slot = tooth.areas?.[area];
+
+            if (!slot) {
+                return;
+            }
+
+            if (!Array.isArray(slot[chosen.group])) {
+                slot[chosen.group] = [];
+            }
+
+            if (!slot[chosen.group].includes(chosen.toolId)) {
+                slot[chosen.group].push(
+                    chosen.toolId
+                );
+            }
+        });
+    }
+
     const BRIDGE_TOOL_IDS = [
         "resin_bonded_bridge_prev",
         "resin_bonded_bridge_in"
@@ -1265,14 +1688,30 @@
     }
 
     const TEETH_TRANSPOSITION_TOOL_ID = "teeth_transposition";
+    const PERMANENT_DECIDUOUS_TOOL_ID = "teeth_change";
 
+    /*
+        Swapped functions:
+
+        Teeth Transposition:
+        - Select the first tooth and then the second tooth.
+        - Swap their positions.
+
+        Teeth Change Permanent/Deciduous:
+        - Convert tooth positions 1-5 to a deciduous / temporary tooth.
+        - Show the same tooth image slightly smaller.
+    */
     function isTeethTranspositionTool(toolId = selectedToolId) {
         return toolId === TEETH_TRANSPOSITION_TOOL_ID;
     }
 
+    function isPermanentDeciduousTool(toolId = selectedToolId) {
+        return toolId === PERMANENT_DECIDUOUS_TOOL_ID;
+    }
+
     /*
-        In this chart, Teeth Transposition is used to mark a permanent tooth
-        as a deciduous / temporary tooth.
+        Teeth Change Permanent/Deciduous marks a permanent tooth as
+        deciduous / temporary.
 
         The state is stored once on the whole tooth and the front tooth image
         is rendered slightly smaller. No treatment pattern is added to the
@@ -1299,10 +1738,20 @@
             "mesial", "distal", "occlusal", "root"
         ];
 
-        // Remove old/duplicate Transposition entries from whole and surfaces.
+        /*
+            Remove duplicate/legacy deciduous markers.
+
+            Older sessions stored this state under teeth_transposition.
+            The new correct storage ID is teeth_change.
+        */
+        const deciduousMarkerIds = [
+            PERMANENT_DECIDUOUS_TOOL_ID,
+            TEETH_TRANSPOSITION_TOOL_ID
+        ];
+
         groups.forEach(group => {
             tooth.whole[group] = (tooth.whole[group] || [])
-                .filter(id => id !== TEETH_TRANSPOSITION_TOOL_ID);
+                .filter(id => !deciduousMarkerIds.includes(id));
         });
 
         areas.forEach(area => {
@@ -1311,7 +1760,7 @@
 
             groups.forEach(group => {
                 slot[group] = (slot[group] || [])
-                    .filter(id => id !== TEETH_TRANSPOSITION_TOOL_ID);
+                    .filter(id => !deciduousMarkerIds.includes(id));
             });
         });
 
@@ -1322,13 +1771,13 @@
                 tooth.whole.others = [];
             }
 
-            tooth.whole.others.push(TEETH_TRANSPOSITION_TOOL_ID);
+            tooth.whole.others.push(PERMANENT_DECIDUOUS_TOOL_ID);
         }
 
         return true;
     }
 
-    function normalizeTeethTransposition(tid) {
+    function normalizePermanentDeciduousState(tid) {
         const tooth = chartData[tid];
         if (!tooth) return;
 
@@ -1338,10 +1787,18 @@
             "mesial", "distal", "occlusal", "root"
         ];
 
+        const compatibleMarkerIds = [
+            PERMANENT_DECIDUOUS_TOOL_ID,
+            TEETH_TRANSPOSITION_TOOL_ID
+        ];
+
         let found = tooth.isDeciduous === true;
 
         groups.forEach(group => {
-            if ((tooth.whole?.[group] || []).includes(TEETH_TRANSPOSITION_TOOL_ID)) {
+            if (
+                (tooth.whole?.[group] || [])
+                    .some(id => compatibleMarkerIds.includes(id))
+            ) {
                 found = true;
             }
         });
@@ -1351,15 +1808,18 @@
             if (!slot) return;
 
             groups.forEach(group => {
-                if ((slot[group] || []).includes(TEETH_TRANSPOSITION_TOOL_ID)) {
+                if (
+                    (slot[group] || [])
+                        .some(id => compatibleMarkerIds.includes(id))
+                ) {
                     found = true;
                 }
             });
         });
 
         /*
-            Old sessions may contain Teeth Transposition on positions 6-8.
-            Remove that invalid state during normalization.
+            Convert legacy teeth_transposition deciduous records to the new
+            teeth_change marker and remove invalid states from teeth 6-8.
         */
         setToothDeciduousState(
             tid,
@@ -1444,7 +1904,7 @@
 
     function rejectRemainingRootOutsideRoot() {
         showToast(
-            "Remaining Root مسموح فقط على الجذر أو على الجزء المقابل له داخل Lingual / Palatal.",
+            "Remaining Root مسموح فقط على جذر صورة السن، وليس على Surface.",
             "warning"
         );
     }
@@ -2064,6 +2524,73 @@
             </g>`;
     }
 
+    function crownTreatmentOverlay(
+        tid,
+        arch,
+        splitY
+    ) {
+        const mark = getCrownMark(tid);
+
+        if (!mark || !mark.tool) {
+            return "";
+        }
+
+        const color =
+            GROUP_COLORS[mark.group] ||
+            GROUP_COLORS.previous;
+
+        /*
+            Upper jaw crown = lower half.
+            Lower jaw crown = upper half.
+
+            Requested behavior:
+            - No shading/pattern on the tooth image.
+            - Only a smaller tidy outline box.
+        */
+        const crownY =
+            arch === "upper"
+                ? splitY
+                : 0;
+
+        const boxX = 1.85;
+        const boxY = crownY + 1.65;
+        const boxWidth = 7.30;
+        const boxHeight = splitY - 3.30;
+
+        return `
+            <g class="crown-treatment-overlay"
+               pointer-events="none">
+
+                <!-- Small outline only: no fill / no shading -->
+                <rect x="${boxX}"
+                      y="${boxY}"
+                      width="${boxWidth}"
+                      height="${boxHeight}"
+                      rx="1.12"
+                      fill="none"
+                      stroke="${color}"
+                      stroke-width="0.66"/>
+
+                <!-- Fine inner white line for readability -->
+                <rect x="${boxX + 0.28}"
+                      y="${boxY + 0.28}"
+                      width="${boxWidth - 0.56}"
+                      height="${boxHeight - 0.56}"
+                      rx="0.92"
+                      fill="none"
+                      stroke="#ffffff"
+                      stroke-opacity="0.84"
+                      stroke-width="0.18"/>
+            </g>`;
+    }
+
+    function rejectCrownOnRoot(label) {
+        showToast(
+            `${label} مسموح فقط على تاج السن، وليس على الجذر.`,
+            "warning"
+        );
+    }
+
     function rejectToothApplianceOnRoot(label) {
         showToast(
             `${label} ممنوع على الجذر. اختاره على جسم السن في الاتجاه الصحيح داخل Lingual / Palatal.`,
@@ -2206,11 +2733,12 @@
     }
 
     /*
-        Draw Periapical Lesion, Crack Tooth, or Tooth Mobility over the
-        complete front tooth image.
+        Draw Periapical Lesion, Crack Tooth, or Tooth Mobility only over
+        the front tooth image.
 
-        Tooth Mobility uses only its tooth-shaped patterned path.
-        No horizontal arrow is rendered.
+        These tools are intentionally not rendered on Lingual / Palatal
+        Surface. Tooth Mobility uses its tidy tooth-shaped mark without the
+        horizontal arrow after application.
     */
     function wholeToothDiseaseFrontOverlay(tid, arch) {
         const mark = getWholeToothDiseaseMark(tid);
@@ -2376,10 +2904,10 @@
     }
 
     /*
-        Remaining Root follows the opposite direction:
+        Kept for backward-compatible rendering signatures.
 
-        Upper jaw root -> upper Lingual / Palatal segment.
-        Lower jaw root -> lower Lingual / Palatal segment.
+        Remaining Root is now image-only, so this Surface mapping is no
+        longer used to display or select anything in Lingual / Palatal.
     */
     function getRemainingRootVisualArea(arch, insideArea) {
         return arch === "upper"
@@ -2397,38 +2925,36 @@
         const result = [];
 
         /*
-            Remaining Root is displayed first in its matching root segment,
-            so its root icon/pattern remains visible there.
-        */
-        if (area === remainingRootVisualArea) {
-            const remainingRootMark = getRemainingRootMark(tid);
+            A Crown covers all five Surface sections:
+            Buccal, Lingual/Palatal, Mesial, Distal and Occlusal.
 
-            if (remainingRootMark && remainingRootMark.tool) {
-                result.push({
-                    group: remainingRootMark.group,
-                    tool: remainingRootMark.tool
-                });
-            }
+            Add it first so the exact selected Crown icon pattern becomes
+            the main shading across the complete Surface diagram.
+        */
+        const crownMark = getCrownMark(tid);
+
+        if (crownMark && crownMark.tool) {
+            result.push({
+                group: crownMark.group,
+                tool: crownMark.tool
+            });
         }
 
         /*
-            A whole-tooth disease is shown across all areas.
+            Remaining Root is image-only.
+
+            Do not inject its icon, pattern, or color into any
+            Lingual / Palatal Surface section.
         */
-        const wholeDisease = getWholeToothDiseaseMark(tid);
 
-        if (wholeDisease && wholeDisease.tool) {
-            const alreadyExists = result.some(existing =>
-                existing.tool &&
-                existing.tool.id === wholeDisease.tool.id
-            );
+        /*
+            Whole-tooth Disease tools are image-only:
+            - Periapical Lesion
+            - Crack Tooth
+            - Tooth Mobility
 
-            if (!alreadyExists) {
-                result.push({
-                    group: wholeDisease.group,
-                    tool: wholeDisease.tool
-                });
-            }
-        }
+            Do not inject them into any Lingual / Palatal Surface section.
+        */
 
         if (area === applianceVisualArea) {
             const applianceMark = getToothApplianceMark(tid);
@@ -2464,6 +2990,17 @@
         remainingRootVisualArea
     ) {
         /*
+            Selection highlight is view-specific:
+
+            - Clicking the front tooth image shows the square on the image only.
+            - It must not highlight any Lingual / Palatal Surface section.
+            - Applied treatments/patterns on Surface remain visible normally.
+        */
+        if (lastSelectionSource === "front") {
+            return false;
+        }
+
+        /*
             The applied pattern/treatment remains visible, but the dark
             selection border disappears after clicking outside Surface.
         */
@@ -2487,23 +3024,26 @@
             sameTooth &&
             selectedTarget.area === "root";
 
+        /*
+            Whole-tooth Disease tools are image-only, so they must never
+            highlight Lingual / Palatal Surface areas.
+        */
         if (
             selectedWhole &&
             isWholeToothDiseaseTool()
         ) {
-            return true;
+            return false;
         }
 
         /*
-            Clicking Root on the tooth image highlights the matching segment
-            below, and clicking that segment selects Root on the tooth image.
+            Remaining Root is image-only, so Root selection on the front
+            image must never highlight a Lingual / Palatal Surface section.
         */
         if (
-            area === remainingRootVisualArea &&
             isRemainingRootTool() &&
             selectedRoot
         ) {
-            return true;
+            return false;
         }
 
         return area === applianceVisualArea &&
@@ -2513,6 +3053,20 @@
 
     function isSelected(tid, area) {
         return selectedTarget && selectedTarget.toothId === tid && selectedTarget.area === area;
+    }
+
+    /*
+        Show a selection square on the front tooth image only when the
+        selection originated from the front image itself.
+
+        Clicking any Lingual / Palatal Surface section may update the data
+        and report, but it must not draw the upper/lower square on the image.
+    */
+    function isFrontImageAreaSelected(tid, area) {
+        return (
+            lastSelectionSource === "front" &&
+            isSelected(tid, area)
+        );
     }
 
     function hexToRgba(hex, alpha) {
@@ -2720,12 +3274,18 @@
         selectedToolId = toolId;
         pendingSwapToothId = null;
 
-        if (toolId === "teeth_change") {
-            showToast("🔁 اختر السن الأول ثم اختر السن الثاني لتبديل مكانهما", "info");
+        if (toolId === TEETH_TRANSPOSITION_TOOL_ID) {
+            showToast(
+                "🔁 اختر السن الأول ثم اختر السن الثاني لتبديل مكانهما.",
+                "info"
+            );
         }
 
-        if (toolId === TEETH_TRANSPOSITION_TOOL_ID) {
-            showToast("🦷 اختر صورة السن لتحويله إلى سن لبني أصغر حجماً.", "info");
+        if (toolId === PERMANENT_DECIDUOUS_TOOL_ID) {
+            showToast(
+                "🦷 اختر صورة السن لتحويله إلى سن لبني أصغر حجماً.",
+                "info"
+            );
         }
 
         renderAll();
@@ -2856,8 +3416,9 @@
         const wm = getWholeMarks(tid)
             .filter(mark =>
                 !isToothApplianceTool(mark.tool.id) &&
+                !isCrownTool(mark.tool.id) &&
                 !isWholeToothDiseaseTool(mark.tool.id) &&
-                !isTeethTranspositionTool(mark.tool.id)
+                !isPermanentDeciduousTool(mark.tool.id)
             );
 
         if (!wm.length && !chartData[tid].whole.note) return "";
@@ -2882,47 +3443,13 @@
     }
 
     function wholeToothDiseaseOcclusalOverlay(tid) {
-        const mark = getWholeToothDiseaseMark(tid);
+        /*
+            Periapical Lesion, Crack Tooth and Tooth Mobility are displayed
+            only on the front tooth image.
 
-        if (
-            !mark ||
-            !mark.tool ||
-            mark.tool.glyph !== "mobility"
-        ) {
-            return "";
-        }
-
-        const color = GROUP_COLORS[mark.group] || GROUP_COLORS.disease;
-        const patternId = `occ_mobility_icon_${tid}`;
-        const mobilityTransform =
-            "translate(19.2,12.8) scale(0.8)";
-
-        return `
-            <g class="whole-disease-occlusal mobility"
-               pointer-events="none"
-               opacity="0.92">
-                <defs>
-                    ${glyphPattern(patternId, "mobility", color)}
-                </defs>
-
-                <!-- Small outline without an opaque white fill -->
-                <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z"
-                      transform="${mobilityTransform}"
-                      fill="none"
-                      stroke="#ffffff"
-                      stroke-width="3.2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"/>
-
-                <!-- Compact Tooth Mobility marker -->
-                <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z"
-                      transform="${mobilityTransform}"
-                      fill="url(#${patternId})"
-                      stroke="${color}"
-                      stroke-width="1.6"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"/>
-            </g>`;
+            Nothing is rendered for these tools on Lingual / Palatal Surface.
+        */
+        return "";
     }
 
     function areaBadges(tid, area, points, showIcons = true) {
@@ -3048,12 +3575,18 @@
     function buildFrontToothSvg(tid, arch, useUnflippedImage) {
         const insideArea = arch === "upper" ? "palatal" : "lingual";
         const sourceId   = getSourceToothId(tid);
+        const visualSourceId =
+            getDentitionVisualSourceId(tid);
 
         /*
-            Teeth Transposition keeps the same anatomical tooth image and
-            distinguishes a deciduous tooth by size only.
+            In Deciduous chart mode, visible teeth 1-5 are rendered as:
+            E D C B A | A B C D E
+
+            Positions D and E visually reuse the current permanent 6 and 7
+            tooth images, exactly as requested.
         */
         const imgSrc =
+            TOOTH_IMAGES[visualSourceId] ||
             TOOTH_IMAGES[sourceId] ||
             TOOTH_IMAGES[tid] ||
             "/images/teeth/U-8R-F.svg";
@@ -3090,7 +3623,8 @@
             ? `transform="translate(0,21) scale(1,-1)"`
             : "";
 
-        const applianceMode    = isToothApplianceTool();
+        const applianceMode     = isToothApplianceTool();
+        const crownMode         = isCrownTool();
         const remainingRootMode = isRemainingRootTool();
         const extractedMode     = isToothExtracted(tid);
 
@@ -3103,6 +3637,10 @@
         const rootY  = arch === "upper" ? 0 : splitY;
         const toothY = arch === "upper" ? splitY : 0;
 
+        /*
+            Front-image selection squares are view-specific:
+            Surface clicks never draw these upper/lower rectangles.
+        */
         const normalHitAreas = `
               <rect x="0.5"
                     y="0"
@@ -3110,7 +3648,7 @@
                     height="${splitY}"
                     fill="transparent"
                     pointer-events="all"
-                    stroke="${isSelected(tid, insideArea) ? '#111827' : 'none'}"
+                    stroke="${isFrontImageAreaSelected(tid, insideArea) ? '#111827' : 'none'}"
                     stroke-width="0.35"
                     rx="1.2"
                     onclick="selectArea('${tid}','${insideArea}','front')"
@@ -3124,12 +3662,48 @@
                     height="${splitY}"
                     fill="transparent"
                     pointer-events="all"
-                    stroke="${isSelected(tid, 'buccal') ? '#111827' : 'none'}"
+                    stroke="${isFrontImageAreaSelected(tid, 'buccal') ? '#111827' : 'none'}"
                     stroke-width="0.35"
                     rx="1.2"
                     onclick="selectArea('${tid}','buccal','front')"
                     style="cursor:pointer">
                 <title>buccal</title>
+              </rect>`;
+
+        const crownLabel =
+            selectedToolId &&
+            getTool(selectedToolId)
+                ? getTool(selectedToolId).label
+                : "Crown";
+
+        const crownHitAreas = `
+              <!-- Crown half accepts all 6 Crown types -->
+              <rect x="0.5"
+                    y="${toothY}"
+                    width="10"
+                    height="${splitY}"
+                    fill="transparent"
+                    pointer-events="all"
+                    stroke="${isFrontImageAreaSelected(tid, 'whole') ? '#111827' : 'none'}"
+                    stroke-width="0.42"
+                    rx="1.2"
+                    onclick="selectArea('${tid}','whole','front')"
+                    style="cursor:pointer">
+                <title>${crownLabel} — Crown only</title>
+              </rect>
+
+              <!-- Root is blocked for Crown tools -->
+              <rect x="0.5"
+                    y="${rootY}"
+                    width="10"
+                    height="${splitY}"
+                    fill="transparent"
+                    pointer-events="all"
+                    stroke="none"
+                    rx="1.2"
+                    onclick="rejectCrownOnRoot('${crownLabel}')"
+                    style="cursor:not-allowed">
+                <title>${crownLabel} is not allowed on Root</title>
               </rect>`;
 
         const applianceLabel = selectedToolId && getTool(selectedToolId)
@@ -3144,7 +3718,7 @@
                     height="${splitY}"
                     fill="transparent"
                     pointer-events="all"
-                    stroke="${isSelected(tid, 'whole') ? '#111827' : 'none'}"
+                    stroke="${isFrontImageAreaSelected(tid, 'whole') ? '#111827' : 'none'}"
                     stroke-width="0.42"
                     rx="1.2"
                     onclick="selectArea('${tid}','whole','front')"
@@ -3174,7 +3748,7 @@
                     height="${splitY}"
                     fill="transparent"
                     pointer-events="all"
-                    stroke="${isSelected(tid, 'root') ? '#111827' : 'none'}"
+                    stroke="${isFrontImageAreaSelected(tid, 'root') ? '#111827' : 'none'}"
                     stroke-width="0.42"
                     rx="1.2"
                     onclick="selectArea('${tid}','root','front')"
@@ -3239,6 +3813,7 @@
                       ? extractedToothOverlay(tid)
                       : `
                           ${wholeToothDiseaseFrontOverlay(tid, arch)}
+                          ${crownTreatmentOverlay(tid, arch, splitY)}
                           ${toothApplianceOverlay(tid, arch)}
                           ${remainingRootHideOtherHalfOverlay(tid, arch, splitY)}
                           ${remainingRootOverlay(tid, arch)}
@@ -3251,9 +3826,13 @@
                         remainingRootMode
                             ? remainingRootHitAreas
                             : (
-                                applianceMode
-                                    ? applianceHitAreas
-                                    : normalHitAreas
+                                crownMode
+                                    ? crownHitAreas
+                                    : (
+                                        applianceMode
+                                            ? applianceHitAreas
+                                            : normalHitAreas
+                                      )
                               )
                       )}
             </svg>`;
@@ -3326,17 +3905,22 @@
         const allKeys = [...segments.map(s=>s.key), "occlusal"];
 
         const defsContent = extractedColor ? "" : allKeys.map(key => {
-            const marks = key === "occlusal"
-                ? getAreaMarks(tid, key)
-                : getOcclusalAreaMarks(
-                    tid,
-                    key,
-                    applianceVisualArea,
-                    remainingRootVisualArea
-                );
+            const marks = getOcclusalAreaMarks(
+                tid,
+                key,
+                applianceVisualArea,
+                remainingRootVisualArea
+            );
 
             if (!marks.length) return "";
 
+            /*
+                Use the exact glyph pattern of the first visible tool.
+
+                For Crown treatments this means every Crown type keeps its
+                own distinctive pattern across all five Surface sections,
+                including the middle Occlusal section.
+            */
             return glyphPattern(
                 `occ_${tid}_${key}`,
                 marks[0].tool.glyph,
@@ -3354,6 +3938,15 @@
                     remainingRootVisualArea
                 );
 
+            const crownMark = marks.find(mark =>
+                mark.tool &&
+                isCrownTool(mark.tool.id)
+            );
+
+            const crownColor = crownMark
+                ? GROUP_COLORS[crownMark.group]
+                : null;
+
             const fill = marks.length
                 ? `url(#occ_${tid}_${s.key})`
                 : "transparent";
@@ -3364,8 +3957,22 @@
                 applianceVisualArea,
                 remainingRootVisualArea
             );
-            const stroke = selected ? "#111827" : "#c4ccd7";
-            const sw = selected ? 2.0 : 0.9;
+
+            const stroke = crownMark
+                ? crownColor
+                : (
+                    selected
+                        ? "#111827"
+                        : "#c4ccd7"
+                  );
+
+            const sw = crownMark
+                ? 1.28
+                : (
+                    selected
+                        ? 2.0
+                        : 0.9
+                  );
 
             return `<path d="${segmentPath(s.startAngle, s.endAngle)}"
                           fill="${fill}"
@@ -3384,9 +3991,23 @@
                 remainingRootVisualArea
             );
 
-        const occlusalFill = occlusalMarks.length
-            ? `url(#occ_${tid}_occlusal)`
-            : "transparent";
+        const occlusalCrownMark =
+            occlusalMarks.find(mark =>
+                mark.tool &&
+                isCrownTool(mark.tool.id)
+            );
+
+        const occlusalCrownColor =
+            occlusalCrownMark
+                ? GROUP_COLORS[
+                    occlusalCrownMark.group
+                  ]
+                : null;
+
+        const occlusalFill =
+            occlusalMarks.length
+                ? `url(#occ_${tid}_occlusal)`
+                : "transparent";
 
         const xLines = xAngles.map(a => {
             const o=ptOuter(a), i=ptInner(a);
@@ -3412,18 +4033,30 @@
               ${xLines}
               <ellipse cx="${cx}" cy="${cy}" rx="${irx}" ry="${iry}"
                        fill="${occlusalFill}"
-                       stroke="${isOcclusalAreaSelected(
-                           tid,
-                           'occlusal',
-                           applianceVisualArea,
-                           remainingRootVisualArea
-                       ) ? '#111827' : '#c4ccd7'}"
-                       stroke-width="${isOcclusalAreaSelected(
-                           tid,
-                           'occlusal',
-                           applianceVisualArea,
-                           remainingRootVisualArea
-                       ) ? 2.0 : 0.9}"
+                       stroke="${occlusalCrownMark
+                           ? occlusalCrownColor
+                           : (
+                               isOcclusalAreaSelected(
+                                   tid,
+                                   'occlusal',
+                                   applianceVisualArea,
+                                   remainingRootVisualArea
+                               )
+                                   ? '#111827'
+                                   : '#c4ccd7'
+                             )}"
+                       stroke-width="${occlusalCrownMark
+                           ? 1.28
+                           : (
+                               isOcclusalAreaSelected(
+                                   tid,
+                                   'occlusal',
+                                   applianceVisualArea,
+                                   remainingRootVisualArea
+                               )
+                                   ? 2.0
+                                   : 0.9
+                             )}"
                        onclick="selectArea('${tid}','occlusal','surface')"
                        style="cursor:pointer"/>
               <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="#c4ccd7" stroke-width="1.3"/>
@@ -3453,8 +4086,57 @@
     //  INTERACTIONS
     // ════════════════════════════════════════════════════════════════
 
+    /*
+        Only the special tools whose behavior was already implemented are
+        allowed to run from the front tooth image.
+
+        All normal Surface tools must be applied from the Lingual / Palatal
+        Surface diagram only.
+    */
+    function canToolApplyFromFrontImage(tool) {
+        if (!tool) {
+            return true;
+        }
+
+        return (
+            isTeethTranspositionTool(tool.id) ||
+            isPermanentDeciduousTool(tool.id) ||
+            isExtractedTool(tool.id) ||
+            isRemainingRootTool(tool.id) ||
+            isWholeToothDiseaseTool(tool.id) ||
+            isCrownTool(tool.id) ||
+            isToothApplianceTool(tool.id)
+        );
+    }
+
+    function rejectToolOnFrontImage(tool) {
+        showToast(
+            `${tool.label} تُطبّق على منطقة Surface التي تختارها فقط، ولا تُطبّق من صورة السن.`,
+            "warning"
+        );
+    }
+
               function selectArea(tid, area, source = "surface") {
         const currentTool = selectedToolId ? getTool(selectedToolId) : null;
+
+        /*
+            Front image rule:
+
+            A normal Surface icon must not be placed from the tooth image.
+            It will be applied only when the user clicks the exact Surface
+            section.
+
+            The special tools listed in canToolApplyFromFrontImage() retain
+            their original behavior.
+        */
+        if (
+            source === "front" &&
+            currentTool &&
+            !canToolApplyFromFrontImage(currentTool)
+        ) {
+            rejectToolOnFrontImage(currentTool);
+            return;
+        }
 
         /*
             A new click starts a new visual selection.
@@ -3473,7 +4155,7 @@
         }
 
         /*
-            Teeth Transposition rules:
+            Teeth Change Permanent/Deciduous rules:
             1. It is applied by clicking the front tooth image only.
             2. It is allowed only for tooth positions 1 through 5.
             3. The tooth becomes deciduous / temporary.
@@ -3483,11 +4165,11 @@
         */
         if (
             currentTool &&
-            isTeethTranspositionTool(currentTool.id)
+            isPermanentDeciduousTool(currentTool.id)
         ) {
             if (source !== "front") {
                 showToast(
-                    "Teeth Transposition يُطبّق من صورة السن فقط، وليس من Lingual / Palatal.",
+                    "Teeth Change Permanent/Deciduous يعمل من صورة السن فقط، وليس من Surface.",
                     "warning"
                 );
                 return;
@@ -3497,7 +4179,7 @@
                 const toothNumber = getToothPositionNumber(tid);
 
                 showToast(
-                    `Teeth Transposition مسموح فقط للأسنان من 1 إلى 5. السن رقم ${toothNumber} يبقى دائمًا.`,
+                    `Teeth Change Permanent/Deciduous مسموح فقط للأسنان من 1 إلى 5. السن رقم ${toothNumber} يبقى دائمًا.`,
                     "warning"
                 );
                 return;
@@ -3575,53 +4257,30 @@
         }
 
         /*
-            Remaining Root rules:
-            1. It is allowed on the anatomical Root half of the front image.
-            2. It is also allowed on the matching Root segment in
-               Lingual / Palatal:
-                   Upper jaw = upper segment.
-                   Lower jaw = lower segment.
-            3. Clicking either view synchronizes the other view.
-            4. The value is always stored in Root only.
+            Image-only Remaining Root rules:
+
+            1. It works only from the anatomical Root half of the front image.
+            2. It does not apply from Lingual / Palatal Surface.
+            3. It does not display any Surface icon, pattern, or highlight.
+            4. The opposite broken part of the tooth remains hidden as before.
+            5. The value is stored in Root for reporting and database saving.
         */
         if (
             currentTool &&
             isRemainingRootTool(currentTool.id)
         ) {
-            const arch = tid.startsWith("U")
-                ? "upper"
-                : "lower";
-
-            const insideArea = arch === "upper"
-                ? "palatal"
-                : "lingual";
-
-            const remainingRootVisualArea =
-                getRemainingRootVisualArea(
-                    arch,
-                    insideArea
-                );
-
             const allowedFromFrontRoot =
                 source === "front" &&
                 area === "root";
 
-            const allowedFromLingualPalatalRoot =
-                source === "surface" &&
-                area === remainingRootVisualArea;
-
-            if (
-                !allowedFromFrontRoot &&
-                !allowedFromLingualPalatalRoot
-            ) {
-                rejectRemainingRootOutsideRoot();
+            if (!allowedFromFrontRoot) {
+                showToast(
+                    "Remaining Root يعمل من جذر صورة السن فقط، وليس من Surface.",
+                    "warning"
+                );
                 return;
             }
 
-            /*
-                Always save in Root, regardless of which synchronized view
-                the user clicked.
-            */
             selectedTarget = {
                 toothId: tid,
                 area: "root"
@@ -3630,7 +4289,7 @@
             applyToolToSelectedTarget();
 
             showToast(
-                `Remaining Root تم وضعه على جذر السن ${tid}.`,
+                `Remaining Root تم وضعه على جذر صورة السن ${tid}.`,
                 "success"
             );
 
@@ -3639,17 +4298,28 @@
         }
 
         /*
-            Whole-tooth disease rules:
-            Periapical Lesion, Crack Tooth, and Tooth Mobility may be applied
-            from any part of the front tooth image or any part of the
-            Lingual / Palatal diagram.
+            Image-only whole-tooth Disease rules:
 
-            The mark is stored once on the whole tooth.
+            These tools work only from the front tooth image:
+            - Periapical Lesion
+            - Crack Tooth
+            - Tooth Mobility
+
+            Clicking Lingual / Palatal Surface does not apply the tool and
+            does not create any Surface shading or selection.
         */
         if (
             currentTool &&
             isWholeToothDiseaseTool(currentTool.id)
         ) {
+            if (source !== "front") {
+                showToast(
+                    `${currentTool.label} يعمل من صورة السن فقط، وليس من Surface.`,
+                    "warning"
+                );
+                return;
+            }
+
             const applied = applyWholeToothDisease(
                 tid,
                 currentTool
@@ -3662,7 +4332,56 @@
                 };
 
                 showToast(
-                    `${currentTool.label} تم تطبيقه على السن كاملًا.`,
+                    `${currentTool.label} تم تطبيقه على صورة السن.`,
+                    "success"
+                );
+            }
+
+            renderAll();
+            return;
+        }
+
+        /*
+            Crown rules — Previous Treatment and In-Hospital:
+
+            1. All 6 Crown icons in each group use this behavior.
+            2. Apply by clicking the Crown half of the front tooth image.
+            3. Root is blocked.
+            4. The Crown is stored in all five Surface areas.
+            5. ReportJson groups them into one report containing five areas.
+            6. DentalToothData can save five separate area rows.
+            7. All five Surface sections receive the exact pattern of the selected Crown icon.
+            8. The Crown half on the image gets only a smaller outline box without shading.
+        */
+        if (
+            currentTool &&
+            isCrownTool(currentTool.id)
+        ) {
+            const allowedFromFrontCrown =
+                source === "front" &&
+                area === "whole";
+
+            if (!allowedFromFrontCrown) {
+                showToast(
+                    `${currentTool.label} يعمل من تاج صورة السن فقط، وليس من الجذر أو Surface.`,
+                    "warning"
+                );
+                return;
+            }
+
+            const applied = applyCrownToTooth(
+                tid,
+                currentTool
+            );
+
+            if (applied) {
+                selectedTarget = {
+                    toothId: tid,
+                    area: "whole"
+                };
+
+                showToast(
+                    `${currentTool.label} تم وضعه على تاج السن ${tid}.`,
                     "success"
                 );
             }
@@ -3741,11 +4460,25 @@
             return;
         }
 
-        if (selectedToolId === "teeth_change") {
+        if (
+            currentTool &&
+            isTeethTranspositionTool(currentTool.id)
+        ) {
+            if (source !== "front") {
+                showToast(
+                    "Teeth Transposition يعمل من صورة السن فقط، وليس من مخطط Surface.",
+                    "warning"
+                );
+                return;
+            }
+
             // First click: remember the first tooth position.
             if (!pendingSwapToothId) {
                 pendingSwapToothId = tid;
-                showToast(`🔁 تم اختيار ${tid} — اختر السن الثاني`, "info");
+                showToast(
+                    `🔁 تم اختيار ${tid} — اختر السن الثاني`,
+                    "info"
+                );
                 renderAll();
                 return;
             }
@@ -3753,29 +4486,53 @@
             // Clicking the same tooth cancels the pending operation.
             if (pendingSwapToothId === tid) {
                 pendingSwapToothId = null;
-                showToast("❌ تم إلغاء تبديل الأسنان", "info");
+                showToast(
+                    "❌ تم إلغاء تبديل الأسنان",
+                    "info"
+                );
                 renderAll();
                 return;
             }
 
-            const firstId  = pendingSwapToothId;
+            const firstId = pendingSwapToothId;
             const secondId = tid;
-            const changed  = swapTeeth(firstId, secondId);
+            const changed = swapTeeth(
+                firstId,
+                secondId
+            );
 
             pendingSwapToothId = null;
-            selectedTarget = { toothId: secondId, area };
+            selectedTarget = {
+                toothId: secondId,
+                area
+            };
 
             if (changed) {
-                showToast(`✅ تم تبديل مكان ${firstId} مع ${secondId}`, "success");
+                showToast(
+                    `✅ تم تبديل مكان ${firstId} مع ${secondId}`,
+                    "success"
+                );
             } else {
-                showToast("❌ لم يتم تبديل الأسنان", "error");
+                showToast(
+                    "❌ لم يتم تبديل الأسنان",
+                    "error"
+                );
             }
 
             renderAll();
             return;
         }
 
-        if (selectedToolId) applyToolToSelectedTarget();
+        /*
+            Reaching this point means this is a normal Surface-scoped tool.
+
+            Because front-image clicks were blocked above, the value is saved
+            only in the exact Surface area that the user clicked.
+        */
+        if (selectedToolId) {
+            applyToolToSelectedTarget();
+        }
+
         renderAll();
     }
 
@@ -3828,6 +4585,27 @@
         if (isToothExtracted(tid)) {
             removeExtractedFromTooth(tid);
             showToast(`تم إلغاء Extracted Tooth عن السن ${tid}.`, "success");
+            renderAll();
+            return;
+        }
+
+        /*
+            Crown is stored in five Surface areas but selected as one action
+            from the crown image. Clear Area therefore removes the complete
+            Crown from all five areas.
+        */
+        if (
+            selectedToolId &&
+            isCrownTool(selectedToolId) &&
+            getCrownMark(tid)
+        ) {
+            removeAllCrownMarks(tid);
+
+            showToast(
+                `تم حذف Crown من المناطق الخمس للسن ${tid}.`,
+                "success"
+            );
+
             renderAll();
             return;
         }
@@ -3904,7 +4682,7 @@
             if (idx > -1) arr.splice(idx, 1);
         }
 
-        if (isTeethTranspositionTool(toolId)) {
+        if (isPermanentDeciduousTool(toolId)) {
             setToothDeciduousState(tid, false);
         }
 
@@ -4227,7 +5005,7 @@
                 .filter(id => id !== toolId);
         });
 
-        if (isTeethTranspositionTool(toolId)) {
+        if (isPermanentDeciduousTool(toolId)) {
             setToothDeciduousState(
                 toothId,
                 false
@@ -4269,9 +5047,11 @@
         });
 
         /*
-            Teeth Change swaps the actual tooth image/position and therefore
-            does not live in a normal surface slot. Add it as a derived action
-            whenever the current position contains a different source tooth.
+            Teeth Transposition swaps the actual tooth image/position and
+            therefore does not live in a normal surface slot.
+
+            Add it as a derived action whenever the current position contains
+            a different source tooth.
         */
         const sourceToothId =
             getSourceToothId(toothId);
@@ -4280,14 +5060,14 @@
             sourceToothId &&
             sourceToothId !== toothId
         ) {
-            const teethChangeTool =
-                getTool("teeth_change");
+            const transpositionTool =
+                getTool(TEETH_TRANSPOSITION_TOOL_ID);
 
-            if (teethChangeTool) {
+            if (transpositionTool) {
                 rows.push({
                     type: "swap",
-                    tool: teethChangeTool,
-                    toolId: teethChangeTool.id,
+                    tool: transpositionTool,
+                    toolId: transpositionTool.id,
                     group: "others",
                     toothId,
                     sourceToothId,
@@ -4807,10 +5587,10 @@
                 : '';
         }
 
-        function renderNumber(positionNumber) {
+        function renderNumber(positionNumber, index) {
             return `
                 <div class="number-cell ${getDentitionNumberClass(positionNumber)}">
-                    ${positionNumber}
+                    ${getDisplayedPositionLabel(index)}
                 </div>`;
         }
 
@@ -4851,7 +5631,7 @@
 
                 <!-- Upper numbers -->
                 <div></div>
-                ${POS_LABELS.map(renderNumber).join("")}
+                ${POS_LABELS.map((n, i) => renderNumber(n, i)).join("")}
 
                 <!-- Upper Buccal -->
                 <div class="side-label">Buccal</div>
@@ -4879,7 +5659,7 @@
 
                 <!-- Lower numbers -->
                 <div></div>
-                ${POS_LABELS.map(renderNumber).join("")}
+                ${POS_LABELS.map((n, i) => renderNumber(n, i)).join("")}
 
             </div>`;
     }
@@ -5249,14 +6029,17 @@
             // Upgrade old Root/Surface Bridge and Space Maintainer records.
             normalizeToothAppliance(tid);
 
+            // Expand old Crown records into the five correct Surface areas.
+            normalizeCrownMark(tid);
+
             // Upgrade old surface records for the three whole-tooth diseases.
             normalizeWholeToothDisease(tid);
 
             // Keep one icon per area from Disease / Previous / In-Hospital.
             normalizeSingleToothLockedMark(tid);
 
-            // Keep Teeth Transposition and the deciduous-size state synchronized.
-            normalizeTeethTransposition(tid);
+            // Keep Teeth Change and the deciduous-size state synchronized.
+            normalizePermanentDeciduousState(tid);
         });
     }
 
