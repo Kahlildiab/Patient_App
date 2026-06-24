@@ -319,6 +319,30 @@
         grid-template-columns: 52px repeat(16, minmax(56px, 1fr));
         gap: 6px;
         align-items: center;
+        position: relative;
+    }
+
+        .chart-grid > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .chart-grid > .jaw-wide-overlay {
+            z-index: 0;
+        }
+
+    .jaw-wide-overlay {
+        pointer-events: none;
+        align-self: stretch;
+        justify-self: stretch;
+        margin: 3px -7px;
+        border-radius: 26px;
+        min-height: 112px;
+        height: auto;
+        z-index: 0;
+        position: relative;
+        box-sizing: border-box;
+        background: transparent;
     }
 
     .side-label {
@@ -355,10 +379,20 @@
         display: block;
         cursor: pointer;
         /*
-                                Bridge and Space Maintainer connector lines extend slightly
-                                outside the SVG so adjacent teeth can be visually connected.
-                            */
+                                            Bridge and Space Maintainer connector lines extend slightly
+                                            outside the SVG so adjacent teeth can be visually connected.
+                                        */
         overflow: visible;
+    }
+
+    .gap-badge-hover {
+        transform-box: fill-box;
+        transform-origin: center;
+        transition: transform .14s ease;
+    }
+
+    .tooth-svg:hover .gap-badge-hover {
+        transform: scale(1.18);
     }
 
     .mid-rl {
@@ -596,9 +630,9 @@
         }
 
     /*
-                    نخفي السن مع الاحتفاظ بمكانه داخل Grid،
-                    حتى تبقى الأسنان 1-5 في مكانها الصحيح.
-                */
+                                نخفي السن مع الاحتفاظ بمكانه داخل Grid،
+                                حتى تبقى الأسنان 1-5 في مكانها الصحيح.
+                            */
     .dentition-hidden {
         visibility: hidden !important;
         pointer-events: none !important;
@@ -794,7 +828,7 @@
         { id:"crack_tooth",                 label:"Crack Tooth",                        group:"disease",  glyph:"crack",            scope:"whole" },
         { id:"tooth_mobility",              label:"Tooth Mobility",                     group:"disease",  glyph:"mobility",         scope:"whole" },
         { id:"remaining_root",              label:"Remaining Root",                     group:"disease",  glyph:"remainingRoot",    scope:"root" },
-        { id:"surface_loss",                label:"Tooth Surface Loss",                 group:"disease",  glyph:"surfaceLoss",      scope:"surface" },
+        { id:"surface_loss",                label:"Tooth Surface Loss",                 group:"disease",  glyph:"surfaceLoss",      scope:"whole" },
 
         { id:"amalgam_prev",                label:"Amalgam",                            group:"previous", glyph:"resto1",           scope:"surface" },
         { id:"composite_prev",              label:"Composite Restoration",              group:"previous", glyph:"resto2",           scope:"surface" },
@@ -808,16 +842,16 @@
         {id:"temporary_crown_prev",         label:"Temporary Crown",                    group:"previous", glyph:"tempCrown",        scope:"whole" },
         { id:"stainless_crown_prev",        label:"Stainless Steel Crown",              group:"previous", glyph:"crown6",           scope:"whole" },
         { id:"resin_bonded_bridge_prev",    label:"Bridge",                             group:"previous", glyph:"bridge",           scope:"whole" },
-        { id:"root_canal_prev",             label:"Root Canal Treatment",               group:"previous", glyph:"rct",              scope:"surface" },
-        { id:"vital_pulp_therapy_prev",     label:"Vital Pulp Therapy",                 group:"previous", glyph:"vpt",              scope:"surface" },
-        { id:"post_prev",                   label:"Post",                               group:"previous", glyph:"post",             scope:"surface" },
+        { id:"root_canal_prev",             label:"Root Canal Treatment",               group:"previous", glyph:"rct",              scope:"root" },
+        { id:"vital_pulp_therapy_prev",     label:"Vital Pulp Therapy",                 group:"previous", glyph:"vpt",              scope:"root" },
+        { id:"post_prev",                   label:"Post",                               group:"previous", glyph:"post",             scope:"root" },
         { id:"stabilization_splint_prev",   label:"Stabilization Splint",               group:"previous", glyph:"splint",           scope:"surface" },
         { id:"partial_acrylic_denture_prev",label:"Partial Acrylic Denture",            group:"previous", glyph:"denture",          scope:"surface" },
         { id:"cc_denture_prev",             label:"Cobalt Chromium Partial Denture",    group:"previous", glyph:"ccDenture",        scope:"surface" },
         { id:"complete_denture_prev",       label:"Complete Denture",                   group:"previous", glyph:"completeDenture",  scope:"surface" },
         { id:"space_maintainer_prev",       label:"Space Maintainer",                   group:"previous", glyph:"spaceMaintainer",  scope:"whole" },
-        { id:"pulpotomy_prev",              label:"Pulpotomy",                          group:"previous", glyph:"pulpotomy",        scope:"surface" },
-        { id:"pulpectomy_prev",             label:"Pulpectomy",                         group:"previous", glyph:"pulpectomy",       scope:"surface" },
+        { id:"pulpotomy_prev",              label:"Pulpotomy",                          group:"previous", glyph:"pulpotomy",        scope:"root" },
+        { id:"pulpectomy_prev",             label:"Pulpectomy",                         group:"previous", glyph:"pulpectomy",       scope:"root" },
 
         { id:"amalgam_in",                  label:"Amalgam",                            group:"inside",   glyph:"resto1",           scope:"surface" },
         { id:"composite_in",                label:"Composite Restoration",              group:"inside",   glyph:"resto2",           scope:"surface" },
@@ -831,21 +865,21 @@
         { id:"temporary_crown_in",          label:"Temporary Crown",                    group:"inside",   glyph:"tempCrown",        scope:"whole" },
         { id:"stainless_crown_in",          label:"Stainless Steel Crown",              group:"inside",   glyph:"crown6",           scope:"whole" },
         { id:"resin_bonded_bridge_in",      label:"Bridge",                             group:"inside",   glyph:"bridge",           scope:"whole" },
-        { id:"root_canal_in",               label:"Root Canal Treatment",               group:"inside",   glyph:"rct",              scope:"surface" },
-        { id:"vpt_in",                      label:"Vital Pulp Therapy",                 group:"inside",   glyph:"vpt",              scope:"surface" },
-        { id:"post_in",                     label:"Post",                               group:"inside",   glyph:"post",             scope:"surface" },
+        { id:"root_canal_in",               label:"Root Canal Treatment",               group:"inside",   glyph:"rct",              scope:"root" },
+        { id:"vpt_in",                      label:"Vital Pulp Therapy",                 group:"inside",   glyph:"vpt",              scope:"root" },
+        { id:"post_in",                     label:"Post",                               group:"inside",   glyph:"post",             scope:"root" },
         { id:"stabilization_splint_in",     label:"Stabilization Splint",               group:"inside",   glyph:"splint",           scope:"surface" },
         { id:"partial_denture_in",          label:"Partial Acrylic Denture",            group:"inside",   glyph:"denture",          scope:"surface" },
         { id:"cc_denture_in",               label:"Cobalt Chromium Partial Denture",    group:"inside",   glyph:"ccDenture",        scope:"surface" },
         { id:"complete_denture_in",         label:"Complete Denture",                   group:"inside",   glyph:"completeDenture",  scope:"surface" },
         { id:"space_maintainer_in",         label:"Space Maintainer",                   group:"inside",   glyph:"spaceMaintainer",  scope:"surface" },
-        { id:"pulpotomy_in",                label:"Pulpotomy",                          group:"inside",   glyph:"pulpotomy",        scope:"surface" },
-        { id:"pulpectomy_in",               label:"Pulpectomy",                         group:"inside",   glyph:"pulpectomy",       scope:"surface" },
+        { id:"pulpotomy_in",                label:"Pulpotomy",                          group:"inside",   glyph:"pulpotomy",        scope:"root" },
+        { id:"pulpectomy_in",               label:"Pulpectomy",                         group:"inside",   glyph:"pulpectomy",       scope:"root" },
         { id:"extracted_tooth_in",          label:"Extracted Tooth",                    group:"inside",   glyph:"extracted",        scope:"surface" },
 
-        { id:"impacted_tooth",              label:"Impacted Tooth",                     group:"others",   glyph:"impacted",         scope:"surface" },
-        { id:"soft_tissue_impacted",        label:"Soft Tissue Impacted Tooth",         group:"others",   glyph:"softImpacted",     scope:"surface" },
-        { id:"partially_erupted",           label:"Partially Erupted Tooth",            group:"others",   glyph:"partiallyErupted", scope:"surface" },
+        { id:"impacted_tooth",              label:"Impacted Tooth",                     group:"others",   glyph:"impacted",         scope:"whole" },
+        { id:"soft_tissue_impacted",        label:"Soft Tissue Impacted Tooth",         group:"others",   glyph:"softImpacted",     scope:"whole" },
+        { id:"partially_erupted",           label:"Partially Erupted Tooth",            group:"others",   glyph:"partiallyErupted", scope:"whole" },
         { id:"teeth_transposition",         label:"Teeth Transposition",                group:"others",   glyph:"transposition",    scope:"whole" },
         { id:"teeth_change",                label:"Teeth Change Permanent/Deciduous",   group:"others",   glyph:"teethChange",      scope:"whole" },
         { id:"extracted_tooth",             label:"Extracted Tooth",                    group:"others",   glyph:"extracted",        scope:"surface" },
@@ -1687,6 +1721,29 @@
         return null;
     }
 
+    /*
+        Bridge shading must cover the five visible Surface areas.
+
+        Upper jaw:
+            buccal, palatal, mesial, distal, occlusal
+
+        Lower jaw:
+            buccal, lingual, mesial, distal, occlusal
+    */
+    function getToothApplianceSurfaceAreas(tid) {
+        const insideArea = tid.startsWith("U")
+            ? "palatal"
+            : "lingual";
+
+        return [
+            "buccal",
+            insideArea,
+            "mesial",
+            "distal",
+            "occlusal"
+        ];
+    }
+
     const TEETH_TRANSPOSITION_TOOL_ID = "teeth_transposition";
     const PERMANENT_DECIDUOUS_TOOL_ID = "teeth_change";
 
@@ -1833,6 +1890,258 @@
         return toolId === REMAINING_ROOT_TOOL_ID;
     }
 
+    const ROOT_ONLY_ENDODONTIC_TOOL_IDS = [
+        "root_canal_prev",
+        "root_canal_in",
+        "vital_pulp_therapy_prev",
+        "vpt_in",
+        "pulpotomy_prev",
+        "pulpotomy_in",
+        "pulpectomy_prev",
+        "pulpectomy_in",
+        "post_prev",
+        "post_in"
+    ];
+
+    function isRootOnlyEndodonticTool(toolId = selectedToolId) {
+        return ROOT_ONLY_ENDODONTIC_TOOL_IDS.includes(toolId);
+    }
+
+    const JAW_WIDE_TOOL_IDS = [
+        "stabilization_splint_prev",
+        "partial_acrylic_denture_prev",
+        "cc_denture_prev",
+        "complete_denture_prev",
+        "stabilization_splint_in",
+        "partial_denture_in",
+        "cc_denture_in",
+        "complete_denture_in"
+    ];
+
+    function isJawWideTool(toolId = selectedToolId) {
+        return JAW_WIDE_TOOL_IDS.includes(toolId);
+    }
+
+    function getJawFromToothId(toothId) {
+        return toothId && toothId.startsWith("U")
+            ? "upper"
+            : "lower";
+    }
+
+    function getJawDisplayName(jaw) {
+        return jaw === "upper"
+            ? "upper jaw"
+            : "lower jaw";
+    }
+
+    function getJawSentinelToothId(jaw) {
+        return jaw === "upper"
+            ? "U0"
+            : "L0";
+    }
+
+    function getJawToothIds(jaw) {
+        return jaw === "upper"
+            ? [...UPPER_IDS]
+            : [...LOWER_IDS];
+    }
+
+    function clearJawWideToolMarks(jaw) {
+        const toothIds = getJawToothIds(jaw);
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas = [
+            "buccal", "lingual", "palatal", "mesial",
+            "distal", "occlusal", "root"
+        ];
+
+        toothIds.forEach(toothId => {
+            const tooth = chartData[toothId];
+            if (!tooth) return;
+
+            groups.forEach(group => {
+                tooth.whole[group] = (tooth.whole[group] || [])
+                    .filter(id => !isJawWideTool(id));
+            });
+
+            areas.forEach(area => {
+                groups.forEach(group => {
+                    tooth.areas[area][group] = (tooth.areas[area][group] || [])
+                        .filter(id => !isJawWideTool(id));
+                });
+            });
+        });
+    }
+
+    function getJawWideToolUsage(jaw) {
+        const sentinelId = getJawSentinelToothId(jaw);
+        const tooth = chartData[sentinelId];
+
+        if (!tooth) {
+            return null;
+        }
+
+        const groups = ["disease", "previous", "inside", "others"];
+
+        for (const group of groups) {
+            const toolId = (tooth.whole[group] || [])
+                .find(id => isJawWideTool(id));
+
+            if (toolId) {
+                return {
+                    toothId: sentinelId,
+                    jaw,
+                    group,
+                    toolId,
+                    tool: getTool(toolId)
+                };
+            }
+        }
+
+        return null;
+    }
+
+    function applyJawWideTool(jaw, tool) {
+        if (!tool) {
+            return false;
+        }
+
+        clearJawWideToolMarks(jaw);
+
+        const sentinelId = getJawSentinelToothId(jaw);
+        const tooth = chartData[sentinelId];
+
+        if (!tooth) {
+            return false;
+        }
+
+        tooth.whole[tool.group] = (tooth.whole[tool.group] || [])
+            .filter(id => id !== tool.id);
+
+        tooth.whole[tool.group].push(tool.id);
+
+        return true;
+    }
+
+    function normalizeJawWideTools() {
+        ["upper", "lower"].forEach(jaw => {
+            const toothIds = getJawToothIds(jaw);
+            const groups = ["disease", "previous", "inside", "others"];
+            const areas = [
+                "buccal", "lingual", "palatal", "mesial",
+                "distal", "occlusal", "root"
+            ];
+
+            let found = null;
+
+            toothIds.forEach(toothId => {
+                const tooth = chartData[toothId];
+                if (!tooth) return;
+
+                groups.forEach(group => {
+                    (tooth.whole[group] || []).forEach(toolId => {
+                        if (isJawWideTool(toolId)) {
+                            found = { group, toolId };
+                        }
+                    });
+                });
+
+                areas.forEach(area => {
+                    groups.forEach(group => {
+                        (tooth.areas[area][group] || []).forEach(toolId => {
+                            if (isJawWideTool(toolId)) {
+                                found = { group, toolId };
+                            }
+                        });
+                    });
+                });
+            });
+
+            clearJawWideToolMarks(jaw);
+
+            if (found) {
+                const sentinelId = getJawSentinelToothId(jaw);
+                chartData[sentinelId].whole[found.group] = [found.toolId];
+            }
+        });
+    }
+
+    function getJawWideOverlayVisual(tool, color) {
+        if (!tool) {
+            return "";
+        }
+
+        switch (tool.glyph) {
+            case "completeDenture":
+                return `
+                    border:4px double ${color};
+                    box-shadow:none;`;
+
+            case "ccDenture":
+                return `
+                    border:4px dashed ${color};
+                    box-shadow:none;`;
+
+            case "denture":
+                return `
+                    border:4px dotted ${color};
+                    box-shadow:none;`;
+
+            case "splint":
+                return `
+                    border:4px solid ${color};
+                    box-shadow:0 0 0 2px ${hexToRgba(color, 0.18)};`;
+
+            default:
+                return `
+                    border:4px solid ${color};
+                    box-shadow:none;`;
+        }
+    }
+
+    function renderJawWideOverlay(jaw) {
+        const usage = getJawWideToolUsage(jaw);
+
+        if (!usage || !usage.tool) {
+            return "";
+        }
+
+        const color =
+            GROUP_COLORS[usage.group] ||
+            GROUP_COLORS.previous;
+
+        /*
+            The tooth-image rows are explicitly positioned:
+            - upper jaw tooth images: row 2
+            - lower jaw tooth images: row 6
+
+            The outline uses the same row, so the teeth appear inside it.
+            It never extends onto the Lingual / Palatal Surface rows.
+        */
+        const gridRow = jaw === "upper"
+            ? "2"
+            : "6";
+
+        return `
+            <div class="jaw-wide-overlay"
+                 style="
+                    grid-column: 2 / span 16;
+                    grid-row: ${gridRow};
+                    align-self: center;
+                    justify-self: stretch;
+                    ${getJawWideOverlayVisual(usage.tool, color)}
+                 ">
+            </div>`;
+    }
+
+    function getRootOnlyEndodonticMark(tid) {
+        const marks = getAreaMarks(tid, "root");
+
+        return marks.find(mark =>
+            mark.tool &&
+            isRootOnlyEndodonticTool(mark.tool.id)
+        ) || null;
+    }
+
     function getRemainingRootMark(tid) {
         const marks = getAreaMarks(tid, "root");
 
@@ -1843,12 +2152,138 @@
     }
 
     /*
+        Backward compatibility:
+
+        Old saved sessions may contain Remaining Root on Whole Tooth or on
+        a Surface area. Move the final located value to Root only so:
+
+        - The report stores Selected Area = root.
+        - The database stores it in the root area.
+        - No Surface pattern or icon can appear.
+    */
+    function normalizeRemainingRootMark(tid) {
+        const tooth = chartData[tid];
+
+        if (!tooth) {
+            return;
+        }
+
+        const groups = [
+            "disease",
+            "previous",
+            "inside",
+            "others"
+        ];
+
+        const areas = [
+            "buccal",
+            "lingual",
+            "palatal",
+            "mesial",
+            "distal",
+            "occlusal",
+            "root"
+        ];
+
+        let found = null;
+
+        groups.forEach(group => {
+            (tooth.whole?.[group] || [])
+                .forEach(toolId => {
+                    if (toolId === REMAINING_ROOT_TOOL_ID) {
+                        found = {
+                            group,
+                            toolId
+                        };
+                    }
+                });
+        });
+
+        areas.forEach(area => {
+            const slot = tooth.areas?.[area];
+
+            if (!slot) {
+                return;
+            }
+
+            groups.forEach(group => {
+                (slot[group] || [])
+                    .forEach(toolId => {
+                        if (toolId === REMAINING_ROOT_TOOL_ID) {
+                            found = {
+                                group,
+                                toolId
+                            };
+                        }
+                    });
+            });
+        });
+
+        /*
+            Remove all duplicate/legacy Remaining Root values.
+        */
+        groups.forEach(group => {
+            tooth.whole[group] = (tooth.whole[group] || [])
+                .filter(id => id !== REMAINING_ROOT_TOOL_ID);
+        });
+
+        areas.forEach(area => {
+            const slot = tooth.areas?.[area];
+
+            if (!slot) {
+                return;
+            }
+
+            groups.forEach(group => {
+                slot[group] = (slot[group] || [])
+                    .filter(id => id !== REMAINING_ROOT_TOOL_ID);
+            });
+        });
+
+        if (!found) {
+            return;
+        }
+
+        if (!Array.isArray(tooth.areas.root[found.group])) {
+            tooth.areas.root[found.group] = [];
+        }
+
+        tooth.areas.root[found.group].push(
+            REMAINING_ROOT_TOOL_ID
+        );
+    }
+
+    /*
         Remaining Root is displayed only over the anatomical root half
         of the front tooth image.
 
         Upper jaw root = upper half.
         Lower jaw root = lower half.
     */
+    function remainingRootGlyphBody(
+        color,
+        patternId
+    ) {
+        /*
+            Tapered shape:
+            - wide end = crown side
+            - narrow end = root side
+        */
+        return `
+            <path d="
+                M10.4 6.4
+                Q16 4.9 21.6 6.4
+                L18.6 26.8
+                Q16 29.1 13.4 26.8
+                Z"
+                fill="url(#${patternId})"
+                stroke="${color}"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"/>
+        `;
+    }
+
     function remainingRootOverlay(tid, arch) {
         const mark = getRemainingRootMark(tid);
 
@@ -1856,21 +2291,67 @@
             return "";
         }
 
-        const color = GROUP_COLORS[mark.group] || GROUP_COLORS.disease;
-        const iconTop = arch === "upper" ? 0.75 : 11.15;
-        const iconSize = 7.35;
-        const scale = iconSize / 24;
+        const color =
+            GROUP_COLORS[mark.group] ||
+            GROUP_COLORS.disease;
+
+        const patternId =
+            `remaining_root_${tid}_${mark.group}`;
+
+        /*
+            The icon is placed only inside the anatomical Root half.
+
+            Lower jaw:
+                crown is above -> wide part stays at the top.
+
+            Upper jaw:
+                crown is below -> flip vertically, so the wide part faces
+                downward toward the crown and the narrow part faces upward
+                toward the end of the root.
+        */
+        const iconTop =
+            arch === "upper"
+                ? 0.45
+                : 11.00;
+
+        const flipTransform =
+            arch === "upper"
+                ? `translate(0,32) scale(1,-1)`
+                : "";
 
         return `
             <g class="remaining-root-icon"
                pointer-events="none"
-               transform="translate(1.82,${iconTop})">
-                <g transform="scale(${scale})">
-                    ${iconSvg(
+               transform="translate(1.36,${iconTop}) scale(0.27)">
+
+                <defs>
+                    ${glyphPattern(
+                        patternId,
                         "remainingRoot",
+                        color
+                    )}
+                </defs>
+
+                <g ${flipTransform
+                    ? `transform="${flipTransform}"`
+                    : ""}>
+
+                    <!-- White halo keeps the icon clear over the tooth image -->
+                    <path d="
+                        M10.4 6.4
+                        Q16 4.9 21.6 6.4
+                        L18.6 26.8
+                        Q16 29.1 13.4 26.8
+                        Z"
+                        fill="none"
+                        stroke="#ffffff"
+                        stroke-width="3.0"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"/>
+
+                    ${remainingRootGlyphBody(
                         color,
-                        24,
-                        mark.group
+                        patternId
                     )}
                 </g>
             </g>`;
@@ -1909,14 +2390,380 @@
         );
     }
 
+    function rootOnlyEndodonticGlyphBody(glyph, color, patternId) {
+        const H = `fill="url(#${patternId})" stroke="${color}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"`;
+
+        switch (glyph) {
+            case "rct":
+                return `
+                    <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>
+                    <line x1="12" y1="12" x2="20" y2="12" stroke="${color}" stroke-width="1.5"/>
+                    <line x1="13" y1="17" x2="19" y2="17" stroke="${color}" stroke-width="1.5"/>
+                    <line x1="13" y1="22" x2="19" y2="22" stroke="${color}" stroke-width="1.5"/>`;
+            case "vpt":
+                return `
+                    <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>
+                    <path d="M16 10 V24 M11 17 H21"
+                          fill="none"
+                          stroke="${color}"
+                          stroke-width="2.4"
+                          stroke-linecap="round"/>`;
+            case "pulpotomy":
+                return `
+                    <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>
+                    <path d="M11.8 12.2 Q16 9.6 20.2 12.2"
+                          fill="none"
+                          stroke="${color}"
+                          stroke-width="2.2"
+                          stroke-linecap="round"/>
+                    <line x1="13" y1="16.5" x2="19" y2="16.5"
+                          stroke="${color}"
+                          stroke-width="1.7"
+                          stroke-linecap="round"/>`;
+            case "pulpectomy":
+                return `
+                    <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>
+                    <line x1="13" y1="11" x2="19" y2="23"
+                          stroke="${color}"
+                          stroke-width="1.9"
+                          stroke-linecap="round"/>
+                    <line x1="19" y1="11" x2="13" y2="23"
+                          stroke="${color}"
+                          stroke-width="1.9"
+                          stroke-linecap="round"/>`;
+            case "post":
+                return `
+                    <rect x="13" y="6" width="6" height="20" rx="2" ${H}/>
+                    <rect x="10" y="6" width="12" height="5" rx="2" ${H}/>`;
+            default:
+                return `
+                    <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>`;
+        }
+    }
+
+    function rootOnlyEndodonticOverlay(tid, arch) {
+        const mark = getRootOnlyEndodonticMark(tid);
+
+        if (!mark || !mark.tool) {
+            return "";
+        }
+
+        const color =
+            GROUP_COLORS[mark.group] ||
+            GROUP_COLORS.previous;
+
+        const patternId =
+            `root_endo_${tid}_${mark.tool.id}`;
+
+        const iconTop =
+            arch === "upper"
+                ? 0.55
+                : 11.05;
+
+        const glyphFlipTransform =
+            arch === "upper"
+                ? `translate(0,32) scale(1,-1)`
+                : "";
+
+        return `
+            <g class="root-only-endodontic-overlay"
+               pointer-events="none"
+               transform="translate(1.48,${iconTop}) scale(0.26)">
+                <defs>
+                    ${glyphPattern(
+                        patternId,
+                        mark.tool.glyph,
+                        color
+                    )}
+                </defs>
+
+                <g ${glyphFlipTransform ? `transform="${glyphFlipTransform}"` : ""}>
+                    <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z"
+                          fill="none"
+                          stroke="#ffffff"
+                          stroke-width="2.9"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                    ${rootOnlyEndodonticGlyphBody(
+                        mark.tool.glyph,
+                        color,
+                        patternId
+                    )}
+                </g>
+            </g>`;
+    }
+
+    function rejectRootOnlyEndodonticOutsideRoot(label) {
+        showToast(
+            `${label} يعمل على جذر صورة السن فقط، وليس على Surface أو تاج السن.`,
+            "warning"
+        );
+    }
+
+
+    function impactionOutlineStyle(mark, color) {
+        if (!mark || !mark.tool) return "";
+
+        switch (mark.tool.id) {
+            case "impacted_tooth":
+                return `stroke="${color}" stroke-width="0.9" stroke-dasharray="2.2 1.25"`;
+
+            case "soft_tissue_impacted":
+                return `stroke="${color}" stroke-width="0.92" stroke-dasharray="0.8 1.0"`;
+
+            case "partially_erupted":
+                return `stroke="${color}" stroke-width="0.95"`;
+
+            default:
+                return `stroke="${color}" stroke-width="0.9"`;
+        }
+    }
+
+    function impactionToothImageTransform(tid, arch) {
+        const mark = getImpactionMark(tid);
+        if (!mark) return "";
+
+        /*
+            Make the movement clearly visible:
+            - upper jaw teeth move upward toward the bone/gingiva
+            - lower jaw teeth move downward toward the bone/gingiva
+        */
+        const offsetY = arch === "upper"
+            ? -2.35
+            : 2.35;
+
+        return `translate(0 ${offsetY})`;
+    }
+
+    function impactionFrontOverlay(tid) {
+        const mark = getImpactionMark(tid);
+        if (!mark || !mark.tool) return "";
+
+        const color = GROUP_COLORS[mark.group] || GROUP_COLORS.others;
+        let extra = "";
+
+        if (mark.tool.id === "soft_tissue_impacted") {
+            extra = `
+                <path d="M0.9 16.55 Q5.5 13.25 10.1 16.55"
+                      fill="none"
+                      stroke="${color}"
+                      stroke-width="0.78"
+                      stroke-linecap="round"/>
+                <path d="M2.1 17.55 Q5.5 15.55 8.9 17.55"
+                      fill="none"
+                      stroke="${color}"
+                      stroke-width="0.6"
+                      stroke-linecap="round"/>`;
+        }
+
+        if (mark.tool.id === "partially_erupted") {
+            extra = `
+                <path d="M1.15 15.85 Q5.5 14.1 9.85 15.85"
+                      fill="none"
+                      stroke="${color}"
+                      stroke-width="0.74"
+                      stroke-linecap="round"/>
+                <path d="M3.65 13.8 L7.35 13.8"
+                      fill="none"
+                      stroke="${color}"
+                      stroke-width="0.62"
+                      stroke-linecap="round"/>`;
+        }
+
+        return `
+            <g class="impaction-front-overlay" pointer-events="none">
+                <ellipse cx="5.5"
+                         cy="10.5"
+                         rx="4.95"
+                         ry="9.65"
+                         fill="none"
+                         ${impactionOutlineStyle(mark, color)}/>
+                ${extra}
+            </g>`;
+    }
+
+    function miniGapBadgeOverlay(tid, arch) {
+        const mark = getMiniGapBadgeMark(tid);
+        if (!mark || !mark.tool) return "";
+
+        const color = GROUP_COLORS[mark.group] || GROUP_COLORS.disease;
+        const translate = arch === "upper"
+            ? "translate(3.05,18.95)"
+            : "translate(3.05,-2.95)";
+
+        return `
+            <g class="mini-gap-badge" pointer-events="all" transform="${translate}">
+                <title>${mark.tool.label}</title>
+                <g class="gap-badge-hover">
+                    <rect x="-0.55"
+                          y="-0.25"
+                          width="5.95"
+                          height="5.95"
+                          rx="1.5"
+                          fill="#ffffff"
+                          fill-opacity="0.96"
+                          stroke="${color}"
+                          stroke-width="0.3"/>
+                    <g transform="translate(0.25,0.25) scale(0.22)">
+                        ${iconSvg(mark.tool.glyph, color, 24, mark.group)}
+                    </g>
+                </g>
+            </g>`;
+    }
+
     const WHOLE_TOOTH_DISEASE_TOOL_IDS = [
         "periapical_lesion",
         "crack_tooth",
-        "tooth_mobility"
+        "tooth_mobility",
+        "surface_loss"
     ];
 
     function isWholeToothDiseaseTool(toolId = selectedToolId) {
         return WHOLE_TOOTH_DISEASE_TOOL_IDS.includes(toolId);
+    }
+
+    const MINI_GAP_BADGE_TOOL_IDS = [
+        // Crack Tooth intentionally has no small popup icon.
+        "tooth_mobility",
+        "surface_loss"
+    ];
+
+    function isMiniGapBadgeTool(toolId) {
+        return MINI_GAP_BADGE_TOOL_IDS.includes(toolId);
+    }
+
+    const IMPACTION_TOOL_IDS = [
+        "impacted_tooth",
+        "soft_tissue_impacted",
+        "partially_erupted"
+    ];
+
+    function isImpactionTool(toolId = selectedToolId) {
+        return IMPACTION_TOOL_IDS.includes(toolId);
+    }
+
+    function getImpactionMark(tid) {
+        const tooth = chartData[tid];
+        if (!tooth) return null;
+
+        const groups = ["disease", "previous", "inside", "others"];
+
+        for (const group of groups) {
+            const toolId = (tooth.whole?.[group] || [])
+                .find(id => IMPACTION_TOOL_IDS.includes(id));
+
+            if (toolId) {
+                return { group, toolId, tool: getTool(toolId) };
+            }
+        }
+
+        return null;
+    }
+
+    function clearImpactionMarks(tid) {
+        const tooth = chartData[tid];
+        if (!tooth) return;
+
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas = ["buccal", "lingual", "palatal", "mesial", "distal", "occlusal", "root"];
+
+        groups.forEach(group => {
+            tooth.whole[group] = (tooth.whole[group] || [])
+                .filter(id => !IMPACTION_TOOL_IDS.includes(id));
+        });
+
+        areas.forEach(area => {
+            const slot = tooth.areas?.[area];
+            if (!slot) return;
+            groups.forEach(group => {
+                slot[group] = (slot[group] || [])
+                    .filter(id => !IMPACTION_TOOL_IDS.includes(id));
+            });
+        });
+    }
+
+    function applyImpactionTool(tid, tool) {
+        const tooth = chartData[tid];
+        if (!tooth || !tool || !isImpactionTool(tool.id)) return false;
+
+        clearImpactionMarks(tid);
+
+        if (!Array.isArray(tooth.whole[tool.group])) {
+            tooth.whole[tool.group] = [];
+        }
+
+        tooth.whole[tool.group].push(tool.id);
+        return true;
+    }
+
+    function normalizeImpactionMark(tid) {
+        const tooth = chartData[tid];
+        if (!tooth) return;
+
+        const groups = ["disease", "previous", "inside", "others"];
+        const areas = ["buccal", "lingual", "palatal", "mesial", "distal", "occlusal", "root"];
+        let found = null;
+
+        groups.forEach(group => {
+            (tooth.whole?.[group] || []).forEach(toolId => {
+                if (IMPACTION_TOOL_IDS.includes(toolId)) {
+                    found = { group, toolId };
+                }
+            });
+        });
+
+        areas.forEach(area => {
+            const slot = tooth.areas?.[area];
+            if (!slot) return;
+
+            groups.forEach(group => {
+                (slot[group] || []).forEach(toolId => {
+                    if (IMPACTION_TOOL_IDS.includes(toolId)) {
+                        found = { group, toolId };
+                    }
+                });
+            });
+        });
+
+        clearImpactionMarks(tid);
+
+        if (found) {
+            if (!Array.isArray(tooth.whole[found.group])) {
+                tooth.whole[found.group] = [];
+            }
+
+            tooth.whole[found.group].push(found.toolId);
+        }
+    }
+
+    function getMiniGapBadgeMark(tid) {
+        const diseaseMark = getWholeToothDiseaseMark(tid);
+
+        if (
+            diseaseMark &&
+            diseaseMark.tool &&
+            ["tooth_mobility", "surface_loss"].includes(diseaseMark.tool.id)
+        ) {
+            return diseaseMark;
+        }
+
+        /*
+            Backward compatibility for older saved sessions where
+            Tooth Surface Loss was stored on a Surface area.
+        */
+        const areas = ["buccal", "lingual", "palatal", "mesial", "distal", "occlusal"];
+
+        for (const area of areas) {
+            const found = getAreaMarks(tid, area).find(mark =>
+                mark.tool && mark.tool.id === "surface_loss"
+            );
+
+            if (found) {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     /*
@@ -1989,8 +2836,9 @@
         }
 
         /*
-            Periapical Lesion, Crack Tooth, and Tooth Mobility use large
-            whole-tooth graphics. Keep only the most recently selected one.
+            These Disease tools are stored once on Whole Tooth.
+            Keep only the most recently selected one. Tooth Surface Loss is
+            rendered as a small gap badge only, without a tooth overlay.
         */
         removeWholeToothDiseaseMarks(tid);
 
@@ -2155,10 +3003,76 @@
     function applyToothAppliance(tid, tool) {
         const tooth = chartData[tid];
 
-        if (!tooth || !tool || !isToothApplianceTool(tool.id)) {
+        if (
+            !tooth ||
+            !tool ||
+            !isToothApplianceTool(tool.id)
+        ) {
             return false;
         }
 
+        /*
+            Bridge is a five-Surface treatment.
+
+            Store the same Bridge tool in:
+            Upper: buccal, palatal, mesial, distal, occlusal
+            Lower: buccal, lingual, mesial, distal, occlusal
+
+            This makes:
+            - ChartDataJson contain five real areas
+            - ReportJson show the five areas in one grouped report
+            - DentalToothData able to save five rows
+        */
+        if (isBridgeTool(tool.id)) {
+            const bridgeAreas =
+                getToothApplianceSurfaceAreas(tid);
+
+            /*
+                Respect the one-icon-per-area rule before writing Bridge
+                into all five Surface sections.
+            */
+            for (const area of bridgeAreas) {
+                const conflict = getAreaIconConflict(
+                    tid,
+                    area,
+                    tool
+                );
+
+                if (conflict) {
+                    showAreaIconConflict(
+                        tid,
+                        area,
+                        tool,
+                        conflict
+                    );
+                    return false;
+                }
+            }
+
+            removeAllToothAppliances(tid);
+
+            bridgeAreas.forEach(area => {
+                const slot = tooth.areas?.[area];
+
+                if (!slot) {
+                    return;
+                }
+
+                if (!Array.isArray(slot[tool.group])) {
+                    slot[tool.group] = [];
+                }
+
+                if (!slot[tool.group].includes(tool.id)) {
+                    slot[tool.group].push(tool.id);
+                }
+            });
+
+            return true;
+        }
+
+        /*
+            Space Maintainer keeps its existing Whole Tooth behavior.
+        */
         if (
             !canApplyLockedToolToArea(
                 tid,
@@ -2233,50 +3147,120 @@
         const tooth = chartData[tid];
         if (!tooth) return;
 
-        const groups = ["disease", "previous", "inside", "others"];
+        const groups = [
+            "disease",
+            "previous",
+            "inside",
+            "others"
+        ];
         const areas = [
-            "buccal", "lingual", "palatal",
-            "mesial", "distal", "occlusal", "root"
+            "buccal",
+            "lingual",
+            "palatal",
+            "mesial",
+            "distal",
+            "occlusal",
+            "root"
         ];
 
         const found = [];
 
         groups.forEach(group => {
-            (tooth.whole?.[group] || []).forEach(toolId => {
-                if (TOOTH_APPLIANCE_TOOL_IDS.includes(toolId)) {
-                    found.push({ group, toolId });
-                }
-            });
+            (tooth.whole?.[group] || [])
+                .forEach(toolId => {
+                    if (
+                        TOOTH_APPLIANCE_TOOL_IDS
+                            .includes(toolId)
+                    ) {
+                        found.push({
+                            group,
+                            toolId
+                        });
+                    }
+                });
         });
 
         areas.forEach(area => {
             const slot = tooth.areas?.[area];
-            if (!slot) return;
+
+            if (!slot) {
+                return;
+            }
 
             groups.forEach(group => {
-                (slot[group] || []).forEach(toolId => {
-                    if (TOOTH_APPLIANCE_TOOL_IDS.includes(toolId)) {
-                        found.push({ group, toolId });
-                    }
-                });
+                (slot[group] || [])
+                    .forEach(toolId => {
+                        if (
+                            TOOTH_APPLIANCE_TOOL_IDS
+                                .includes(toolId)
+                        ) {
+                            found.push({
+                                group,
+                                toolId
+                            });
+                        }
+                    });
             });
         });
 
-        if (!found.length) return;
+        if (!found.length) {
+            return;
+        }
 
         /*
-            When an old session contains both Previous and In-Hospital values,
-            retain only one. The final located value is used.
+            Keep the last located appliance, remove legacy duplicates,
+            then store it using its correct modern structure.
         */
-        const chosen = found[found.length - 1];
+        const chosen =
+            found[found.length - 1];
 
         removeAllToothAppliances(tid);
 
-        if (!Array.isArray(tooth.whole[chosen.group])) {
+        if (isBridgeTool(chosen.toolId)) {
+            getToothApplianceSurfaceAreas(tid)
+                .forEach(area => {
+                    const slot =
+                        tooth.areas?.[area];
+
+                    if (!slot) {
+                        return;
+                    }
+
+                    if (
+                        !Array.isArray(
+                            slot[chosen.group]
+                        )
+                    ) {
+                        slot[chosen.group] = [];
+                    }
+
+                    if (
+                        !slot[chosen.group]
+                            .includes(chosen.toolId)
+                    ) {
+                        slot[chosen.group].push(
+                            chosen.toolId
+                        );
+                    }
+                });
+
+            return;
+        }
+
+        /*
+            Space Maintainer stays on Whole Tooth.
+        */
+        if (
+            !Array.isArray(
+                tooth.whole[chosen.group]
+            )
+        ) {
             tooth.whole[chosen.group] = [];
         }
 
-        tooth.whole[chosen.group].push(chosen.toolId);
+        tooth.whole[chosen.group].push(
+            chosen.toolId
+        );
     }
 
     function getPairConnectorColor(leftMark, rightMark) {
@@ -2733,12 +3717,11 @@
     }
 
     /*
-        Draw Periapical Lesion, Crack Tooth, or Tooth Mobility only over
-        the front tooth image.
+        Draw whole-tooth disease marks over the front tooth image.
 
-        These tools are intentionally not rendered on Lingual / Palatal
-        Surface. Tooth Mobility uses its tidy tooth-shaped mark without the
-        horizontal arrow after application.
+        Tooth Mobility and Tooth Surface Loss are badge-only:
+        they are saved on the whole tooth but are not drawn over the tooth.
+        Their small icon appears only between the tooth and the Surface.
     */
     function wholeToothDiseaseFrontOverlay(tid, arch) {
         const mark = getWholeToothDiseaseMark(tid);
@@ -2746,6 +3729,17 @@
 
         const color = GROUP_COLORS[mark.group] || GROUP_COLORS.disease;
         const glyph = mark.tool.glyph;
+
+        /*
+            Tooth Mobility and Tooth Surface Loss are deliberately badge-only:
+            no icon, fill, pattern, or outline is drawn over the tooth image.
+        */
+        if (
+            mark.tool.id === "surface_loss" ||
+            mark.tool.id === "tooth_mobility"
+        ) {
+            return "";
+        }
 
         if (glyph === "mobility") {
             const patternId = `front_mobility_${tid}`;
@@ -2784,31 +3778,33 @@
         }
 
         if (glyph === "crack") {
+            const crackTransform = "translate(2.25,3.2) scale(0.62)";
+
             return `
-                <g class="whole-disease-front crack" pointer-events="none">
-                    <!-- White halo -->
+                <g class="whole-disease-front crack" pointer-events="none" opacity="0.96">
                     <path d="M6.25 1.25
                              L4.35 5.25
                              L6.25 8.15
                              L4.15 11.45
                              L6.35 14.55
                              L4.65 19.75"
+                          transform="${crackTransform}"
                           fill="none"
                           stroke="#ffffff"
-                          stroke-width="1.65"
+                          stroke-width="1.55"
                           stroke-linecap="round"
                           stroke-linejoin="round"/>
 
-                    <!-- Crack -->
                     <path d="M6.25 1.25
                              L4.35 5.25
                              L6.25 8.15
                              L4.15 11.45
                              L6.35 14.55
                              L4.65 19.75"
+                          transform="${crackTransform}"
                           fill="none"
                           stroke="${color}"
-                          stroke-width="0.88"
+                          stroke-width="1.05"
                           stroke-linecap="round"
                           stroke-linejoin="round"/>
                 </g>`;
@@ -2952,14 +3948,28 @@
             - Periapical Lesion
             - Crack Tooth
             - Tooth Mobility
+            - Tooth Surface Loss
 
             Do not inject them into any Lingual / Palatal Surface section.
         */
 
-        if (area === applianceVisualArea) {
-            const applianceMark = getToothApplianceMark(tid);
+        const applianceMark = getToothApplianceMark(tid);
 
-            if (applianceMark && applianceMark.tool) {
+        if (applianceMark && applianceMark.tool) {
+            /*
+                Bridge:
+                shade all five Surface sections.
+
+                Space Maintainer:
+                keep its existing single matching Surface behavior.
+            */
+            const shouldShowApplianceHere =
+                isBridgeTool(applianceMark.tool.id)
+                    ? getToothApplianceSurfaceAreas(tid)
+                        .includes(area)
+                    : area === applianceVisualArea;
+
+            if (shouldShowApplianceHere) {
                 result.push({
                     group: applianceMark.group,
                     tool: applianceMark.tool
@@ -2968,6 +3978,25 @@
         }
 
         directMarks.forEach(mark => {
+            /*
+                These tools must not render inside Lingual / Palatal Surface:
+                - Remaining Root
+                - The three Impaction tools
+                - Tooth Surface Loss (small gap icon only)
+
+                Their stored data remains available for saving and reporting.
+            */
+            if (
+                mark.tool &&
+                (
+                    isRemainingRootTool(mark.tool.id) ||
+                    isImpactionTool(mark.tool.id) ||
+                    mark.tool.id === "surface_loss"
+                )
+            ) {
+                return;
+            }
+
             const alreadyExists = result.some(existing =>
                 existing.group === mark.group &&
                 existing.tool &&
@@ -2989,6 +4018,15 @@
         applianceVisualArea,
         remainingRootVisualArea
     ) {
+        /*
+            Tooth Surface Loss is represented by the small icon between
+            the Surface diagram and the tooth image only. It must not add
+            a dark selection border or any other visual effect to Surface.
+        */
+        if (selectedToolId === "surface_loss") {
+            return false;
+        }
+
         /*
             Selection highlight is view-specific:
 
@@ -3030,7 +4068,10 @@
         */
         if (
             selectedWhole &&
-            isWholeToothDiseaseTool()
+            (
+                isWholeToothDiseaseTool() ||
+                isImpactionTool()
+            )
         ) {
             return false;
         }
@@ -3052,7 +4093,12 @@
     }
 
     function isSelected(tid, area) {
-        return selectedTarget && selectedTarget.toothId === tid && selectedTarget.area === area;
+        return (
+            selectedTarget &&
+            !selectedTarget.isJaw &&
+            selectedTarget.toothId === tid &&
+            selectedTarget.area === area
+        );
     }
 
     /*
@@ -3288,6 +4334,20 @@
             );
         }
 
+        if (isJawWideTool(toolId)) {
+            showToast(
+                "🦷 اختر صورة أي سن من الفك العلوي أو السفلي ليتم تحديد الفك بالكامل، بدون أي تأثير على Surface.",
+                "info"
+            );
+        }
+
+        if (isImpactionTool(toolId)) {
+            showToast(
+                "🦷 اختر صورة السن نفسها. سيتم تحريك السن باتجاه اللثة/العظم ورسم دائرة مميزة حوله.",
+                "info"
+            );
+        }
+
         renderAll();
     }
 
@@ -3383,7 +4443,10 @@
     //  OVERLAYS & BADGES
     // ════════════════════════════════════════════════════════════════
     function wholeToothOverlayFront(tid) {
-        const wm = getWholeMarks(tid);
+        const wm = getWholeMarks(tid)
+            .filter(mark =>
+                !isJawWideTool(mark.tool.id)
+            );
         if (!wm.length && !chartData[tid].whole.note) return "";
         let p = "";
         const extracted  = wm.find(m=>m.tool.glyph==="extracted");
@@ -3418,7 +4481,9 @@
                 !isToothApplianceTool(mark.tool.id) &&
                 !isCrownTool(mark.tool.id) &&
                 !isWholeToothDiseaseTool(mark.tool.id) &&
-                !isPermanentDeciduousTool(mark.tool.id)
+                !isImpactionTool(mark.tool.id) &&
+                !isPermanentDeciduousTool(mark.tool.id) &&
+                !isJawWideTool(mark.tool.id)
             );
 
         if (!wm.length && !chartData[tid].whole.note) return "";
@@ -3614,9 +4679,19 @@
         const toothOffsetY =
             (21 - (21 * toothScale)) / 2;
 
-        const toothVisualTransform = shouldShrinkDeciduous
+        const baseToothVisualTransform = shouldShrinkDeciduous
             ? `translate(${toothOffsetX} ${toothOffsetY}) scale(${toothScale})`
             : "";
+
+        const impactionTransform = impactionToothImageTransform(
+            tid,
+            arch
+        );
+
+        const toothVisualTransform = [
+            baseToothVisualTransform,
+            impactionTransform
+        ].filter(Boolean).join(" ");
 
         // Preserve the original image orientation behavior.
         const imgTransform = (!useUnflippedImage && arch === "upper")
@@ -3626,6 +4701,8 @@
         const applianceMode     = isToothApplianceTool();
         const crownMode         = isCrownTool();
         const remainingRootMode = isRemainingRootTool();
+        const rootEndoMode      = isRootOnlyEndodonticTool();
+        const impactionMode     = isImpactionTool();
         const extractedMode     = isToothExtracted(tid);
 
         /*
@@ -3770,6 +4847,39 @@
                 <title>Remaining Root is allowed on Root only</title>
               </rect>`;
 
+        const rootEndodonticLabel =
+            selectedToolId && getTool(selectedToolId)
+                ? getTool(selectedToolId).label
+                : "Root treatment";
+
+        const rootEndodonticHitAreas = `
+              <rect x="0.5"
+                    y="${rootY}"
+                    width="10"
+                    height="${splitY}"
+                    fill="transparent"
+                    pointer-events="all"
+                    stroke="${isFrontImageAreaSelected(tid, 'root') ? '#111827' : 'none'}"
+                    stroke-width="0.42"
+                    rx="1.2"
+                    onclick="selectArea('${tid}','root','front')"
+                    style="cursor:pointer">
+                <title>${rootEndodonticLabel} — Root only</title>
+              </rect>
+
+              <rect x="0.5"
+                    y="${toothY}"
+                    width="10"
+                    height="${splitY}"
+                    fill="transparent"
+                    pointer-events="all"
+                    stroke="none"
+                    rx="1.2"
+                    onclick="rejectRootOnlyEndodonticOutsideRoot('${rootEndodonticLabel}')"
+                    style="cursor:not-allowed">
+                <title>${rootEndodonticLabel} is allowed on Root only</title>
+              </rect>`;
+
         const extractedHitArea = `
               <rect x="0"
                     y="0"
@@ -3781,6 +4891,27 @@
                     onclick="rejectExtractedToothAction('${tid}')"
                     style="cursor:not-allowed">
                 <title>This tooth is extracted</title>
+              </rect>`;
+
+        /*
+            These three tools apply to the complete front tooth image.
+            A dedicated full-size hit area prevents the click from being
+            treated as Buccal / Lingual / Palatal and makes the whole tooth
+            reliably clickable.
+        */
+        const impactionHitArea = `
+              <rect x="0"
+                    y="0"
+                    width="11"
+                    height="21"
+                    fill="transparent"
+                    pointer-events="all"
+                    stroke="${isFrontImageAreaSelected(tid, 'whole') ? '#111827' : 'none'}"
+                    stroke-width="0.35"
+                    rx="1.4"
+                    onclick="selectArea('${tid}','whole','front')"
+                    style="cursor:pointer">
+                <title>${selectedToolId && getTool(selectedToolId) ? getTool(selectedToolId).label : 'Impaction Tool'} — Whole Tooth</title>
               </rect>`;
 
         return `
@@ -3814,11 +4945,15 @@
                       : `
                           ${wholeToothDiseaseFrontOverlay(tid, arch)}
                           ${crownTreatmentOverlay(tid, arch, splitY)}
+                          ${rootOnlyEndodonticOverlay(tid, arch)}
                           ${toothApplianceOverlay(tid, arch)}
                           ${remainingRootHideOtherHalfOverlay(tid, arch, splitY)}
                           ${remainingRootOverlay(tid, arch)}
+                          ${impactionFrontOverlay(tid)}
                         `}
               </g>
+
+              ${extractedMode ? "" : miniGapBadgeOverlay(tid, arch)}
 
               ${extractedMode
                     ? extractedHitArea
@@ -3826,12 +4961,20 @@
                         remainingRootMode
                             ? remainingRootHitAreas
                             : (
-                                crownMode
-                                    ? crownHitAreas
+                                rootEndoMode
+                                    ? rootEndodonticHitAreas
                                     : (
-                                        applianceMode
-                                            ? applianceHitAreas
-                                            : normalHitAreas
+                                        crownMode
+                                            ? crownHitAreas
+                                            : (
+                                                applianceMode
+                                                    ? applianceHitAreas
+                                                    : (
+                                                        impactionMode
+                                                            ? impactionHitArea
+                                                            : normalHitAreas
+                                                      )
+                                              )
                                       )
                               )
                       )}
@@ -4103,9 +5246,13 @@
             isPermanentDeciduousTool(tool.id) ||
             isExtractedTool(tool.id) ||
             isRemainingRootTool(tool.id) ||
+            isRootOnlyEndodonticTool(tool.id) ||
+            isJawWideTool(tool.id) ||
+            isImpactionTool(tool.id) ||
             isWholeToothDiseaseTool(tool.id) ||
             isCrownTool(tool.id) ||
-            isToothApplianceTool(tool.id)
+            isToothApplianceTool(tool.id) ||
+            tool.id === "surface_loss"
         );
     }
 
@@ -4139,11 +5286,98 @@
         }
 
         /*
+            The three impaction tools are front-image only.
+
+            Clicking Lingual / Palatal Surface while one of them is selected
+            must not change the selected area, add a pattern, add a badge,
+            or make any visual change on Surface.
+        */
+        if (
+            source === "surface" &&
+            currentTool &&
+            isImpactionTool(currentTool.id)
+        ) {
+            showToast(
+                `${currentTool.label} يعمل على صورة السن فقط.`,
+                "warning"
+            );
+            return;
+        }
+
+        /*
+            Tooth Surface Loss rules:
+            1. It works from the front tooth image only.
+            2. It is stored on the clicked tooth side/area for reporting.
+            3. It shows only the small icon between the Surface diagram and
+               the tooth image.
+            4. It must not create any visual change on Surface itself.
+        */
+        if (
+            source === "surface" &&
+            currentTool &&
+            currentTool.id === "surface_loss"
+        ) {
+            showToast(
+                "Tooth Surface Loss يعمل من صورة السن فقط، وسيظهر كأيقونة صغيرة بين السن والـ Surface.",
+                "warning"
+            );
+            return;
+        }
+
+        /*
             A new click starts a new visual selection.
             "surface" means the Lingual / Palatal five-part diagram.
         */
         lastSelectionSource = source;
         hideSurfaceSelectionHighlight = false;
+
+        /*
+            Jaw-wide denture / splint tools:
+
+            - Complete Denture
+            - Cobalt Chromium Partial Denture
+            - Partial Acrylic Denture
+            - Stabilization Splint
+
+            They work only from the tooth image, never from Surface.
+            Clicking any tooth image in the upper/lower arch applies the tool
+            to the whole jaw, using one rounded outline around the tooth-image row only.
+        */
+        if (
+            currentTool &&
+            isJawWideTool(currentTool.id)
+        ) {
+            if (source !== "front") {
+                showToast(
+                    `${currentTool.label} يعمل على الفك بالكامل من صورة السن فقط، وليس من Surface.`,
+                    "warning"
+                );
+                return;
+            }
+
+            const jaw = getJawFromToothId(tid);
+            const applied = applyJawWideTool(
+                jaw,
+                currentTool
+            );
+
+            if (applied) {
+                selectedTarget = {
+                    toothId: getJawSentinelToothId(jaw),
+                    area: "whole",
+                    isJaw: true,
+                    jaw
+                };
+
+                showToast(
+                    `${currentTool.label} تم تطبيقه على ${getJawDisplayName(jaw)}.`,
+                    "success"
+                );
+            }
+
+            renderAll();
+            return;
+        }
 
         /*
             Once a tooth is marked as Extracted Tooth, no chart action is
@@ -4155,13 +5389,55 @@
         }
 
         /*
+            Impacted Tooth / Soft Tissue Impacted Tooth /
+            Partially Erupted Tooth rules:
+            1. They work from the front tooth image only.
+            2. They affect the whole tooth image, not Surface.
+            3. The tooth is moved slightly toward the gingiva / bone.
+            4. Each icon gets its own distinct outline style.
+        */
+        if (
+            currentTool &&
+            isImpactionTool(currentTool.id)
+        ) {
+            if (source !== "front") {
+                showToast(
+                    `${currentTool.label} يعمل من صورة السن فقط، وليس من Surface.`,
+                    "warning"
+                );
+                return;
+            }
+
+            const applied = applyImpactionTool(
+                tid,
+                currentTool
+            );
+
+            if (applied) {
+                selectedTarget = {
+                    toothId: tid,
+                    area: "whole"
+                };
+
+                showToast(
+                    `${currentTool.label} تم تطبيقه على السن ${tid}.`,
+                    "success"
+                );
+            }
+
+            renderAll();
+            return;
+        }
+
+        /*
             Teeth Change Permanent/Deciduous rules:
             1. It is applied by clicking the front tooth image only.
             2. It is allowed only for tooth positions 1 through 5.
             3. The tooth becomes deciduous / temporary.
             4. The same tooth image is shown slightly smaller.
-            5. Teeth 6, 7, and 8 always remain permanent.
-            6. It is stored once on the whole tooth for saving/reporting.
+            5. The displayed number above that tooth changes from 1-5 to A-E.
+            6. Teeth 6, 7, and 8 always remain permanent.
+            7. It is stored once on the whole tooth for saving/reporting.
         */
         if (
             currentTool &&
@@ -4198,6 +5474,46 @@
 
                 showToast(
                     `تم تحويل السن ${tid} إلى سن لبني وتصغير حجمه.`,
+                    "success"
+                );
+            }
+
+            renderAll();
+            return;
+        }
+
+        /*
+            Tooth Surface Loss behaves like Tooth Mobility when applying:
+            - Click the front tooth image.
+            - Store once on Whole Tooth.
+            - Show only the small badge between the tooth and Surface.
+            - Do not draw an icon over the tooth and do not affect Surface.
+        */
+        if (
+            currentTool &&
+            currentTool.id === "surface_loss"
+        ) {
+            if (source !== "front") {
+                showToast(
+                    "Tooth Surface Loss يعمل من صورة السن فقط، وليس من Surface.",
+                    "warning"
+                );
+                return;
+            }
+
+            const applied = applyWholeToothDisease(
+                tid,
+                currentTool
+            );
+
+            if (applied) {
+                selectedTarget = {
+                    toothId: tid,
+                    area: "whole"
+                };
+
+                showToast(
+                    `تم تطبيق ${currentTool.label} على السن ${tid}. ستظهر الأيقونة الصغيرة فقط بين السن والـ Surface.`,
                     "success"
                 );
             }
@@ -4262,8 +5578,10 @@
             1. It works only from the anatomical Root half of the front image.
             2. It does not apply from Lingual / Palatal Surface.
             3. It does not display any Surface icon, pattern, or highlight.
-            4. The opposite broken part of the tooth remains hidden as before.
-            5. The value is stored in Root for reporting and database saving.
+            4. The tapered icon's wide side faces the crown.
+            5. The tapered icon's narrow side faces the root.
+            6. The opposite broken part of the tooth remains hidden as before.
+            7. The value is stored in Root for reporting and database saving.
         */
         if (
             currentTool &&
@@ -4290,6 +5608,46 @@
 
             showToast(
                 `Remaining Root تم وضعه على جذر صورة السن ${tid}.`,
+                "success"
+            );
+
+            renderAll();
+            return;
+        }
+
+        /*
+            Root-only Post / Vital Pulp Therapy / Root Canal Treatment rules:
+
+            1. They work only from the anatomical Root half of the front image.
+            2. Clicking any Surface area does nothing.
+            3. They do not create any Surface shading or effect.
+            4. They are stored in the root area for report/database saving.
+        */
+        if (
+            currentTool &&
+            isRootOnlyEndodonticTool(currentTool.id)
+        ) {
+            const allowedFromFrontRoot =
+                source === "front" &&
+                area === "root";
+
+            if (!allowedFromFrontRoot) {
+                showToast(
+                    `${currentTool.label} يعمل على جذر صورة السن فقط، وليس على Surface أو تاج السن.`,
+                    "warning"
+                );
+                return;
+            }
+
+            selectedTarget = {
+                toothId: tid,
+                area: "root"
+            };
+
+            applyToolToSelectedTarget();
+
+            showToast(
+                `${currentTool.label} تم وضعه على جذر السن ${tid}.`,
                 "success"
             );
 
@@ -4392,6 +5750,10 @@
 
         /*
             Bridge / Space Maintainer rules:
+
+            - Bridge shades and stores all five Surface sections.
+            - ReportJson groups those five areas into one Bridge report.
+            - Space Maintainer keeps its current behavior unless changed later.
             1. Apply from the crown/tooth half of the front image.
             2. Or apply from the upper Lingual / Palatal segment.
             3. Root is forbidden.
@@ -4610,6 +5972,26 @@
             return;
         }
 
+        /*
+            Bridge is also stored in five Surface areas but selected as one
+            action from the tooth image.
+        */
+        if (
+            selectedToolId &&
+            isBridgeTool(selectedToolId) &&
+            getToothApplianceMark(tid, "bridge")
+        ) {
+            removeAllToothAppliances(tid);
+
+            showToast(
+                `تم حذف Bridge من المناطق الخمس للسن ${tid}.`,
+                "success"
+            );
+
+            renderAll();
+            return;
+        }
+
         if (selectedTarget.area === "whole") {
             chartData[tid].whole = makeSlot();
             chartData[tid].isDeciduous = false;
@@ -4765,9 +6147,15 @@
     }
 
     function getReportAreaLabel(area) {
-        return area === "whole"
-            ? "whole tooth"
-            : area;
+        if (area === "whole") {
+            return "whole tooth";
+        }
+
+        if (area === "jaw") {
+            return "whole jaw";
+        }
+
+        return area;
     }
 
     function getReportAreasText(areas) {
@@ -4809,23 +6197,36 @@
                 groupedReport[toolId] = {};
             }
 
+            const isJawTool =
+                isJawWideTool(toolId) &&
+                area === "whole";
+
+            const jaw = isJawTool
+                ? getJawFromToothId(toothId)
+                : null;
+
             /*
                 Tool IDs already identify Previous/In-Hospital variants,
                 but the group remains part of the key for safe old-session
                 compatibility.
             */
-            const usageKey = `${toothId}|${group}`;
+            const usageKey = isJawTool
+                ? `jaw|${jaw}|${group}`
+                : `${toothId}|${group}`;
 
             if (!groupedReport[toolId][usageKey]) {
                 groupedReport[toolId][usageKey] = {
                     toolId,
                     toothId,
                     group,
-                    areas: []
+                    areas: ["whole"],
+                    isJaw: isJawTool,
+                    jaw
                 };
             }
 
             if (
+                !isJawTool &&
                 !groupedReport[toolId][usageKey].areas.includes(area)
             ) {
                 groupedReport[toolId][usageKey].areas.push(area);
@@ -4913,6 +6314,22 @@
             }
 
             report[toolId].forEach(usage => {
+                if (usage.isJaw) {
+                    items.push({
+                        selectedTool: tool.label,
+                        toolId: tool.id,
+                        group: usage.group,
+                        selectedJaw: getJawDisplayName(
+                            usage.jaw
+                        ),
+                        selectedAreas: [
+                            "whole jaw"
+                        ]
+                    });
+
+                    return;
+                }
+
                 items.push({
                     selectedTool: tool.label,
                     toolId: tool.id,
@@ -4959,7 +6376,11 @@
         selectedToolId = toolId;
         selectedTarget = {
             toothId,
-            area: areas[0] || "whole"
+            area: areas[0] || "whole",
+            isJaw: isJawWideTool(toolId),
+            jaw: isJawWideTool(toolId)
+                ? getJawFromToothId(toothId)
+                : null
         };
         reportToolId = null;
 
@@ -5041,7 +6462,9 @@
                         toolId,
                         group: usage.group,
                         toothId,
-                        areas: usage.areas
+                        areas: usage.areas,
+                        isJaw: usage.isJaw,
+                        jaw: usage.jaw
                     });
                 });
         });
@@ -5282,18 +6705,26 @@
                         </div>
 
                         <div class="key">
-                            Selected Tooth
+                            ${row.isJaw ? "Selected Jaw" : "Selected Tooth"}
                         </div>
                         <div class="value"
                              style="margin-bottom:6px;">
-                            ${escapeHtml(row.toothId)}
+                            ${escapeHtml(
+                                row.isJaw
+                                    ? getJawDisplayName(row.jaw)
+                                    : row.toothId
+                            )}
                         </div>
 
                         <div class="key">
                             Selected Area
                         </div>
                         <div class="value">
-                            ${escapeHtml(areasText)}
+                            ${escapeHtml(
+                                row.isJaw
+                                    ? "whole jaw"
+                                    : areasText
+                            )}
                         </div>
                     </div>
 
@@ -5328,18 +6759,41 @@
             ? selectedTool.label
             : "—";
 
+        const selectedJaw =
+            selectedTarget &&
+            (
+                selectedTarget.isJaw ||
+                (
+                    selectedTool &&
+                    isJawWideTool(selectedTool.id)
+                )
+            )
+                ? (
+                    selectedTarget.jaw ||
+                    getJawFromToothId(
+                        selectedTarget.toothId
+                    )
+                  )
+                : null;
+
         document.getElementById(
             "selectedToothLabel"
         ).textContent = selectedTarget
-            ? selectedTarget.toothId
+            ? (
+                selectedJaw
+                    ? getJawDisplayName(selectedJaw)
+                    : selectedTarget.toothId
+              )
             : "—";
 
         let selectedAreasText = "—";
 
         if (selectedTarget) {
-            selectedAreasText = getReportAreaLabel(
-                selectedTarget.area
-            );
+            selectedAreasText = selectedJaw
+                ? "whole jaw"
+                : getReportAreaLabel(
+                    selectedTarget.area
+                );
 
             if (selectedToolId) {
                 const selectedToolReport =
@@ -5351,7 +6805,10 @@
                         selectedTarget.toothId
                     );
 
-                if (
+                if (groupedUsage?.isJaw) {
+                    selectedAreasText =
+                        "whole jaw";
+                } else if (
                     groupedUsage &&
                     groupedUsage.areas.length
                 ) {
@@ -5481,18 +6938,26 @@
                                 </div>
 
                                 <div class="key">
-                                    Selected Tooth
+                                    ${usage.isJaw ? "Selected Jaw" : "Selected Tooth"}
                                 </div>
                                 <div class="value"
                                      style="margin-bottom:6px;">
-                                    ${escapeHtml(usage.toothId)}
+                                    ${escapeHtml(
+                                        usage.isJaw
+                                            ? getJawDisplayName(usage.jaw)
+                                            : usage.toothId
+                                    )}
                                 </div>
 
                                 <div class="key">
                                     Selected Area
                                 </div>
                                 <div class="value">
-                                    ${escapeHtml(areasText)}
+                                    ${escapeHtml(
+                                        usage.isJaw
+                                            ? "whole jaw"
+                                            : areasText
+                                    )}
                                 </div>
                             </div>
                         </div>`;
@@ -5533,7 +6998,9 @@
         */
         document.getElementById(
             "noteBox"
-        ).value = selectedSlot?.note || "";
+        ).value = selectedTarget.isJaw
+            ? ""
+            : (selectedSlot?.note || "");
 
         /*
             Selected Details now always includes every action applied to the
@@ -5581,47 +7048,100 @@
     }
             function renderChart() {
 
+        /*
+            Return only CSS declarations, not a complete style attribute.
+            This lets each tooth keep its explicit grid row/column position.
+        */
         function cellStyle(id) {
             return id === pendingSwapToothId
-                ? 'style="background:#fef3c7;border-radius:10px;box-shadow:0 0 0 2px #f59e0b inset;"'
-                : '';
+                ? "background:#fef3c7;border-radius:10px;box-shadow:0 0 0 2px #f59e0b inset;"
+                : "";
         }
 
-        function renderNumber(positionNumber, index) {
+        function getSingleToothDisplayedLabel(toothId) {
+            const number = getToothPositionNumber(toothId);
+
+            if (number === null) {
+                return "";
+            }
+
+            if (isDeciduousChartView) {
+                if (number >= 6 && number <= 8) {
+                    return "";
+                }
+
+                return ({ 1:"A", 2:"B", 3:"C", 4:"D", 5:"E" })[number] || "";
+            }
+
+            if (
+                chartData[toothId] &&
+                chartData[toothId].isDeciduous === true &&
+                canBeDeciduousTooth(toothId)
+            ) {
+                return ({ 1:"A", 2:"B", 3:"C", 4:"D", 5:"E" })[number] || String(number);
+            }
+
+            return String(number);
+        }
+
+        function getSingleToothNumberClass(toothId) {
+            return getDentitionNumberClass(
+                getToothPositionNumber(toothId)
+            );
+        }
+
+        function renderNumber(toothId, index, row) {
             return `
-                <div class="number-cell ${getDentitionNumberClass(positionNumber)}">
-                    ${getDisplayedPositionLabel(index)}
+                <div class="number-cell ${getSingleToothNumberClass(toothId)}"
+                     style="grid-column:${index + 2};grid-row:${row};">
+                    ${getSingleToothDisplayedLabel(toothId)}
                 </div>`;
         }
 
-        function renderUpperFrontTooth(id) {
+        function renderUpperFrontTooth(id, index) {
             return `
                 <div class="tooth-cell ${getDentitionToothClass(id)}"
-                     ${cellStyle(id)}>
+                     style="
+                        grid-column:${index + 2};
+                        grid-row:2;
+                        ${cellStyle(id)}
+                     ">
                     ${renderToothFront(id, "upper")}
                 </div>`;
         }
 
-        function renderUpperInsideTooth(id) {
+        function renderUpperInsideTooth(id, index) {
             return `
                 <div class="tooth-cell ${getDentitionToothClass(id)}"
-                     ${cellStyle(id)}>
+                     style="
+                        grid-column:${index + 2};
+                        grid-row:3;
+                        ${cellStyle(id)}
+                     ">
                     ${occlusalToothSvg(id, "upper")}
                 </div>`;
         }
 
-        function renderLowerInsideTooth(id) {
+        function renderLowerInsideTooth(id, index) {
             return `
                 <div class="tooth-cell ${getDentitionToothClass(id)}"
-                     ${cellStyle(id)}>
+                     style="
+                        grid-column:${index + 2};
+                        grid-row:5;
+                        ${cellStyle(id)}
+                     ">
                     ${occlusalToothSvg(id, "lower")}
                 </div>`;
         }
 
-        function renderLowerFrontTooth(id) {
+        function renderLowerFrontTooth(id, index) {
             return `
                 <div class="tooth-cell ${getDentitionToothClass(id)}"
-                     ${cellStyle(id)}>
+                     style="
+                        grid-column:${index + 2};
+                        grid-row:6;
+                        ${cellStyle(id)}
+                     ">
                     ${renderToothFront(id, "lower")}
                 </div>`;
         }
@@ -5630,36 +7150,61 @@
             <div class="chart-grid">
 
                 <!-- Upper numbers -->
-                <div></div>
-                ${POS_LABELS.map((n, i) => renderNumber(n, i)).join("")}
+                <div style="grid-column:1;grid-row:1;"></div>
+                ${UPPER_IDS.map((id, i) => renderNumber(id, i, 1)).join("")}
+
+                <!--
+                    The outline and the upper tooth images now occupy the
+                    same grid row. Teeth appear inside the outline.
+                -->
+                ${renderJawWideOverlay("upper")}
 
                 <!-- Upper Buccal -->
-                <div class="side-label">Buccal</div>
+                <div class="side-label"
+                     style="grid-column:1;grid-row:2;">
+                    Buccal
+                </div>
                 ${UPPER_IDS.map(renderUpperFrontTooth).join("")}
 
                 <!-- Upper Lingual / Palatal -->
-                <div class="side-label">Lingual - Palatal</div>
+                <div class="side-label"
+                     style="grid-column:1;grid-row:3;">
+                     Palatal
+                </div>
                 ${UPPER_IDS.map(renderUpperInsideTooth).join("")}
 
                 <!-- Middle right / left -->
-                <div></div>
+                <div style="grid-column:1;grid-row:4;"></div>
 
-                <div class="mid-rl">
+                <div class="mid-rl"
+                     style="grid-row:4;">
                     <span>R</span>
                     <span>L</span>
                 </div>
 
                 <!-- Lower Lingual / Palatal -->
-                <div class="side-label">Lingual - Palatal</div>
+                <div class="side-label"
+                     style="grid-column:1;grid-row:5;">
+                    Lingual
+                </div>
                 ${LOWER_IDS.map(renderLowerInsideTooth).join("")}
 
+                <!--
+                    The lower outline shares row 6 with the lower tooth
+                    images, so the teeth stay inside the outline.
+                -->
+                ${renderJawWideOverlay("lower")}
+
                 <!-- Lower Buccal -->
-                <div class="side-label">Buccal</div>
+                <div class="side-label"
+                     style="grid-column:1;grid-row:6;">
+                    Buccal
+                </div>
                 ${LOWER_IDS.map(renderLowerFrontTooth).join("")}
 
                 <!-- Lower numbers -->
-                <div></div>
-                ${POS_LABELS.map((n, i) => renderNumber(n, i)).join("")}
+                <div style="grid-column:1;grid-row:7;"></div>
+                ${LOWER_IDS.map((id, i) => renderNumber(id, i, 7)).join("")}
 
             </div>`;
     }
@@ -5721,22 +7266,38 @@
                 return;
             }
 
-            const key =
-                `${toothId}|${group}|${toolId}`;
+            const isJaw =
+                isJawWideTool(toolId) &&
+                area === "whole";
+
+            const jaw = isJaw
+                ? getJawFromToothId(toothId)
+                : null;
+
+            const key = isJaw
+                ? `jaw|${jaw}|${group}|${toolId}`
+                : `${toothId}|${group}|${toolId}`;
 
             if (!grouped[key]) {
                 grouped[key] = {
-                    fdi,
+                    fdi: isJaw
+                        ? getJawDisplayName(jaw)
+                        : fdi,
                     tid: toothId,
                     group,
                     toolId,
                     label: tool.label,
                     glyph: tool.glyph,
-                    areas: []
+                    areas: ["whole"],
+                    isJaw,
+                    jaw
                 };
             }
 
-            if (!grouped[key].areas.includes(area)) {
+            if (
+                !isJaw &&
+                !grouped[key].areas.includes(area)
+            ) {
                 grouped[key].areas.push(area);
             }
         }
@@ -5815,8 +7376,20 @@
             ...toolRows,
             ...noteRows
         ].sort((a, b) => {
-            if (a.fdi !== b.fdi) {
-                return a.fdi - b.fdi;
+            const aIsJaw = !!a.isJaw;
+            const bIsJaw = !!b.isJaw;
+
+            if (aIsJaw !== bIsJaw) {
+                return aIsJaw ? -1 : 1;
+            }
+
+            if (aIsJaw && bIsJaw) {
+                if (a.jaw !== b.jaw) {
+                    return String(a.jaw)
+                        .localeCompare(String(b.jaw));
+                }
+            } else if (a.fdi !== b.fdi) {
+                return Number(a.fdi) - Number(b.fdi);
             }
 
             return String(a.label)
@@ -5842,8 +7415,21 @@
         // group by FDI tooth number
         const byTooth = {};
         rows.forEach(r => {
-            if (!byTooth[r.fdi]) byTooth[r.fdi] = { fdi:r.fdi, tid:r.tid, items:[] };
-            byTooth[r.fdi].items.push(r);
+            const blockKey = r.isJaw
+                ? `jaw-${r.jaw}`
+                : `tooth-${r.fdi}`;
+
+            if (!byTooth[blockKey]) {
+                byTooth[blockKey] = {
+                    fdi: r.fdi,
+                    tid: r.tid,
+                    items: [],
+                    isJaw: r.isJaw,
+                    jaw: r.jaw
+                };
+            }
+
+            byTooth[blockKey].items.push(r);
         });
         const toothBlocks = Object.values(byTooth).map(tooth => {
             const itemRows = tooth.items.map(r => `
@@ -5853,7 +7439,9 @@
                     </td>
                     <td style="padding:5px 8px;font-size:13px;color:#374151;
                                text-transform:capitalize;">${escapeHtml(
-                                   getReportAreasText(r.areas || [])
+                                   r.isJaw
+                                       ? "whole jaw"
+                                       : getReportAreasText(r.areas || [])
                                )}</td>
                     <td style="padding:5px 8px;">${badge(r.group)}</td>
                     <td style="padding:5px 8px;font-size:13px;color:#111827;">${escapeHtml(r.label)}</td>
@@ -5863,9 +7451,12 @@
                             border-radius:12px;overflow:hidden;">
                     <div style="background:#f1f5f9;padding:7px 12px;font-weight:bold;
                                 font-size:14px;border-bottom:1px solid var(--line);">
-                        🦷 Tooth <span style="color:#2563eb">${tooth.fdi}</span>
-                        <span style="font-weight:normal;color:var(--muted);
-                                     font-size:12px;margin-left:6px;">(${tooth.tid})</span>
+                        ${tooth.isJaw
+                            ? `🦷 Jaw <span style="color:#2563eb">${escapeHtml(getJawDisplayName(tooth.jaw))}</span>`
+                            : `🦷 Tooth <span style="color:#2563eb">${tooth.fdi}</span>
+                               <span style="font-weight:normal;color:var(--muted);
+                                            font-size:12px;margin-left:6px;">(${tooth.tid})</span>`
+                        }
                     </div>
                     <table style="width:100%;border-collapse:collapse;">
                         <thead>
@@ -6035,12 +7626,21 @@
             // Upgrade old surface records for the three whole-tooth diseases.
             normalizeWholeToothDisease(tid);
 
+            // Move old Remaining Root records to Root only.
+            normalizeRemainingRootMark(tid);
+
+            // Move old impacted / partially erupted values to Whole Tooth.
+            normalizeImpactionMark(tid);
+
             // Keep one icon per area from Disease / Previous / In-Hospital.
             normalizeSingleToothLockedMark(tid);
 
             // Keep Teeth Change and the deciduous-size state synchronized.
             normalizePermanentDeciduousState(tid);
         });
+
+        // Move jaw-wide dentures/splints to one jaw-level record.
+        normalizeJawWideTools();
     }
 
     async function saveChartToDb() {
