@@ -3,12 +3,13 @@
 namespace DentalCollegeManagementSystem_AAU.Controllers
 {
     /// <summary>
-    /// Controller يخدّم صفحة الـ Dental Chart (View)
-    /// Route: /DentalChartPage/Index?patientId=5
+    /// يفتح صفحة Dental Chart فقط.
+    /// مثال:
+    /// /DentalChartPage/Index?patientId=5
     /// </summary>
     public class DentalChartPageController : Controller
     {
-        // GET /DentalChartPage/Index?patientId=5
+        [HttpGet]
         public IActionResult Index(int patientId)
         {
             if (patientId <= 0)

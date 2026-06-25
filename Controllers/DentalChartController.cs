@@ -1,4 +1,8 @@
-﻿using DentalCollegeManagementSystem_AAU.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using DentalCollegeManagementSystem_AAU.Data;
 using DentalCollegeManagementSystem_AAU.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -81,6 +85,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     Id = s.Id,
                     SessionNote = s.SessionNote,
                     ReportJson = s.ReportJson,
+                    BpeJson = s.BpeJson,
                     UpdatedAt = s.UpdatedAt
                 })
                 .ToListAsync();
@@ -131,6 +136,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 _context.DentalToothData.RemoveRange(session.ToothData);
                 session.SessionNote = dto.SessionNote;
                 session.ReportJson = reportJson;
+                session.BpeJson = NormalizeBpeJson(dto.BpeJson ?? session.BpeJson);
                 session.UpdatedAt = DateTime.UtcNow;
 
                 foreach (var row in incoming) row.SessionId = session.Id;
@@ -143,6 +149,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     PatientId = dto.PatientId,
                     SessionNote = dto.SessionNote,
                     ReportJson = reportJson,
+                    BpeJson = NormalizeBpeJson(dto.BpeJson),
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -175,6 +182,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 PatientId = dto.PatientId,
                 SessionNote = dto.SessionNote,
                 ReportJson = reportJson,
+                BpeJson = NormalizeBpeJson(dto.BpeJson),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -211,6 +219,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             _context.DentalToothData.RemoveRange(session.ToothData);
             session.SessionNote = dto.SessionNote;
             session.ReportJson = reportJson;
+            session.BpeJson = NormalizeBpeJson(dto.BpeJson ?? session.BpeJson);
             session.UpdatedAt = DateTime.UtcNow;
 
             foreach (var row in incoming) row.SessionId = id;
@@ -314,7 +323,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 SessionId = session.Id,
                 PatientId = session.PatientId,
                 SessionNote = session.SessionNote,
-                UpdatedAt = session.UpdatedAt
+                UpdatedAt = session.UpdatedAt,
+                Bpe = ParseBpeData(session.BpeJson)
             };
 
             var groups = new[] { "disease", "previous", "inside", "others" };
@@ -349,6 +359,90 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             report.TotalItems = report.Teeth.Sum(t => t.Areas.Sum(a => a.Tools.Count));
             return report;
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  BPE HELPERS
+        // ════════════════════════════════════════════════════════
+
+        private static readonly HashSet<string> AnteriorBpeValues = new()
+        {
+            "0", "1", "2", "3", "4"
+        };
+
+        private static readonly HashSet<string> PosteriorBpeValues = new()
+        {
+            "0", "1", "2", "3", "4",
+            "0*", "1*", "2*", "3*", "4*"
+        };
+
+        private static string NormalizeBpeJson(string? bpeJson)
+        {
+            var bpe = ParseBpeData(bpeJson);
+
+            return JsonSerializer.Serialize(new
+            {
+                upperRight = bpe.UpperRight,
+                upperAnterior = bpe.UpperAnterior,
+                upperLeft = bpe.UpperLeft,
+                lowerRight = bpe.LowerRight,
+                lowerAnterior = bpe.LowerAnterior,
+                lowerLeft = bpe.LowerLeft
+            });
+        }
+
+        private static BpeDataDto ParseBpeData(string? bpeJson)
+        {
+            var result = new BpeDataDto();
+
+            if (string.IsNullOrWhiteSpace(bpeJson))
+                return result;
+
+            try
+            {
+                using var doc = JsonDocument.Parse(bpeJson);
+                var root = doc.RootElement;
+
+                string Read(string camelName, string pascalName)
+                {
+                    JsonElement value;
+
+                    if (!root.TryGetProperty(camelName, out value) &&
+                        !root.TryGetProperty(pascalName, out value))
+                    {
+                        return "0";
+                    }
+
+                    return value.ValueKind == JsonValueKind.String
+                        ? value.GetString() ?? "0"
+                        : value.ToString();
+                }
+
+                result.UpperRight = NormalizePosteriorBpe(Read("upperRight", "UpperRight"));
+                result.UpperAnterior = NormalizeAnteriorBpe(Read("upperAnterior", "UpperAnterior"));
+                result.UpperLeft = NormalizePosteriorBpe(Read("upperLeft", "UpperLeft"));
+                result.LowerRight = NormalizePosteriorBpe(Read("lowerRight", "LowerRight"));
+                result.LowerAnterior = NormalizeAnteriorBpe(Read("lowerAnterior", "LowerAnterior"));
+                result.LowerLeft = NormalizePosteriorBpe(Read("lowerLeft", "LowerLeft"));
+            }
+            catch
+            {
+                // Invalid/old BPE JSON: use six zero values.
+            }
+
+            return result;
+        }
+
+        private static string NormalizeAnteriorBpe(string? value)
+        {
+            var normalized = (value ?? "0").Trim();
+            return AnteriorBpeValues.Contains(normalized) ? normalized : "0";
+        }
+
+        private static string NormalizePosteriorBpe(string? value)
+        {
+            var normalized = (value ?? "0").Trim();
+            return PosteriorBpeValues.Contains(normalized) ? normalized : "0";
         }
 
         // ════════════════════════════════════════════════════════
@@ -418,6 +512,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             ChartDataJson = ReconstructChartDataJson(s.ToothData),
             SessionNote = s.SessionNote,
             ReportJson = s.ReportJson,
+            BpeJson = NormalizeBpeJson(s.BpeJson),
             CreatedAt = s.CreatedAt,
             UpdatedAt = s.UpdatedAt
         };

@@ -6,5 +6,6 @@
         public string SessionNote { get; set; }
         public DateTime UpdatedAt { get; set; }
         public string? ReportJson { get; internal set; }
+        public string BpeJson { get; internal set; }
     }
 }

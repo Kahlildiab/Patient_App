@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DentalCollegeManagementSystem_AAU.Models
@@ -18,16 +20,33 @@ namespace DentalCollegeManagementSystem_AAU.Models
         public string? SessionNote { get; set; }
 
         /// <summary>
-        /// تقرير الجلسة النصي — يُولَّد تلقائياً عند الحفظ
-        /// مثال: "Tooth 11: Caries (buccal) | Tooth 21: Root Canal (root)"
+        /// تقرير الجلسة المنظم المولد من JavaScript.
         /// </summary>
         [Column(TypeName = "nvarchar(max)")]
         public string? ReportJson { get; set; }
 
+        /// <summary>
+        /// قيم Basic Periodontal Examination الخاصة بهذه الجلسة.
+        /// مثال:
+        /// {
+        ///   "upperRight":"3*",
+        ///   "upperAnterior":"2",
+        ///   "upperLeft":"1",
+        ///   "lowerRight":"4*",
+        ///   "lowerAnterior":"0",
+        ///   "lowerLeft":"2*"
+        /// }
+        /// </summary>
+        [Required]
+        [Column(TypeName = "nvarchar(500)")]
+        public string BpeJson { get; set; } =
+            "{\"upperRight\":\"0\",\"upperAnterior\":\"0\",\"upperLeft\":\"0\",\"lowerRight\":\"0\",\"lowerAnterior\":\"0\",\"lowerLeft\":\"0\"}";
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        public virtual ICollection<DentalToothData> ToothData { get; set; } = new List<DentalToothData>();
+        public virtual ICollection<DentalToothData> ToothData { get; set; }
+            = new List<DentalToothData>();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -41,7 +60,7 @@ namespace DentalCollegeManagementSystem_AAU.Models
         [Required]
         public int SessionId { get; set; }
 
-        [ForeignKey("SessionId")]
+        [ForeignKey(nameof(SessionId))]
         public virtual DentalChartSession? Session { get; set; }
 
         /// <summary>U0–U15 (Upper) | L0–L15 (Lower)</summary>
@@ -49,24 +68,45 @@ namespace DentalCollegeManagementSystem_AAU.Models
         [MaxLength(4)]
         public string ToothId { get; set; } = "";
 
-        /// <summary>whole | buccal | lingual | palatal | mesial | distal | occlusal | root</summary>
+        /// <summary>
+        /// whole | buccal | lingual | palatal | mesial | distal | occlusal | root
+        /// </summary>
         [Required]
         [MaxLength(20)]
         public string AreaName { get; set; } = "";
 
-        [MaxLength(500)] public string? DiseaseToolId { get; set; }
-        [MaxLength(500)] public string? PreviousToolId { get; set; }
-        [MaxLength(500)] public string? InsideToolId { get; set; }
-        [MaxLength(500)] public string? OthersToolId { get; set; }
+        [MaxLength(500)]
+        public string? DiseaseToolId { get; set; }
+
+        [MaxLength(500)]
+        public string? PreviousToolId { get; set; }
+
+        [MaxLength(500)]
+        public string? InsideToolId { get; set; }
+
+        [MaxLength(500)]
+        public string? OthersToolId { get; set; }
 
         [Column(TypeName = "nvarchar(1000)")]
         public string? Note { get; set; }
     }
 
     // ═══════════════════════════════════════════════════════════════
-    //  DTOs
+    //  BPE DTO
     // ═══════════════════════════════════════════════════════════════
+    public class BpeDataDto
+    {
+        public string UpperRight { get; set; } = "0";
+        public string UpperAnterior { get; set; } = "0";
+        public string UpperLeft { get; set; } = "0";
+        public string LowerRight { get; set; } = "0";
+        public string LowerAnterior { get; set; } = "0";
+        public string LowerLeft { get; set; } = "0";
+    }
 
+    // ═══════════════════════════════════════════════════════════════
+    //  Save / Response DTOs
+    // ═══════════════════════════════════════════════════════════════
     public class SaveDentalChartDto
     {
         [Required]
@@ -76,12 +116,12 @@ namespace DentalCollegeManagementSystem_AAU.Models
         public string ChartDataJson { get; set; } = "{}";
 
         public string? SessionNote { get; set; }
+        public string? ReportJson { get; set; }
 
         /// <summary>
-        /// تقرير اختياري مولَّد من الـ JS
-        /// إذا ما أُرسل، الـ Controller بيولّده تلقائياً
+        /// BPE JSON المرسل من الصفحة. يبقى nullable للتوافق مع الجلسات القديمة.
         /// </summary>
-        public string? ReportJson { get; set; }
+        public string? BpeJson { get; set; }
     }
 
     public class DentalChartResponseDto
@@ -91,6 +131,7 @@ namespace DentalCollegeManagementSystem_AAU.Models
         public string ChartDataJson { get; set; } = "{}";
         public string? SessionNote { get; set; }
         public string? ReportJson { get; set; }
+        public string BpeJson { get; set; } = "{}";
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
@@ -100,14 +141,13 @@ namespace DentalCollegeManagementSystem_AAU.Models
         public int Id { get; set; }
         public string? SessionNote { get; set; }
         public string? ReportJson { get; set; }
+        public string BpeJson { get; set; } = "{}";
         public DateTime UpdatedAt { get; set; }
     }
 
     // ═══════════════════════════════════════════════════════════════
-    //  Report DTOs — بنية التقرير المنظّم
+    //  Report DTOs
     // ═══════════════════════════════════════════════════════════════
-
-    /// <summary>تقرير كامل للجلسة</summary>
     public class SessionReportDto
     {
         public int SessionId { get; set; }
@@ -115,45 +155,27 @@ namespace DentalCollegeManagementSystem_AAU.Models
         public string? SessionNote { get; set; }
         public DateTime UpdatedAt { get; set; }
         public int TotalItems { get; set; }
-        public List<ToothReportDto> Teeth { get; set; } = new();
+        public BpeDataDto Bpe { get; set; } = new BpeDataDto();
+        public List<ToothReportDto> Teeth { get; set; } = new List<ToothReportDto>();
     }
 
-    /// <summary>تقرير سن واحد</summary>
     public class ToothReportDto
     {
         public string ToothId { get; set; } = "";
         public int FdiCode { get; set; }
-        public List<AreaReportDto> Areas { get; set; } = new();
+        public List<AreaReportDto> Areas { get; set; } = new List<AreaReportDto>();
     }
 
-    /// <summary>تقرير منطقة واحدة داخل السن</summary>
     public class AreaReportDto
     {
         public string AreaName { get; set; } = "";
-        public List<ToolEntryDto> Tools { get; set; } = new();
+        public List<ToolEntryDto> Tools { get; set; } = new List<ToolEntryDto>();
         public string? Note { get; set; }
     }
 
-    /// <summary>أداة واحدة مطبّقة</summary>
     public class ToolEntryDto
     {
-        public string Group { get; set; } = "";   // disease | previous | inside | others
-        public string ToolId { get; set; } = "";   // caries | rct | ...
+        public string Group { get; set; } = "";
+        public string ToolId { get; set; } = "";
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════
-//  Migration hint — أضف في DbContext:
-//
-//  public DbSet<DentalChartSession> DentalChartSessions { get; set; }
-//  public DbSet<DentalToothData>    DentalToothData     { get; set; }
-//
-//  OnModelCreating:
-//  modelBuilder.Entity<DentalChartSession>()
-//      .HasIndex(s => s.PatientId);
-//  modelBuilder.Entity<DentalToothData>()
-//      .HasIndex(d => new { d.SessionId, d.ToothId, d.AreaName })
-//      .IsUnique();
-//
-//  ثم: Add-Migration AddReportJson  →  Update-Database
-// ═══════════════════════════════════════════════════════════════════
