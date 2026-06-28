@@ -27,6 +27,27 @@
     };
 }
 
+
+@{
+    bool visitClosedForAccess =
+        ViewBag.IsVisitClosed != null &&
+        (bool)ViewBag.IsVisitClosed;
+
+    string visitRoleForAccess =
+        Context.Session.GetString("UserRole") ?? "";
+
+    bool adminCanEditClosedVisit =
+        string.Equals(
+            visitRoleForAccess,
+            "Admin",
+            StringComparison.OrdinalIgnoreCase
+        );
+
+    bool pageReadOnly =
+        visitClosedForAccess &&
+        !adminCanEditClosedVisit;
+}
+
 <style>
     :root {
         --navy: #1a237e;
@@ -262,285 +283,317 @@
             border-color: #90caf9;
         }
 </style>
-
-@if (TempData["Error"] != null)
-{
-    <div style="background:#fdecea; color:#c62828; padding:12px 16px;
-        border-radius:8px; margin-bottom:16px; font-size:.88rem;">
-        @TempData["Error"]
-    </div>
-}
-
-@if (TempData["Success"] != null)
-{
-    <div style="background:#d1e7dd; color:#0a3622; padding:12px 16px;
-        border-radius:8px; margin-bottom:16px; font-size:.88rem;">
-        @TempData["Success"]
-    </div>
-}
-
-<div class="treatment-plan-container">
-
-    <div class="d-flex justify-content-end mb-3">
-        <button class="tp-add-btn"
-                data-bs-toggle="modal"
-                data-bs-target="#addTreatmentModal">
-            + Add Treatment
-        </button>
-    </div>
-
-    @foreach (var cat in categories)
-    {
-        <div id="@cat.SectionId" class="tp-section">
-
-            <div class="tp-section-header">
-                <h6 class="tp-section-title">@cat.Title</h6>
-                <span class="tp-section-count">@cat.Items.Count procedure(s)</span>
-            </div>
-
-            @if (!cat.Items.Any())
-            {
-                <p class="tp-empty">No @cat.Title.ToLower() procedures added yet</p>
-            }
-            else
-            {
-                foreach (var item in cat.Items)
-                {
-                    bool isPendingAdmin = item.AdminApprovalStatus == "Pending";
-                    bool canDelete = !isPendingAdmin || isAdmin;
-
-                    string badgeClass = item.Status switch
-                    {
-                        ProcedureStatus.Completed => "completed",
-                        ProcedureStatus.InProgress => "inprogress",
-                        _ => ""
-                    };
-
-                    <div class="tp-delete-row">
-                        @if (canDelete)
-                        {
-                            <form asp-controller="TreatmentPlan" asp-action="DeleteProcedure"
-                                  method="post" class="m-0 p-0 d-inline">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@item.Id" />
-                                <input type="hidden" name="patientId" value="@patientId" />
-                                <input type="hidden" name="sectionId" value="@cat.SectionId" />
-                                <button type="submit" class="tp-delete-btn"
-                                        onclick="return confirm('Delete this procedure?')">
-                                    Delete
-                                    <svg class="trash-icon" xmlns="http://www.w3.org/2000/svg"
-                                         viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="3 6 5 6 21 6" />
-                                        <path d="M19 6l-1 14H6L5 6" />
-                                        <path d="M10 11v6M14 11v6" />
-                                        <path d="M9 6V4h6v2" />
-                                    </svg>
-                                </button>
-                            </form>
-                        }
-                    </div>
-
-                    <div class="tp-card @(isPendingAdmin ? "is-pending" : "")">
-
-                        @if (isPendingAdmin)
-                        {
-                            <div style="background:#fff3e0; border:1px solid #ffb74d; border-radius:6px;
-                                padding:8px 12px; margin-bottom:10px; font-size:.8rem;
-                                color:#e65100; font-weight:600;">
-                                ⏳ Awaiting Admin Approval
-                            </div>
-                        }
-
-                        <!-- Row 1: Notes | Status -->
-                        <div class="tp-row">
-                            <div class="tp-col-grow">
-                                <span class="tp-label">Note:&nbsp;</span>
-                                @if (!string.IsNullOrWhiteSpace(item.Notes))
-                                {
-                                    <span class="tp-notes-text">@item.Notes</span>
-                                }
-                            </div>
-                            <div class="tp-col-right">
-                                @if (isPendingAdmin)
-                                {
-                                    <span class="tp-pending-badge">⏳ Pending Approval</span>
-                                }
-                                else if (isAdmin)
-                                {
-                                    <form asp-controller="TreatmentPlan" asp-action="UpdateStatus"
-                                          method="post" class="m-0 p-0 d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <input type="hidden" name="patientId" value="@patientId" />
-                                        <input type="hidden" name="sectionId" value="@cat.SectionId" />
-                                        <div class="tp-status-wrap">
-                                            <select name="status" class="tp-status-select"
-                                                    onchange="this.form.submit()">
-                                                @foreach (ProcedureStatus s in Enum.GetValues(typeof(ProcedureStatus)))
-                                                {
-                                                    <option value="@s" selected="@(item.Status == s)">
-                                                        @s.GetDisplayName()
-                                                    </option>
-                                                }
-                                            </select>
-                                            <span class="tp-chevron">&#8964;</span>
-                                        </div>
-                                    </form>
-                                }
-                                else
-                                {
-                                    <span class="tp-status-badge @badgeClass">
-                                        @item.Status.GetDisplayName()
-                                    </span>
-                                }
-                            </div>
-                        </div>
-
-                        <!-- Row 2 -->
-                        <div class="tp-row mt-2">
-                            <div class="tp-col-fixed">
-                                <span class="tp-label">Tooth Number:&nbsp;</span>
-                                <span class="tp-val">Tooth @item.ToothNumber</span>
-                            </div>
-                            <div class="tp-col-grow">
-                                <span class="tp-label">Estimated Sessions:&nbsp;</span>
-                                <span class="tp-val sessions">@item.EstimatedSessions Sessions</span>
-                            </div>
-                            <div class="tp-col-right">
-                                @if (item.CompletionDate.HasValue)
-                                {
-                                    <span class="tp-val date">@item.CompletionDate.Value.ToString("dd-MM-yyyy")</span>
-                                }
-                                else
-                                {
-                                    <span class="tp-val date-dashes">--------</span>
-                                }
-                            </div>
-                        </div>
-
-                        <!-- Row 3 -->
-                        <div class="tp-row">
-                            <div class="tp-col-fixed">
-                                <span class="tp-label">Procedure:&nbsp;</span>
-                                <span class="tp-val">@item.Procedure</span>
-                            </div>
-                            <div class="tp-col-grow">
-                                <span class="tp-label">Priority:&nbsp;</span>
-                                <span class="tp-val @GetPriorityClass(item.Priority)">@item.Priority</span>
-                            </div>
-                        </div>
-
-                        @if (!isPendingAdmin && !string.IsNullOrEmpty(item.AdminApprovedBy))
-                        {
-                            <div style="margin-top:8px; font-size:.75rem; color:#aaa;">
-                                ✅ Approved by @item.AdminApprovedBy
-                                @if (item.AdminApprovedDate.HasValue)
-                                {
-                                    <span>on @item.AdminApprovedDate.Value.ToString("dd-MM-yyyy")</span>
-                                }
-                            </div>
-                        }
-
-                    </div><!-- /.tp-card -->
-                }
-            }
-        </div><!-- /.tp-section -->
+<style>
+    #treatmentPlanReadOnlyRoot.closed-visit-readonly input:disabled,
+    #treatmentPlanReadOnlyRoot.closed-visit-readonly textarea:disabled,
+    #treatmentPlanReadOnlyRoot.closed-visit-readonly select:disabled {
+        opacity: 1 !important;
+        color: #333 !important;
+        background-color: #f7f7f7 !important;
+        cursor: default !important;
     }
-</div>
 
-<!-- ===== ADD TREATMENT MODAL ===== -->
-<div class="modal fade" id="addTreatmentModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold">Add New Procedure</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form asp-controller="TreatmentPlan" asp-action="AddProcedure" method="post">
-                @Html.AntiForgeryToken()
-                <div class="modal-body">
-                    <input type="hidden" name="PatientId" value="@patientId" />
+    #treatmentPlanReadOnlyRoot.closed-visit-readonly input[type="checkbox"]:disabled,
+    #treatmentPlanReadOnlyRoot.closed-visit-readonly input[type="radio"]:disabled {
+        opacity: 1 !important;
+    }
 
-                    @if (isStudent)
+    #treatmentPlanReadOnlyRoot.closed-visit-readonly .readonly-disabled-action {
+        opacity: .45 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+    }
+
+    #treatmentPlanReadOnlyRoot.closed-visit-readonly input[type="file"],
+    #treatmentPlanReadOnlyRoot.closed-visit-readonly .photo-drop-zone,
+    #treatmentPlanReadOnlyRoot.closed-visit-readonly .ph-upload-zone {
+        pointer-events: none !important;
+        opacity: .55 !important;
+        cursor: not-allowed !important;
+    }
+</style>
+
+<div id="treatmentPlanReadOnlyRoot" class="@(pageReadOnly ? "closed-visit-readonly" : "")">
+
+
+    @if (TempData["Error"] != null)
+    {
+        <div style="background:#fdecea; color:#c62828; padding:12px 16px;
+            border-radius:8px; margin-bottom:16px; font-size:.88rem;">
+            @TempData["Error"]
+        </div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div style="background:#d1e7dd; color:#0a3622; padding:12px 16px;
+            border-radius:8px; margin-bottom:16px; font-size:.88rem;">
+            @TempData["Success"]
+        </div>
+    }
+
+    <div class="treatment-plan-container">
+
+        <div class="d-flex justify-content-end mb-3">
+            <button class="tp-add-btn"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addTreatmentModal">
+                + Add Treatment
+            </button>
+        </div>
+
+        @foreach (var cat in categories)
+        {
+            <div id="@cat.SectionId" class="tp-section">
+
+                <div class="tp-section-header">
+                    <h6 class="tp-section-title">@cat.Title</h6>
+                    <span class="tp-section-count">@cat.Items.Count procedure(s)</span>
+                </div>
+
+                @if (!cat.Items.Any())
+                {
+                    <p class="tp-empty">No @cat.Title.ToLower() procedures added yet</p>
+                }
+                else
+                {
+                    foreach (var item in cat.Items)
                     {
-                        <div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:6px;
-                            padding:10px 14px; margin-bottom:16px; font-size:.83rem; color:#1565c0;">
-                            ℹ️ This procedure will be sent to Admin for approval before it becomes active.
-                        </div>
-                    }
+                        bool isPendingAdmin = item.AdminApprovalStatus == "Pending";
+                        bool canDelete = !isPendingAdmin || isAdmin;
 
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Category</label>
-                            <select name="NewProcedure.Category" id="modalCategory" class="form-select">
-                                @foreach (TreatmentCategory c in Enum.GetValues(typeof(TreatmentCategory)))
-                                {
-                                    <option value="@c">@c.GetDisplayName()</option>
-                                }
-                            </select>
+                        string badgeClass = item.Status switch
+                        {
+                            ProcedureStatus.Completed => "completed",
+                            ProcedureStatus.InProgress => "inprogress",
+                            _ => ""
+                        };
+
+                        <div class="tp-delete-row">
+                            @if (canDelete)
+                            {
+                                <form asp-controller="TreatmentPlan" asp-action="DeleteProcedure"
+                                      method="post" class="m-0 p-0 d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <input type="hidden" name="patientId" value="@patientId" />
+                                    <input type="hidden" name="sectionId" value="@cat.SectionId" />
+                                    <button type="submit" class="tp-delete-btn"
+                                            onclick="return confirm('Delete this procedure?')">
+                                        Delete
+                                        <svg class="trash-icon" xmlns="http://www.w3.org/2000/svg"
+                                             viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="3 6 5 6 21 6" />
+                                            <path d="M19 6l-1 14H6L5 6" />
+                                            <path d="M10 11v6M14 11v6" />
+                                            <path d="M9 6V4h6v2" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            }
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Tooth Number</label>
-                            <input type="text" name="NewProcedure.ToothNumber"
-                                   class="form-control" placeholder="e.g., 16" />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Procedure</label>
-                            <input type="text" name="NewProcedure.Procedure"
-                                   class="form-control" placeholder="e.g., Composite filling" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Priority</label>
-                            <select name="NewProcedure.Priority" class="form-select">
-                                @foreach (TreatmentPriority p in Enum.GetValues(typeof(TreatmentPriority)))
-                                {
-                                    <option value="@p">@p</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Estimated Sessions</label>
-                            <input type="number" name="NewProcedure.EstimatedSessions"
-                                   class="form-control" value="1" min="1" />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Notes</label>
-                            <textarea name="NewProcedure.Notes" class="form-control" rows="3"
-                                      placeholder="Additional notes..."></textarea>
+
+                        <div class="tp-card @(isPendingAdmin ? "is-pending" : "")">
+
+                            @if (isPendingAdmin)
+                            {
+                                <div style="background:#fff3e0; border:1px solid #ffb74d; border-radius:6px;
+                                    padding:8px 12px; margin-bottom:10px; font-size:.8rem;
+                                    color:#e65100; font-weight:600;">
+                                    ⏳ Awaiting Admin Approval
+                                </div>
+                            }
+
+                            <!-- Row 1: Notes | Status -->
+                            <div class="tp-row">
+                                <div class="tp-col-grow">
+                                    <span class="tp-label">Note:&nbsp;</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.Notes))
+                                    {
+                                        <span class="tp-notes-text">@item.Notes</span>
+                                    }
+                                </div>
+                                <div class="tp-col-right">
+                                    @if (isPendingAdmin)
+                                    {
+                                        <span class="tp-pending-badge">⏳ Pending Approval</span>
+                                    }
+                                    else if (isAdmin)
+                                    {
+                                        <form asp-controller="TreatmentPlan" asp-action="UpdateStatus"
+                                              method="post" class="m-0 p-0 d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="patientId" value="@patientId" />
+                                            <input type="hidden" name="sectionId" value="@cat.SectionId" />
+                                            <div class="tp-status-wrap">
+                                                <select name="status" class="tp-status-select"
+                                                        onchange="this.form.submit()">
+                                                    @foreach (ProcedureStatus s in Enum.GetValues(typeof(ProcedureStatus)))
+                                                    {
+                                                        <option value="@s" selected="@(item.Status == s)">
+                                                            @s.GetDisplayName()
+                                                        </option>
+                                                    }
+                                                </select>
+                                                <span class="tp-chevron">&#8964;</span>
+                                            </div>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="tp-status-badge @badgeClass">
+                                            @item.Status.GetDisplayName()
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Row 2 -->
+                            <div class="tp-row mt-2">
+                                <div class="tp-col-fixed">
+                                    <span class="tp-label">Tooth Number:&nbsp;</span>
+                                    <span class="tp-val">Tooth @item.ToothNumber</span>
+                                </div>
+                                <div class="tp-col-grow">
+                                    <span class="tp-label">Estimated Sessions:&nbsp;</span>
+                                    <span class="tp-val sessions">@item.EstimatedSessions Sessions</span>
+                                </div>
+                                <div class="tp-col-right">
+                                    @if (item.CompletionDate.HasValue)
+                                    {
+                                        <span class="tp-val date">@item.CompletionDate.Value.ToString("dd-MM-yyyy")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tp-val date-dashes">--------</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Row 3 -->
+                            <div class="tp-row">
+                                <div class="tp-col-fixed">
+                                    <span class="tp-label">Procedure:&nbsp;</span>
+                                    <span class="tp-val">@item.Procedure</span>
+                                </div>
+                                <div class="tp-col-grow">
+                                    <span class="tp-label">Priority:&nbsp;</span>
+                                    <span class="tp-val @GetPriorityClass(item.Priority)">@item.Priority</span>
+                                </div>
+                            </div>
+
+                            @if (!isPendingAdmin && !string.IsNullOrEmpty(item.AdminApprovedBy))
+                            {
+                                <div style="margin-top:8px; font-size:.75rem; color:#aaa;">
+                                    ✅ Approved by @item.AdminApprovedBy
+                                    @if (item.AdminApprovedDate.HasValue)
+                                    {
+                                        <span>on @item.AdminApprovedDate.Value.ToString("dd-MM-yyyy")</span>
+                                    }
+                                </div>
+                            }
+
+                        </div><!-- /.tp-card -->
+                    }
+                }
+            </div><!-- /.tp-section -->
+        }
+    </div>
+
+    <!-- ===== ADD TREATMENT MODAL ===== -->
+    <div class="modal fade" id="addTreatmentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Add New Procedure</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form asp-controller="TreatmentPlan" asp-action="AddProcedure" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body">
+                        <input type="hidden" name="PatientId" value="@patientId" />
+
+                        @if (isStudent)
+                        {
+                            <div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:6px;
+                                padding:10px 14px; margin-bottom:16px; font-size:.83rem; color:#1565c0;">
+                                ℹ️ This procedure will be sent to Admin for approval before it becomes active.
+                            </div>
+                        }
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Category</label>
+                                <select name="NewProcedure.Category" id="modalCategory" class="form-select">
+                                    @foreach (TreatmentCategory c in Enum.GetValues(typeof(TreatmentCategory)))
+                                    {
+                                        <option value="@c">@c.GetDisplayName()</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tooth Number</label>
+                                <input type="text" name="NewProcedure.ToothNumber"
+                                       class="form-control" placeholder="e.g., 16" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Procedure</label>
+                                <input type="text" name="NewProcedure.Procedure"
+                                       class="form-control" placeholder="e.g., Composite filling" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Priority</label>
+                                <select name="NewProcedure.Priority" class="form-select">
+                                    @foreach (TreatmentPriority p in Enum.GetValues(typeof(TreatmentPriority)))
+                                    {
+                                        <option value="@p">@p</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Estimated Sessions</label>
+                                <input type="number" name="NewProcedure.EstimatedSessions"
+                                       class="form-control" value="1" min="1" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Notes</label>
+                                <textarea name="NewProcedure.Notes" class="form-control" rows="3"
+                                          placeholder="Additional notes..."></textarea>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"
-                            data-bs-dismiss="modal">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary w-50">
-                        @(isStudent ? "Submit for Approval" : "Add Procedure")
-                    </button>
-                </div>
-            </form>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary w-50">
+                            @(isStudent ? "Submit for Approval" : "Add Procedure")
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const hash = window.location.hash;
-        if (hash) {
-            const target = document.querySelector(hash);
-            if (target) {
-                setTimeout(() => {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    target.style.transition = 'background-color 0.5s ease';
-                    target.style.backgroundColor = '#e8eaf6';
-                    setTimeout(() => { target.style.backgroundColor = ''; }, 2000);
-                }, 300);
-            }
-        }
-    });
-</script>
+    <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const hash = window.location.hash;
+                if (hash) {
+                    const target = document.querySelector(hash);
+                    if (target) {
+                        setTimeout(() => {
+                            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            target.style.transition = 'background-color 0.5s ease';
+                            target.style.backgroundColor = '#e8eaf6';
+                            setTimeout(() => { target.style.backgroundColor = ''; }, 2000);
+                        }, 300);
+                    }
+                }
+            });
+    </script>
 
 @functions {
     string GetPriorityClass(TreatmentPriority p) => p switch
@@ -551,3 +604,121 @@
         _ => ""
     };
 }
+
+<script>
+        (function () {
+            document.addEventListener("DOMContentLoaded", function () {
+
+                const pageReadOnly =
+                    @pageReadOnly.ToString().ToLower();
+
+                const root =
+                    document.getElementById("treatmentPlanReadOnlyRoot");
+
+                if (!pageReadOnly || !root) {
+                    return;
+                }
+
+                root.classList.add("closed-visit-readonly");
+
+                root.querySelectorAll(
+                    "input:not([type='hidden']), textarea, select"
+                ).forEach(function (element) {
+                    element.disabled = true;
+                });
+
+                root.querySelectorAll(
+                    "[contenteditable='true']"
+                ).forEach(function (element) {
+                    element.setAttribute("contenteditable", "false");
+                });
+
+                function isViewOnlyButton(button) {
+                    const text =
+                        (button.textContent || "")
+                        .replace(/\s+/g, " ")
+                        .trim()
+                        .toLowerCase();
+
+                    return button.matches(
+                        ".btn-close, [data-bs-dismiss='modal'], [data-readonly-allow='true']"
+                    )
+                    || text === "details"
+                    || text === "view"
+                    || text.startsWith("view ")
+                    || text.includes("preview")
+                    || text === "close"
+                    || text === "×"
+                    || text === "✕";
+                }
+
+                root.querySelectorAll(
+                    "button, input[type='button'], input[type='submit']"
+                ).forEach(function (button) {
+
+                    if (isViewOnlyButton(button)) {
+                        return;
+                    }
+
+                    button.disabled = true;
+                    button.setAttribute("aria-disabled", "true");
+                    button.classList.add("readonly-disabled-action");
+                });
+
+                root.querySelectorAll(
+                    ".photo-drop-zone, .ph-upload-zone, input[type='file']"
+                ).forEach(function (element) {
+                    element.classList.add("readonly-disabled-action");
+                });
+
+                root.querySelectorAll("form").forEach(function (form) {
+                    form.addEventListener(
+                        "submit",
+                        function (event) {
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                        },
+                        true
+                    );
+                });
+
+                root.addEventListener(
+                    "click",
+                    function (event) {
+
+                        const blocked =
+                            event.target.closest(
+                                ".readonly-disabled-action"
+                            );
+
+                        if (!blocked) {
+                            return;
+                        }
+
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                    },
+                    true
+                );
+
+                ["dragover", "drop"].forEach(function (eventName) {
+                    root.addEventListener(
+                        eventName,
+                        function (event) {
+                            if (
+                                event.target.closest(
+                                    ".photo-drop-zone, .ph-upload-zone"
+                                )
+                            ) {
+                                event.preventDefault();
+                                event.stopImmediatePropagation();
+                            }
+                        },
+                        true
+                    );
+                });
+            });
+        })();
+</script>
+
+</div>

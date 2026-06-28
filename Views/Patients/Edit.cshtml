@@ -9,6 +9,27 @@
 <link rel="stylesheet" href="~/css/all.min.css" />
 <link rel="stylesheet" href="~/css/RTE.css" />
 
+
+@{
+    bool visitClosedForAccess =
+        ViewBag.IsVisitClosed != null &&
+        (bool)ViewBag.IsVisitClosed;
+
+    string visitRoleForAccess =
+        Context.Session.GetString("UserRole") ?? "";
+
+    bool adminCanEditClosedVisit =
+        string.Equals(
+            visitRoleForAccess,
+            "Admin",
+            StringComparison.OrdinalIgnoreCase
+        );
+
+    bool pageReadOnly =
+        visitClosedForAccess &&
+        !adminCanEditClosedVisit;
+}
+
 <style>
     .edit-wrapper {
         padding: 30px 20px;
@@ -213,212 +234,363 @@
         margin: 0;
     }
 </style>
+<style>
+    #patientEditReadOnlyRoot.closed-visit-readonly input:disabled,
+    #patientEditReadOnlyRoot.closed-visit-readonly textarea:disabled,
+    #patientEditReadOnlyRoot.closed-visit-readonly select:disabled {
+        opacity: 1 !important;
+        color: #333 !important;
+        background-color: #f7f7f7 !important;
+        cursor: default !important;
+    }
 
-<div class="edit-wrapper">
-    <div class="lineleft"></div>
-    <h1 class="sectiontitle heading6"></h1>
-    <div>
-        <section id="title-wrapper" style="justify-content:End;">
-            <div class="lineleft"></div>
-            <h1 class="sectiontitle heading6">
-                <p style="text-align:center;"><span style="color:#252468;">EDIT PATIENT</span></p>
-            </h1>
-            <div class="lineright" style="display:block; background-color:#daa328;"></div>
-        </section>
-    </div>
-    <br />
+    #patientEditReadOnlyRoot.closed-visit-readonly input[type="checkbox"]:disabled,
+    #patientEditReadOnlyRoot.closed-visit-readonly input[type="radio"]:disabled {
+        opacity: 1 !important;
+    }
 
-    <div class="edit-card">
-        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+    #patientEditReadOnlyRoot.closed-visit-readonly .readonly-disabled-action {
+        opacity: .45 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+    }
 
-            <div asp-validation-summary="All" class="text-danger" style="font-size:13px; margin-bottom:14px;"></div>
-            <input type="hidden" asp-for="PatientID" />
-            <input type="hidden" asp-for="ProfilePhotoPath" id="currentPhotoPath" />
-            <input type="hidden" name="RemovePhoto" id="removePhotoInput" value="false" />
+    #patientEditReadOnlyRoot.closed-visit-readonly input[type="file"],
+    #patientEditReadOnlyRoot.closed-visit-readonly .photo-drop-zone,
+    #patientEditReadOnlyRoot.closed-visit-readonly .ph-upload-zone {
+        pointer-events: none !important;
+        opacity: .55 !important;
+        cursor: not-allowed !important;
+    }
+</style>
 
-            @* ===== Personal Info ===== *@
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="required">First Name</label>
-                    <input asp-for="FirstName" />
-                    <span asp-validation-for="FirstName" class="validation-msg"></span>
-                </div>
-                <div class="form-col">
-                    <label class="required">Second Name</label>
-                    <input asp-for="SecondName" />
-                    <span asp-validation-for="SecondName" class="validation-msg"></span>
-                </div>
-            </div>
+<div id="patientEditReadOnlyRoot" class="@(pageReadOnly ? "closed-visit-readonly" : "")">
 
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="required">Third Name</label>
-                    <input asp-for="ThirdName" />
-                    <span asp-validation-for="ThirdName" class="validation-msg"></span>
-                </div>
-                <div class="form-col">
-                    <label class="required">Family Name</label>
-                    <input asp-for="FourthName" />
-                    <span asp-validation-for="FourthName" class="validation-msg"></span>
-                </div>
-            </div>
 
-            <hr class="form-divider" />
-            <br />
+    <div class="edit-wrapper">
+        <div class="lineleft"></div>
+        <h1 class="sectiontitle heading6"></h1>
+        <div>
+            <section id="title-wrapper" style="justify-content:End;">
+                <div class="lineleft"></div>
+                <h1 class="sectiontitle heading6">
+                    <p style="text-align:center;"><span style="color:#252468;">EDIT PATIENT</span></p>
+                </h1>
+                <div class="lineright" style="display:block; background-color:#daa328;"></div>
+            </section>
+        </div>
+        <br />
 
-            @* ===== Identity & Contact ===== *@
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="required">Nationality</label>
-                    <div class="radio-group">
-                        <label><input type="radio" asp-for="Nationality" value="1" /> Jordanian</label>
-                        <label><input type="radio" asp-for="Nationality" value="2" /> Not Jordanian</label>
-                    </div>
-                </div>
-                <div class="form-col">
-                    <label id="idLabel" class="required">National ID</label>
-                    <input asp-for="NationalID_PassportNumber" id="idInput" />
-                    <span asp-validation-for="NationalID_PassportNumber" class="validation-msg"></span>
-                </div>
-            </div>
+        <div class="edit-card">
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
 
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="required">Gender</label>
-                    <div class="radio-group">
-                        <label><input type="radio" asp-for="Gender" value="Male" /> Male</label>
-                        <label><input type="radio" asp-for="Gender" value="Female" /> Female</label>
-                    </div>
-                </div>
-                <div class="form-col">
-                    <label class="required">Date of Birth</label>
-                    <input asp-for="DateOfBirth" type="date" />
-                    <span asp-validation-for="DateOfBirth" class="validation-msg"></span>
-                </div>
-            </div>
+                <div asp-validation-summary="All" class="text-danger" style="font-size:13px; margin-bottom:14px;"></div>
+                <input type="hidden" asp-for="PatientID" />
+                <input type="hidden" asp-for="ProfilePhotoPath" id="currentPhotoPath" />
+                <input type="hidden" name="RemovePhoto" id="removePhotoInput" value="false" />
 
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="required">Phone Number</label>
-                    <input asp-for="PhoneNumber" />
-                    <span asp-validation-for="PhoneNumber" class="validation-msg"></span>
-                </div>
-                <div class="form-col">
-                    <label>Address</label>
-                    <input asp-for="Address" />
-                </div>
-            </div>
-
-            <hr class="form-divider" />
-            <br />
-
-            @* ===== Guardian Info ===== *@
-            @if (!string.IsNullOrEmpty(Model.FatherName) || !string.IsNullOrEmpty(Model.FatherPhone))
-            {
+                @* ===== Personal Info ===== *@
                 <div class="form-row">
                     <div class="form-col">
-                        <label>Father Name</label>
-                        <input asp-for="FatherName" />
+                        <label class="required">First Name</label>
+                        <input asp-for="FirstName" />
+                        <span asp-validation-for="FirstName" class="validation-msg"></span>
                     </div>
                     <div class="form-col">
-                        <label>Phone Number</label>
-                        <input asp-for="FatherPhone" />
+                        <label class="required">Second Name</label>
+                        <input asp-for="SecondName" />
+                        <span asp-validation-for="SecondName" class="validation-msg"></span>
                     </div>
                 </div>
-            }
 
-            @if (!string.IsNullOrEmpty(Model.MotherName) || !string.IsNullOrEmpty(Model.MotherPhone))
-            {
                 <div class="form-row">
                     <div class="form-col">
-                        <label>Mother Name</label>
-                        <input asp-for="MotherName" />
+                        <label class="required">Third Name</label>
+                        <input asp-for="ThirdName" />
+                        <span asp-validation-for="ThirdName" class="validation-msg"></span>
                     </div>
                     <div class="form-col">
-                        <label>Phone Number</label>
-                        <input asp-for="MotherPhone" />
+                        <label class="required">Family Name</label>
+                        <input asp-for="FourthName" />
+                        <span asp-validation-for="FourthName" class="validation-msg"></span>
                     </div>
                 </div>
-            }
 
-            @if (!string.IsNullOrEmpty(Model.FatherName) || !string.IsNullOrEmpty(Model.FatherPhone) ||
-                 !string.IsNullOrEmpty(Model.MotherName) || !string.IsNullOrEmpty(Model.MotherPhone))
-            {
                 <hr class="form-divider" />
                 <br />
-            }
 
-            @* ===== Appointment ===== *@
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="required">Date of Appointment</label>
-                    <input asp-for="AppointmentDate" type="date" />
-                    <span asp-validation-for="AppointmentDate" class="validation-msg"></span>
-                </div>
-                <div class="form-col">
-                    <label class="required">Time</label>
-                    <div class="radio-group">
-                        <label><input type="radio" asp-for="AppointmentTime" value="AM" /> AM</label>
-                        <label><input type="radio" asp-for="AppointmentTime" value="PM" /> PM</label>
+                @* ===== Identity & Contact ===== *@
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="required">Nationality</label>
+                        <div class="radio-group">
+                            <label><input type="radio" asp-for="Nationality" value="1" /> Jordanian</label>
+                            <label><input type="radio" asp-for="Nationality" value="2" /> Not Jordanian</label>
+                        </div>
                     </div>
-                    <span asp-validation-for="AppointmentTime" class="validation-msg"></span>
-                </div>
-            </div>
-
-            <hr class="form-divider" />
-            <br />
-
-            @* ===== Profile Photo — دايماً موجود ===== *@
-            <div class="photo-section">
-                <div class="photo-section-title">
-                    <i class="fa-solid fa-camera me-1"></i> Profile Photo
-                </div>
-                <div class="photo-preview-wrap">
-
-                    <!-- دائرة الصورة -->
-                    <div class="photo-circle @(hasPhoto ? "has-photo" : "")" id="photoCircle">
-                        @if (hasPhoto)
-                        {
-                            <img src="@Model.ProfilePhotoPath" id="photoPreviewImg" alt="Patient Photo" />
-                        }
-                        else
-                        {
-                            <!-- أيقونة افتراضية لما ما في صورة -->
-                            <i class="fa-solid fa-user" id="photoPlaceholderIcon"
-                               style="font-size:36px; color:#ccc;"></i>
-                        }
+                    <div class="form-col">
+                        <label id="idLabel" class="required">National ID</label>
+                        <input asp-for="NationalID_PassportNumber" id="idInput" />
+                        <span asp-validation-for="NationalID_PassportNumber" class="validation-msg"></span>
                     </div>
-
-                    <!-- الأزرار -->
-                    <div class="photo-actions">
-
-                        <!-- زر الرفع — دايماً موجود -->
-                        <label for="ProfilePhotoFile" class="btn-upload-photo">
-                            <i class="fa-solid fa-arrow-up-from-bracket"></i>
-                            <span id="uploadBtnText">@(hasPhoto ? "Change Photo" : "Upload Photo")</span>
-                        </label>
-                        <input type="file" id="ProfilePhotoFile" name="ProfilePhotoFile"
-                               accept="image/jpeg,image/png,image/jpg" class="d-none" />
-
-                        <!-- زر الحذف — يظهر فقط إذا في صورة -->
-                        <button type="button" class="btn-remove-photo @(hasPhoto ? "" : "d-none")"
-                                id="removePhotoBtn">
-                            <i class="fa-solid fa-trash"></i> Remove Photo
-                        </button>
-
-                        <p class="photo-hint">JPG or PNG — max 2MB</p>
-                        <span id="photoError" class="text-danger" style="font-size:12px;"></span>
-                    </div>
-
                 </div>
-            </div>
 
-            <button type="submit" class="btn-save">Save</button>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="required">Gender</label>
+                        <div class="radio-group">
+                            <label><input type="radio" asp-for="Gender" value="Male" /> Male</label>
+                            <label><input type="radio" asp-for="Gender" value="Female" /> Female</label>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <label class="required">Date of Birth</label>
+                        <input asp-for="DateOfBirth" type="date" />
+                        <span asp-validation-for="DateOfBirth" class="validation-msg"></span>
+                    </div>
+                </div>
 
-        </form>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="required">Phone Number</label>
+                        <input asp-for="PhoneNumber" />
+                        <span asp-validation-for="PhoneNumber" class="validation-msg"></span>
+                    </div>
+                    <div class="form-col">
+                        <label>Address</label>
+                        <input asp-for="Address" />
+                    </div>
+                </div>
+
+                <hr class="form-divider" />
+                <br />
+
+                @* ===== Guardian Info ===== *@
+                @if (!string.IsNullOrEmpty(Model.FatherName) || !string.IsNullOrEmpty(Model.FatherPhone))
+                {
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Father Name</label>
+                            <input asp-for="FatherName" />
+                        </div>
+                        <div class="form-col">
+                            <label>Phone Number</label>
+                            <input asp-for="FatherPhone" />
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.MotherName) || !string.IsNullOrEmpty(Model.MotherPhone))
+                {
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Mother Name</label>
+                            <input asp-for="MotherName" />
+                        </div>
+                        <div class="form-col">
+                            <label>Phone Number</label>
+                            <input asp-for="MotherPhone" />
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.FatherName) || !string.IsNullOrEmpty(Model.FatherPhone) ||
+                     !string.IsNullOrEmpty(Model.MotherName) || !string.IsNullOrEmpty(Model.MotherPhone))
+                {
+                    <hr class="form-divider" />
+                    <br />
+                }
+
+                @* ===== Appointment ===== *@
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="required">Date of Appointment</label>
+                        <input asp-for="AppointmentDate" type="date" />
+                        <span asp-validation-for="AppointmentDate" class="validation-msg"></span>
+                    </div>
+                    <div class="form-col">
+                        <label class="required">Time</label>
+                        <div class="radio-group">
+                            <label><input type="radio" asp-for="AppointmentTime" value="AM" /> AM</label>
+                            <label><input type="radio" asp-for="AppointmentTime" value="PM" /> PM</label>
+                        </div>
+                        <span asp-validation-for="AppointmentTime" class="validation-msg"></span>
+                    </div>
+                </div>
+
+                <hr class="form-divider" />
+                <br />
+
+                @* ===== Profile Photo — دايماً موجود ===== *@
+                <div class="photo-section">
+                    <div class="photo-section-title">
+                        <i class="fa-solid fa-camera me-1"></i> Profile Photo
+                    </div>
+                    <div class="photo-preview-wrap">
+
+                        <!-- دائرة الصورة -->
+                        <div class="photo-circle @(hasPhoto ? "has-photo" : "")" id="photoCircle">
+                            @if (hasPhoto)
+                            {
+                                <img src="@Model.ProfilePhotoPath" id="photoPreviewImg" alt="Patient Photo" />
+                            }
+                            else
+                            {
+                                <!-- أيقونة افتراضية لما ما في صورة -->
+                                <i class="fa-solid fa-user" id="photoPlaceholderIcon"
+                                   style="font-size:36px; color:#ccc;"></i>
+                            }
+                        </div>
+
+                        <!-- الأزرار -->
+                        <div class="photo-actions">
+
+                            <!-- زر الرفع — دايماً موجود -->
+                            <label for="ProfilePhotoFile" class="btn-upload-photo">
+                                <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                                <span id="uploadBtnText">@(hasPhoto ? "Change Photo" : "Upload Photo")</span>
+                            </label>
+                            <input type="file" id="ProfilePhotoFile" name="ProfilePhotoFile"
+                                   accept="image/jpeg,image/png,image/jpg" class="d-none" />
+
+                            <!-- زر الحذف — يظهر فقط إذا في صورة -->
+                            <button type="button" class="btn-remove-photo @(hasPhoto ? "" : "d-none")"
+                                    id="removePhotoBtn">
+                                <i class="fa-solid fa-trash"></i> Remove Photo
+                            </button>
+
+                            <p class="photo-hint">JPG or PNG — max 2MB</p>
+                            <span id="photoError" class="text-danger" style="font-size:12px;"></span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save">Save</button>
+
+            </form>
+        </div>
     </div>
-</div>
 
+
+
+    <script>
+            (function () {
+                document.addEventListener("DOMContentLoaded", function () {
+
+                    const pageReadOnly =
+                        @pageReadOnly.ToString().ToLower();
+
+                    const root =
+                        document.getElementById("patientEditReadOnlyRoot");
+
+                    if (!pageReadOnly || !root) {
+                        return;
+                    }
+
+                    root.classList.add("closed-visit-readonly");
+
+                    root.querySelectorAll(
+                        "input:not([type='hidden']), textarea, select"
+                    ).forEach(function (element) {
+                        element.disabled = true;
+                    });
+
+                    root.querySelectorAll(
+                        "[contenteditable='true']"
+                    ).forEach(function (element) {
+                        element.setAttribute("contenteditable", "false");
+                    });
+
+                    function isViewOnlyButton(button) {
+                        const text =
+                            (button.textContent || "")
+                            .replace(/\s+/g, " ")
+                            .trim()
+                            .toLowerCase();
+
+                        return button.matches(
+                            ".btn-close, [data-bs-dismiss='modal'], [data-readonly-allow='true']"
+                        )
+                        || text === "details"
+                        || text === "view"
+                        || text.startsWith("view ")
+                        || text.includes("preview")
+                        || text === "close"
+                        || text === "×"
+                        || text === "✕";
+                    }
+
+                    root.querySelectorAll(
+                        "button, input[type='button'], input[type='submit']"
+                    ).forEach(function (button) {
+
+                        if (isViewOnlyButton(button)) {
+                            return;
+                        }
+
+                        button.disabled = true;
+                        button.setAttribute("aria-disabled", "true");
+                        button.classList.add("readonly-disabled-action");
+                    });
+
+                    root.querySelectorAll(
+                        ".photo-drop-zone, .ph-upload-zone, input[type='file']"
+                    ).forEach(function (element) {
+                        element.classList.add("readonly-disabled-action");
+                    });
+
+                    root.querySelectorAll("form").forEach(function (form) {
+                        form.addEventListener(
+                            "submit",
+                            function (event) {
+                                event.preventDefault();
+                                event.stopImmediatePropagation();
+                            },
+                            true
+                        );
+                    });
+
+                    root.addEventListener(
+                        "click",
+                        function (event) {
+
+                            const blocked =
+                                event.target.closest(
+                                    ".readonly-disabled-action"
+                                );
+
+                            if (!blocked) {
+                                return;
+                            }
+
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                        },
+                        true
+                    );
+
+                    ["dragover", "drop"].forEach(function (eventName) {
+                        root.addEventListener(
+                            eventName,
+                            function (event) {
+                                if (
+                                    event.target.closest(
+                                        ".photo-drop-zone, .ph-upload-zone"
+                                    )
+                                ) {
+                                    event.preventDefault();
+                                    event.stopImmediatePropagation();
+                                }
+                            },
+                            true
+                        );
+                    });
+                });
+            })();
+    </script>
+
+</div>
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

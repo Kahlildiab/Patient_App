@@ -53,5 +53,10 @@ namespace DentalCollegeManagementSystem_AAU.Models
         public string AdminApprovalStatus { get; set; } = "Approved";
         public string? AdminApprovedBy { get; set; }
         public DateTime? AdminApprovedDate { get; set; }
+        public bool IsClosed { get; set; } = false;
+
+        public DateTime? ClosedDate { get; set; }
+
+        public string? ClosedBy { get; set; }
     }
 }

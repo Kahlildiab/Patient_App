@@ -4,6 +4,27 @@
     var sh = ViewBag.SocialHistory as DentalCollegeManagementSystem_AAU.Models.SocialHistory;
 }
 
+
+@{
+    bool visitClosedForAccess =
+        ViewBag.IsVisitClosed != null &&
+        (bool)ViewBag.IsVisitClosed;
+
+    string visitRoleForAccess =
+        Context.Session.GetString("UserRole") ?? "";
+
+    bool adminCanEditClosedVisit =
+        string.Equals(
+            visitRoleForAccess,
+            "Admin",
+            StringComparison.OrdinalIgnoreCase
+        );
+
+    bool pageReadOnly =
+        visitClosedForAccess &&
+        !adminCanEditClosedVisit;
+}
+
 <style>
     .sh-section {
         border: 1px solid #ddd;
@@ -12,13 +33,20 @@
         margin-bottom: 14px;
         background: #fff;
     }
+
     .sh-section-title {
         font-weight: 700;
         font-size: 13px;
         color: #252468;
         margin-bottom: 12px;
     }
-    .sh-radio-group { display: flex; gap: 28px; flex-wrap: wrap; }
+
+    .sh-radio-group {
+        display: flex;
+        gap: 28px;
+        flex-wrap: wrap;
+    }
+
     .sh-radio-label {
         display: flex;
         align-items: center;
@@ -26,12 +54,14 @@
         font-size: 13px;
         cursor: pointer;
     }
-    .sh-radio-label input[type="radio"],
-    .sh-check-label input[type="checkbox"] {
-        accent-color: #252468;
-        width: 15px;
-        height: 15px;
-    }
+
+        .sh-radio-label input[type="radio"],
+        .sh-check-label input[type="checkbox"] {
+            accent-color: #252468;
+            width: 15px;
+            height: 15px;
+        }
+
     .sh-check-label {
         display: flex;
         align-items: center;
@@ -39,6 +69,7 @@
         font-size: 13px;
         cursor: pointer;
     }
+
     .sh-text-input {
         width: 100%;
         border: 1px solid #ddd;
@@ -50,13 +81,18 @@
         outline: none;
         transition: border-color .2s;
     }
-    .sh-text-input:focus { border-color: #252468; }
+
+        .sh-text-input:focus {
+            border-color: #252468;
+        }
+
     .sh-grid-2 {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 12px;
         margin-bottom: 12px;
     }
+
     .sh-field-label {
         font-size: 12px;
         font-weight: 600;
@@ -64,102 +100,135 @@
         margin-bottom: 5px;
         display: block;
     }
+
     .sh-always-fields {
         margin-top: 14px;
         border-top: 1px dashed #ddd;
         padding-top: 14px;
     }
 </style>
-
-<form id="socialHistoryForm">
-    @Html.AntiForgeryToken()
-    <input type="hidden" name="PatientID" value="@Model.PatientID" />
-    @if (sh != null)
-    {
-        <input type="hidden" name="SocialHistoryID" value="@sh.SocialHistoryID" />
+<style>
+    #socialHistoryReadOnlyRoot.closed-visit-readonly input:disabled,
+    #socialHistoryReadOnlyRoot.closed-visit-readonly textarea:disabled,
+    #socialHistoryReadOnlyRoot.closed-visit-readonly select:disabled {
+        opacity: 1 !important;
+        color: #333 !important;
+        background-color: #f7f7f7 !important;
+        cursor: default !important;
     }
 
-    <!-- 1. Occupation -->
-    <div class="sh-section">
-        <div class="sh-section-title">1. Occupation</div>
-        <input type="text"
-               name="Occupation"
-               class="sh-text-input"
-               placeholder="Enter occupation..."
-               value="@(sh?.Occupation ?? "")" />
-    </div>
+    #socialHistoryReadOnlyRoot.closed-visit-readonly input[type="checkbox"]:disabled,
+    #socialHistoryReadOnlyRoot.closed-visit-readonly input[type="radio"]:disabled {
+        opacity: 1 !important;
+    }
 
-    <!-- 2. Smoking Status -->
-    <div class="sh-section">
-        <div class="sh-section-title">2. Smoking Status</div>
-        <div style="font-size:12px; font-weight:600; color:#555; margin-bottom:8px;">Current Status</div>
-        <div class="sh-radio-group">
-            <label class="sh-radio-label">
-                <input type="radio" name="SmokingStatus" value="NeverSmoked"
-                       onchange="handleSmokingStatus('NeverSmoked')"
-                       @(sh == null || sh.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.NeverSmoked ? "checked" : "") />
-                Never Smoked
-            </label>
-            <label class="sh-radio-label">
-                <input type="radio" name="SmokingStatus" value="CurrentSmoker"
-                       onchange="handleSmokingStatus('CurrentSmoker')"
-                       @(sh?.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.CurrentSmoker ? "checked" : "") />
-                Current Smoker
-            </label>
-            <label class="sh-radio-label">
-                <input type="radio" name="SmokingStatus" value="FormerSmoker"
-                       onchange="handleSmokingStatus('FormerSmoker')"
-                       @(sh?.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.FormerSmoker ? "checked" : "") />
-                Former Smoker
-            </label>
+    #socialHistoryReadOnlyRoot.closed-visit-readonly .readonly-disabled-action {
+        opacity: .45 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+    }
+
+    #socialHistoryReadOnlyRoot.closed-visit-readonly input[type="file"],
+    #socialHistoryReadOnlyRoot.closed-visit-readonly .photo-drop-zone,
+    #socialHistoryReadOnlyRoot.closed-visit-readonly .ph-upload-zone {
+        pointer-events: none !important;
+        opacity: .55 !important;
+        cursor: not-allowed !important;
+    }
+</style>
+
+<div id="socialHistoryReadOnlyRoot" class="@(pageReadOnly ? "closed-visit-readonly" : "")">
+
+
+    <form id="socialHistoryForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="PatientID" value="@Model.PatientID" />
+        @if (sh != null)
+        {
+            <input type="hidden" name="SocialHistoryID" value="@sh.SocialHistoryID" />
+        }
+
+        <!-- 1. Occupation -->
+        <div class="sh-section">
+            <div class="sh-section-title">1. Occupation</div>
+            <input type="text"
+                   name="Occupation"
+                   class="sh-text-input"
+                   placeholder="Enter occupation..."
+                   value="@(sh?.Occupation ?? "")" />
         </div>
 
-        <!-- DIV المشترك: Current + Former -->
-        <div id="smokingDetailsDiv" style="display:@(sh?.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.CurrentSmoker || sh?.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.FormerSmoker ? "block" : "none"); margin-top:14px; border-top:1px dashed #ddd; padding-top:14px;">
-            <div style="font-size:12px; font-weight:600; color:#555; margin-bottom:8px;">Method of Smoking</div>
-            <div class="sh-grid-2" style="margin-bottom:12px;">
-                <label class="sh-check-label"><input type="checkbox" name="SmokingMethodCigarettes" value="true" /> Cigarettes</label>
-                <label class="sh-check-label"><input type="checkbox" name="SmokingMethodVape" value="true" /> Vape</label>
-                <label class="sh-check-label"><input type="checkbox" name="SmokingMethodShisha" value="true" /> Shisha</label>
-                <label class="sh-check-label"><input type="checkbox" name="SmokingMethodOther" value="true" /> Other</label>
+        <!-- 2. Smoking Status -->
+        <div class="sh-section">
+            <div class="sh-section-title">2. Smoking Status</div>
+            <div style="font-size:12px; font-weight:600; color:#555; margin-bottom:8px;">Current Status</div>
+            <div class="sh-radio-group">
+                <label class="sh-radio-label">
+                    <input type="radio" name="SmokingStatus" value="NeverSmoked"
+                           onchange="handleSmokingStatus('NeverSmoked')"
+                    @(sh == null || sh.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.NeverSmoked ? "checked" : "") />
+                    Never Smoked
+                </label>
+                <label class="sh-radio-label">
+                    <input type="radio" name="SmokingStatus" value="CurrentSmoker"
+                           onchange="handleSmokingStatus('CurrentSmoker')"
+                    @(sh?.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.CurrentSmoker ? "checked" : "") />
+                    Current Smoker
+                </label>
+                <label class="sh-radio-label">
+                    <input type="radio" name="SmokingStatus" value="FormerSmoker"
+                           onchange="handleSmokingStatus('FormerSmoker')"
+                    @(sh?.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.FormerSmoker ? "checked" : "") />
+                    Former Smoker
+                </label>
             </div>
-            <div class="sh-grid-2">
-                <div>
-                    <label class="sh-field-label">Duration</label>
-                    <input type="text" name="SmokingDuration" class="sh-text-input" placeholder="e.g., 5 years" />
+
+            <!-- DIV المشترك: Current + Former -->
+            <div id="smokingDetailsDiv" style="display:@(sh?.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.CurrentSmoker || sh?.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.FormerSmoker ? "block" : "none"); margin-top:14px; border-top:1px dashed #ddd; padding-top:14px;">
+                <div style="font-size:12px; font-weight:600; color:#555; margin-bottom:8px;">Method of Smoking</div>
+                <div class="sh-grid-2" style="margin-bottom:12px;">
+                    <label class="sh-check-label"><input type="checkbox" name="SmokingMethodCigarettes" value="true" /> Cigarettes</label>
+                    <label class="sh-check-label"><input type="checkbox" name="SmokingMethodVape" value="true" /> Vape</label>
+                    <label class="sh-check-label"><input type="checkbox" name="SmokingMethodShisha" value="true" /> Shisha</label>
+                    <label class="sh-check-label"><input type="checkbox" name="SmokingMethodOther" value="true" /> Other</label>
+                </div>
+                <div class="sh-grid-2">
+                    <div>
+                        <label class="sh-field-label">Duration</label>
+                        <input type="text" name="SmokingDuration" class="sh-text-input" placeholder="e.g., 5 years" />
+                    </div>
+                    <div>
+                        <label class="sh-field-label">Frequency</label>
+                        <input type="text" name="SmokingFrequency" class="sh-text-input" placeholder="e.g., Daily, Weekly" />
+                    </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label class="sh-field-label">Quantity (per day/week)</label>
+                    <input type="text" name="SmokingQuantity" class="sh-text-input" placeholder="e.g., 10 cigarettes per day" />
                 </div>
                 <div>
-                    <label class="sh-field-label">Frequency</label>
-                    <input type="text" name="SmokingFrequency" class="sh-text-input" placeholder="e.g., Daily, Weekly" />
+                    <label class="sh-field-label">Previous Attempts for Quitting</label>
+                    <textarea name="SmokingQuittingAttempts" class="sh-text-input" rows="3" placeholder="Describe previous quitting attempts..."></textarea>
                 </div>
             </div>
-            <div style="margin-bottom:12px;">
-                <label class="sh-field-label">Quantity (per day/week)</label>
-                <input type="text" name="SmokingQuantity" class="sh-text-input" placeholder="e.g., 10 cigarettes per day" />
-            </div>
-            <div>
-                <label class="sh-field-label">Previous Attempts for Quitting</label>
-                <textarea name="SmokingQuittingAttempts" class="sh-text-input" rows="3" placeholder="Describe previous quitting attempts..."></textarea>
+
+            <!-- DIV الثاني: Former فقط -->
+            <div id="formerSmokingDiv" style="display:@(sh?.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.FormerSmoker ? "block" : "none"); margin-top:12px;">
+                <label class="sh-field-label">Previous Smoking History</label>
+                <textarea name="PreviousSmokingHistory" class="sh-text-input" rows="3" placeholder="Details about previous smoking..."></textarea>
             </div>
         </div>
 
-        <!-- DIV الثاني: Former فقط -->
-        <div id="formerSmokingDiv" style="display:@(sh?.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.FormerSmoker ? "block" : "none"); margin-top:12px;">
-            <label class="sh-field-label">Previous Smoking History</label>
-            <textarea name="PreviousSmokingHistory" class="sh-text-input" rows="3" placeholder="Details about previous smoking..."></textarea>
-        </div>
-    </div>
+        <!-- 3. Alcohol Consumption -->
+        <div class="sh-section">
+            <div class="sh-section-title">3. Alcohol Consumption</div>
+            <label class="sh-check-label">
+                <input type="checkbox" id="consumesAlcoholCb" name="ConsumesAlcohol" value="true"
+                @(sh?.ConsumesAlcohol == true ? "checked" : "") />
+                Consumes Alcohol
+            </label>
 
-    <!-- 3. Alcohol Consumption -->
-    <div class="sh-section">
-        <div class="sh-section-title">3. Alcohol Consumption</div>
-        <label class="sh-check-label">
-            <input type="checkbox" id="consumesAlcoholCb" name="ConsumesAlcohol" value="true"
-                   @(sh?.ConsumesAlcohol == true ? "checked" : "") />
-            Consumes Alcohol
-        </label>
-
-       @*  <div class="sh-always-fields">
+            @*  <div class="sh-always-fields">
             <div class="sh-grid-2">
                 <div>
                     <label class="sh-field-label">Type</label>
@@ -189,18 +258,18 @@
                 </div>
             </div>
         </div> *@
-    </div>
+        </div>
 
-    <!-- 4. Drug Abuse -->
-    <div class="sh-section">
-        <div class="sh-section-title">4. Drug Abuse</div>
-        <label class="sh-check-label">
-            <input type="checkbox" id="usesDrugsCb" name="UsesRecreationalDrugs" value="true"
-                   @(sh?.UsesRecreationalDrugs == true ? "checked" : "") />
-            Uses Recreational Drugs
-        </label>
+        <!-- 4. Drug Abuse -->
+        <div class="sh-section">
+            <div class="sh-section-title">4. Drug Abuse</div>
+            <label class="sh-check-label">
+                <input type="checkbox" id="usesDrugsCb" name="UsesRecreationalDrugs" value="true"
+                @(sh?.UsesRecreationalDrugs == true ? "checked" : "") />
+                Uses Recreational Drugs
+            </label>
 
-      @*   <div class="sh-always-fields">
+            @*   <div class="sh-always-fields">
             <div class="sh-grid-2">
                 <div>
                     <label class="sh-field-label">Type</label>
@@ -230,108 +299,226 @@
                 </div>
             </div>
         </div> *@
-    </div>
+        </div>
 
-    <!-- Save Button -->
-    <div class="btnwrap" style="padding-bottom:50px; display:flex; justify-content:center;">
-        <button type="button"
-                id="saveSocialHistoryBtn"
-                onclick="saveSocialHistory()"
-                class="mybtn heading13"
-                style="background-color:#DAA328; border-radius:0px 10px 10px; width:200px; border:none;">
-            Save
-            <span class="line" style="border-right:6px solid #252468; border-bottom:6px solid #252468; right:-4px; bottom:-4px; border-top:none; border-left:none;"></span>
-            <span class="areaborder" style="border:0px;"></span>
-        </button>
-    </div>
-</form>
+        <!-- Save Button -->
+        <div class="btnwrap" style="padding-bottom:50px; display:flex; justify-content:center;">
+            <button type="button"
+                    id="saveSocialHistoryBtn"
+                    onclick="saveSocialHistory()"
+                    class="mybtn heading13"
+                    style="background-color:#DAA328; border-radius:0px 10px 10px; width:200px; border:none;">
+                Save
+                <span class="line" style="border-right:6px solid #252468; border-bottom:6px solid #252468; right:-4px; bottom:-4px; border-top:none; border-left:none;"></span>
+                <span class="areaborder" style="border:0px;"></span>
+            </button>
+        </div>
+    </form>
 
-<script>
-    // ── Show / Hide Smoking Fields ────────────────────────────
-    function handleSmokingStatus(value) {
-        document.getElementById('smokingDetailsDiv').style.display =
-            (value === 'CurrentSmoker' || value === 'FormerSmoker') ? 'block' : 'none';
-        document.getElementById('formerSmokingDiv').style.display =
-            (value === 'FormerSmoker') ? 'block' : 'none';
-        saveSocialFormData();
-    }
-
-    // ── sessionStorage ────────────────────────────────────────
-    const SH_FORM_KEY = 'socialHistoryForm_@Model.PatientID';
-
-    function restoreSocialFormData() {
-        const saved = sessionStorage.getItem(SH_FORM_KEY);
-        if (!saved) return;
-        const data = JSON.parse(saved);
-
-        data.forEach(({ name, value, type, checked }) => {
-            const els = document.querySelectorAll(`#social-history [name="${name}"]`);
-            els.forEach(el => {
-                if (type === 'radio') {
-                    if (el.value === value) {
-                        el.checked = true;
-                        if (name === 'SmokingStatus') handleSmokingStatus(value);
-                    }
-                } else if (type === 'checkbox') {
-                    if (el.value === value) el.checked = checked;
-                } else {
-                    el.value = value;
-                }
-            });
-        });
-    }
-
-    function saveSocialFormData() {
-        const form = document.querySelector('#social-history form');
-        if (!form) return;
-        const data = [];
-
-        form.querySelectorAll('input, select, textarea').forEach(el => {
-            if (!el.name || el.name === '__RequestVerificationToken'
-                || el.name === 'PatientID' || el.name === 'SocialHistoryID') return;
-            data.push({ name: el.name, value: el.value, type: el.type, checked: el.checked });
-        });
-
-        sessionStorage.setItem(SH_FORM_KEY, JSON.stringify(data));
-    }
-
-    function clearSocialSavedData() {
-        sessionStorage.removeItem(SH_FORM_KEY);
-    }
-
-    // ── ربط الأحداث ───────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', function () {
-        restoreSocialFormData();
-
-        const form = document.querySelector('#social-history form');
-        if (!form) return;
-        form.addEventListener('change', saveSocialFormData);
-        form.addEventListener('input', saveSocialFormData);
-    });
-
-    // ── Save ──────────────────────────────────────────────────
-    function saveSocialHistory() {
-        const form    = document.querySelector('#social-history form');
-        const data    = new FormData(form);
-        const saveBtn = document.getElementById('saveSocialHistoryBtn');
-
-        saveBtn.disabled  = true;
-        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-
-        fetch('/SocialHistories/Save', { method: 'POST', body: data })
-        .then(res => res.json())
-        .then(result => {
-            if (result.success) {
-                clearSocialSavedData();
-                showToast('Social History saved successfully.', 'success');
-            } else {
-                showToast(result.message || 'Error saving.', 'error');
+    <script>
+            // ── Show / Hide Smoking Fields ────────────────────────────
+            function handleSmokingStatus(value) {
+                document.getElementById('smokingDetailsDiv').style.display =
+                    (value === 'CurrentSmoker' || value === 'FormerSmoker') ? 'block' : 'none';
+                document.getElementById('formerSmokingDiv').style.display =
+                    (value === 'FormerSmoker') ? 'block' : 'none';
+                saveSocialFormData();
             }
-        })
-        .catch(() => showToast('Server error. Please try again.', 'error'))
-        .finally(() => {
-            saveBtn.disabled  = false;
-            saveBtn.innerHTML = 'Save';
-        });
-    }
-</script>
+
+            // ── sessionStorage ────────────────────────────────────────
+            const SH_FORM_KEY = 'socialHistoryForm_@Model.PatientID';
+
+            function restoreSocialFormData() {
+                const saved = sessionStorage.getItem(SH_FORM_KEY);
+                if (!saved) return;
+                const data = JSON.parse(saved);
+
+                data.forEach(({ name, value, type, checked }) => {
+                    const els = document.querySelectorAll(`#social-history [name="${name}"]`);
+                    els.forEach(el => {
+                        if (type === 'radio') {
+                            if (el.value === value) {
+                                el.checked = true;
+                                if (name === 'SmokingStatus') handleSmokingStatus(value);
+                            }
+                        } else if (type === 'checkbox') {
+                            if (el.value === value) el.checked = checked;
+                        } else {
+                            el.value = value;
+                        }
+                    });
+                });
+            }
+
+            function saveSocialFormData() {
+                const form = document.querySelector('#social-history form');
+                if (!form) return;
+                const data = [];
+
+                form.querySelectorAll('input, select, textarea').forEach(el => {
+                    if (!el.name || el.name === '__RequestVerificationToken'
+                        || el.name === 'PatientID' || el.name === 'SocialHistoryID') return;
+                    data.push({ name: el.name, value: el.value, type: el.type, checked: el.checked });
+                });
+
+                sessionStorage.setItem(SH_FORM_KEY, JSON.stringify(data));
+            }
+
+            function clearSocialSavedData() {
+                sessionStorage.removeItem(SH_FORM_KEY);
+            }
+
+            // ── ربط الأحداث ───────────────────────────────────────────
+            document.addEventListener('DOMContentLoaded', function () {
+                restoreSocialFormData();
+
+                const form = document.querySelector('#social-history form');
+                if (!form) return;
+                form.addEventListener('change', saveSocialFormData);
+                form.addEventListener('input', saveSocialFormData);
+            });
+
+            // ── Save ──────────────────────────────────────────────────
+            function saveSocialHistory() {
+                const form    = document.querySelector('#social-history form');
+                const data    = new FormData(form);
+                const saveBtn = document.getElementById('saveSocialHistoryBtn');
+
+                saveBtn.disabled  = true;
+                saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+                fetch('/SocialHistories/Save', { method: 'POST', body: data })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        clearSocialSavedData();
+                        showToast('Social History saved successfully.', 'success');
+                    } else {
+                        showToast(result.message || 'Error saving.', 'error');
+                    }
+                })
+                .catch(() => showToast('Server error. Please try again.', 'error'))
+                .finally(() => {
+                    saveBtn.disabled  = false;
+                    saveBtn.innerHTML = 'Save';
+                });
+            }
+    </script>
+
+    <script>
+            (function () {
+                document.addEventListener("DOMContentLoaded", function () {
+
+                    const pageReadOnly =
+                        @pageReadOnly.ToString().ToLower();
+
+                    const root =
+                        document.getElementById("socialHistoryReadOnlyRoot");
+
+                    if (!pageReadOnly || !root) {
+                        return;
+                    }
+
+                    root.classList.add("closed-visit-readonly");
+
+                    root.querySelectorAll(
+                        "input:not([type='hidden']), textarea, select"
+                    ).forEach(function (element) {
+                        element.disabled = true;
+                    });
+
+                    root.querySelectorAll(
+                        "[contenteditable='true']"
+                    ).forEach(function (element) {
+                        element.setAttribute("contenteditable", "false");
+                    });
+
+                    function isViewOnlyButton(button) {
+                        const text =
+                            (button.textContent || "")
+                            .replace(/\s+/g, " ")
+                            .trim()
+                            .toLowerCase();
+
+                        return button.matches(
+                            ".btn-close, [data-bs-dismiss='modal'], [data-readonly-allow='true']"
+                        )
+                        || text === "details"
+                        || text === "view"
+                        || text.startsWith("view ")
+                        || text.includes("preview")
+                        || text === "close"
+                        || text === "×"
+                        || text === "✕";
+                    }
+
+                    root.querySelectorAll(
+                        "button, input[type='button'], input[type='submit']"
+                    ).forEach(function (button) {
+
+                        if (isViewOnlyButton(button)) {
+                            return;
+                        }
+
+                        button.disabled = true;
+                        button.setAttribute("aria-disabled", "true");
+                        button.classList.add("readonly-disabled-action");
+                    });
+
+                    root.querySelectorAll(
+                        ".photo-drop-zone, .ph-upload-zone, input[type='file']"
+                    ).forEach(function (element) {
+                        element.classList.add("readonly-disabled-action");
+                    });
+
+                    root.querySelectorAll("form").forEach(function (form) {
+                        form.addEventListener(
+                            "submit",
+                            function (event) {
+                                event.preventDefault();
+                                event.stopImmediatePropagation();
+                            },
+                            true
+                        );
+                    });
+
+                    root.addEventListener(
+                        "click",
+                        function (event) {
+
+                            const blocked =
+                                event.target.closest(
+                                    ".readonly-disabled-action"
+                                );
+
+                            if (!blocked) {
+                                return;
+                            }
+
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                        },
+                        true
+                    );
+
+                    ["dragover", "drop"].forEach(function (eventName) {
+                        root.addEventListener(
+                            eventName,
+                            function (event) {
+                                if (
+                                    event.target.closest(
+                                        ".photo-drop-zone, .ph-upload-zone"
+                                    )
+                                ) {
+                                    event.preventDefault();
+                                    event.stopImmediatePropagation();
+                                }
+                            },
+                            true
+                        );
+                    });
+                });
+            })();
+    </script>
+
+</div>

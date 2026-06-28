@@ -313,7 +313,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         }
 
         // ─── Details ──────────────────────────────────────────────────────────────
-        public async Task<IActionResult> Details(int? id, string activeTab = "overview")
+        public async Task<IActionResult> Details(int? id, string tab = "medical-history")
         {
             if (id == null) return NotFound();
 
@@ -322,6 +322,83 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 .FirstOrDefaultAsync(m => m.PatientID == id);
 
             if (patient == null) return NotFound();
+
+            /*
+             * أول مرة يتم فتح ملف المريض:
+             * أنشئ زيارة أولى مفتوحة تلقائياً إذا لم يكن للمريض أي زيارة سابقة.
+             */
+            bool hasAnyVisit = await _context.Visits
+                .AnyAsync(v => v.PatientID == id.Value);
+
+            if (!hasAnyVisit)
+            {
+                string userRole =
+                    HttpContext.Session.GetString("UserRole")
+                    ?? string.Empty;
+
+                string appointmentTimeValue =
+                    patient.AppointmentTime?.Trim().ToUpperInvariant()
+                    ?? string.Empty;
+
+                string? appointmentPeriod = null;
+
+                if (appointmentTimeValue.Contains("AM"))
+                {
+                    appointmentPeriod = "AM";
+                }
+                else if (appointmentTimeValue.Contains("PM"))
+                {
+                    appointmentPeriod = "PM";
+                }
+                else if (
+                    TimeSpan.TryParse(
+                        patient.AppointmentTime,
+                        out TimeSpan parsedTime
+                    )
+                )
+                {
+                    appointmentPeriod =
+                        parsedTime.Hours >= 12
+                            ? "PM"
+                            : "AM";
+                }
+                else if (
+                    DateTime.TryParse(
+                        patient.AppointmentTime,
+                        out DateTime parsedDateTime
+                    )
+                )
+                {
+                    appointmentPeriod =
+                        parsedDateTime.Hour >= 12
+                            ? "PM"
+                            : "AM";
+                }
+
+                var firstVisit = new Visit
+                {
+                    PatientID = id.Value,
+                    VisitDate = DateTime.Today,
+                    AppointmentPeriod = appointmentPeriod,
+                    Attended = false,
+                    IsApproved = false,
+                    AdminApprovalStatus =
+                        string.Equals(
+                            userRole,
+                            "Student",
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                            ? "Pending"
+                            : "Approved",
+                    CreatedDate = DateTime.Now,
+                    IsClosed = false,
+                    ClosedDate = null,
+                    ClosedBy = null
+                };
+
+                _context.Visits.Add(firstVisit);
+                await _context.SaveChangesAsync();
+            }
 
             var templates = await _context.Competency
                 .Where(c => c.PatientID == null)
@@ -371,7 +448,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             ViewBag.Orders = orders;
             ViewBag.Patient = patient;
             ViewBag.PatientId = id;
-            ViewBag.ActiveTab = activeTab;
+            ViewBag.ActiveTab = tab;
 
             ViewBag.Pending = orders.Count(o => o.Status == "Pending");
             ViewBag.Completed = orders.Count(o => o.Status == "Completed");
@@ -411,15 +488,88 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 .ToListAsync();
             ViewBag.AllAppointments = allAppointments;
 
+            var latestVisit = await _context.Visits
+                .Where(v => v.PatientID == id.Value)
+                .OrderByDescending(v => v.VisitDate)
+                .ThenByDescending(v => v.VisitID)
+                .FirstOrDefaultAsync();
+
+            bool isAdmin =
+                string.Equals(
+                    HttpContext.Session.GetString("UserRole"),
+                    "Admin",
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+            ViewBag.IsVisitClosed =
+                latestVisit != null &&
+                latestVisit.IsClosed;
+
+            ViewBag.IsAdmin = isAdmin;
+
+            ViewBag.IsReadOnly =
+                latestVisit != null &&
+                latestVisit.IsClosed &&
+                !isAdmin;
+
             return View(patient);
         }
 
         // ─── Edit ─────────────────────────────────────────────────────────────────
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+            {
+                return NotFound();
+            }
+
             var patient = await _context.Patients.FindAsync(id);
-            if (patient == null) return NotFound();
+
+            if (patient == null)
+            {
+                return NotFound();
+            }
+
+            var latestVisit = await _context.Visits
+                .Where(v => v.PatientID == id.Value)
+                .OrderByDescending(v => v.VisitDate)
+                .ThenByDescending(v => v.VisitID)
+                .FirstOrDefaultAsync();
+
+            bool isAdmin =
+                string.Equals(
+                    HttpContext.Session.GetString("UserRole"),
+                    "Admin",
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+            bool isReadOnly =
+                latestVisit != null &&
+                latestVisit.IsClosed &&
+                !isAdmin;
+
+            ViewBag.IsVisitClosed =
+                latestVisit != null &&
+                latestVisit.IsClosed;
+
+            ViewBag.IsAdmin = isAdmin;
+            ViewBag.IsReadOnly = isReadOnly;
+
+            if (isReadOnly)
+            {
+                TempData["Error"] =
+                    "This visit is closed. Only an Administrator can edit patient information.";
+
+                return RedirectToAction(
+                    "Details",
+                    new
+                    {
+                        id = id.Value,
+                        tab = "medical-history"
+                    }
+                );
+            }
+
             return View(patient);
         }
 
@@ -431,7 +581,42 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             IFormFile? ProfilePhotoFile,
             string? RemovePhoto)
         {
-            if (id != patient.PatientID) return NotFound();
+            if (id != patient.PatientID)
+            {
+                return NotFound();
+            }
+
+            var latestVisit = await _context.Visits
+                .Where(v => v.PatientID == id)
+                .OrderByDescending(v => v.VisitDate)
+                .ThenByDescending(v => v.VisitID)
+                .FirstOrDefaultAsync();
+
+            bool isAdmin =
+                string.Equals(
+                    HttpContext.Session.GetString("UserRole"),
+                    "Admin",
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+            if (
+                latestVisit != null &&
+                latestVisit.IsClosed &&
+                !isAdmin
+            )
+            {
+                TempData["Error"] =
+                    "This visit is closed. Only an Administrator can edit patient information.";
+
+                return RedirectToAction(
+                    "Details",
+                    new
+                    {
+                        id = patient.PatientID,
+                        tab = "medical-history"
+                    }
+                );
+            }
 
             if (ModelState.IsValid)
             {

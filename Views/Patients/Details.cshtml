@@ -32,6 +32,24 @@
         conditions != null &&
         conditions.Any(c => c.IsFlagged);
 
+    bool isVisitClosed =
+        ViewBag.IsVisitClosed != null &&
+        (bool)ViewBag.IsVisitClosed;
+
+    string currentVisitAccessRole =
+        Context.Session.GetString("UserRole") ?? "";
+
+    bool isAdmin =
+        string.Equals(
+            currentVisitAccessRole,
+            "Admin",
+            StringComparison.OrdinalIgnoreCase
+        );
+
+    bool isReadOnly =
+        isVisitClosed &&
+        !isAdmin;
+
     string activeTab = Context.Request.Query["tab"].ToString();
 
     if (string.IsNullOrWhiteSpace(activeTab))
@@ -39,10 +57,9 @@
         activeTab = "medical-history";
     }
 
-    string complexity =
-        mh?.CaseComplexity.HasValue == true
-            ? mh.CaseComplexity.ToString()
-            : "---";
+    string complexity = mh?.CaseComplexity.HasValue == true
+        ? mh.CaseComplexity.ToString()
+        : "---";
 
     var nextAppt = ViewBag.NextAppointment
         as DentalCollegeManagementSystem_AAU.Models.Appointment;
@@ -312,6 +329,74 @@
         .content-section.active {
             display: block;
         }
+
+    /* ===== CLOSED VISIT / VIEW-ONLY MODE ===== */
+    #patientVisitContent {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .visit-closed-alert {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        max-width: 1200px;
+        margin: 0 auto 20px;
+        padding: 14px 18px;
+        background: #ffebee;
+        border: 1.5px solid #c62828;
+        border-radius: 8px;
+    }
+
+    .visit-closed-icon {
+        flex-shrink: 0;
+        font-size: 26px;
+    }
+
+    .visit-closed-title {
+        margin-bottom: 3px;
+        color: #b71c1c;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .visit-closed-text {
+        color: #555;
+        font-size: 12px;
+    }
+
+    .visit-readonly input:disabled,
+    .visit-readonly textarea:disabled,
+    .visit-readonly select:disabled {
+        opacity: 1 !important;
+        color: #333 !important;
+        background-color: #f7f7f7 !important;
+        cursor: default !important;
+    }
+
+    .visit-readonly input[type="checkbox"]:disabled,
+    .visit-readonly input[type="radio"]:disabled {
+        opacity: 1 !important;
+    }
+
+    .visit-readonly .readonly-disabled-action {
+        opacity: .45 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+    }
+
+    .visit-readonly input[type="file"],
+    .visit-readonly .photo-drop-zone,
+    .visit-readonly .ph-upload-zone {
+        pointer-events: none !important;
+        opacity: .55 !important;
+        cursor: not-allowed !important;
+    }
+
+    .visit-readonly form {
+        margin-bottom: 0;
+    }
+
 </style>
 
 <!-- ===== PATIENT DETAILS CARD ===== -->
@@ -325,11 +410,14 @@
             <div class="lineright" style="display:block; background-color:#daa328;"></div>
         </section>
     </div>
-    <div class="edit-link">
-        <a asp-action="Edit" asp-route-id="@Model.PatientID">
-            Edit <i class="fa-solid fa-pen-to-square"></i>
-        </a>
-    </div>
+    @if (!isReadOnly)
+    {
+        <div class="edit-link">
+            <a asp-action="Edit" asp-route-id="@Model.PatientID">
+                Edit <i class="fa-solid fa-pen-to-square"></i>
+            </a>
+        </div>
+    }
     <div class="details-card">
         <div class="details-body">
             <div class="patient-name-en">
@@ -400,6 +488,33 @@
         </div>
     </div>
 </div>
+
+
+@if (isVisitClosed)
+{
+    <div class="visit-closed-alert">
+        <span class="visit-closed-icon">🔒</span>
+
+        <div>
+            <div class="visit-closed-title">
+                Visit Closed
+            </div>
+
+            @if (isAdmin)
+            {
+                <div class="visit-closed-text">
+                    Administrator edit mode is active.
+                </div>
+            }
+            else
+            {
+                <div class="visit-closed-text">
+                    This visit has ended. All information is now view only.
+                </div>
+            }
+        </div>
+    </div>
+}
 
 <!-- ===== INFO BAR ===== -->
 <div class="info-bar" style="background:white; border:0.5px solid #ddd; border-radius:12px; padding:1rem 1.5rem;">
@@ -520,13 +635,26 @@
                 </li>
 
                 <li>
-                    <a id="dentalChartLink"
-                       href="@Url.Action("Index", "DentalChartPage", new { patientId = Model.PatientID })"
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       class="LinkFontStyle sidebar-link dental-chart-link">
-                        <span>Dental Charting</span>
-                    </a>
+                    @if (isReadOnly)
+                    {
+                        <a id="dentalChartLink"
+                           href="javascript:void(0)"
+                           class="LinkFontStyle sidebar-link dental-chart-link"
+                           style="opacity:.55; cursor:not-allowed;"
+                           title="This visit is closed. Only an Administrator can edit Dental Charting.">
+                            <span>Dental Charting 🔒</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <a id="dentalChartLink"
+                           href="@Url.Action("Index", "DentalChartPage", new { patientId = Model.PatientID })"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="LinkFontStyle sidebar-link dental-chart-link">
+                            <span>Dental Charting</span>
+                        </a>
+                    }
                 </li>
 
                 <li>
@@ -547,15 +675,7 @@
                     </a>
                 </li>
 
-                <li>
-                    <a href="@TabUrl("notes")"
-                       class="LinkFontStyle sidebar-link @GetTabClass("notes") @dentalDisabled"
-                       data-target="notes"
-                       style="@dentalStyle">
-                        <span>Notes</span>
-                    </a>
-                </li>
-
+               
                 <li>
                     <a href="@TabUrl("radiographs")"
                        class="LinkFontStyle sidebar-link @GetTabClass("radiographs") @dentalDisabled"
@@ -591,6 +711,14 @@
                         <span>Orders</span>
                     </a>
                 </li>
+                <li>
+                    <a href="@TabUrl("notes")"
+                       class="LinkFontStyle sidebar-link @GetTabClass("notes") @dentalDisabled"
+                       data-target="notes"
+                       style="@dentalStyle">
+                        <span>Notes</span>
+                    </a>
+                </li>
 
             </ul>
 
@@ -609,351 +737,356 @@
         </section>
         <br />
 
-        <div id="medical-history" class="content-section @(activeTab == "medical-history" ? "active" : "")">
-            @using (Html.BeginForm("Create", "MedicalHistories", FormMethod.Post))
-            {
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="PatientID" value="@Model.PatientID" />
-                @if (mh != null)
-                {
-                    <input type="hidden" name="MedicalHistoryID" value="@mh.MedicalHistoryID" />
-                }
+        <div id="patientVisitContent"
+             class="@(isReadOnly ? "visit-readonly" : "")">
 
-                <!-- Alert -->
-                @* يظهر فقط إذا في medical history مسبقة (زيارة ثانية فأكثر) *@
-                @if (mh != null)
+            <div id="medical-history" class="content-section @(activeTab == "medical-history" ? "active" : "")">
+                @using (Html.BeginForm("Create", "MedicalHistories", FormMethod.Post))
                 {
-                    <div id="medical-history-alert" style="border:1.5px solid #daa328; border-radius:6px; padding:16px 20px; margin-bottom:16px; display:flex; gap:16px; align-items:flex-start;">
-                        <div style="font-size:28px; color:#daa328; flex-shrink:0;">⚠️</div>
-                        <div>
-                            <div style="font-weight:700; font-size:14px; color:#252468; margin-bottom:4px;">Medical History Verification Required</div>
-                            <label style="font-size:12px; color:#333; display:flex; align-items:center; gap:8px; cursor:pointer;">
-                                <input type="checkbox" id="medicalHistoryCheckbox" name="MedicalHistoryVerified" value="true" @(mh?.MedicalHistoryVerified == true ? "checked" : "") />
-                                I confirm that I have reviewed the medical history with the patient.
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="PatientID" value="@Model.PatientID" />
+                    @if (mh != null)
+                    {
+                        <input type="hidden" name="MedicalHistoryID" value="@mh.MedicalHistoryID" />
+                    }
+
+                    <!-- Alert -->
+                    @* يظهر فقط إذا في medical history مسبقة (زيارة ثانية فأكثر) *@
+                    @if (mh != null)
+                    {
+                        <div id="medical-history-alert" style="border:1.5px solid #daa328; border-radius:6px; padding:16px 20px; margin-bottom:16px; display:flex; gap:16px; align-items:flex-start;">
+                            <div style="font-size:28px; color:#daa328; flex-shrink:0;">⚠️</div>
+                            <div>
+                                <div style="font-weight:700; font-size:14px; color:#252468; margin-bottom:4px;">Medical History Verification Required</div>
+                                <label style="font-size:12px; color:#333; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                    <input type="checkbox" id="medicalHistoryCheckbox" name="MedicalHistoryVerified" value="true" @(mh?.MedicalHistoryVerified == true ? "checked" : "") />
+                                    I confirm that I have reviewed the medical history with the patient.
+                                </label>
+                                <div style="font-size:11px; color:#888; margin-top:2px;">Check this box to unlock the patient file and continue with today's visit.</div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        @* أول مرة — نحط الـ checkbox مخفي وmحدد تلقائياً عشان ما يبلوك الـ tabs *@
+                        <input type="hidden" name="MedicalHistoryVerified" value="true" />
+                    }
+
+                    <!-- Visit Review -->
+                    <div style="border:1.5px solid #252468; border-radius:6px; padding:16px 20px; margin-bottom:16px;">
+                        <div style="font-weight:700; font-size:14px; color:#252468; margin-bottom:10px;">📊 Visit Review</div>
+                        <div style="font-size:12px; font-weight:600; color:#333; margin-bottom:6px;">Changes Status:</div>
+                        <div style="display:flex; gap:24px; margin-bottom:10px;">
+                            <label style="display:flex; align-items:center; gap:6px; font-size:13px;">
+                                <input type="radio" name="ChangesStatus" value="NoChanges" @(mh?.ChangesStatus == DentalCollegeManagementSystem_AAU.Models.ChangesStatusType.NoChanges || mh == null ? "checked" : "") />
+                                No changes in medical history
                             </label>
-                            <div style="font-size:11px; color:#888; margin-top:2px;">Check this box to unlock the patient file and continue with today's visit.</div>
+                            <label style="display:flex; align-items:center; gap:6px; font-size:13px;">
+                                <input type="radio" name="ChangesStatus" value="ChangesReported" @(mh?.ChangesStatus == DentalCollegeManagementSystem_AAU.Models.ChangesStatusType.ChangesReported ? "checked" : "") />
+                                Changes reported
+                            </label>
                         </div>
+                        <div style="font-size:12px; font-weight:600; color:#333; margin-bottom:6px;">Review Date:</div>
+                        <input type="date" name="ReviewDate"
+                               value="@(mh?.ReviewDate.HasValue == true ? mh.ReviewDate.Value.ToString("yyyy-MM-dd") : DateTime.Today.ToString("yyyy-MM-dd"))"
+                               style="border:1px solid #ccc; padding:6px 10px; font-size:13px; border-radius:4px;" />
                     </div>
-                }
-                else
-                {
-                    @* أول مرة — نحط الـ checkbox مخفي وmحدد تلقائياً عشان ما يبلوك الـ tabs *@
-                    <input type="hidden" name="MedicalHistoryVerified" value="true" />
-                }
 
-                <!-- Visit Review -->
-                <div style="border:1.5px solid #252468; border-radius:6px; padding:16px 20px; margin-bottom:16px;">
-                    <div style="font-weight:700; font-size:14px; color:#252468; margin-bottom:10px;">📊 Visit Review</div>
-                    <div style="font-size:12px; font-weight:600; color:#333; margin-bottom:6px;">Changes Status:</div>
-                    <div style="display:flex; gap:24px; margin-bottom:10px;">
-                        <label style="display:flex; align-items:center; gap:6px; font-size:13px;">
-                            <input type="radio" name="ChangesStatus" value="NoChanges" @(mh?.ChangesStatus == DentalCollegeManagementSystem_AAU.Models.ChangesStatusType.NoChanges || mh == null ? "checked" : "") />
-                            No changes in medical history
-                        </label>
-                        <label style="display:flex; align-items:center; gap:6px; font-size:13px;">
-                            <input type="radio" name="ChangesStatus" value="ChangesReported" @(mh?.ChangesStatus == DentalCollegeManagementSystem_AAU.Models.ChangesStatusType.ChangesReported ? "checked" : "") />
-                            Changes reported
-                        </label>
-                    </div>
-                    <div style="font-size:12px; font-weight:600; color:#333; margin-bottom:6px;">Review Date:</div>
-                    <input type="date" name="ReviewDate"
-                           value="@(mh?.ReviewDate.HasValue == true ? mh.ReviewDate.Value.ToString("yyyy-MM-dd") : DateTime.Today.ToString("yyyy-MM-dd"))"
-                           style="border:1px solid #ccc; padding:6px 10px; font-size:13px; border-radius:4px;" />
-                </div>
-
-                <!-- 1. Allergies -->
-                <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:12px;">
-                    <div style="font-weight:700; font-size:13px; color:#252468; margin-bottom:10px;">1. Allergies</div>
-                    <div style="display:flex; gap:40px;">
-                        <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
-                            <input type="radio" name="Allergies" value="false"
-                            @(mh?.Allergies == false || mh == null ? "checked" : "")
-                                   onchange="toggleAllergyNotes(false)" /> NO
-                        </label>
-                        <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
-                            <input type="radio" name="Allergies" value="true"
-                            @(mh?.Allergies == true ? "checked" : "")
-                                   onchange="toggleAllergyNotes(true)" /> Yes
-                        </label>
-                    </div>
-                    <div id="allergyNotesBox" style="margin-top:12px; @(mh?.Allergies == true ? "" : "display:none;")">
-                        <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">
-                            Allergy Details <span style="color:#c0392b;">*</span>
-                        </label>
-                        <textarea id="allergyNotesText" name="AllergyNotes" rows="3"
-                                  style="width:100%; border:1px solid #ddd; border-radius:4px; padding:8px 12px; font-size:13px; resize:vertical;"
-                                  placeholder="Describe the allergy (e.g. Penicillin, Latex...)">@mh?.AllergyNotes</textarea>
-
-                        <div id="allergyNotesError" style="display:none; color:#c0392b; font-size:12px; margin-top:4px;">
-                            ⚠️ Please describe the allergy.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. Ongoing Medical Treatment -->
-                <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:12px;">
-                    <div style="font-weight:700; font-size:13px; color:#252468; margin-bottom:10px;">2. Ongoing Medical Treatment</div>
-                    <textarea class="form-control" name="OngoingTreatment" rows="3"
-                              placeholder="Describe any ongoing medical treatments..."
-                              style="border-radius:4px; font-size:13px; resize:vertical;">@mh?.OngoingTreatment</textarea>
-                </div>
-
-                <!-- 3. Recent Hospitalization -->
-                <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:12px;">
-                    <div style="font-weight:700; font-size:13px; color:#252468; margin-bottom:10px;">3. Recent Hospitalization (Past 12 Months)</div>
-                    <div style="display:flex; gap:40px;">
-                        <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
-                            <input type="radio" name="RecentHospitalization" value="false"
-                            @(mh?.RecentHospitalization == false || mh == null ? "checked" : "")
-                                   onchange="toggleHospitalizationNotes(false)" /> NO
-                        </label>
-                        <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
-                            <input type="radio" name="RecentHospitalization" value="true"
-                            @(mh?.RecentHospitalization == true ? "checked" : "")
-                                   onchange="toggleHospitalizationNotes(true)" /> Yes
-                        </label>
-                    </div>
-                    <div id="hospitalizationNotesBox" style="margin-top:12px; @(mh?.RecentHospitalization == true ? "" : "display:none;")">
-                        <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">
-                            Hospitalization Details <span style="color:#c0392b;">*</span>
-                        </label>
-                        <textarea id="hospitalizationNotesText" name="HospitalizationNotes" rows="3"
-                                  style="width:100%; border:1px solid #ddd; border-radius:4px; padding:8px 12px; font-size:13px; resize:vertical;"
-                                  placeholder="Describe the hospitalization reason...">@mh?.HospitalizationNotes</textarea>
-                        <div id="hospitalizationNotesError" style="display:none; color:#c0392b; font-size:12px; margin-top:4px;">
-                            ⚠️ Please describe the hospitalization.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. Pregnancy -->
-                @if (Model.Gender?.ToLower() != "male")
-                {
+                    <!-- 1. Allergies -->
                     <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:12px;">
-                        <div style="font-weight:700; font-size:13px; color:#252468; margin-bottom:10px;">4. Current Pregnancy or Breastfeeding (If Applicable)</div>
-                        <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; margin-bottom:6px;">
-                            <input type="checkbox" name="IsPregnant" value="true" @(mh?.IsPregnant == true ? "checked" : "") /> Currently Pregnant
-                        </label>
-                        <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
-                            <input type="checkbox" name="IsBreastfeeding" value="true" @(mh?.IsBreastfeeding == true ? "checked" : "") /> Currently Breastfeeding
-                        </label>
+                        <div style="font-weight:700; font-size:13px; color:#252468; margin-bottom:10px;">1. Allergies</div>
+                        <div style="display:flex; gap:40px;">
+                            <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
+                                <input type="radio" name="Allergies" value="false"
+                                @(mh?.Allergies == false || mh == null ? "checked" : "")
+                                       onchange="toggleAllergyNotes(false)" /> NO
+                            </label>
+                            <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
+                                <input type="radio" name="Allergies" value="true"
+                                @(mh?.Allergies == true ? "checked" : "")
+                                       onchange="toggleAllergyNotes(true)" /> Yes
+                            </label>
+                        </div>
+                        <div id="allergyNotesBox" style="margin-top:12px; @(mh?.Allergies == true ? "" : "display:none;")">
+                            <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">
+                                Allergy Details <span style="color:#c0392b;">*</span>
+                            </label>
+                            <textarea id="allergyNotesText" name="AllergyNotes" rows="3"
+                                      style="width:100%; border:1px solid #ddd; border-radius:4px; padding:8px 12px; font-size:13px; resize:vertical;"
+                                      placeholder="Describe the allergy (e.g. Penicillin, Latex...)">@mh?.AllergyNotes</textarea>
+
+                            <div id="allergyNotesError" style="display:none; color:#c0392b; font-size:12px; margin-top:4px;">
+                                ⚠️ Please describe the allergy.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Ongoing Medical Treatment -->
+                    <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:12px;">
+                        <div style="font-weight:700; font-size:13px; color:#252468; margin-bottom:10px;">2. Ongoing Medical Treatment</div>
+                        <textarea class="form-control" name="OngoingTreatment" rows="3"
+                                  placeholder="Describe any ongoing medical treatments..."
+                                  style="border-radius:4px; font-size:13px; resize:vertical;">@mh?.OngoingTreatment</textarea>
+                    </div>
+
+                    <!-- 3. Recent Hospitalization -->
+                    <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:12px;">
+                        <div style="font-weight:700; font-size:13px; color:#252468; margin-bottom:10px;">3. Recent Hospitalization (Past 12 Months)</div>
+                        <div style="display:flex; gap:40px;">
+                            <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
+                                <input type="radio" name="RecentHospitalization" value="false"
+                                @(mh?.RecentHospitalization == false || mh == null ? "checked" : "")
+                                       onchange="toggleHospitalizationNotes(false)" /> NO
+                            </label>
+                            <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
+                                <input type="radio" name="RecentHospitalization" value="true"
+                                @(mh?.RecentHospitalization == true ? "checked" : "")
+                                       onchange="toggleHospitalizationNotes(true)" /> Yes
+                            </label>
+                        </div>
+                        <div id="hospitalizationNotesBox" style="margin-top:12px; @(mh?.RecentHospitalization == true ? "" : "display:none;")">
+                            <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">
+                                Hospitalization Details <span style="color:#c0392b;">*</span>
+                            </label>
+                            <textarea id="hospitalizationNotesText" name="HospitalizationNotes" rows="3"
+                                      style="width:100%; border:1px solid #ddd; border-radius:4px; padding:8px 12px; font-size:13px; resize:vertical;"
+                                      placeholder="Describe the hospitalization reason...">@mh?.HospitalizationNotes</textarea>
+                            <div id="hospitalizationNotesError" style="display:none; color:#c0392b; font-size:12px; margin-top:4px;">
+                                ⚠️ Please describe the hospitalization.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Pregnancy -->
+                    @if (Model.Gender?.ToLower() != "male")
+                    {
+                        <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:12px;">
+                            <div style="font-weight:700; font-size:13px; color:#252468; margin-bottom:10px;">4. Current Pregnancy or Breastfeeding (If Applicable)</div>
+                            <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; margin-bottom:6px;">
+                                <input type="checkbox" name="IsPregnant" value="true" @(mh?.IsPregnant == true ? "checked" : "") /> Currently Pregnant
+                            </label>
+                            <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
+                                <input type="checkbox" name="IsBreastfeeding" value="true" @(mh?.IsBreastfeeding == true ? "checked" : "") /> Currently Breastfeeding
+                            </label>
+                        </div>
+                    }
+
+                    <!-- 5. Conditions -->
+                    <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                            <div style="font-weight:700; font-size:13px; color:#252468;">5. Diagnosed Medical Conditions</div>
+                            <button type="button" onclick="openConditionModal()"
+                                    style="background:#252468; color:white; border:none; padding:5px 14px; font-size:12px; font-weight:600; cursor:pointer; border-radius:4px;">
+                                + Add Condition
+                            </button>
+                        </div>
+                        <div id="conditions-display">
+                            @if (conditions != null && conditions.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped" style="font-size:12px;" id="conditions-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Condition</th>
+                                                <th>Year</th>
+                                                <th>Notes</th>
+                                                <th>Case</th>
+                                                <th>Red Flag</th>
+                                                <th style="text-align:center;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="conditions-tbody">
+                                            @foreach (var c in conditions)
+                                            {
+                                                <tr>
+                                                    <td style="font-weight:600; color:#252468;">@c.ConditionName</td>
+                                                    <td>@(c.YearOfDiagnosis.HasValue ? c.YearOfDiagnosis.ToString() : "---")</td>
+                                                    <td>@(string.IsNullOrEmpty(c.Notes) ? "---" : c.Notes)</td>
+                                                    <td>
+                                                        @if (c.IsCurrentlyActive)
+                                                        {
+                                                            <span style="color:#27ae60; font-weight:600;">Active</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span style="color:#aaa;">Inactive</span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (c.IsFlagged)
+                                                        {
+                                                            <span style="color:#c0392b; font-weight:700; font-size:13px;">🚩 Yes</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span style="color:#aaa; font-size:11px;">No</span>
+                                                        }
+                                                    </td>
+                                                    <td style="text-align:center; white-space:nowrap;">
+                                                        <button type="button"
+                                                                class="edit-condition-btn"
+                                                                data-id="@c.ConditionID"
+                                                                data-name="@c.ConditionName"
+                                                                data-year="@(c.YearOfDiagnosis.HasValue ? c.YearOfDiagnosis.ToString() : "")"
+                                                                data-active="@(c.IsCurrentlyActive ? "true" : "false")"
+                                                                data-flagged="@(c.IsFlagged ? "true" : "false")"
+                                                                data-notes="@(c.Notes ?? "")"
+                                                                style="background:none; border:none; color:#252468; cursor:pointer; margin-right:8px;" title="Edit">
+                                                            <i class="fa-solid fa-pen-to-square"></i>
+                                                        </button>
+                                                        <button type="button"
+                                                                onclick="deleteCondition(this, @c.ConditionID)"
+                                                                style="background:none; border:none; color:#c0392b; cursor:pointer;" title="Delete">
+                                                            <i class="fa-solid fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div id="no-conditions-msg" style="font-size:12px; color:#888;">No conditions recorded yet.</div>
+                                <div class="table-responsive" id="conditions-table" style="display:none;">
+                                    <table class="table table-bordered table-striped" style="font-size:12px;">
+                                        <thead>
+                                            <tr>
+                                                <th>Condition</th>
+                                                <th>Year</th>
+                                                <th>Notes</th>
+                                                <th>Red Flag</th>
+                                                <th style="text-align:center;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="conditions-tbody"></tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- 6. Medications -->
+                    <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:24px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <div style="font-weight:700; font-size:13px; color:#252468;">6. Medications</div>
+                            <button type="button" onclick="openMedicationModal()"
+                                    style="background:#252468; color:white; border:none; padding:5px 14px; font-size:12px; font-weight:600; cursor:pointer; border-radius:4px;">
+                                + Add Medication
+                            </button>
+                        </div>
+                        <div id="medications-display">
+                            @if (meds != null && meds.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped" style="font-size:12px;" id="medications-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Drug Name</th>
+                                                <th>Dose</th>
+                                                <th>Frequency</th>
+                                                <th>Duration</th>
+                                                <th>Flags</th>
+                                                <th style="text-align:center;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="medications-tbody">
+                                            @foreach (var med in meds)
+                                            {
+                                                <tr>
+                                                    <td>@med.DrugName</td>
+                                                    <td>@(string.IsNullOrEmpty(med.Dose) ? "---" : med.Dose)</td>
+                                                    <td>@(string.IsNullOrEmpty(med.Frequency) ? "---" : med.Frequency)</td>
+                                                    <td>@(string.IsNullOrEmpty(med.Duration) ? "---" : med.Duration)</td>
+                                                    <td>
+                                                        @if (string.IsNullOrEmpty(med.FlagType))
+                                                        {
+                                                            <span style="color:#aaa; font-size:11px;">---</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            string flagClass = med.FlagType switch
+                                                            {
+                                                                "Anticoagulant" => "flag-anticoagulant",
+                                                                "Bisphosphonates" => "flag-bisphosphonates",
+                                                                "Steroids" => "flag-steroids",
+                                                                "Immunosuppressants" => "flag-immunosuppressants",
+                                                                _ => ""
+                                                            };
+                                                            <span class="flag-badge @flagClass">@med.FlagType</span>
+                                                        }
+                                                    </td>
+                                                    <td style="text-align:center; white-space:nowrap;">
+                                                        <button type="button"
+                                                                class="edit-med-btn"
+                                                                data-id="@med.MedicationID"
+                                                                data-drug="@med.DrugName"
+                                                                data-dose="@(med.Dose ?? "")"
+                                                                data-frequency="@(med.Frequency ?? "")"
+                                                                data-duration="@(med.Duration ?? "")"
+                                                                data-flag="@(med.FlagType ?? "")"
+                                                                style="background:none; border:none; color:#252468; cursor:pointer; margin-right:8px;" title="Edit">
+                                                            <i class="fa-solid fa-pen-to-square"></i>
+                                                        </button>
+                                                        <button type="button" onclick="deleteMedication(this, @med.MedicationID)"
+                                                                style="background:none; border:none; color:#c0392b; cursor:pointer;" title="Delete">
+                                                            <i class="fa-solid fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div id="no-medications-msg" style="font-size:12px; color:#888;">No medications recorded yet.</div>
+                                <div class="table-responsive" id="medications-table" style="display:none;">
+                                    <table class="table table-bordered table-striped" style="font-size:12px;">
+                                        <thead>
+                                            <tr>
+                                                <th>Drug Name</th>
+                                                <th>Dose</th>
+                                                <th>Frequency</th>
+                                                <th>Duration</th>
+                                                <th>Flags</th>
+                                                <th style="text-align:center;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="medications-tbody"></tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div class="btnwrap" style="padding-top:0px; padding-bottom:50px; display:flex; justify-content:center;">
+                        <button type="submit" id="saveBtn" class="mybtn heading13"
+                                style="background-color:#DAA328; border-radius:0px 10px 10px; width:200px; border:none;">
+                            Save
+                            <span class="line" style="border-right:6px solid #252468; border-bottom:6px solid #252468; right:-4px; bottom:-4px; border-top:none; border-left:none;"></span>
+                            <span class="areaborder" style="border:0px;"></span>
+                        </button>
                     </div>
                 }
+            </div>
 
-                <!-- 5. Conditions -->
-                <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:12px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-                        <div style="font-weight:700; font-size:13px; color:#252468;">5. Diagnosed Medical Conditions</div>
-                        <button type="button" onclick="openConditionModal()"
-                                style="background:#252468; color:white; border:none; padding:5px 14px; font-size:12px; font-weight:600; cursor:pointer; border-radius:4px;">
-                            + Add Condition
-                        </button>
-                    </div>
-                    <div id="conditions-display">
-                        @if (conditions != null && conditions.Any())
-                        {
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-striped" style="font-size:12px;" id="conditions-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Condition</th>
-                                            <th>Year</th>
-                                            <th>Notes</th>
-                                            <th>Case</th>
-                                            <th>Red Flag</th>
-                                            <th style="text-align:center;">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="conditions-tbody">
-                                        @foreach (var c in conditions)
-                                        {
-                                            <tr>
-                                                <td style="font-weight:600; color:#252468;">@c.ConditionName</td>
-                                                <td>@(c.YearOfDiagnosis.HasValue ? c.YearOfDiagnosis.ToString() : "---")</td>
-                                                <td>@(string.IsNullOrEmpty(c.Notes) ? "---" : c.Notes)</td>
-                                                <td>
-                                                    @if (c.IsCurrentlyActive)
-                                                    {
-                                                        <span style="color:#27ae60; font-weight:600;">Active</span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span style="color:#aaa;">Inactive</span>
-                                                    }
-                                                </td>
-                                                <td>
-                                                    @if (c.IsFlagged)
-                                                    {
-                                                        <span style="color:#c0392b; font-weight:700; font-size:13px;">🚩 Yes</span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span style="color:#aaa; font-size:11px;">No</span>
-                                                    }
-                                                </td>
-                                                <td style="text-align:center; white-space:nowrap;">
-                                                    <button type="button"
-                                                            class="edit-condition-btn"
-                                                            data-id="@c.ConditionID"
-                                                            data-name="@c.ConditionName"
-                                                            data-year="@(c.YearOfDiagnosis.HasValue ? c.YearOfDiagnosis.ToString() : "")"
-                                                            data-active="@(c.IsCurrentlyActive ? "true" : "false")"
-                                                            data-flagged="@(c.IsFlagged ? "true" : "false")"
-                                                            data-notes="@(c.Notes ?? "")"
-                                                            style="background:none; border:none; color:#252468; cursor:pointer; margin-right:8px;" title="Edit">
-                                                        <i class="fa-solid fa-pen-to-square"></i>
-                                                    </button>
-                                                    <button type="button"
-                                                            onclick="deleteCondition(this, @c.ConditionID)"
-                                                            style="background:none; border:none; color:#c0392b; cursor:pointer;" title="Delete">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
-                        else
-                        {
-                            <div id="no-conditions-msg" style="font-size:12px; color:#888;">No conditions recorded yet.</div>
-                            <div class="table-responsive" id="conditions-table" style="display:none;">
-                                <table class="table table-bordered table-striped" style="font-size:12px;">
-                                    <thead>
-                                        <tr>
-                                            <th>Condition</th>
-                                            <th>Year</th>
-                                            <th>Notes</th>
-                                            <th>Red Flag</th>
-                                            <th style="text-align:center;">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="conditions-tbody"></tbody>
-                                </table>
-                            </div>
-                        }
-                    </div>
-                </div>
+            <div id="dental-history" class="content-section @(activeTab == "dental-history" ? "active" : "")">@await Html.PartialAsync("DentalHistory", Model)</div>
+            <div id="social-history" class="content-section @(activeTab == "social-history" ? "active" : "")">@await Html.PartialAsync("SocialHistory", Model)</div>
+            <div id="extraoral-exam" class="content-section @(activeTab == "extraoral-exam" ? "active" : "")">@await Html.PartialAsync("Extraoralexam", Model)</div>
+            <div id="intraoral-exam" class="content-section @(activeTab == "intraoral-exam" ? "active" : "")">@await Html.PartialAsync("Intraoralexam", Model)</div>
+            <div id="treatment-plan" class="content-section @(activeTab == "treatment-plan" ? "active" : "")">@await Html.PartialAsync("Treatment-plan", Model)</div>
+            <div id="notes" class="content-section @(activeTab == "notes" ? "active" : "")">@await Html.PartialAsync("Notes", Model)</div>
+            <div id="radiographs" class="content-section @(activeTab == "radiographs" ? "active" : "")">@await Html.PartialAsync("Radiographs", Model)</div>
+            <div id="photos" class="content-section @(activeTab == "photos" ? "active" : "")">@await Html.PartialAsync("Photos", Model)</div>
+            <div id="competencies" class="content-section @(activeTab == "competencies" ? "active" : "")">@await Html.PartialAsync("Competencies", Model)</div>
+            <div id="orders" class="content-section @(activeTab == "orders" ? "active" : "")">@await Html.PartialAsync("Orders", ViewBag.Orders as List<Order>)</div>
+            <div id="todays-visit" class="content-section @(activeTab == "todays-visit" ? "active" : "")">@await Html.PartialAsync("Visits", Model)</div>
 
-                <!-- 6. Medications -->
-                <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:24px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                        <div style="font-weight:700; font-size:13px; color:#252468;">6. Medications</div>
-                        <button type="button" onclick="openMedicationModal()"
-                                style="background:#252468; color:white; border:none; padding:5px 14px; font-size:12px; font-weight:600; cursor:pointer; border-radius:4px;">
-                            + Add Medication
-                        </button>
-                    </div>
-                    <div id="medications-display">
-                        @if (meds != null && meds.Any())
-                        {
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-striped" style="font-size:12px;" id="medications-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Drug Name</th>
-                                            <th>Dose</th>
-                                            <th>Frequency</th>
-                                            <th>Duration</th>
-                                            <th>Flags</th>
-                                            <th style="text-align:center;">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="medications-tbody">
-                                        @foreach (var med in meds)
-                                        {
-                                            <tr>
-                                                <td>@med.DrugName</td>
-                                                <td>@(string.IsNullOrEmpty(med.Dose) ? "---" : med.Dose)</td>
-                                                <td>@(string.IsNullOrEmpty(med.Frequency) ? "---" : med.Frequency)</td>
-                                                <td>@(string.IsNullOrEmpty(med.Duration) ? "---" : med.Duration)</td>
-                                                <td>
-                                                    @if (string.IsNullOrEmpty(med.FlagType))
-                                                    {
-                                                        <span style="color:#aaa; font-size:11px;">---</span>
-                                                    }
-                                                    else
-                                                    {
-                                                        string flagClass = med.FlagType switch
-                                                        {
-                                                            "Anticoagulant" => "flag-anticoagulant",
-                                                            "Bisphosphonates" => "flag-bisphosphonates",
-                                                            "Steroids" => "flag-steroids",
-                                                            "Immunosuppressants" => "flag-immunosuppressants",
-                                                            _ => ""
-                                                        };
-                                                        <span class="flag-badge @flagClass">@med.FlagType</span>
-                                                    }
-                                                </td>
-                                                <td style="text-align:center; white-space:nowrap;">
-                                                    <button type="button"
-                                                            class="edit-med-btn"
-                                                            data-id="@med.MedicationID"
-                                                            data-drug="@med.DrugName"
-                                                            data-dose="@(med.Dose ?? "")"
-                                                            data-frequency="@(med.Frequency ?? "")"
-                                                            data-duration="@(med.Duration ?? "")"
-                                                            data-flag="@(med.FlagType ?? "")"
-                                                            style="background:none; border:none; color:#252468; cursor:pointer; margin-right:8px;" title="Edit">
-                                                        <i class="fa-solid fa-pen-to-square"></i>
-                                                    </button>
-                                                    <button type="button" onclick="deleteMedication(this, @med.MedicationID)"
-                                                            style="background:none; border:none; color:#c0392b; cursor:pointer;" title="Delete">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
-                        else
-                        {
-                            <div id="no-medications-msg" style="font-size:12px; color:#888;">No medications recorded yet.</div>
-                            <div class="table-responsive" id="medications-table" style="display:none;">
-                                <table class="table table-bordered table-striped" style="font-size:12px;">
-                                    <thead>
-                                        <tr>
-                                            <th>Drug Name</th>
-                                            <th>Dose</th>
-                                            <th>Frequency</th>
-                                            <th>Duration</th>
-                                            <th>Flags</th>
-                                            <th style="text-align:center;">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="medications-tbody"></tbody>
-                                </table>
-                            </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Save Button -->
-                <div class="btnwrap" style="padding-top:0px; padding-bottom:50px; display:flex; justify-content:center;">
-                    <button type="submit" id="saveBtn" class="mybtn heading13"
-                            style="background-color:#DAA328; border-radius:0px 10px 10px; width:200px; border:none;">
-                        Save
-                        <span class="line" style="border-right:6px solid #252468; border-bottom:6px solid #252468; right:-4px; bottom:-4px; border-top:none; border-left:none;"></span>
-                        <span class="areaborder" style="border:0px;"></span>
-                    </button>
-                </div>
-            }
         </div>
-
-        <div id="dental-history" class="content-section @(activeTab == "dental-history" ? "active" : "")">@await Html.PartialAsync("DentalHistory", Model)</div>
-        <div id="social-history" class="content-section @(activeTab == "social-history" ? "active" : "")">@await Html.PartialAsync("SocialHistory", Model)</div>
-        <div id="extraoral-exam" class="content-section @(activeTab == "extraoral-exam" ? "active" : "")">@await Html.PartialAsync("Extraoralexam", Model)</div>
-        <div id="intraoral-exam" class="content-section @(activeTab == "intraoral-exam" ? "active" : "")">@await Html.PartialAsync("Intraoralexam", Model)</div>
-        <div id="treatment-plan" class="content-section @(activeTab == "treatment-plan" ? "active" : "")">@await Html.PartialAsync("Treatment-plan", Model)</div>
-        <div id="notes" class="content-section @(activeTab == "notes" ? "active" : "")">@await Html.PartialAsync("Notes", Model)</div>
-        <div id="radiographs" class="content-section @(activeTab == "radiographs" ? "active" : "")">@await Html.PartialAsync("Radiographs", Model)</div>
-        <div id="photos" class="content-section @(activeTab == "photos" ? "active" : "")">@await Html.PartialAsync("Photos", Model)</div>
-        <div id="competencies" class="content-section @(activeTab == "competencies" ? "active" : "")">@await Html.PartialAsync("Competencies", Model)</div>
-        <div id="orders" class="content-section @(activeTab == "orders" ? "active" : "")">@await Html.PartialAsync("Orders", ViewBag.Orders as List<Order>)</div>
-        <div id="todays-visit" class="content-section @(activeTab == "todays-visit" ? "active" : "")">@await Html.PartialAsync("Visits", Model)</div>
 
     </div>
 </div>
@@ -1101,6 +1234,82 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+
+        // =====================================================
+        // CLOSED VISIT: all tabs remain visible, but data is view only
+        // =====================================================
+
+        const isReadOnly =
+        @isReadOnly.ToString().ToLower();
+
+        if (isReadOnly) {
+
+        const readOnlyRoots = [
+        document.getElementById("patientVisitContent"),
+        document.getElementById("conditionModal"),
+        document.getElementById("editConditionModal"),
+        document.getElementById("medicationModal"),
+        document.getElementById("editMedicationModal")
+        ].filter(Boolean);
+
+        function isViewOnlyButton(button) {
+
+        const text =
+        (button.textContent || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+
+        return button.matches(
+        ".btn-close, [data-bs-dismiss='modal'], [data-readonly-allow='true']"
+        )
+        || text === "details"
+        || text === "view"
+        || text.startsWith("view ")
+        || text.includes("preview")
+        || text === "close"
+        || text === "×"
+        || text === "✕";
+        }
+
+        readOnlyRoots.forEach(function (root) {
+
+        root.querySelectorAll(
+        "input:not([type='hidden']), textarea, select"
+        )
+        .forEach(function (element) {
+        element.disabled = true;
+        });
+
+        root.querySelectorAll(
+        "button, input[type='button'], input[type='submit']"
+        )
+        .forEach(function (button) {
+
+        if (isViewOnlyButton(button)) {
+        return;
+        }
+
+        button.disabled = true;
+        button.setAttribute("aria-disabled", "true");
+        button.classList.add("readonly-disabled-action");
+        });
+
+        root.querySelectorAll("form")
+        .forEach(function (form) {
+
+        form.addEventListener(
+        "submit",
+        function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        },
+        true
+        );
+        });
+        });
+        }
+
 
         // =====================================================
         // 1. رابط Dental Charting
