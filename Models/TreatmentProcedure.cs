@@ -1,25 +1,58 @@
-﻿// Models/TreatmentProcedure.cs
+﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace DentalCollegeManagementSystem_AAU.Models  
+namespace DentalCollegeManagementSystem_AAU.Models
 {
     public class TreatmentProcedure
     {
+        [Key]
         public int Id { get; set; }
+
+        [Required]
         public int PatientId { get; set; }
+
+        [Required]
         public TreatmentCategory Category { get; set; }
+
+        [Required]
+        [StringLength(50)]
         public string ToothNumber { get; set; }
+            = string.Empty;
+
+        [Required]
+        [StringLength(500)]
         public string Procedure { get; set; }
+            = string.Empty;
+
+        [Range(1, 100)]
         public int EstimatedSessions { get; set; }
+            = 1;
+
+        [Required]
         public TreatmentPriority Priority { get; set; }
-        public string Notes { get; set; }
+
+        [StringLength(2000)]
+        public string? Notes { get; set; }
+
+        [Required]
         public ProcedureStatus Status { get; set; }
+            = ProcedureStatus.Planned;
+
         public DateTime? CompletionDate { get; set; }
 
-        public virtual Patient Patient { get; set; }
-        public string AdminApprovalStatus { get; set; } = "Approved";
+        [Required]
+        [StringLength(50)]
+        public string AdminApprovalStatus { get; set; }
+            = "Approved";
+
+        [StringLength(200)]
         public string? AdminApprovedBy { get; set; }
+
         public DateTime? AdminApprovedDate { get; set; }
+
+        [ForeignKey(nameof(PatientId))]
+        public virtual Patient? Patient { get; set; }
     }
 
     public enum TreatmentCategory
@@ -47,8 +80,10 @@ namespace DentalCollegeManagementSystem_AAU.Models
     public enum ProcedureStatus
     {
         Planned,
+
         [Display(Name = "In Progress")]
         InProgress,
+
         Completed
     }
 }

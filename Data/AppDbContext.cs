@@ -22,6 +22,7 @@ namespace DentalCollegeManagementSystem_AAU.Data
         public DbSet<ExtraoralExamPhoto> ExtraoralExamPhotos { get; set; }
         public DbSet<IntraoralExamPhoto> IntraoralExamPhotos { get; set; }
         public DbSet<TreatmentProcedure> TreatmentProcedures { get; set; }
+        public DbSet<TreatmentPlanDiagnosis> TreatmentPlanDiagnoses { get; set; }
         public DbSet<Visit> Visits { get; set; }
         public DbSet<Note> Notes { get; set; }
         public DbSet<Radiograph> Radiographs { get; set; }

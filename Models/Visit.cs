@@ -58,5 +58,7 @@ namespace DentalCollegeManagementSystem_AAU.Models
         public DateTime? ClosedDate { get; set; }
 
         public string? ClosedBy { get; set; }
+        [StringLength(20)]
+        public string? CaseComplexity { get; set; }
     }
 }

@@ -419,10 +419,45 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             var extraoralexam = await _context.ExtraoralExams.FirstOrDefaultAsync(s => s.PatientID == id);
             var intraoralexam = await _context.IntraoralExams.FirstOrDefaultAsync(s => s.PatientID == id);
             var notes = await _context.Notes.Where(n => n.PatientId == id).OrderByDescending(n => n.CreatedAt).ToListAsync();
-            var treatmentProcedures = await _context.TreatmentProcedures.Where(p => p.PatientId == id).ToListAsync();
+            var treatmentProcedures = await _context.TreatmentProcedures
+                .Where(p => p.PatientId == id)
+                .ToListAsync();
+
+            var treatmentPlanDiagnosis =
+                await _context.TreatmentPlanDiagnoses
+                    .FirstOrDefaultAsync(
+                        d => d.PatientId == id.Value
+                    );
+
+            int totalCompetencies =
+                templates.Count;
+
+            int completedCompetencies =
+                patientCompetencies.Count(
+                    competency =>
+                        competency.IsCompleted
+                );
+
+            int treatmentProgressPercentage =
+                totalCompetencies > 0
+                    ? (int)Math.Round(
+                        (double)completedCompetencies
+                        / totalCompetencies
+                        * 100
+                    )
+                    : 0;
 
             ViewBag.AllCompetencies = templates;
             ViewBag.PatientCompetencies = patientCompetencies;
+
+            ViewBag.TreatmentProgressPercentage =
+                treatmentProgressPercentage;
+
+            ViewBag.CompletedCompetencies =
+                completedCompetencies;
+
+            ViewBag.TotalCompetencies =
+                totalCompetencies;
             ViewBag.MedicalHistory = medicalHistory;
             ViewBag.Conditions = conditions;
             ViewBag.Medications = medications;
@@ -431,6 +466,30 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             ViewBag.ExtraoralExam = extraoralexam;
             ViewBag.IntraoralExam = intraoralexam;
             ViewBag.TreatmentProcedures = treatmentProcedures;
+
+            ViewBag.TreatmentPlanDiagnosis =
+                treatmentPlanDiagnosis;
+
+            string? patientCaseComplexity =
+                visits
+                    .Where(
+                        v =>
+                            !string.IsNullOrWhiteSpace(
+                                v.CaseComplexity
+                            )
+                    )
+                    .OrderBy(v => v.VisitDate)
+                    .ThenBy(v => v.VisitID)
+                    .Select(v => v.CaseComplexity)
+                    .FirstOrDefault();
+
+            ViewBag.CaseComplexity =
+                string.IsNullOrWhiteSpace(
+                    patientCaseComplexity
+                )
+                    ? "---"
+                    : patientCaseComplexity;
+
             ViewBag.Visits = visits;
             ViewBag.Notes = notes;
 
@@ -473,14 +532,94 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 .OrderByDescending(p => p.UploadedDate)
                 .ToListAsync();
 
-            // ✅ يستثني Cancelled
-            var nextAppointment = await _context.Appointments
-                .Where(a => a.PatientID == id
-                         && a.AppointmentDate.Date >= DateTime.Today
-                         && a.AppointmentStatus != "Cancelled")
-                .OrderBy(a => a.AppointmentDate)
-                .FirstOrDefaultAsync();
-            ViewBag.NextAppointment = nextAppointment;
+            /*
+             * الموعد القادم:
+             * - يستثني المواعيد الملغاة.
+             * - يستثني مواعيد اليوم التي انتهى وقتها.
+             * - يرتب حسب التاريخ ثم وقت البداية.
+             */
+            DateTime today =
+                DateTime.Today;
+
+            TimeSpan currentTime =
+                DateTime.Now.TimeOfDay;
+
+            var nextAppointment =
+                await _context.Appointments
+                    .Where(
+                        a =>
+                            a.PatientID == id
+                            &&
+                            a.AppointmentStatus
+                                != "Cancelled"
+                            &&
+                            (
+                                a.AppointmentDate.Date
+                                    > today
+                                ||
+                                (
+                                    a.AppointmentDate.Date
+                                        == today
+                                    &&
+                                    a.TimeTo
+                                        >= currentTime
+                                )
+                            )
+                    )
+                    .OrderBy(
+                        a => a.AppointmentDate
+                    )
+                    .ThenBy(
+                        a => a.TimeFrom
+                    )
+                    .FirstOrDefaultAsync();
+
+            ViewBag.NextAppointment =
+                nextAppointment;
+
+            /*
+             * الطلاب المسندون لهذا المريض.
+             * يتم جلب أسماء المستخدمين النشطين فقط،
+             * وترتيبهم حسب تاريخ الإسناد.
+             */
+            var assignedStudentNames =
+                await (
+                    from allocation
+                        in _context.AllocatedStudents
+
+                    join appUser
+                        in _context.AppUsers
+                        on allocation.AppUserId
+                        equals appUser.Id
+
+                    where
+                        allocation.PatientID == id.Value
+                        &&
+                        appUser.Status == "Active"
+
+                    orderby allocation.AssignedDate
+
+                    select appUser.NameEn
+                )
+                .Where(
+                    name =>
+                        name != null
+                        &&
+                        name != ""
+                )
+                .Distinct()
+                .ToListAsync();
+
+            ViewBag.AssignedStudentNames =
+                assignedStudentNames;
+
+            ViewBag.AssignedStudentText =
+                assignedStudentNames.Any()
+                    ? string.Join(
+                        ", ",
+                        assignedStudentNames
+                    )
+                    : "No student assigned";
 
             var allAppointments = await _context.Appointments
                 .Where(a => a.PatientID == id)

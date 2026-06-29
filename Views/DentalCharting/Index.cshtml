@@ -3,7 +3,26 @@
 ───────────────────────────────────────────────────────────────────────── *@
 @{
     ViewData["Title"] = "Dental Chart";
-    var patientId = ViewBag.PatientId ?? 0;
+
+    int patientId =
+        ViewBag.PatientId != null
+            ? Convert.ToInt32(
+                ViewBag.PatientId
+            )
+            : 0;
+
+    bool isVisitClosed =
+        ViewBag.IsVisitClosed != null &&
+        (bool)ViewBag.IsVisitClosed;
+
+    bool isAdmin =
+        ViewBag.IsAdmin != null &&
+        (bool)ViewBag.IsAdmin;
+
+    bool isReadOnly =
+        ViewBag.IsReadOnly != null
+            ? (bool)ViewBag.IsReadOnly
+            : isVisitClosed && !isAdmin;
 }
 
 <style>
@@ -379,9 +398,9 @@
         display: block;
         cursor: pointer;
         /*
-                                                        Bridge and Space Maintainer connector lines extend slightly
-                                                        outside the SVG so adjacent teeth can be visually connected.
-                                                    */
+                                                            Bridge and Space Maintainer connector lines extend slightly
+                                                            outside the SVG so adjacent teeth can be visually connected.
+                                                        */
         overflow: visible;
     }
 
@@ -630,9 +649,9 @@
         }
 
     /*
-                                            نخفي السن مع الاحتفاظ بمكانه داخل Grid،
-                                            حتى تبقى الأسنان 1-5 في مكانها الصحيح.
-                                        */
+                                                نخفي السن مع الاحتفاظ بمكانه داخل Grid،
+                                                حتى تبقى الأسنان 1-5 في مكانها الصحيح.
+                                            */
     .dentition-hidden {
         visibility: hidden !important;
         pointer-events: none !important;
@@ -640,8 +659,8 @@
 
 
     /* ═══════════════════════════════════════════════════════════════
-               BPE — Basic Periodontal Examination
-               ═══════════════════════════════════════════════════════════════ */
+                   BPE — Basic Periodontal Examination
+                   ═══════════════════════════════════════════════════════════════ */
     .bpe-section {
         margin-top: 22px;
         padding-top: 4px;
@@ -744,6 +763,63 @@
         }
     }
 
+
+
+    /* ===== CLOSED VISIT / VIEW ONLY ===== */
+    .dental-view-only-alert {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        padding: 13px 16px;
+        border: 1.5px solid #c62828;
+        border-radius: 12px;
+        background: #ffebee;
+        color: #7f1d1d;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .dental-admin-alert {
+        border-color: #2e7d32;
+        background: #e8f5e9;
+        color: #1b5e20;
+    }
+
+    .dental-readonly #toolbar,
+    .dental-readonly #chartHost {
+        pointer-events: none !important;
+    }
+
+    .dental-readonly #toolbar {
+        opacity: .55;
+    }
+
+    .dental-readonly #chartHost {
+        cursor: default !important;
+    }
+
+    .dental-readonly #reportPanel button,
+    .dental-readonly #detailList button,
+    .dental-readonly .editing-only {
+        display: none !important;
+    }
+
+    .dental-readonly textarea:disabled,
+    .dental-readonly select:disabled,
+    .dental-readonly input:disabled {
+        opacity: 1 !important;
+        color: #374151 !important;
+        background: #f3f4f6 !important;
+        cursor: default !important;
+    }
+
+    body.dental-readonly-page
+    #historyModal .btn-danger,
+    body.dental-readonly-page
+    #othersTextModal .btn-primary {
+        display: none !important;
+    }
 </style>
 
 <div id="toastContainer"></div>
@@ -774,14 +850,38 @@
         <h3 id="othersTextTitle">📝 Add Note</h3>
         <textarea id="othersTextInput"
                   placeholder="اكتب ملاحظتك هنا / Write your note here..."
+                  disabled="@(isReadOnly ? "disabled" : null)"
                   style="min-height:120px;margin-top:0;font-size:15px;"></textarea>
         <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">
             <button class="btn btn-secondary" onclick="closeOthersTextModal()">✕ Cancel</button>
-            <button class="btn btn-primary" onclick="saveOthersText()">💾 Save Note</button>
+            <button class="btn btn-primary editing-only" onclick="saveOthersText()">💾 Save Note</button>
         </div>
     </div>
 </div>
-<div class="app">
+<div class="app @(isReadOnly ? "dental-readonly" : "")">
+
+    @if (isReadOnly)
+    {
+        <div class="dental-view-only-alert">
+            <span>🔒</span>
+
+            <span>
+                Visit Closed — Dental Charting is view only.
+                Only an Administrator can modify it.
+            </span>
+        </div>
+    }
+    else if (isVisitClosed && isAdmin)
+    {
+        <div class="dental-view-only-alert dental-admin-alert">
+            <span>🔓</span>
+
+            <span>
+                Visit Closed — Administrator edit mode is active.
+            </span>
+        </div>
+    }
+
     <div class="topbar">
 
         <div class="header">
@@ -800,7 +900,8 @@
                 <label class="dentition-switch">
                     <input type="checkbox"
                            id="deciduousModeCheckbox"
-                           onchange="changeDentitionMode(this.checked)" />
+                           onchange="changeDentitionMode(this.checked)"
+                           disabled="@(isReadOnly ? "disabled" : null)" />
 
                     <span class="dentition-switch-text">
                         <strong id="dentitionModeLabel">
@@ -819,13 +920,13 @@
                     📥 Load
                 </button>
 
-                <button class="btn btn-green"
+                <button class="btn btn-green editing-only"
                         type="button"
                         onclick="saveChartToDb()">
                     💾 Save
                 </button>
 
-                <button class="btn btn-warning"
+                <button class="btn btn-warning editing-only"
                         type="button"
                         onclick="saveNewSession()">
                     🗂️ New Session
@@ -850,7 +951,11 @@
         <div class="chart-panel">
             <div class="chart-title">
                 <h2>Interactive Dental Chart</h2>
-                <div class="hint">Select a tool from the toolbar, then click on a tooth area.</div>
+                <div class="hint">
+                    @(isReadOnly
+                        ? "View only — this visit is closed."
+                        : "Select a tool from the toolbar, then click on a tooth area.")
+                </div>
             </div>
             <div id="chartHost"></div>
 
@@ -877,7 +982,7 @@
 
                         <tr class="bpe-upper-row">
                             <td class="bpe-select-cell">
-                                <select id="bpeUpperRight" class="bpe-select" aria-label="BPE Upper Right">
+                                <select id="bpeUpperRight" class="bpe-select" disabled="@(isReadOnly ? "disabled" : null)" aria-label="BPE Upper Right">
                                     <option value="0">0</option>
                                     <option value="1">1</option>
                                     <option value="2">2</option>
@@ -887,7 +992,7 @@
                                 </select>
                             </td>
                             <td class="bpe-select-cell">
-                                <select id="bpeUpperAnterior" class="bpe-select" aria-label="BPE Upper Anterior">
+                                <select id="bpeUpperAnterior" class="bpe-select" disabled="@(isReadOnly ? "disabled" : null)" aria-label="BPE Upper Anterior">
                                     <option value="0">0</option>
                                     <option value="1">1</option>
                                     <option value="2">2</option>
@@ -896,7 +1001,7 @@
                                 </select>
                             </td>
                             <td class="bpe-select-cell">
-                                <select id="bpeUpperLeft" class="bpe-select" aria-label="BPE Upper Left">
+                                <select id="bpeUpperLeft" class="bpe-select" disabled="@(isReadOnly ? "disabled" : null)" aria-label="BPE Upper Left">
                                     <option value="0">0</option>
                                     <option value="1">1</option>
                                     <option value="2">2</option>
@@ -909,7 +1014,7 @@
 
                         <tr class="bpe-lower-row">
                             <td class="bpe-select-cell">
-                                <select id="bpeLowerRight" class="bpe-select" aria-label="BPE Lower Right">
+                                <select id="bpeLowerRight" class="bpe-select" disabled="@(isReadOnly ? "disabled" : null)" aria-label="BPE Lower Right">
                                     <option value="0">0</option>
                                     <option value="1">1</option>
                                     <option value="2">2</option>
@@ -919,7 +1024,7 @@
                                 </select>
                             </td>
                             <td class="bpe-select-cell">
-                                <select id="bpeLowerAnterior" class="bpe-select" aria-label="BPE Lower Anterior">
+                                <select id="bpeLowerAnterior" class="bpe-select" disabled="@(isReadOnly ? "disabled" : null)" aria-label="BPE Lower Anterior">
                                     <option value="0">0</option>
                                     <option value="1">1</option>
                                     <option value="2">2</option>
@@ -928,7 +1033,7 @@
                                 </select>
                             </td>
                             <td class="bpe-select-cell">
-                                <select id="bpeLowerLeft" class="bpe-select" aria-label="BPE Lower Left">
+                                <select id="bpeLowerLeft" class="bpe-select" disabled="@(isReadOnly ? "disabled" : null)" aria-label="BPE Lower Left">
                                     <option value="0">0</option>
                                     <option value="1">1</option>
                                     <option value="2">2</option>
@@ -970,20 +1075,20 @@
                 <div><b>Selected Area:</b>  <span id="selectedAreaLabel">—</span></div>
 
                 <div class="actions">
-                    <button class="btn btn-secondary" onclick="clearSelectedTarget()">Clear Area</button>
-                    <button class="btn btn-danger" onclick="clearSelectedTooth()">Clear Tooth</button>
-                    <button class="btn btn-warning" onclick="clearAllChart()">Clear All</button>
+                    <button class="btn btn-secondary editing-only" onclick="clearSelectedTarget()">Clear Area</button>
+                    <button class="btn btn-danger editing-only" onclick="clearSelectedTooth()">Clear Tooth</button>
+                    <button class="btn btn-warning editing-only" onclick="clearAllChart()">Clear All</button>
                 </div>
 
                 <div style="margin-top:10px;"><b>Area Note</b></div>
-                <textarea id="noteBox" placeholder="Write a note for the selected area..."></textarea>
+                <textarea id="noteBox" placeholder="Write a note for the selected area..." disabled="@(isReadOnly ? "disabled" : null)"></textarea>
                 <div class="actions">
-                    <button class="btn btn-primary" onclick="saveNote()">💾 Save Note</button>
+                    <button class="btn btn-primary editing-only" onclick="saveNote()">💾 Save Note</button>
                 </div>
 
                 <div class="session-note-wrap">
                     <label>General Session Note</label>
-                    <textarea id="sessionNoteGlobal" placeholder="General note for this session..."></textarea>
+                    <textarea id="sessionNoteGlobal" placeholder="General note for this session..." disabled="@(isReadOnly ? "disabled" : null)"></textarea>
                 </div>
             </div>
 
@@ -1017,6 +1122,22 @@
     // ════════════════════════════════════════════════════════════════
     const PATIENT_ID = @patientId;
     const API_BASE = "/DentalChart/api";
+
+    const IS_READ_ONLY =
+        @isReadOnly.ToString().ToLower();
+
+    function ensureDentalChartEditable() {
+        if (!IS_READ_ONLY) {
+            return true;
+        }
+
+        showToast(
+            "🔒 This visit is closed. Dental Charting is view only.",
+            "warning"
+        );
+
+        return false;
+    }
 
 
     // ════════════════════════════════════════════════════════════════
@@ -1455,6 +1576,7 @@
             : "";
     }
         function changeDentitionMode(isChecked) {
+        if (!ensureDentalChartEditable()) return;
 
         /*
             Checked   = Deciduous Teeth
@@ -4878,6 +5000,7 @@
     }
 
     function selectTool(toolId) {
+        if (!ensureDentalChartEditable()) return;
         selectedToolId = toolId;
         pendingSwapToothId = null;
 
@@ -4913,6 +5036,7 @@
     }
 
     function swapTeeth(tid1, tid2) {
+        if (!ensureDentalChartEditable()) return;
         if (!tid1 || !tid2 || tid1 === tid2) return false;
         if (!chartData[tid1] || !chartData[tid2]) return false;
 
@@ -5800,6 +5924,7 @@
             </svg>`;
     }
     function toggleToothVariant(tid) {
+        if (!ensureDentalChartEditable()) return;
         const tooth = chartData[tid];
         if (!tooth) return;
 
@@ -5847,6 +5972,7 @@
     }
 
               function selectArea(tid, area, source = "surface") {
+        if (!ensureDentalChartEditable()) return;
         const currentTool = selectedToolId ? getTool(selectedToolId) : null;
 
         /*
@@ -6560,6 +6686,7 @@
     }
 
     function applyToolToSelectedTarget() {
+        if (!ensureDentalChartEditable()) return;
         if (!selectedToolId || !selectedTarget) return;
 
         const tool = getTool(selectedToolId);
@@ -6597,6 +6724,7 @@
     }
 
     function clearSelectedTarget() {
+        if (!ensureDentalChartEditable()) return;
         if (!selectedTarget) return;
 
         const tid = selectedTarget.toothId;
@@ -6664,6 +6792,7 @@
     }
 
     function clearSelectedTooth() {
+        if (!ensureDentalChartEditable()) return;
         if (!selectedTarget) return;
 
         const id = selectedTarget.toothId;
@@ -6680,6 +6809,7 @@
     }
 
     function clearAllChart() {
+        if (!ensureDentalChartEditable()) return;
         const allTeeth = [
             ...UPPER_IDS,
             ...LOWER_IDS
@@ -6732,6 +6862,7 @@
     }
 
     function saveNote() {
+        if (!ensureDentalChartEditable()) return;
         if (!selectedTarget) return;
 
         const tid = selectedTarget.toothId;
@@ -6753,6 +6884,7 @@
     }
 
     function removeGroupFromArea(group, toolId) {
+        if (!ensureDentalChartEditable()) return;
         if (!selectedTarget) return;
         const arr = chartData[selectedTarget.toothId].areas[selectedTarget.area][group];
         const idx = arr.indexOf(toolId);
@@ -6761,6 +6893,7 @@
     }
 
     function removeWholeGroup(tid, group, toolId) {
+        if (!ensureDentalChartEditable()) return;
         const arr = chartData[tid].whole[group];
 
         if (Array.isArray(arr)) {
@@ -6776,6 +6909,7 @@
     }
 
     function removeFromArea(toothId, areaKey, group, toolId) {
+        if (!ensureDentalChartEditable()) return;
         const arr = chartData[toothId].areas[areaKey][group];
         const idx = arr.indexOf(toolId);
         if (idx > -1) arr.splice(idx, 1);
@@ -6783,12 +6917,14 @@
     }
 
     function clearAreaNote() {
+        if (!ensureDentalChartEditable()) return;
         if (!selectedTarget) return;
         chartData[selectedTarget.toothId].areas[selectedTarget.area].note = "";
         renderAll();
     }
 
     function clearAreaNoteFor(toothId, areaKey) {
+        if (!ensureDentalChartEditable()) return;
         const tooth = chartData[toothId];
 
         if (!tooth) {
@@ -7117,6 +7253,7 @@
         group,
         encodedAreas
     ) {
+        if (!ensureDentalChartEditable()) return;
         let areas = [];
 
         try {
@@ -7743,6 +7880,7 @@
             );
     }
         function openOthersTextModal(tid, area) {
+        if (!ensureDentalChartEditable()) return;
         const existing = chartData[tid].areas[area].note || "";
         const modal = document.getElementById("othersTextModal");
         document.getElementById("othersTextInput").value = existing;
@@ -7754,6 +7892,7 @@
     }
 
     function saveOthersText() {
+        if (!ensureDentalChartEditable()) return;
         const modal = document.getElementById("othersTextModal");
         const tid   = modal.dataset.tid;
         const area  = modal.dataset.area;
@@ -8385,6 +8524,7 @@
     }
 
     async function saveChartToDb() {
+        if (!ensureDentalChartEditable()) return;
         if (!PATIENT_ID) { showToast("❌ Patient ID is not set!", "error"); return; }
         if (!currentSessionId) {
             showToast("⚠️ No active session — creating one automatically...", "info");
@@ -8426,6 +8566,7 @@
     async function loadChartFromDb() { openHistory(); }
 
     async function saveNewSession() {
+        if (!ensureDentalChartEditable()) return;
         if (!PATIENT_ID) { showToast("❌ Patient ID is not set!", "error"); return; }
         const note = document.getElementById("sessionNoteGlobal").value.trim()
                    || prompt("Session note (optional):") || "";
@@ -8579,6 +8720,21 @@
     // ════════════════════════════════════════════════════════════════
     //  INIT
     // ════════════════════════════════════════════════════════════════
+    if (IS_READ_ONLY) {
+        document.body.classList.add(
+            "dental-readonly-page"
+        );
+
+        document.querySelectorAll(
+            "#noteBox, "
+            + "#sessionNoteGlobal, "
+            + ".bpe-select, "
+            + "#deciduousModeCheckbox"
+        ).forEach(function (element) {
+            element.disabled = true;
+        });
+    }
+
     renderAll();
     if (PATIENT_ID > 0) {
         loadLatestSession();

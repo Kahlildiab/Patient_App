@@ -9,6 +9,10 @@
 
     var patientId = Model.PatientID;
 
+    var diagnosisTreatmentPlan =
+        ViewBag.TreatmentPlanDiagnosis
+        as DentalCollegeManagementSystem_AAU.Models.TreatmentPlanDiagnosis;
+
     var currentRole = Context.Session.GetString("UserRole") ?? "";
     var isStudent = currentRole == "Student";
     var isAdmin = currentRole == "Admin";
@@ -282,6 +286,118 @@
             color: #1565c0;
             border-color: #90caf9;
         }
+
+    .tp-general-note {
+        background: #fff;
+        border: 1.5px solid var(--border);
+        border-left: 5px solid var(--navy);
+        border-radius: 10px;
+        padding: 20px 22px;
+        margin-bottom: 20px;
+    }
+
+    .tp-general-note-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+
+    .tp-general-note-title {
+        margin: 0;
+        color: var(--navy);
+        font-size: 1.08rem;
+        font-weight: 800;
+    }
+
+    .tp-general-note-subtitle {
+        margin-top: 4px;
+        color: var(--label-gray);
+        font-size: .82rem;
+    }
+
+    .tp-general-note-textarea {
+        width: 100%;
+        min-height: 145px;
+        resize: vertical;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: .9rem;
+        line-height: 1.6;
+        color: #263238;
+        background: #fff;
+    }
+
+        .tp-general-note-textarea:focus {
+            outline: none;
+            border-color: var(--navy);
+            box-shadow: 0 0 0 3px rgba(26, 35, 126, .10);
+        }
+
+    .tp-general-note-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+    }
+
+    .tp-general-note-save {
+        background: var(--navy);
+        color: #fff;
+        border: 0;
+        border-radius: 7px;
+        padding: 9px 20px;
+        font-size: .86rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+        .tp-general-note-save:hover {
+            background: var(--navy-mid);
+        }
+
+    .tp-general-note-meta {
+        font-size: .77rem;
+        color: #888;
+    }
+
+    .tp-general-note-pending {
+        display: inline-block;
+        padding: 5px 11px;
+        border-radius: 6px;
+        border: 1px solid #ffb74d;
+        background: #fff3e0;
+        color: #e65100;
+        font-size: .78rem;
+        font-weight: 700;
+    }
+
+    .tp-general-note-approved {
+        display: inline-block;
+        padding: 5px 11px;
+        border-radius: 6px;
+        border: 1px solid #a5d6a7;
+        background: #e8f5e9;
+        color: #2e7d32;
+        font-size: .78rem;
+        font-weight: 700;
+    }
+
+    .tp-general-note-empty {
+        display: inline-block;
+        padding: 5px 11px;
+        border-radius: 6px;
+        border: 1px solid #cfd8dc;
+        background: #f5f7f9;
+        color: #607d8b;
+        font-size: .78rem;
+        font-weight: 700;
+    }
 </style>
 <style>
     #treatmentPlanReadOnlyRoot.closed-visit-readonly input:disabled,
@@ -331,6 +447,7 @@
             @TempData["Success"]
         </div>
     }
+
 
     <div class="treatment-plan-container">
 
@@ -500,6 +617,133 @@
                 }
             </div><!-- /.tp-section -->
         }
+    </div>
+
+    <!-- ===== GENERAL DIAGNOSES AND TREATMENT-PLAN NOTE ===== -->
+    <div class="tp-general-note"
+         id="diagnoses-treatment-plan">
+
+        <div class="tp-general-note-header">
+            <div>
+                <h6 class="tp-general-note-title">
+                    Diagnoses and Treatment-plan
+                </h6>
+
+                <div class="tp-general-note-subtitle">
+                    General diagnoses and overall treatment-plan
+                    note for this patient.
+                </div>
+            </div>
+
+            <div>
+                @if (diagnosisTreatmentPlan == null)
+                {
+                    <span class="tp-general-note-empty">
+                        Not Submitted
+                    </span>
+                }
+                else if (
+                    diagnosisTreatmentPlan
+                        .AdminApprovalStatus == "Pending"
+                )
+                {
+                    <span class="tp-general-note-pending">
+                        ⏳ Pending Approval
+                    </span>
+                }
+                else
+                {
+                    <span class="tp-general-note-approved">
+                        ✓ Approved
+                    </span>
+                }
+            </div>
+        </div>
+
+        <form asp-controller="TreatmentPlan"
+              asp-action="SaveDiagnosisTreatmentPlan"
+              method="post">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden"
+                   name="patientId"
+                   value="@patientId" />
+
+            @if (isStudent)
+            {
+                <div style="
+                    background:#e3f2fd;
+                    border:1px solid #90caf9;
+                    border-radius:6px;
+                    padding:9px 12px;
+                    margin-bottom:12px;
+                    font-size:.8rem;
+                    color:#1565c0;">
+                    ℹ️ Saving or changing this note will send it
+                    to the supervisor for approval.
+                </div>
+            }
+
+            <textarea name="diagnosisAndTreatmentPlan"
+                      class="tp-general-note-textarea"
+                      maxlength="4000"
+                      required
+                      placeholder="Write the general diagnoses and treatment-plan for this patient...">@(diagnosisTreatmentPlan?.DiagnosisAndTreatmentPlan ?? "")</textarea>
+
+            <div class="tp-general-note-footer">
+                <div class="tp-general-note-meta">
+                    @if (
+                        diagnosisTreatmentPlan != null &&
+                        diagnosisTreatmentPlan.AdminApprovalStatus
+                            == "Approved"
+                    )
+                    {
+                        <span>
+                            Approved by
+                            @(diagnosisTreatmentPlan.AdminApprovedBy
+                                ?? "Admin")
+
+                            @if (
+                                diagnosisTreatmentPlan
+                                    .AdminApprovedDate
+                                    .HasValue
+                            )
+                            {
+                                <span>
+                                    on
+                                    @diagnosisTreatmentPlan
+                                    .AdminApprovedDate
+                                    .Value
+                                    .ToString("dd-MM-yyyy")
+                                </span>
+                            }
+                        </span>
+                    }
+                    else if (diagnosisTreatmentPlan != null)
+                    {
+                        <span>
+                            Last submitted:
+                            @(diagnosisTreatmentPlan.UpdatedDate
+                                ?? diagnosisTreatmentPlan.CreatedDate)
+                            .ToString("dd-MM-yyyy hh:mm tt")
+                        </span>
+                    }
+                </div>
+
+                <button type="submit"
+                        class="tp-general-note-save">
+                    @if (isStudent)
+                    {
+                        <span>Submit for Approval</span>
+                    }
+                    else
+                    {
+                        <span>Save Note</span>
+                    }
+                </button>
+            </div>
+        </form>
     </div>
 
     <!-- ===== ADD TREATMENT MODAL ===== -->
@@ -720,5 +964,4 @@
             });
         })();
 </script>
-
 </div>

@@ -57,12 +57,68 @@
         activeTab = "medical-history";
     }
 
-    string complexity = mh?.CaseComplexity.HasValue == true
-        ? mh.CaseComplexity.ToString()
-        : "---";
+    string complexity =
+        ViewBag.CaseComplexity != null
+            ? ViewBag.CaseComplexity.ToString()
+            : "---";
 
-    var nextAppt = ViewBag.NextAppointment
+    int treatmentProgressPercentage =
+        ViewBag.TreatmentProgressPercentage != null
+            ? Convert.ToInt32(
+                ViewBag.TreatmentProgressPercentage
+            )
+            : 0;
+
+    int completedCompetencies =
+        ViewBag.CompletedCompetencies != null
+            ? Convert.ToInt32(
+                ViewBag.CompletedCompetencies
+            )
+            : 0;
+
+    int totalCompetencies =
+        ViewBag.TotalCompetencies != null
+            ? Convert.ToInt32(
+                ViewBag.TotalCompetencies
+            )
+            : 0;
+
+    var nextAppt =
+        ViewBag.NextAppointment
         as DentalCollegeManagementSystem_AAU.Models.Appointment;
+
+    string nextAppointmentText =
+        "No upcoming appointment";
+
+    if (nextAppt != null)
+    {
+        string nextAppointmentTime =
+            nextAppt.TimeFrom != default
+                ? DateTime.Today
+                    .Add(nextAppt.TimeFrom)
+                    .ToString("hh:mm tt")
+                : string.Empty;
+
+        nextAppointmentText =
+            nextAppt.AppointmentDate
+                .ToString("dd/MM/yyyy");
+
+        if (
+            !string.IsNullOrWhiteSpace(
+                nextAppointmentTime
+            )
+        )
+        {
+            nextAppointmentText +=
+                " - " + nextAppointmentTime;
+        }
+    }
+
+    string assignedStudentText =
+        ViewBag.AssignedStudentText != null
+            ? ViewBag.AssignedStudentText.ToString()
+                ?? "No student assigned"
+            : "No student assigned";
 
     var allAppts = ViewBag.AllAppointments
         as List<DentalCollegeManagementSystem_AAU.Models.Appointment>
@@ -527,19 +583,86 @@
             <div style="font-size:16px; font-weight:500;">@complexity</div>
         </div>
 
-        <div style="background:#f5f5f5; border-radius:8px; padding:12px 16px;">
-            <div style="font-size:12px; color:#888;">Treatment Progress</div>
-            <div style="font-size:16px; font-weight:500;">---</div>
+        <!-- Treatment Progress -->
+        <div style="
+            background:#f5f5f5;
+            border-radius:8px;
+            padding:12px 16px;">
+
+            <div style="
+                font-size:12px;
+                color:#888;">
+                Treatment Progress
+            </div>
+
+            <div style="
+                font-size:16px;
+                font-weight:700;
+                color:#252468;
+                margin-top:4px;">
+                @treatmentProgressPercentage%
+            </div>
         </div>
 
-        <div style="background:#f5f5f5; border-radius:8px; padding:12px 16px;">
-            <div style="font-size:12px; color:#888;">Next Appointment</div>
-            <div style="font-size:16px; font-weight:500;">---</div>
+        <!-- Next Appointment -->
+        <div style="
+            background:#f5f5f5;
+            border-radius:8px;
+            padding:12px 16px;
+            min-width:0;">
+
+            <div style="
+                font-size:12px;
+                color:#888;">
+                Next Appointment
+            </div>
+
+            <div style="
+                font-size:13px;
+                font-weight:600;
+                color:@(nextAppt != null
+                                     ? "#252468"
+                                     : "#999");
+                margin-top:4px;
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis;"
+                 title="@nextAppointmentText">
+
+                @nextAppointmentText
+            </div>
         </div>
 
-        <div style="background:#f5f5f5; border-radius:8px; padding:12px 16px;">
-            <div style="font-size:12px; color:#888;">Assigned Student</div>
-            <div style="font-size:16px; font-weight:500;">---</div>
+        <!-- Assigned Student -->
+        <div style="
+            background:#f5f5f5;
+            border-radius:8px;
+            padding:12px 16px;
+            min-width:0;">
+
+            <div style="
+                font-size:12px;
+                color:#888;">
+                Assigned Student
+            </div>
+
+            <div style="
+                font-size:13px;
+                font-weight:600;
+                color:@(
+                 assignedStudentText
+                     == "No student assigned"
+                         ? "#999"
+                         : "#252468"
+                             );
+                margin-top:4px;
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis;"
+                 title="@assignedStudentText">
+
+                @assignedStudentText
+            </div>
         </div>
 
     </div>
@@ -635,26 +758,32 @@
                 </li>
 
                 <li>
-                    @if (isReadOnly)
-                    {
-                        <a id="dentalChartLink"
-                           href="javascript:void(0)"
-                           class="LinkFontStyle sidebar-link dental-chart-link"
-                           style="opacity:.55; cursor:not-allowed;"
-                           title="This visit is closed. Only an Administrator can edit Dental Charting.">
-                            <span>Dental Charting 🔒</span>
-                        </a>
-                    }
-                    else
-                    {
-                        <a id="dentalChartLink"
-                           href="@Url.Action("Index", "DentalChartPage", new { patientId = Model.PatientID })"
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           class="LinkFontStyle sidebar-link dental-chart-link">
-                            <span>Dental Charting</span>
-                        </a>
-                    }
+                    <a id="dentalChartLink"
+                       href="@Url.Action(
+                                                                         "Index",
+                                                                         "DentalChartPage",
+                                                                         new
+                                                                         {
+                                                                             patientId = Model.PatientID
+                                                                         })"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="LinkFontStyle sidebar-link dental-chart-link"
+                       title="@(isReadOnly
+                                                                         ? "View only — this visit is closed."
+                                                                         : "Open Dental Charting")">
+
+                        <span>
+                            Dental Charting
+
+                            @if (isReadOnly)
+                            {
+                                <span aria-hidden="true">
+                                    🔒
+                                </span>
+                            }
+                        </span>
+                    </a>
                 </li>
 
                 <li>

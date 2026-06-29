@@ -5,11 +5,13 @@ using System.Threading.Tasks;
 using DentalCollegeManagementSystem_AAU.Data;
 using DentalCollegeManagementSystem_AAU.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
 namespace DentalCollegeManagementSystem_AAU.Controllers
 {
+    [DentalCollegeManagementSystem_AAU.Filters.AuthFilter]
     [Route("DentalChart")]
     public class DentalChartController : Controller
     {
@@ -26,19 +28,95 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             _context = context;
         }
 
+        private bool IsAdmin()
+        {
+            return string.Equals(
+                HttpContext.Session.GetString("UserRole"),
+                "Admin",
+                StringComparison.OrdinalIgnoreCase
+            );
+        }
+
+        private async Task<bool> IsReadOnlyAsync(int patientId)
+        {
+            if (IsAdmin())
+            {
+                return false;
+            }
+
+            var latestVisit = await _context.Visits
+                .Where(v => v.PatientID == patientId)
+                .OrderByDescending(v => v.VisitDate)
+                .ThenByDescending(v => v.VisitID)
+                .Select(v => new
+                {
+                    v.IsClosed
+                })
+                .FirstOrDefaultAsync();
+
+            return latestVisit != null &&
+                   latestVisit.IsClosed;
+        }
+
+        private ObjectResult ClosedVisitResult()
+        {
+            return StatusCode(
+                StatusCodes.Status403Forbidden,
+                new
+                {
+                    message =
+                        "This visit is closed. Only an Administrator can modify Dental Charting."
+                }
+            );
+        }
+
         // ════════════════════════════════════════════════════════
         //  VIEW
         // ════════════════════════════════════════════════════════
 
         [HttpGet("")]
         [HttpGet("Index")]
-        public IActionResult Index(int patientId)
+        public async Task<IActionResult> Index(int patientId)
         {
             if (patientId <= 0)
-                return BadRequest("patientId مطلوب وأكبر من صفر.");
+            {
+                return BadRequest(
+                    "patientId مطلوب وأكبر من صفر."
+                );
+            }
+
+            bool patientExists = await _context.Patients
+                .AnyAsync(p => p.PatientID == patientId);
+
+            if (!patientExists)
+            {
+                return NotFound(
+                    "Patient was not found."
+                );
+            }
+
+            var latestVisit = await _context.Visits
+                .Where(v => v.PatientID == patientId)
+                .OrderByDescending(v => v.VisitDate)
+                .ThenByDescending(v => v.VisitID)
+                .FirstOrDefaultAsync();
+
+            bool isAdmin = IsAdmin();
+
+            bool isVisitClosed =
+                latestVisit != null &&
+                latestVisit.IsClosed;
 
             ViewBag.PatientId = patientId;
-            return View("~/Views/DentalCharting/Index.cshtml");
+            ViewBag.IsVisitClosed = isVisitClosed;
+            ViewBag.IsAdmin = isAdmin;
+            ViewBag.IsReadOnly =
+                isVisitClosed &&
+                !isAdmin;
+
+            return View(
+                "~/Views/DentalCharting/Index.cshtml"
+            );
         }
 
         // ════════════════════════════════════════════════════════
@@ -115,7 +193,15 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         [HttpPost("api/save")]
         public async Task<IActionResult> SaveChart([FromBody] SaveDentalChartDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (await IsReadOnlyAsync(dto.PatientId))
+            {
+                return ClosedVisitResult();
+            }
 
             List<DentalToothData> incoming;
             try { incoming = ParseChartDataJson(dto.ChartDataJson, sessionId: 0); }
@@ -168,7 +254,15 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         [HttpPost("api/save-session")]
         public async Task<IActionResult> SaveNewSession([FromBody] SaveDentalChartDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (await IsReadOnlyAsync(dto.PatientId))
+            {
+                return ClosedVisitResult();
+            }
 
             List<DentalToothData> incoming;
             try { incoming = ParseChartDataJson(dto.ChartDataJson, sessionId: 0); }
@@ -200,14 +294,29 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         [HttpPut("api/update/{id:int}")]
         public async Task<IActionResult> UpdateSession(int id, [FromBody] SaveDentalChartDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
             var session = await _context.DentalChartSessions
                 .Include(s => s.ToothData)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             if (session == null)
-                return NotFound(new { message = "Session not found." });
+            {
+                return NotFound(
+                    new
+                    {
+                        message = "Session not found."
+                    }
+                );
+            }
+
+            if (await IsReadOnlyAsync(session.PatientId))
+            {
+                return ClosedVisitResult();
+            }
 
             List<DentalToothData> incoming;
             try { incoming = ParseChartDataJson(dto.ChartDataJson, sessionId: id); }
@@ -237,7 +346,15 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 .Include(s => s.ToothData)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
-            if (session == null) return NotFound();
+            if (session == null)
+            {
+                return NotFound();
+            }
+
+            if (await IsReadOnlyAsync(session.PatientId))
+            {
+                return ClosedVisitResult();
+            }
 
             _context.DentalToothData.RemoveRange(session.ToothData);
             _context.DentalChartSessions.Remove(session);

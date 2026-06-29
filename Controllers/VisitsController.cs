@@ -15,6 +15,68 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             _context = context;
         }
 
+        private static bool IsApprovalRole(
+            string? userRole)
+        {
+            return
+                string.Equals(
+                    userRole,
+                    "Admin",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                ||
+                string.Equals(
+                    userRole,
+                    "Fulltime Supervisor",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                ||
+                string.Equals(
+                    userRole,
+                    "Parttime Supervisor",
+                    StringComparison.OrdinalIgnoreCase
+                );
+        }
+
+        private static string? NormalizeCaseComplexity(
+            string? value)
+        {
+            string normalized =
+                (value ?? string.Empty).Trim();
+
+            if (
+                normalized.Equals(
+                    "Mild",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return "Mild";
+            }
+
+            if (
+                normalized.Equals(
+                    "Moderate",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return "Moderate";
+            }
+
+            if (
+                normalized.Equals(
+                    "Advance",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return "Advance";
+            }
+
+            return null;
+        }
+
         // POST: Visits/Save
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -238,41 +300,103 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AdminApprove(
             int visitId,
-            int patientId)
+            int patientId,
+            string? caseComplexity)
         {
-            var userRole =
+            string? userRole =
                 HttpContext.Session.GetString("UserRole");
 
-            if (userRole != "Admin")
+            if (!IsApprovalRole(userRole))
             {
                 return RedirectToAction(
                     "Login",
-                    "Account");
+                    "Account"
+                );
             }
 
             var visit =
-                await _context.Visits.FindAsync(visitId);
+                await _context.Visits
+                    .FirstOrDefaultAsync(
+                        v =>
+                            v.VisitID == visitId
+                            &&
+                            v.PatientID == patientId
+                    );
 
-            if (visit != null)
+            if (visit == null)
             {
-                visit.AdminApprovalStatus = "Approved";
+                TempData["Error"] =
+                    "Visit was not found.";
 
-                visit.AdminApprovedBy =
-                    HttpContext.Session
-                        .GetString("FullName");
-
-                visit.AdminApprovedDate =
-                    DateTime.Now;
-
-                await _context.SaveChangesAsync();
-
-                TempData["Success"] =
-                    "✅ Visit approved by Admin!";
+                return RedirectToAction(
+                    "Index",
+                    "AdminApprovals"
+                );
             }
+
+            string? savedComplexity =
+                await _context.Visits
+                    .Where(
+                        v =>
+                            v.PatientID == patientId
+                            &&
+                            v.CaseComplexity != null
+                            &&
+                            v.CaseComplexity != ""
+                    )
+                    .OrderBy(v => v.VisitDate)
+                    .ThenBy(v => v.VisitID)
+                    .Select(v => v.CaseComplexity)
+                    .FirstOrDefaultAsync();
+
+            if (string.IsNullOrWhiteSpace(savedComplexity))
+            {
+                string? normalizedComplexity =
+                    NormalizeCaseComplexity(
+                        caseComplexity
+                    );
+
+                if (
+                    string.IsNullOrWhiteSpace(
+                        normalizedComplexity
+                    )
+                )
+                {
+                    TempData["Error"] =
+                        "⚠️ Please select Case Complexity "
+                        + "for the patient's first visit.";
+
+                    return RedirectToAction(
+                        "Index",
+                        "AdminApprovals"
+                    );
+                }
+
+                visit.CaseComplexity =
+                    normalizedComplexity;
+            }
+
+            visit.AdminApprovalStatus =
+                "Approved";
+
+            visit.AdminApprovedBy =
+                HttpContext.Session
+                    .GetString("FullName")
+                ?? "Supervisor";
+
+            visit.AdminApprovedDate =
+                DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                "✅ Visit approved successfully. "
+                + "Case Complexity was saved.";
 
             return RedirectToAction(
                 "Index",
-                "AdminApprovals");
+                "AdminApprovals"
+            );
         }
 
         // POST: Visits/AdminReject
@@ -285,11 +409,12 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             var userRole =
                 HttpContext.Session.GetString("UserRole");
 
-            if (userRole != "Admin")
+            if (!IsApprovalRole(userRole))
             {
                 return RedirectToAction(
                     "Login",
-                    "Account");
+                    "Account"
+                );
             }
 
             var visit =

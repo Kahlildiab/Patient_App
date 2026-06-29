@@ -1,9 +1,31 @@
 ﻿@using DentalCollegeManagementSystem_AAU.Models
 
 @{
-    var pendingVisits = ViewBag.PendingVisits as List<Visit> ?? new();
-    var pendingProcedures = ViewBag.PendingProcedures as List<TreatmentProcedure> ?? new();
-    var pendingOrders = ViewBag.PendingOrders as List<Order> ?? new();
+    var pendingVisits =
+        ViewBag.PendingVisits
+        as List<Visit>
+        ?? new();
+
+    var pendingDiagnosisTreatmentPlans =
+        ViewBag.PendingDiagnosisTreatmentPlans
+        as List<TreatmentPlanDiagnosis>
+        ?? new();
+
+    var pendingProcedures =
+        ViewBag.PendingProcedures
+        as List<TreatmentProcedure>
+        ?? new();
+
+    var pendingOrders =
+        ViewBag.PendingOrders
+        as List<Order>
+        ?? new();
+
+    var caseComplexityByPatient =
+        ViewBag.CaseComplexityByPatient
+        as Dictionary<int, string>
+        ?? new Dictionary<int, string>();
+
     int totalPending = ViewBag.TotalPending ?? 0;
 }
 
@@ -35,7 +57,7 @@
 
     .ap-stats {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 14px;
         margin-bottom: 28px;
     }
@@ -211,6 +233,78 @@
         color: #aaa;
         font-size: .88rem;
     }
+
+    .ap-complexity-wrap {
+        min-width: 190px;
+    }
+
+    .ap-complexity-label {
+        display: block;
+        margin-bottom: 5px;
+        color: #555;
+        font-size: .75rem;
+        font-weight: 700;
+    }
+
+    .ap-complexity-select {
+        width: 100%;
+        min-width: 180px;
+        padding: 7px 10px;
+        border: 1.5px solid #c5cae9;
+        border-radius: 6px;
+        background: #fff;
+        color: #1a237e;
+        font-size: .82rem;
+        font-weight: 700;
+    }
+
+        .ap-complexity-select:focus {
+            outline: none;
+            border-color: #1a237e;
+            box-shadow: 0 0 0 3px rgba(26, 35, 126, .10);
+        }
+
+    .ap-complexity-value {
+        display: inline-block;
+        padding: 5px 11px;
+        border: 1px solid #90caf9;
+        border-radius: 6px;
+        background: #e3f2fd;
+        color: #1565c0;
+        font-size: .8rem;
+        font-weight: 700;
+    }
+
+    .ap-first-visit-note {
+        margin-top: 5px;
+        color: #e65100;
+        font-size: .72rem;
+    }
+
+    .ap-general-note-text {
+        margin-top: 8px;
+        padding: 10px 12px;
+        border-radius: 7px;
+        background: #f8f9ff;
+        border-left: 4px solid #1a237e;
+        color: #374151;
+        font-size: .84rem;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    @@media (max-width: 1100px) {
+        .ap-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @@media (max-width: 650px) {
+        .ap-stats {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 @if (TempData["Success"] != null)
@@ -249,6 +343,32 @@
             <div class="ap-stat-value">@pendingVisits.Count</div>
         </div>
     </div>
+
+    <div class="ap-stat">
+        <div class="ap-stat-icon"
+             style="background:#e3f2fd;">
+            <svg width="20"
+                 height="20"
+                 fill="none"
+                 stroke="#1565c0"
+                 stroke-width="2"
+                 viewBox="0 0 24 24">
+                <path d="M4 4h16v16H4z" />
+                <path d="M8 8h8M8 12h8M8 16h5" />
+            </svg>
+        </div>
+
+        <div>
+            <div class="ap-stat-label">
+                Pending Diagnoses Plans
+            </div>
+
+            <div class="ap-stat-value">
+                @pendingDiagnosisTreatmentPlans.Count
+            </div>
+        </div>
+    </div>
+
     <div class="ap-stat">
         <div class="ap-stat-icon" style="background:#e8f5e9;">
             <svg width="20" height="20" fill="none" stroke="#2e7d32" stroke-width="2" viewBox="0 0 24 24">
@@ -280,16 +400,9 @@
     <div class="ap-section-header">
         <span class="ap-section-title">📅 Visits</span>
         <div style="display:flex; align-items:center; gap:12px;">
-            <span class="ap-count-badge">@pendingVisits.Count pending</span>
-            @if (pendingVisits.Any())
-            {
-                <form asp-controller="AdminApprovals" asp-action="ApproveAllVisits"
-                      method="post" class="m-0 p-0"
-                      onsubmit="return confirm('Approve all @pendingVisits.Count pending visit(s)?')">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="ap-approve-all-btn">✓ Approve All</button>
-                </form>
-            }
+            <span class="ap-count-badge">
+                @pendingVisits.Count pending
+            </span>
         </div>
     </div>
 
@@ -301,34 +414,283 @@
     {
         foreach (var v in pendingVisits)
         {
+            bool hasCaseComplexity =
+                caseComplexityByPatient.TryGetValue(
+                    v.PatientID,
+                    out string? savedComplexity
+                )
+                &&
+                !string.IsNullOrWhiteSpace(
+                    savedComplexity
+                );
+
             <div class="ap-card">
                 <div class="ap-card-info">
-                    <div class="ap-card-patient">👤 @GetPatientName(v.Patient)</div>
+                    <div class="ap-card-patient">
+                        👤 @GetPatientName(v.Patient)
+                    </div>
+
                     <div class="ap-card-title">
-                        📅 @v.VisitDate.ToString("dd / MM / yyyy")
-                        @if (!string.IsNullOrWhiteSpace(v.AppointmentPeriod))
+                        📅 @v.VisitDate.ToString(
+                                                    "dd / MM / yyyy"
+                                                )
+
+                        @if (
+                            !string.IsNullOrWhiteSpace(
+                                v.AppointmentPeriod
+                            )
+                        )
                         {
-                            <span style="background:#e8eaf6; color:#3949ab; border-radius:4px;
-                                padding:1px 8px; font-size:.72rem; margin-left:6px;">
+                            <span style="
+                                background:#e8eaf6;
+                                color:#3949ab;
+                                border-radius:4px;
+                                padding:1px 8px;
+                                font-size:.72rem;
+                                margin-left:6px;">
                                 @v.AppointmentPeriod
                             </span>
                         }
                     </div>
-                    <div class="ap-card-date">Submitted: @v.CreatedDate.ToString("dd-MM-yyyy hh:mm tt")</div>
+
+                    <div class="ap-card-date">
+                        Submitted:
+                        @v.CreatedDate.ToString(
+                            "dd-MM-yyyy hh:mm tt"
+                        )
+                    </div>
                 </div>
+
                 <div class="ap-actions">
-                    <form asp-controller="Visits" asp-action="AdminApprove" method="post">
+                    <form asp-controller="Visits"
+                          asp-action="AdminApprove"
+                          method="post"
+                          style="
+                        display:flex;
+                        gap:8px;
+                        align-items:flex-end;
+                        flex-wrap:wrap;">
+
                         @Html.AntiForgeryToken()
-                        <input type="hidden" name="visitId" value="@v.VisitID" />
-                        <input type="hidden" name="patientId" value="@v.PatientID" />
-                        <button type="submit" class="ap-approve-btn">✓ Approve</button>
+
+                        <input type="hidden"
+                               name="visitId"
+                               value="@v.VisitID" />
+
+                        <input type="hidden"
+                               name="patientId"
+                               value="@v.PatientID" />
+
+                        <div class="ap-complexity-wrap">
+                            <label class="ap-complexity-label">
+                                Case Complexity
+                            </label>
+
+                            @if (hasCaseComplexity)
+                            {
+                                <span class="ap-complexity-value">
+                                    @savedComplexity
+                                </span>
+
+                                <input type="hidden"
+                                       name="caseComplexity"
+                                       value="@savedComplexity" />
+                            }
+                            else
+                            {
+                                <select name="caseComplexity"
+                                        class="ap-complexity-select"
+                                        required>
+                                    <option value="">
+                                        -- Select Complexity --
+                                    </option>
+
+                                    <option value="Mild">
+                                        1 - Mild
+                                    </option>
+
+                                    <option value="Moderate">
+                                        2 - Moderate
+                                    </option>
+
+                                    <option value="Advance">
+                                        3 - Advance
+                                    </option>
+                                </select>
+
+                                <div class="ap-first-visit-note">
+                                    Required for the first visit
+                                </div>
+                            }
+                        </div>
+
+                        <button type="submit"
+                                class="ap-approve-btn">
+                            ✓ Approve
+                        </button>
                     </form>
-                    <form asp-controller="Visits" asp-action="AdminReject" method="post"
-                          onsubmit="return confirm('Reject and delete this visit?')">
+
+                    <form asp-controller="Visits"
+                          asp-action="AdminReject"
+                          method="post"
+                          onsubmit="
+                        return confirm(
+                        'Reject and delete this visit?'
+                        )">
+
                         @Html.AntiForgeryToken()
-                        <input type="hidden" name="visitId" value="@v.VisitID" />
-                        <input type="hidden" name="patientId" value="@v.PatientID" />
-                        <button type="submit" class="ap-reject-btn">✗ Reject</button>
+
+                        <input type="hidden"
+                               name="visitId"
+                               value="@v.VisitID" />
+
+                        <input type="hidden"
+                               name="patientId"
+                               value="@v.PatientID" />
+
+                        <button type="submit"
+                                class="ap-reject-btn">
+                            ✗ Reject
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+
+<!-- ===== DIAGNOSES AND TREATMENT-PLAN ===== -->
+<div class="ap-section">
+    <div class="ap-section-header">
+        <span class="ap-section-title">
+            📝 Diagnoses and Treatment-plan
+        </span>
+
+        <div style="
+            display:flex;
+            align-items:center;
+            gap:12px;">
+
+            <span class="ap-count-badge">
+                @pendingDiagnosisTreatmentPlans.Count pending
+            </span>
+
+            @if (pendingDiagnosisTreatmentPlans.Any())
+            {
+                <form asp-controller="AdminApprovals"
+                      asp-action="ApproveAllDiagnosisTreatmentPlans"
+                      method="post"
+                      class="m-0 p-0"
+                      onsubmit="return confirm(
+                    'Approve all @pendingDiagnosisTreatmentPlans.Count pending note(s)?'
+                    )">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="ap-approve-all-btn">
+                        ✓ Approve All
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+
+    @if (!pendingDiagnosisTreatmentPlans.Any())
+    {
+        <div class="ap-empty">
+            ✅ No pending Diagnoses and Treatment-plan notes
+        </div>
+    }
+    else
+    {
+        foreach (
+            var item in
+            pendingDiagnosisTreatmentPlans
+        )
+        {
+            DateTime submittedDate =
+                item.UpdatedDate
+                ?? item.CreatedDate;
+
+            <div class="ap-card">
+                <div class="ap-card-info">
+                    <div class="ap-card-patient">
+                        👤 @GetPatientName(item.Patient)
+
+                        @if (
+                            !string.IsNullOrWhiteSpace(
+                                item.CreatedBy
+                            )
+                        )
+                        {
+                            <span style="
+                                color:#aaa;
+                                margin-left:8px;">
+                                by @item.CreatedBy
+                            </span>
+                        }
+                    </div>
+
+                    <div class="ap-card-title">
+                        Diagnoses and Treatment-plan
+                    </div>
+
+                    <div class="ap-general-note-text">
+                        @item.DiagnosisAndTreatmentPlan
+                    </div>
+
+                    <div class="ap-card-date">
+                        Submitted:
+                        @submittedDate.ToString(
+                            "dd-MM-yyyy hh:mm tt"
+                        )
+                    </div>
+                </div>
+
+                <div class="ap-actions">
+                    <form asp-controller="TreatmentPlan"
+                          asp-action="AdminApproveDiagnosisTreatmentPlan"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               name="id"
+                               value="@item.Id" />
+
+                        <input type="hidden"
+                               name="patientId"
+                               value="@item.PatientId" />
+
+                        <button type="submit"
+                                class="ap-approve-btn">
+                            ✓ Approve
+                        </button>
+                    </form>
+
+                    <form asp-controller="TreatmentPlan"
+                          asp-action="AdminRejectDiagnosisTreatmentPlan"
+                          method="post"
+                          onsubmit="return confirm(
+                        'Reject and remove this note?'
+                        )">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               name="id"
+                               value="@item.Id" />
+
+                        <input type="hidden"
+                               name="patientId"
+                               value="@item.PatientId" />
+
+                        <button type="submit"
+                                class="ap-reject-btn">
+                            ✗ Reject
+                        </button>
                     </form>
                 </div>
             </div>
