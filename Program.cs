@@ -1,22 +1,54 @@
 using DentalCollegeManagementSystem_AAU.Data;
+using DentalCollegeManagementSystem_AAU.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ بدون Global Filter
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Patient"));
-});
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Patient")));
 
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
+
+builder.Services.AddScoped<ActiveDirectoryValidator>();
+builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddSignalR();
+
+string jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Jwt:Key is missing.");
+string jwtIssuer = builder.Configuration["Jwt:Issuer"]
+    ?? throw new InvalidOperationException("Jwt:Issuer is missing.");
+string jwtAudience = builder.Configuration["Jwt:Audience"]
+    ?? throw new InvalidOperationException("Jwt:Audience is missing.");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
 
 var app = builder.Build();
 
@@ -30,7 +62,10 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
+app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.MapControllerRoute(
     name: "areas",
