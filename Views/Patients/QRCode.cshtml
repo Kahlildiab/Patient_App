@@ -1,0 +1,787 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل مريض جديد | كلية طب الأسنان</title>
+
+    <style>
+        :root {
+            --navy: #071c55;
+            --navy2: #12347f;
+            --pink: #ef8792;
+            --pink-soft: #ffd7dc;
+            --ink: #17203a;
+            --muted: #6d7488;
+            --white: #fff;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--ink);
+            font-family: Tahoma, Arial, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at 8% 8%, rgba(239,135,146,.22), transparent 25rem),
+                radial-gradient(circle at 92% 92%, rgba(18,52,127,.18), transparent 28rem),
+                linear-gradient(135deg, #fafcff, #eef3fb 55%, #fff7f8);
+        }
+
+        .page {
+            width: min(1180px, calc(100% - 30px));
+            margin: auto;
+            padding: 34px 0;
+        }
+
+        .poster {
+            display: grid;
+            grid-template-columns: 1.08fr .92fr;
+            min-height: 720px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,.9);
+            border-radius: 36px;
+            background: rgba(255,255,255,.86);
+            box-shadow: 0 30px 90px rgba(7,28,85,.16);
+            backdrop-filter: blur(18px);
+        }
+
+        .intro {
+            position: relative;
+            isolation: isolate;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow: hidden;
+            padding: 62px;
+            color: white;
+            background: linear-gradient(145deg, #071c55, #12347f);
+        }
+
+        .intro::before,
+        .intro::after {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            border-radius: 50%;
+        }
+
+        .intro::before {
+            width: 470px;
+            height: 470px;
+            left: -250px;
+            bottom: -210px;
+            border: 72px solid rgba(255,255,255,.045);
+        }
+
+        .intro::after {
+            width: 350px;
+            height: 350px;
+            right: -180px;
+            top: -190px;
+            border: 60px solid rgba(239,135,146,.18);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 50px;
+        }
+
+        .brand-logo {
+            display: grid;
+            place-items: center;
+            width: 94px;
+            height: 116px;
+            padding: 7px;
+            border: 1px solid rgba(255,255,255,.22);
+            border-radius: 24px;
+            background: rgba(255,255,255,.10);
+        }
+
+        .brand-logo img {
+            display: block;
+            width: auto;
+            height: 98px;
+        }
+
+        .brand small {
+            display: block;
+            margin-bottom: 7px;
+            color: rgba(255,255,255,.68);
+            font-size: 14px;
+        }
+
+        .brand strong {
+            display: block;
+            font-size: clamp(20px, 2vw, 29px);
+            line-height: 1.45;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            width: fit-content;
+            margin-bottom: 18px;
+            padding: 8px 14px;
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 999px;
+            color: #fff2f4;
+            background: rgba(239,135,146,.13);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--pink);
+            box-shadow: 0 0 0 0 rgba(239,135,146,.65);
+            animation: pulse 2s infinite;
+        }
+
+        @@keyframes pulse {
+            70% { box-shadow: 0 0 0 12px rgba(239,135,146,0); }
+            100% { box-shadow: 0 0 0 0 rgba(239,135,146,0); }
+        }
+
+        h1 {
+            margin: 0;
+            max-width: 620px;
+            font-size: clamp(39px, 5vw, 68px);
+            line-height: 1.15;
+            letter-spacing: -1.5px;
+        }
+
+        h1 span { color: var(--pink-soft); }
+
+        .lead {
+            max-width: 600px;
+            margin: 24px 0 0;
+            color: rgba(255,255,255,.78);
+            font-size: clamp(16px, 1.8vw, 20px);
+            line-height: 1.9;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 40px;
+        }
+
+        .step {
+            min-height: 112px;
+            padding: 17px;
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 20px;
+            background: rgba(255,255,255,.07);
+        }
+
+        .step i {
+            display: grid;
+            place-items: center;
+            width: 29px;
+            height: 29px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            color: var(--navy);
+            background: var(--pink-soft);
+            font-style: normal;
+            font-weight: 800;
+        }
+
+        .step strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .step span {
+            color: rgba(255,255,255,.62);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .qr-side {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px;
+        }
+
+        .qr-panel {
+            width: min(100%, 470px);
+            text-align: center;
+        }
+
+        .qr-panel h2 {
+            margin: 0 0 8px;
+            color: var(--navy);
+            font-size: clamp(27px, 3vw, 37px);
+        }
+
+        .subtitle {
+            margin: 0 0 26px;
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.75;
+        }
+
+        .qr-frame {
+            position: relative;
+            width: min(100%, 390px);
+            margin: auto;
+            padding: 22px;
+            border: 1px solid #e5e9f3;
+            border-radius: 34px;
+            background: white;
+            box-shadow:
+                0 22px 50px rgba(7,28,85,.13),
+                0 0 0 8px rgba(239,135,146,.07);
+        }
+
+        #qrCanvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 18px;
+            image-rendering: pixelated;
+        }
+
+        .corner {
+            position: absolute;
+            width: 42px;
+            height: 42px;
+            pointer-events: none;
+        }
+
+        .tl {
+            left: 10px; top: 10px;
+            border-top: 4px solid var(--pink);
+            border-left: 4px solid var(--pink);
+            border-radius: 14px 0 0;
+        }
+
+        .tr {
+            right: 10px; top: 10px;
+            border-top: 4px solid var(--navy);
+            border-right: 4px solid var(--navy);
+            border-radius: 0 14px 0 0;
+        }
+
+        .bl {
+            left: 10px; bottom: 10px;
+            border-left: 4px solid var(--navy);
+            border-bottom: 4px solid var(--navy);
+            border-radius: 0 0 0 14px;
+        }
+
+        .br {
+            right: 10px; bottom: 10px;
+            border-right: 4px solid var(--pink);
+            border-bottom: 4px solid var(--pink);
+            border-radius: 0 0 14px;
+        }
+
+        #qrSource {
+            position: fixed;
+            left: -99999px;
+            top: -99999px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 22px;
+            padding: 9px 15px;
+            border-radius: 999px;
+            color: #16865d;
+            background: rgba(22,134,93,.09);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .hint svg,
+        button svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .url-box {
+            display: flex;
+            align-items: center;
+            direction: ltr;
+            gap: 8px;
+            margin-top: 19px;
+            padding: 10px 12px;
+            border: 1px solid #e7eaf2;
+            border-radius: 15px;
+            background: #f8f9fc;
+        }
+
+        .url-text {
+            min-width: 0;
+            flex: 1;
+            overflow: hidden;
+            color: #596178;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 11px;
+            text-align: left;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .copy-btn {
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            flex: 0 0 auto;
+            border: 0;
+            border-radius: 11px;
+            color: white;
+            background: var(--navy);
+            cursor: pointer;
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 11px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            min-height: 49px;
+            padding: 12px 16px;
+            border: 0;
+            border-radius: 15px;
+            cursor: pointer;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 800;
+            transition: .18s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .primary {
+            color: white;
+            background: linear-gradient(135deg, var(--navy), var(--navy2));
+            box-shadow: 0 12px 26px rgba(7,28,85,.20);
+        }
+
+        .secondary {
+            color: #8a3742;
+            background: #fff0f2;
+        }
+
+        .note {
+            margin: 17px 0 0;
+            color: #8a91a4;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .toast {
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            bottom: 24px;
+            padding: 12px 18px;
+            border-radius: 999px;
+            color: white;
+            background: rgba(7,28,85,.95);
+            box-shadow: 0 12px 30px rgba(7,28,85,.24);
+            font-size: 13px;
+            font-weight: 700;
+            opacity: 0;
+            transform: translate(-50%, 20px);
+            pointer-events: none;
+            transition: .25s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        .load-error {
+            padding: 30px 15px;
+            color: #a13242;
+            line-height: 1.8;
+        }
+
+        @@media (max-width: 900px) {
+            .poster { grid-template-columns: 1fr; }
+            .intro { padding: 44px 32px 48px; }
+            .brand { margin-bottom: 36px; }
+            .qr-side { padding: 46px 24px 54px; }
+        }
+
+        @@media (max-width: 560px) {
+            .page { width: calc(100% - 18px); padding: 9px 0; }
+            .poster { border-radius: 24px; }
+            .intro { padding: 30px 22px 36px; }
+            .brand { gap: 13px; margin-bottom: 30px; align-items: flex-start; }
+            .brand-logo { width: 74px; height: 91px; border-radius: 19px; }
+            .brand-logo img { height: 78px; }
+            .steps { grid-template-columns: 1fr; }
+            .step { min-height: 0; }
+            .qr-side { padding: 35px 15px 44px; }
+            .qr-frame { padding: 17px; border-radius: 27px; }
+            .actions { grid-template-columns: 1fr; }
+        }
+
+        @@media print {
+            @@page { size: A4; margin: 8mm; }
+            body { background: white; }
+            .actions, .copy-btn, .toast { display: none !important; }
+            .page { width: 100%; padding: 0; }
+            .poster {
+                min-height: 275mm;
+                grid-template-columns: 1fr;
+                border: 0;
+                border-radius: 0;
+                box-shadow: none;
+            }
+            .intro {
+                min-height: 118mm;
+                padding: 18mm;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .brand { margin-bottom: 12mm; }
+            .steps { margin-top: 9mm; }
+            .qr-side { padding: 12mm; }
+            .qr-frame { width: 92mm; padding: 5mm; box-shadow: none; }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+        <section class="poster">
+            <div class="intro">
+                <div class="brand">
+                    <div class="brand-logo">
+                        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIIAAADICAYAAAAkwDn3AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAFsBJREFUeNrsXW1sVNeZPjMef8Rj8DhRbVUkYEcC/wjZGApO22Bi43YViRjsfDQJ2wacZqWwWVhMpGyQ2hiWares2oTQbWilBtOoG3WzTUIDSO02Js6aH4Vki/nID2ALTjaogi3rMcHgb+957twzPnPm3Pm833Ne6Wo8947H4znPfd7nfc973kOIMmXKlClT5m2bmZlpp0eD+ibMtaAHPzNAcIKCYbsavsIGArl2/CMc3RQMJxQ7FDAQpsdGydXfvUf+9Is3GiaHhxU7FCoQmI1+8im59LMexQ6FDgSNHUYVOyggKHZQQFDsoICg2EEBIS922KKGuwCBIGGHlykY3qdHrRr2AgSCwA7Nk9GoYodCBUICO7y2P6LYocCBoNhBAUGxgwJCana4dvQoudHb2zx9/XpBs0NBA4HZ5JUrZOS3v42Mnz1bsOyggKDbzPg4Gf3DHwqWHRQQDNhh8rPPCoodFBAM2OFGfz+OZvpzQbCDAkIqdvjsM3L94MGCYAcFBMUOCgiKHRQQFDsoICh2UEBQ7KCAoNhBAUGxgwKC/ezwg64fRn59+Jjn2MGXQKh59GHyxW+uIxV/cXfa11aubCLh1lZSerf8tbiGo7iuLuF82dKl2nk88hYdHiEP/9X3cTQPRb0zZ+E7IJTU1JDyRQtJ2YL5pLJxecrXhioryZxlXyJF1dWkZNEi6WtwDUewoiLxfFVV7Bp9lBllBbLwnmd4dogoINholY3LOFBUa4NtZOX1s4MfKCkhodtvN/WzCOxwEUv6FRBssnLhzp5zj7F7mCO4jmKTgSBhh3coGN5xIzsE/QaCYFmp9vONc+e1RyOdAKYAYzCRpwGB6gAwgxXGsUO7G9nBV0AI1y/UHscvXyHDxz/kBrwmmQ10pmAFKXGAzJtn6Wd0Kzv4BgjBsrL43f/5qdNacer06JjUBfBMMTb4CZkeGSFTQ0OWuge3s4NvgIBIgRlAEHMP56TuAQzBRCR7zcTFizFGoEAIhsO2fGY3sUPIP25hViTOe7pTYItSTT+wQecZ4tYHVyd/KRQM42fP2vK5GTusXX1v+89+/LfNFAydgUDggGKEHN0Czwip9EMqARmPHrjkEdyGKCRZDoFpDD+wgy8YgR9YLHgdv3w5/vwLbau167GIopeUzZ8fjyz+9+BhMnb+PJn7xZiYRHaxdPFibaDhHgACuAycw/OKtjYyHY3GQaAJUxOZg7HD+nWr2n/wj522soOnGEG/S+7HFybLB0wODyeAAHZT1wsx97AwgRlYiMmMhZGajqivj4nJ06fjgw1G4Jng5u9/r1U9m20/f+MIWb7yucgHR8/Yxg4BD4EACrvn6Wf/JbIgeols+upsmId0skbjNEoQgQC3Ec8XRIe15wAFe23xLWVxRtAokg30xEQ8ktDehzICtAPAMH39Opm8dEnqFnYd/pjsOvSxaf/35o1t5Lt//41oVaTCUnYIeYQFeqjvbP/23/xIo8/N9yWGeCxKkBmWtSVcp6yRyozucLgJuwQkb3v2HiTvHj4Wee3VTWAGAAGAiBaUa9BZ4CLibfhO0SUUig1+eoW0PvhdsnXbPsvyDkG3sgB8IxS0rqSJshg7WKUdgm5lAeoGCpoF7GaHoNtYAGgH6qGcldnHDkE3sQBQDrQD9crsZYegm1gAKFfmDDsEFQsodnAECIoF3MkOQcUCih1gIbtYgD70UJRq2UGnAIA6BKSjS/WiVjxnE1BIF2NCiRWpTF25kpBi9io7cFnJ3fTUDqOsZMgmFujZuetNR9wAq1xCdXOqimY2oVREZqeh2ewjUstmTTc7xQ6bN7Zt+c7z3wAz1NkKBDewQNXKFWTu8uXxuz5rEIXD2hQ01jyMnzvnaUDgJly7urHWVtfgNAuA8lGHwGYd8zWwBQPEzf5+S6aenbaQ31gAbuC2r3/NkAUw/Tz66afaFDRqFUJ0kMO3xVYrBVF5RA9UMsvK2nGuvLWVjJ05o9UpKCC4kAUYCMAEMsNUNKqbr59KHEDUI5ROTcSecHc6ag9K6+sTqpGYsYolFKYoICSyQDdlgS1ORgRGIAADoCSNFa5maqhWwoFCldKlS5PWODJB6RcwhPIEQfP/DV3v+d4/v1nrZGIImgDuQMYCl3/1tlackokOwOAiUuBL1qAHpo4c0VY9iyui8XySuhhWCl9wQHALC7DwsObRh5I0AVwAmCBTMYjCVKYLAISbx47FIwRWn8gzAbNbvvxlLf/g9ZxDMEcWOLF1274tbsgOyvIDKErNFASwokgkQRxCH5SvWpUkGAEG2d0v9kjwNRD0OYKXKQu833j/c7VumCMAACJNKxJ9+/BwViDQ/reJiWRwUE1gBIYpIXyEoAxVV/sfCG5jgVk2SG6EARBkogl4A63LClNTgUFMLBl1XPEFENzIAmKkIOqCVBXNqQwromW0LwODVtEsRCGpuqd4GghuZQFmfC8EZsPHP8rrPY00gAaGpqaEczIGEYWk54GAnVNPnr7oShZgxq9Y0gbm8pWkxS2mgoHe8YgQ4t8RdQ3i64o8rBOMGCHy68PHXV0vIDa/yDZhZBRGQvRNXLggBQPueF4LTArAA3MEiks8CQTPLoIVJ5Ru5qgNEtwN1QLMzyMy0DKLQuMMgIHNM0xJJp+KqiK+YgRPgYC5hrzuCEHsgeYD4XBClpGJSl40JrGKTU02FCMAvaVlSeeyDRmTfl8yqADGJD1/o7eXFFFXNEVdgTgFjdCTB1AwXKEYwcsGIPB3e/xO0V0D3IG0DkGSjFJA8LghJMx2xbNXXYEvgDA9luwGUtUjZmNgBT5zqInGFBVJYuOt6ZHrSiPYdudKhCHCyck0vQ8yNYSOOCAgU4FAlkmcGRlRjGCniYN+i941xdS/kaY2UZZAmhqKKiDYaeKcQnn9Qts/g5hSRgQxMzGugGCnjZw9n6QRMtmfwbQvjmoD0TVMebi62bNAQEqZtdhlhnUMdpmsGMXLJWueDh/FimSwwtw0m3WYorBRiCKknr2+RM7TQBjqP5rMCk0rpN3YzTJMTN0iTEnDvL7OwdNAQFr52ocfJv5DZaXafk5m5RVEEMgqltLlGhQQ7GCF/zyalFfQwPCtdaYyAwOBKBD5CmcFBIft8r+/leQiwAhghnKDTbuyMQx++IEHpAkktpReAcEFhuTS5V+9lfzPUWbAmgds/5eLqwALaNv6URAY7eEgVi551XyzXwMSTKhgli17QzNuHIgykH9IV82EiAA7uWRagyguf7t/xWJy8vRFT/WI9A0QWDgJvQCXIFsNjYQTSzppW/2MjZHJq1dJ6ZwK7Y7XkkQZ1B1CF4iCUdvPobiY7FyzRnsfgOC5bfuIV/pF+goIMBSw/s+P95KaRx6Kd22X2ey1zFPTyBOMHou1A5ZFD3xuIVIZJq+9ukn72Qtg8GU9AsLKP/3iDSoi3zZlRhJiELQ/8pvfxPor0ePGkSMZdU8BGNavW6UYwUmDFsCByAHl77K1EOkYAIUqstQxA4OMGWRgcDsz+BoIIiAIOay5BExZI4rAEQgGSah0diCRGMLGHEgSpQsLcR1HUQabhrodDK4FAnzsPXfXaQqctw+OniEL7ijOK7rgp7DRMeXWe+7WilPj/pJtCJ4GDBCIstzC63Swn5S4AzeDwXVAgD/dvPFBDQRyeyyeO8CAZhIOJv3TlAmwQTiYId3ucKncQypD3wg28F4AQ8hNDPDWv76QxACpBpOFg8gqInTENsBG4pBtCYiNwMqyqGbCHY+EUcmdd5Ib/f0JAhEAkbECYwMvgSHkFhD0HtqZggXShD5UAM5tXKYdLGmEzmnB0lJtviEXoZgEiOpqTRiK0QITjF4HgyuA8OILj+UMglRJI7MNg42Oavz6B4DCD2BwHAi186u1Le1Egyjcs/cQEfdzAmCef+IrpO1rDWn9e/p8wxgZvXCBkKt/1qIE/k5H8Qn2fhQLUHAOLoEXkX4Ag+NAgDAU7R++/2/0+KX09cjhH5s7QRqH/phxn2XR+DkHft9Hvnx9Uq8xgAYQJ5UABnFVlNfB4DgQ1q6+N4kJjECQfEePkmtUIOKAAJwT3/o3WQtgDgJiEo22xHWSfFeUaX2tI7vjES1gAopnBu1nyfI4gOGl7/yE/OUzjye5OreDwVEgQCQumJ84yYO+DPnlB2JJIyyUBSBi2wRfSblIFn6fZQcxYVRMIwS+9Gwci104IOA1eL0sxYzJJnSYkYlfN4PB0bkGmUAE9edrAARon/VUSrdSOl2KWNoHIWLcB4GBQfa/AAz3r7hLA4PMnJqbUItgM7BcWvN7DQwKCBlYoCS3djheAoOjQJBV8EA3uM1SuQG/gMFRIMi+HLMSS6YygqRecSaLBhleAIPjrkH8cvCluM1CkrL4bFc1ZQKGTwy62NkBBseBgLxBIhAWu849YEeXdFGEGWAQQ2k7weACIHycNslktYmrlFCYwiePRLE4IXRaMwsM6cxKMDgOBMwliKLxyXUttn4GJI+wTxPudDzytQclkpL2yTyAkCkYUrkJK24UV4SP7woTS3APdotGgGGktzcho4gMojjpBBCYsbIpHRjSuQmz3acrgPDK3kNJ5/5OMhllt8la72fbdc0KNwEQmM0KrgACvghRNMaU9GLHPpM25yC4BW2/J5NXPecKhlSM4VkgwDD1LBoKVpwy2XpGq3ogpAODHUvnXAMEMIIslHSCFWRL39g+0VZZKjDI9IAZk3OuBAJs67Z9klCy0f68gSAQYbL2vHYzAw8CsXLLV0DAPyh+CU6knJM6ogwN5R0ymukmnjJIR+cFfuIyE2nQDUvLUxWiWAWGLzVt1ZJHfE4FRTtYPGPFd+IqIKyXpFllmUerTZxHYLvEmhk6ZmKoVLKrWslVrmGNRA+87kDZlljRDPPyxl2eAoIsSWIVDaYzgGDy0qWEcyhwDfqkJb+rgSALE3MtZDXDpBuCeny3V08AQRYdmB0iZasTRPfg5Q0+PQSEWksTJrkYWucVChBctRo637ARC17Zame2ExzbGPTzHLYL1jbu8rE7cHUeIZewEUvf0FZPthYSgMCBpXGsBV+mfZXEusSAEovuNbDAHc9uzGhBLJhi3tNPWdq0WwHBYs1gBAKjnorG7BFr2p0LGGZ80GrXc0BIV4EDd4D2ukYLXqP9R7VDpgsy7eCez3oGpRHy0AR8LiHdZBM0gTiQ6Hdw9XfvJW3oAZdQ88jDCaDBz3iPP7/1tuHfCCRt5acYwXITizVZVzWZsd7KoqHJpggCGFgB18QO7gDI3OXL5F+MbM8mD+/Q4hkgiEUpMKOilL/uejzpHKIBhIlGhmt4jWhz7m2Urm2UbuXn8c05PAGEQcoIIivIClhlM5RofiFjAtGwVP7a8Y8S6Z+CAB1QkoSocA5ZRsUINpmYUsaAiws6ZK12rv7Hexn/Ddk+UOLMIlroiG5BnIRSQLDQ9kjK2vkCVmgGUTeACbJpvC3dB0pYv2B1GbsCQgbuQaw/ACu8+MLjhq4Cezpla8OCe9Bcgc4KcAmiPvD6Vn6ezCMYlbVDOK4R6hWQL8ilDT9YIWnPSDTMogBAPyXRvL6VnyeBAFaQgQHNqcQk0+ench8gcUthLSxtbU2KIOASJn0cLbgWCDFW+GVG09A3zp7L+W+gRW9a5hgZ0RbFFoK5NsWMku1UU9FwCfnszgL3kGpaWtvPUWjCrYDggIERUN9vBIYbEmo3kxVuHjvme4HoCSCkA8PNLItMMtUJWitdygR2LWhRQMgSDHzWEdFCtpt1yAxpZ949sH7KhQYCLWrywocEGLDyB+XulTRyqPzkLHnyLnPqB6++e5Dcdt9XtJ+xyLVQNIEngQCDe2CrfjbfhyygOUBAOZrfs4a+cA3KFBCUKSAoU0BQpoDgB3NjU3EFBAcMG5Vh/0qvAUIBwcxY/PbbSXFtbXTt6nt3nD/5k6jdrYQVEBw2TF2XNzXh6AtWVCwJBALbqyIVdZQZDniFHRQQ8jRUNFW0tUUpG3RQALTQY1ADRyAQpUcHZYUOL7CDAkKOhuLWcGsrKVu6dD9lhDo66AekbEHPe4EdFBBycAMobg0/8MBgUXU1GKATd3/K35llhy63soMCQjZisLoaAEBd4w46sGCBvqxAFAjspuywhDJDn9vYQQEhQxZAb+by1ta+YDgMAGzP+b2ohoCWcBs7KCCkMSx+gRikj128GMwbXC5jBwUEoy8mHNbEIGWCA7oY3G0607iIHRQQJAYxWLFmDRODHenEoB/YQQFBLgZx9y/JVgx6mR0UEHQxWLZ0KcTgQFFVFQDQZTULuI0dCh4IpbULNDFYUl+PwQcIBhwHpgPsULBAQNsd9FH6wkMdEINLrBCDXmKHggTC3MblZN7TndGyBfM7dDE46NbPahc7FBQQ0FIPfRZv+3rr7mBZmeH8gEsBYSk7hAoBAGjFV9W0gjLBMvj/LjujAbPZgT60zMzMbFl58q7uR765KyLrPaUYQWLlixaRed/eEKUg2KGLwT6v/0+MHXoP7ex76Z+eMoUdjIAQXb+uxdENOM1ggZpHH0ZTzr5QJLIkn/kBN2uHzRvbuo5/8MNovmMVNPgjAwvmV9cBcV6sv4MYvOPZZ6LlixZ2mjk/4FZ2uLO2Jm92CGaqVq3art5sMYiQkIrB/boY3F8IGsgMdghmgjhU2Lz26qYDaF9TO999+xdoYnDlCoSEgzQkzKhYRLFDDmKRVdhQpLX896mfDrIuZ26wWOv9ThJpWpFTsYhihxyiBv1LXvLiC4/t+OOpnzq7m7u+WQd1BX2hykrfiUG72SGQ6x+isWwDfejZs/dgA7qg2bkt3/NPfJV87+VNUQqGHW5MDbvNkHe4MHi5uygYiNQuqAmYmkdAZIG4HBRk97Qp3AEFwSsKBFmxQwuNBAdMcQ2pkhso13armFQ2e+NaBgROoEBMdlCB4ioxqczEqCELQBy4taoCYnL3f/W/lHYXFmU+BQIXanZRELRQMAyYlQtX5jEg8KGmLiZ3IJ710spgBQRrALEd8awbV/comzVb6hG4efT2lSfv6tm5683Inr0HLf2bRZXttfQBR3Rq+MCAcK1Z/3GQXhvkzmN/vwb96QC9FuWu4XxE9n6KEXIQk5i3oLphP0JNq8QkHbTt9AHt3d+nxwn6/H020PQ4oZ/HcZE+38IN9EXhWoN+rQfvw71fjwKCOWKyE/MWVExqoaaZ7kJngm796Q7cwfRopuc30Md2/Y7HOZaMell/7Nbv+AP6gZ+79ffboP8Oe78NDCQKCOaIyTrMWyDUNHHeAgPYh4GmFL5dH1Siu4la/edX6LUuuAbOVQzqv4fzr3Dvxd5vv/5+A9w1pRHMFJNUO8BV9Lz+xpHmrdv25TVvofvvFs7ntzOfz/l/ZoMMHDowGKswRmF6oAXMoLscxiiDihEsEJOYOn1y3Sqzi2B69DsXwi+jimXdhWzgXAvhGKWbez8FBAsBYVoRjH73tut3b0eGv9PAaYZOIToY0N9nUNcc7QoI1ovJvIpgdJ/P6L0jxd0bEUJHxiDQA/uZ+GQuQWeVn+u/osSiXWKSxIpgdmcjJvUBfYe7i3H3btfBwfICa3UX0KDrgz6dCdjgRvXf2cC5hB79+XpOXygg2MgOmLdApU2m8xYN3J3eoA8iDgBhvw6GBv3uJ1wYWcu9xxb9d9brIBnQr/fojwOMMVTUYC8gMBBLUGnzrSdauk+dGUwVusWjBjFCQKaQ3tV1unbAgPbpA030sFF836jOGEt0TdCQjfBUZqFRMNTS4x16bFffhjIAIqK+BWXKlCmzwv5fgAEA3FSfhx4RbJMAAAAASUVORK5CYII="
+                             alt="شعار كلية طب الأسنان">
+                    </div>
+
+                    <div>
+                        <small>Al-Ahliyya Amman University</small>
+                        <strong>كلية طب الأسنان<br>Faculty of Dentistry</strong>
+                    </div>
+                </div>
+
+                <div class="badge">
+                    <span class="dot"></span>
+                    خدمة إلكترونية سريعة وآمنة
+                </div>
+
+                <h1>
+                    تسجيل مريض جديد
+                    <span>بخطوة بسيطة</span>
+                </h1>
+
+                <p class="lead">
+                    امسح رمز الاستجابة السريعة باستخدام كاميرا الهاتف،
+                    ثم عبّئ نموذج التسجيل الإلكتروني لإرسال بيانات المريض.
+                </p>
+
+                <div class="steps">
+                    <div class="step">
+                        <i>1</i>
+                        <strong>افتح الكاميرا</strong>
+                        <span>استخدم كاميرا الهاتف أو تطبيق قراءة QR.</span>
+                    </div>
+
+                    <div class="step">
+                        <i>2</i>
+                        <strong>امسح الرمز</strong>
+                        <span>وجّه الكاميرا نحو الرمز الموجود في الصفحة.</span>
+                    </div>
+
+                    <div class="step">
+                        <i>3</i>
+                        <strong>أكمل التسجيل</strong>
+                        <span>أدخل المعلومات المطلوبة ثم أرسل النموذج.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="qr-side">
+                <div class="qr-panel">
+                    <h2>امسح الرمز للتسجيل</h2>
+
+                    <p class="subtitle">
+                        Scan the QR code to open the new patient registration form
+                    </p>
+
+                    <div class="qr-frame" id="qrFrame">
+                        <span class="corner tl"></span>
+                        <span class="corner tr"></span>
+                        <span class="corner bl"></span>
+                        <span class="corner br"></span>
+
+                        <canvas id="qrCanvas" width="1024" height="1024"></canvas>
+                    </div>
+
+                    <div class="hint">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"
+                                  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        رمز ثابت من دون رابط مختصر
+                    </div>
+
+                    <div class="url-box">
+                        <span class="url-text" id="visibleUrl"></span>
+
+                        <button class="copy-btn" id="copyButton"
+                                type="button" title="نسخ الرابط">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <rect x="8" y="8" width="11" height="11" rx="2"
+                                      stroke="currentColor" stroke-width="2"/>
+                                <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"
+                                      stroke="currentColor" stroke-width="2"
+                                      stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="actions">
+                        <button class="btn primary" id="downloadButton" type="button">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"
+                                      stroke="currentColor" stroke-width="2"
+                                      stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            تحميل رمز QR
+                        </button>
+
+                        <button class="btn secondary" id="printButton" type="button">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"
+                                      stroke="currentColor" stroke-width="2"
+                                      stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M7 14h10v7H7z"
+                                      stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            طباعة الصفحة
+                        </button>
+                    </div>
+
+                    <p class="note">
+                        يبقى رمز QR صالحاً ما دام عنوان صفحة التسجيل نفسه لم يتغير.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="qrSource"></div>
+    <div class="toast" id="toast" role="status"></div>
+
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+        integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA=="
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer">
+    </script>
+
+    <script>
+        (() => {
+            "use strict";
+
+            // Change this line only when the destination URL changes.
+            const TARGET_URL = "http://dental.ammanu.edu.jo/Patients/CreatePublic";
+            const LOGO =
+                "data:image/png;base64,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";
+
+            const visibleUrl = document.getElementById("visibleUrl");
+            const qrSource = document.getElementById("qrSource");
+            const output = document.getElementById("qrCanvas");
+            const context = output.getContext("2d", { alpha: false });
+            const toast = document.getElementById("toast");
+            let toastTimer;
+
+            visibleUrl.textContent = TARGET_URL;
+            visibleUrl.title = TARGET_URL;
+
+            function showToast(message) {
+                clearTimeout(toastTimer);
+                toast.textContent = message;
+                toast.classList.add("show");
+                toastTimer = setTimeout(
+                    () => toast.classList.remove("show"),
+                    2200
+                );
+            }
+
+            function roundedRect(ctx, x, y, w, h, radius) {
+                const r = Math.min(radius, w / 2, h / 2);
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.arcTo(x + w, y, x + w, y + h, r);
+                ctx.arcTo(x + w, y + h, x, y + h, r);
+                ctx.arcTo(x, y + h, x, y, r);
+                ctx.arcTo(x, y, x + w, y, r);
+                ctx.closePath();
+            }
+
+            function loadImage(src) {
+                return new Promise((resolve, reject) => {
+                    const image = new Image();
+                    image.onload = () => resolve(image);
+                    image.onerror = reject;
+                    image.src = src;
+                });
+            }
+
+            async function addLogo(sourceCanvas) {
+                output.width = 1024;
+                output.height = 1024;
+
+                context.fillStyle = "#ffffff";
+                context.fillRect(0, 0, 1024, 1024);
+
+                context.imageSmoothingEnabled = false;
+                context.drawImage(sourceCanvas, 0, 0, 1024, 1024);
+
+                const logo = await loadImage(LOGO);
+
+                const boxWidth = 218;
+                const boxHeight = 258;
+                const boxX = (1024 - boxWidth) / 2;
+                const boxY = (1024 - boxHeight) / 2;
+
+                context.imageSmoothingEnabled = true;
+                context.fillStyle = "#ffffff";
+                roundedRect(
+                    context,
+                    boxX,
+                    boxY,
+                    boxWidth,
+                    boxHeight,
+                    34
+                );
+                context.fill();
+
+                const maxWidth = 142;
+                const maxHeight = 218;
+                const scale = Math.min(
+                    maxWidth / logo.naturalWidth,
+                    maxHeight / logo.naturalHeight
+                );
+
+                const width = logo.naturalWidth * scale;
+                const height = logo.naturalHeight * scale;
+
+                context.drawImage(
+                    logo,
+                    (1024 - width) / 2,
+                    (1024 - height) / 2,
+                    width,
+                    height
+                );
+            }
+
+            function generateQr() {
+                if (typeof QRCode === "undefined") {
+                    document.getElementById("qrFrame").innerHTML =
+                        '<div class="load-error">تعذر تحميل مكتبة QR. تأكد من اتصال الإنترنت ثم أعد تحميل الصفحة.</div>';
+                    return;
+                }
+
+                qrSource.innerHTML = "";
+
+                new QRCode(qrSource, {
+                    text: TARGET_URL,
+                    width: 1024,
+                    height: 1024,
+                    colorDark: "#071c55",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                setTimeout(async () => {
+                    const sourceCanvas =
+                        qrSource.querySelector("canvas");
+
+                    if (!sourceCanvas) {
+                        showToast("تعذر إنشاء رمز QR");
+                        return;
+                    }
+
+                    try {
+                        await addLogo(sourceCanvas);
+                    } catch (error) {
+                        console.error(error);
+                        context.imageSmoothingEnabled = false;
+                        context.drawImage(
+                            sourceCanvas,
+                            0,
+                            0,
+                            output.width,
+                            output.height
+                        );
+                    }
+                }, 100);
+            }
+
+            document
+                .getElementById("downloadButton")
+                .addEventListener("click", () => {
+                    const link = document.createElement("a");
+                    link.download = "AAU-Dental-Patient-QR.png";
+                    link.href = output.toDataURL("image/png", 1);
+                    link.click();
+                    showToast("تم تجهيز صورة رمز QR");
+                });
+
+            document
+                .getElementById("printButton")
+                .addEventListener("click", () => window.print());
+
+            document
+                .getElementById("copyButton")
+                .addEventListener("click", async () => {
+                    try {
+                        await navigator.clipboard.writeText(TARGET_URL);
+                    } catch {
+                        const area = document.createElement("textarea");
+                        area.value = TARGET_URL;
+                        area.style.position = "fixed";
+                        area.style.opacity = "0";
+                        document.body.appendChild(area);
+                        area.select();
+                        document.execCommand("copy");
+                        area.remove();
+                    }
+
+                    showToast("تم نسخ الرابط");
+                });
+
+            generateQr();
+        })();
+    </script>
+</body>
+</html>

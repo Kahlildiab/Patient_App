@@ -6,7 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DentalCollegeManagementSystem_AAU.Controllers
 {
-    [AuthFilter("Admin")]
+    [AuthFilter(
+        "Admin",
+        "Fulltime Supervisor",
+        "Parttime Supervisor"
+    )]
     public class AdminStatusController : Controller
     {
         private readonly AppDbContext _context;
@@ -30,26 +34,53 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             var query = _context.Patients.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(searchName))
+            {
                 query = query.Where(p =>
-                    (p.FirstName + " " + p.SecondName + " " + p.ThirdName + " " + p.FourthName)
-                    .ToLower().Contains(searchName.Trim().ToLower()));
+                    (p.FirstName + " " + p.SecondName + " " +
+                     p.ThirdName + " " + p.FourthName)
+                    .ToLower()
+                    .Contains(searchName.Trim().ToLower()));
+            }
 
             if (!string.IsNullOrWhiteSpace(searchID))
+            {
                 query = query.Where(p =>
                     p.NationalID_PassportNumber != null &&
-                    p.NationalID_PassportNumber.ToLower().Contains(searchID.Trim().ToLower()));
+                    p.NationalID_PassportNumber
+                        .ToLower()
+                        .Contains(searchID.Trim().ToLower()));
+            }
 
             if (!string.IsNullOrWhiteSpace(filterStatus))
             {
                 if (filterStatus == "Screening")
+                {
                     query = query.Where(p =>
-                        p.PatientStatus == "Screening" || string.IsNullOrEmpty(p.PatientStatus));
+                        p.PatientStatus == "Screening" ||
+                        string.IsNullOrEmpty(p.PatientStatus));
+                }
                 else
-                    query = query.Where(p => p.PatientStatus == filterStatus);
+                {
+                    query = query.Where(p =>
+                        p.PatientStatus == filterStatus);
+                }
             }
 
             int totalItems = await query.CountAsync();
-            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            int totalPages =
+                (int)Math.Ceiling(
+                    (double)totalItems / pageSize);
+
+            if (page < 1)
+            {
+                page = 1;
+            }
+
+            if (totalPages > 0 && page > totalPages)
+            {
+                page = totalPages;
+            }
 
             var patients = await query
                 .OrderByDescending(p => p.PatientID)
@@ -57,10 +88,21 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 .Take(pageSize)
                 .ToListAsync();
 
-            ViewBag.TotalPatients = await _context.Patients.CountAsync();
-            ViewBag.Screening = await _context.Patients.CountAsync(p => p.PatientStatus == "Screening" || string.IsNullOrEmpty(p.PatientStatus));
-            ViewBag.Allocated = await _context.Patients.CountAsync(p => p.PatientStatus == "Allocated");
-            ViewBag.Discharged = await _context.Patients.CountAsync(p => p.PatientStatus == "Discharged");
+            ViewBag.TotalPatients =
+                await _context.Patients.CountAsync();
+
+            ViewBag.Screening =
+                await _context.Patients.CountAsync(p =>
+                    p.PatientStatus == "Screening" ||
+                    string.IsNullOrEmpty(p.PatientStatus));
+
+            ViewBag.Allocated =
+                await _context.Patients.CountAsync(p =>
+                    p.PatientStatus == "Allocated");
+
+            ViewBag.Discharged =
+                await _context.Patients.CountAsync(p =>
+                    p.PatientStatus == "Discharged");
 
             ViewBag.TotalPages = totalPages;
             ViewBag.CurrentPage = page;
@@ -72,31 +114,40 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         }
 
         // ═══════════════════════════════════════════════════════
-        //  GET: /AdminStatus/GetStudentCount?patientId=X
+        // GET: /AdminStatus/GetStudentCount?patientId=X
         // ═══════════════════════════════════════════════════════
         [HttpGet]
-        public async Task<IActionResult> GetStudentCount(int patientId)
+        public async Task<IActionResult> GetStudentCount(
+            int patientId)
         {
-            var count = await _context.AllocatedStudents
-                .CountAsync(a => a.PatientID == patientId);
+            int count =
+                await _context.AllocatedStudents
+                    .CountAsync(a =>
+                        a.PatientID == patientId);
+
             return Json(new { count });
         }
 
         // ═══════════════════════════════════════════════════════
-        //  GET: /AdminStatus/HasDischargeOrder?patientId=X
+        // GET: /AdminStatus/HasDischargeOrder?patientId=X
         // ═══════════════════════════════════════════════════════
         [HttpGet]
-        public async Task<IActionResult> HasDischargeOrder(int patientId)
+        public async Task<IActionResult> HasDischargeOrder(
+            int patientId)
         {
             bool hasOrder = false;
-            // TODO: uncomment when Orders model is ready:
+
+            // TODO: فعّل هذا الشرط عندما يصبح Discharge Order جاهزاً.
             // hasOrder = await _context.Orders
-            //     .AnyAsync(o => o.PatientID == patientId && o.OrderType == "Discharged");
+            //     .AnyAsync(o =>
+            //         o.PatientID == patientId &&
+            //         o.OrderType == "Discharged");
+
             return Json(new { hasOrder });
         }
 
         // ═══════════════════════════════════════════════════════
-        //  POST: /AdminStatus/ChangeStatus
+        // POST: /AdminStatus/ChangeStatus
         // ═══════════════════════════════════════════════════════
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -108,110 +159,138 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             string? filterStatus,
             int page = 1)
         {
-            var redirectArgs = new { searchName, searchID, filterStatus, page };
+            var redirectArgs =
+                new
+                {
+                    searchName,
+                    searchID,
+                    filterStatus,
+                    page
+                };
 
-            var patient = await _context.Patients.FindAsync(patientId);
+            var patient =
+                await _context.Patients
+                    .FindAsync(patientId);
+
             if (patient == null)
             {
-                TempData["Error"] = "Patient not found.";
-                return RedirectToAction(nameof(AdminStatus), redirectArgs);
+                TempData["Error"] =
+                    "Patient not found.";
+
+                return RedirectToAction(
+                    nameof(AdminStatus),
+                    redirectArgs);
             }
 
-            var allowed = new[] { "Screening", "Allocated", "Discharged" };
+            var allowed =
+                new[]
+                {
+                    "Screening",
+                    "Allocated",
+                    "Discharged"
+                };
+
             if (!allowed.Contains(newStatus))
             {
-                TempData["Error"] = "Invalid status value.";
-                return RedirectToAction(nameof(AdminStatus), redirectArgs);
+                TempData["Error"] =
+                    "Invalid status value.";
+
+                return RedirectToAction(
+                    nameof(AdminStatus),
+                    redirectArgs);
             }
 
-            string currentStatus = string.IsNullOrEmpty(patient.PatientStatus)
-                                 ? "Screening" : patient.PatientStatus;
+            string currentStatus =
+                string.IsNullOrEmpty(
+                    patient.PatientStatus)
+                    ? "Screening"
+                    : patient.PatientStatus;
 
             if (currentStatus == newStatus)
-                return RedirectToAction(nameof(AdminStatus), redirectArgs);
-
-            // ══════════════════════════════════════════════════
-            //  TRANSITION RULES
-            // ══════════════════════════════════════════════════
-
-            // Rule 1: Allocated → Screening — requires 0 students
-            if (currentStatus == "Allocated" && newStatus == "Screening")
             {
-                int studentCount = await _context.AllocatedStudents
-                    .CountAsync(a => a.PatientID == patientId);
+                return RedirectToAction(
+                    nameof(AdminStatus),
+                    redirectArgs);
+            }
+
+            // Allocated -> Screening requires zero students.
+            if (
+                currentStatus == "Allocated" &&
+                newStatus == "Screening")
+            {
+                int studentCount =
+                    await _context.AllocatedStudents
+                        .CountAsync(a =>
+                            a.PatientID == patientId);
+
                 if (studentCount > 0)
                 {
-                    TempData["Error"] = $"Cannot revert to Screening. Please remove all {studentCount} assigned student(s) first.";
-                    return RedirectToAction(nameof(AdminStatus), redirectArgs);
+                    TempData["Error"] =
+                        $"Cannot revert to Screening. Please remove all {studentCount} assigned student(s) first.";
+
+                    return RedirectToAction(
+                        nameof(AdminStatus),
+                        redirectArgs);
                 }
             }
 
-            // Rule 2: * → Allocated — requires at least 1 student
-            if (newStatus == "Allocated" && currentStatus != "Allocated")
+            // Any status -> Allocated requires at least one student.
+            if (
+                newStatus == "Allocated" &&
+                currentStatus != "Allocated")
             {
-                int studentCount = await _context.AllocatedStudents
-                    .CountAsync(a => a.PatientID == patientId);
+                int studentCount =
+                    await _context.AllocatedStudents
+                        .CountAsync(a =>
+                            a.PatientID == patientId);
+
                 if (studentCount == 0)
                 {
-                    TempData["Error"] = "At least one student must be assigned before changing status to Allocated.";
-                    return RedirectToAction(nameof(AdminStatus), redirectArgs);
+                    TempData["Error"] =
+                        "At least one student must be assigned before changing status to Allocated.";
+
+                    return RedirectToAction(
+                        nameof(AdminStatus),
+                        redirectArgs);
                 }
             }
 
-            // Rule 3: Allocated → Discharged — requires Discharge Order
-            if (currentStatus == "Allocated" && newStatus == "Discharged")
+            // Discharged -> Allocated is not allowed.
+            if (
+                currentStatus == "Discharged" &&
+                newStatus == "Allocated")
             {
-                // TODO: uncomment when Orders model is ready
-                // bool hasOrder = await _context.Orders
-                //     .AnyAsync(o => o.PatientID == patientId && o.OrderType == "Discharged");
-                // if (!hasOrder)
-                // {
-                //     TempData["Error"] = "A Discharge Order must be created before changing status to Discharged.";
-                //     return RedirectToAction(nameof(AdminStatus), redirectArgs);
-                // }
+                TempData["Error"] =
+                    "Cannot change status from Discharged to Allocated.";
+
+                return RedirectToAction(
+                    nameof(AdminStatus),
+                    redirectArgs);
             }
 
-            //Rule 4: Discharged → Allocated — requires NO active Discharge Order
-            //if (currentStatus == "Discharged" && newStatus == "Allocated")
-            //{
-            //TODO: uncomment when Orders model is ready
-            //     bool hasOrder = await _context.Orders
-            //         .AnyAsync(o => o.PatientID == patientId && o.OrderType == "Discharged");
-            //    if (hasOrder)
-            //    {
-            //        TempData["Error"] = "Cannot re-allocate: patient still has an active Discharge Order.";
-            //        return RedirectToAction(nameof(AdminStatus), redirectArgs);
-            //    }
-            //}
-
-            // Rule 4: Discharged → Allocated
-            if (currentStatus == "Discharged" && newStatus == "Allocated")
-            {
-                TempData["Error"] = "Cannot change status from Discharged to Allocated.";
-                return RedirectToAction(nameof(AdminStatus), redirectArgs);
-            }
-
-            // ══════════════════════════════════════════════════
-            //  APPLY CHANGE + LOG HISTORY
-            // ══════════════════════════════════════════════════
             patient.PatientStatus = newStatus;
 
-            _context.PatientStatusHistories.Add(new PatientStatusHistory
-            {
-                PatientID = patientId,
-                OldStatus = currentStatus,
-                NewStatus = newStatus,
-                ChangedAt = DateTime.Now
-            });
+            _context.PatientStatusHistories.Add(
+                new PatientStatusHistory
+                {
+                    PatientID = patientId,
+                    OldStatus = currentStatus,
+                    NewStatus = newStatus,
+                    ChangedAt = DateTime.Now
+                });
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = $"{patient.FirstName} {patient.FourthName} — status changed to {newStatus}.";
-            return RedirectToAction(nameof(AdminStatus), redirectArgs);
+            TempData["Success"] =
+                $"{patient.FirstName} {patient.FourthName} — status changed to {newStatus}.";
+
+            return RedirectToAction(
+                nameof(AdminStatus),
+                redirectArgs);
         }
 
         // ═══════════════════════════════════════════════════════
-        //  POST: /AdminStatus/BulkChangeStatus
+        // POST: /AdminStatus/BulkChangeStatus
         // ═══════════════════════════════════════════════════════
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -219,43 +298,85 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             List<int> selectedPatients,
             string bulkStatus)
         {
-            if (selectedPatients == null || !selectedPatients.Any())
+            if (
+                selectedPatients == null ||
+                !selectedPatients.Any())
             {
-                TempData["Error"] = "No patients selected.";
-                return RedirectToAction(nameof(AdminStatus));
+                TempData["Error"] =
+                    "No patients selected.";
+
+                return RedirectToAction(
+                    nameof(AdminStatus));
             }
 
-            var allowed = new[] { "Screening", "Allocated", "Discharged" };
+            var allowed =
+                new[]
+                {
+                    "Screening",
+                    "Allocated",
+                    "Discharged"
+                };
+
             if (!allowed.Contains(bulkStatus))
             {
-                TempData["Error"] = "Invalid status.";
-                return RedirectToAction(nameof(AdminStatus));
+                TempData["Error"] =
+                    "Invalid status.";
+
+                return RedirectToAction(
+                    nameof(AdminStatus));
             }
 
-            var patients = await _context.Patients
-                .Where(p => selectedPatients.Contains(p.PatientID))
-                .ToListAsync();
+            var patients =
+                await _context.Patients
+                    .Where(p =>
+                        selectedPatients.Contains(
+                            p.PatientID))
+                    .ToListAsync();
 
-            foreach (var p in patients)
+            int changedCount = 0;
+
+            foreach (var patient in patients)
             {
-                string oldStatus = string.IsNullOrEmpty(p.PatientStatus) ? "Screening" : p.PatientStatus;
-                if (oldStatus == bulkStatus) continue;
+                string oldStatus =
+                    string.IsNullOrEmpty(
+                        patient.PatientStatus)
+                        ? "Screening"
+                        : patient.PatientStatus;
 
-                p.PatientStatus = bulkStatus;
-
-                _context.PatientStatusHistories.Add(new PatientStatusHistory
+                if (oldStatus == bulkStatus)
                 {
-                    PatientID = p.PatientID,
-                    OldStatus = oldStatus,
-                    NewStatus = bulkStatus,
-                    ChangedAt = DateTime.Now
-                });
+                    continue;
+                }
+
+                patient.PatientStatus =
+                    bulkStatus;
+
+                _context.PatientStatusHistories.Add(
+                    new PatientStatusHistory
+                    {
+                        PatientID =
+                            patient.PatientID,
+
+                        OldStatus =
+                            oldStatus,
+
+                        NewStatus =
+                            bulkStatus,
+
+                        ChangedAt =
+                            DateTime.Now
+                    });
+
+                changedCount++;
             }
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = $"{patients.Count} patient(s) updated to {bulkStatus}.";
-            return RedirectToAction(nameof(AdminStatus));
+            TempData["Success"] =
+                $"{changedCount} patient(s) updated to {bulkStatus}.";
+
+            return RedirectToAction(
+                nameof(AdminStatus));
         }
     }
 }

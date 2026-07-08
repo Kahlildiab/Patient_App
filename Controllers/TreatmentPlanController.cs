@@ -42,6 +42,45 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
         }
 
+        private static string? NormalizeCaseComplexity(
+            string? value)
+        {
+            string normalized =
+                (value ?? string.Empty).Trim();
+
+            if (
+                normalized.Equals(
+                    "Mild",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return "Mild";
+            }
+
+            if (
+                normalized.Equals(
+                    "Moderate",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return "Moderate";
+            }
+
+            if (
+                normalized.Equals(
+                    "Advance",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return "Advance";
+            }
+
+            return null;
+        }
+
         private bool IsAdmin()
         {
             return string.Equals(
@@ -245,7 +284,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         public async Task<IActionResult>
             AdminApproveDiagnosisTreatmentPlan(
                 int id,
-                int patientId)
+                int patientId,
+                string? caseComplexity)
         {
             string userRole =
                 HttpContext.Session.GetString("UserRole")
@@ -261,27 +301,138 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             var record =
                 await _context.TreatmentPlanDiagnoses
-                    .FindAsync(id);
+                    .FirstOrDefaultAsync(
+                        d =>
+                            d.Id == id
+                            &&
+                            d.PatientId == patientId
+                    );
 
-            if (record != null)
+            if (record == null)
             {
-                record.AdminApprovalStatus =
-                    "Approved";
+                TempData["Error"] =
+                    "Treatment Plan was not found.";
 
-                record.AdminApprovedBy =
-                    HttpContext.Session
-                        .GetString("FullName")
-                    ?? "Admin";
-
-                record.AdminApprovedDate =
-                    DateTime.Now;
-
-                await _context.SaveChangesAsync();
-
-                TempData["Success"] =
-                    "✅ Diagnoses and Treatment-plan "
-                    + "approved successfully.";
+                return RedirectToAction(
+                    "Index",
+                    "AdminApprovals"
+                );
             }
+
+            /*
+             * Case Complexity is always stored on the patient's
+             * first visit.
+             */
+            var firstVisit =
+                await _context.Visits
+                    .Where(
+                        v =>
+                            v.PatientID == patientId
+                    )
+                    .OrderBy(v => v.VisitDate)
+                    .ThenBy(v => v.VisitID)
+                    .FirstOrDefaultAsync();
+
+            if (firstVisit == null)
+            {
+                TempData["Error"] =
+                    "⚠️ The patient does not have a first visit. "
+                    + "Create the first visit before approving "
+                    + "the Treatment Plan.";
+
+                return RedirectToAction(
+                    "Index",
+                    "AdminApprovals"
+                );
+            }
+
+            string? normalizedComplexity =
+                NormalizeCaseComplexity(
+                    firstVisit.CaseComplexity
+                );
+
+            /*
+             * Support old data where Case Complexity may have been
+             * stored on another visit.
+             */
+            if (
+                string.IsNullOrWhiteSpace(
+                    normalizedComplexity
+                )
+            )
+            {
+                string? previouslySavedComplexity =
+                    await _context.Visits
+                        .Where(
+                            v =>
+                                v.PatientID == patientId
+                                &&
+                                v.CaseComplexity != null
+                                &&
+                                v.CaseComplexity != ""
+                        )
+                        .OrderBy(v => v.VisitDate)
+                        .ThenBy(v => v.VisitID)
+                        .Select(v => v.CaseComplexity)
+                        .FirstOrDefaultAsync();
+
+                normalizedComplexity =
+                    NormalizeCaseComplexity(
+                        previouslySavedComplexity
+                    );
+            }
+
+            /*
+             * If no value was previously saved, the approver must
+             * select it from the Admin Approvals page.
+             */
+            if (
+                string.IsNullOrWhiteSpace(
+                    normalizedComplexity
+                )
+            )
+            {
+                normalizedComplexity =
+                    NormalizeCaseComplexity(
+                        caseComplexity
+                    );
+            }
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    normalizedComplexity
+                )
+            )
+            {
+                TempData["Error"] =
+                    "⚠️ Please select Case Complexity "
+                    + "before approving the Treatment Plan.";
+
+                return RedirectToAction(
+                    "Index",
+                    "AdminApprovals"
+                );
+            }
+
+            firstVisit.CaseComplexity =
+                normalizedComplexity;
+
+            record.AdminApprovalStatus =
+                "Approved";
+
+            record.AdminApprovedBy =
+                HttpContext.Session
+                    .GetString("FullName")
+                ?? "Admin";
+
+            record.AdminApprovedDate =
+                DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                "✅ Diagnoses and Treatment-plan approved. "
+                + $"Case Complexity: {normalizedComplexity}.";
 
             return RedirectToAction(
                 "Index",

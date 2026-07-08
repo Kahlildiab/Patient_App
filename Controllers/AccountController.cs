@@ -10,25 +10,26 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
     public class AccountController : Controller
     {
         private readonly AppDbContext _context;
-
-        private readonly ActiveDirectoryValidator
-            _activeDirectoryValidator;
-
-        private readonly JwtTokenService
-            _jwtTokenService;
+        private readonly ActiveDirectoryValidator _activeDirectoryValidator;
+        private readonly JwtTokenService _jwtTokenService;
+        private readonly ILogger<AccountController> _logger;
+        private readonly string _domain;
 
         public AccountController(
             AppDbContext context,
             ActiveDirectoryValidator activeDirectoryValidator,
-            JwtTokenService jwtTokenService)
+            JwtTokenService jwtTokenService,
+            IConfiguration configuration,
+            ILogger<AccountController> logger)
         {
             _context = context;
+            _activeDirectoryValidator = activeDirectoryValidator;
+            _jwtTokenService = jwtTokenService;
+            _logger = logger;
 
-            _activeDirectoryValidator =
-                activeDirectoryValidator;
-
-            _jwtTokenService =
-                jwtTokenService;
+            _domain = configuration["ActiveDirectory:Domain"]?.Trim()
+                ?? throw new InvalidOperationException(
+                    "ActiveDirectory:Domain is missing from appsettings.json.");
         }
 
         // =====================================================
@@ -48,21 +49,16 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         public IActionResult Login()
         {
             string? currentRole =
-                HttpContext.Session.GetString(
-                    "UserRole"
-                );
+                HttpContext.Session.GetString("UserRole");
 
             if (!string.IsNullOrWhiteSpace(currentRole))
             {
                 return RedirectToAction(
                     "Index",
-                    "Home"
-                );
+                    "Home");
             }
 
-            return View(
-                new LoginViewModel()
-            );
+            return View(new LoginViewModel());
         }
 
         // =====================================================
@@ -80,47 +76,34 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             }
 
             string enteredUsername =
-                model.Username.Trim();
+                NormalizeUserName(model.Username);
 
             /*
-             * أولًا:
              * البحث عن المستخدم داخل جدول Users.
              */
             var localUser =
                 await _context.Users
                     .FirstOrDefaultAsync(
                         user =>
-                            user.Username
-                            == enteredUsername
-                    );
+                            user.Username == enteredUsername);
 
             /*
              * حساب Admin المحلي:
              *
-             * يدخل باستخدام Username وPassword
-             * الموجودين في جدول Users.
-             *
-             * لا يتم إرسال Admin إلى Active Directory.
+             * لا يتم فحصه من Active Directory.
+             * يتم استخدام كلمة المرور الموجودة في جدول Users.
              */
-            if (
-                localUser != null
-                &&
+            if (localUser != null &&
                 string.Equals(
                     localUser.UserRole,
                     "Admin",
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
+                    StringComparison.OrdinalIgnoreCase))
             {
-                if (
-                    localUser.Password
-                    != model.Password
-                )
+                if (localUser.Password != model.Password)
                 {
                     ModelState.AddModelError(
-                        "",
-                        "❌ Invalid username or password."
-                    );
+                        string.Empty,
+                        "❌ Invalid username or password.");
 
                     return View(model);
                 }
@@ -128,9 +111,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 if (localUser.IsActive == 0)
                 {
                     ModelState.AddModelError(
-                        "",
-                        "⏳ Your account is not active."
-                    );
+                        string.Empty,
+                        "⏳ Your account is not active.");
 
                     return View(model);
                 }
@@ -141,153 +123,164 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     fullName: localUser.FullName,
                     email: localUser.Email,
                     givenName: localUser.FullName,
-                    surname: string.Empty
-                );
+                    surname: string.Empty);
 
-                localUser.LastLoginDate =
-                    DateTime.Now;
+                localUser.LastLoginDate = DateTime.Now;
 
                 await _context.SaveChangesAsync();
 
                 return RedirectToAction(
                     "Index",
-                    "Home"
-                );
+                    "Home");
             }
 
             /*
              * باقي المستخدمين:
-             * يتم فحص Username وPassword
-             * عن طريق Active Directory.
+             * التحقق من اسم المستخدم وكلمة المرور
+             * باستخدام Active Directory.
              */
-            ActiveDirectoryUserInfo? adUser;
+            bool isAuthenticated;
 
             try
             {
-                adUser =
-                    _activeDirectoryValidator
-                        .Authenticate(
-                            enteredUsername,
-                            model.Password
-                        );
+                isAuthenticated =
+                    _activeDirectoryValidator.IsAuthenticated(
+                        _domain,
+                        enteredUsername,
+                        model.Password);
             }
-            catch (
-                ActiveDirectoryUnavailableException
-            )
+            catch (Exception ex)
             {
-                ModelState.AddModelError(
-                    "",
-                    "❌ The university login service "
-                    + "is currently unavailable. "
-                    + "Please contact IT support."
-                );
+                _logger.LogError(
+                    ex,
+                    "Active Directory authentication error for user {UserName}. Domain: {Domain}. Error: {Error}",
+                    enteredUsername,
+                    _domain,
+                    ex.Message);
 
-                return View(model);
-            }
-            catch (Exception)
-            {
                 ModelState.AddModelError(
-                    "",
-                    "❌ An error occurred while "
-                    + "connecting to Active Directory."
-                );
+                    string.Empty,
+                    "❌ The university login service is currently unavailable. Please contact IT support.");
 
                 return View(model);
             }
 
-            if (adUser == null)
+            if (!isAuthenticated)
             {
+                _logger.LogWarning(
+                    "Active Directory rejected credentials for user {UserName}.",
+                    enteredUsername);
+
                 ModelState.AddModelError(
-                    "",
-                    "❌ Invalid university "
-                    + "username or password."
-                );
+                    string.Empty,
+                    "❌ Invalid university username or password.");
 
                 return View(model);
             }
 
             /*
-             * بعد نجاح Active Directory:
+             * نجح التحقق من Active Directory.
              *
-             * البحث عن المستخدم في جدول Users
-             * لتحديد:
-             *
-             * UserRole
-             * IsActive
-             * UserID
+             * يجب أن يكون المستخدم مسجلًا أيضًا
+             * داخل جدول Users في النظام.
              */
-            var user =
-                await _context.Users
-                    .FirstOrDefaultAsync(
-                        currentUser =>
-                            currentUser.Username
-                                == adUser.UserName
-                            ||
-                            (
-                                !string.IsNullOrWhiteSpace(
-                                    adUser.Email
-                                )
-                                &&
-                                currentUser.Email
-                                    == adUser.Email
-                            )
-                    );
-
-            if (user == null)
+            if (localUser == null)
             {
                 ModelState.AddModelError(
-                    "",
-                    "❌ Your university account "
-                    + "is valid, but you are not "
-                    + "registered in this system."
-                );
+                    string.Empty,
+                    "❌ Your university account is valid, but you are not registered in this system.");
 
                 return View(model);
             }
 
-            if (user.IsActive == 0)
+            if (localUser.IsActive == 0)
             {
                 ModelState.AddModelError(
-                    "",
-                    "⏳ Your account is pending "
-                    + "approval from the Manager."
-                );
+                    string.Empty,
+                    "⏳ Your account is pending approval from the Manager.");
 
                 return View(model);
             }
 
-            string fullName =
-                !string.IsNullOrWhiteSpace(
-                    user.FullName
-                )
-                    ? user.FullName
-                    : adUser.DisplayName;
+            /*
+             * جلب الاسم الأول واسم العائلة
+             * من Active Directory.
+             *
+             * فشل جلب الاسم لا يمنع تسجيل الدخول
+             * بعد نجاح كلمة المرور.
+             */
+            string givenName = string.Empty;
+            string surname = string.Empty;
+
+            try
+            {
+                givenName =
+                    CleanActiveDirectoryValue(
+                        _activeDirectoryValidator.GetGivenName(
+                            _domain,
+                            enteredUsername,
+                            model.Password));
+
+                surname =
+                    CleanActiveDirectoryValue(
+                        _activeDirectoryValidator.GetLastName(
+                            _domain,
+                            enteredUsername,
+                            model.Password));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Login succeeded, but Active Directory user details could not be retrieved for {UserName}.",
+                    enteredUsername);
+            }
+
+            string activeDirectoryFullName =
+                $"{givenName} {surname}".Trim();
+
+            string fullName;
+
+            if (!string.IsNullOrWhiteSpace(localUser.FullName))
+            {
+                fullName = localUser.FullName;
+            }
+            else if (!string.IsNullOrWhiteSpace(activeDirectoryFullName))
+            {
+                fullName = activeDirectoryFullName;
+            }
+            else
+            {
+                fullName = enteredUsername;
+            }
 
             string email =
-                !string.IsNullOrWhiteSpace(
-                    user.Email
-                )
-                    ? user.Email
-                    : adUser.Email;
+                localUser.Email ?? string.Empty;
+
+            string tokenGivenName =
+                !string.IsNullOrWhiteSpace(givenName)
+                    ? givenName
+                    : fullName;
 
             await CreateUserSessionAsync(
-                user: user,
-                username: adUser.UserName,
+                user: localUser,
+                username: enteredUsername,
                 fullName: fullName,
                 email: email,
-                givenName: adUser.GivenName,
-                surname: adUser.Surname
-            );
+                givenName: tokenGivenName,
+                surname: surname);
 
-            user.LastLoginDate =
-                DateTime.Now;
+            localUser.LastLoginDate = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation(
+                "User {UserName} logged in successfully.",
+                enteredUsername);
+
             return RedirectToAction(
                 "Index",
-                "Home"
-            );
+                "Home");
         }
 
         // =====================================================
@@ -304,69 +297,55 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         {
             HttpContext.Session.SetString(
                 "UserID",
-                user.UserID.ToString()
-            );
+                user.UserID.ToString());
 
             HttpContext.Session.SetString(
                 "Username",
-                username ?? string.Empty
-            );
+                username ?? string.Empty);
 
             HttpContext.Session.SetString(
                 "FullName",
-                fullName ?? string.Empty
-            );
+                fullName ?? string.Empty);
 
             HttpContext.Session.SetString(
                 "UserRole",
-                user.UserRole ?? string.Empty
-            );
+                user.UserRole ?? string.Empty);
 
             HttpContext.Session.SetString(
                 "UserEmail",
-                email ?? string.Empty
-            );
+                email ?? string.Empty);
 
             /*
-             * جلب AppUserID:
+             * جلب AppUserID باستخدام:
              *
-             * تتم المطابقة باستخدام UserLog
-             * أو Email.
+             * UserLog
+             * أو Email
              */
             var appUser =
                 await _context.AppUsers
                     .FirstOrDefaultAsync(
                         currentAppUser =>
-                            currentAppUser.Status
-                                == "Active"
+                            currentAppUser.Status == "Active"
                             &&
                             (
-                                currentAppUser.UserLog
-                                    == username
+                                currentAppUser.UserLog == username
                                 ||
                                 (
-                                    !string.IsNullOrWhiteSpace(
-                                        email
-                                    )
+                                    !string.IsNullOrWhiteSpace(email)
                                     &&
-                                    currentAppUser.Email
-                                        == email
+                                    currentAppUser.Email == email
                                 )
-                            )
-                    );
+                            ));
 
             if (appUser != null)
             {
                 HttpContext.Session.SetString(
                     "AppUserID",
-                    appUser.Id.ToString()
-                );
+                    appUser.Id.ToString());
             }
             else
             {
-                HttpContext.Session.Remove(
-                    "AppUserID"
-                );
+                HttpContext.Session.Remove("AppUserID");
             }
 
             /*
@@ -378,13 +357,11 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     username ?? string.Empty,
                     givenName ?? string.Empty,
                     surname ?? string.Empty,
-                    user.UserRole ?? string.Empty
-                );
+                    user.UserRole ?? string.Empty);
 
             HttpContext.Session.SetString(
                 "AccessToken",
-                token
-            );
+                token);
         }
 
         // =====================================================
@@ -395,21 +372,16 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         public IActionResult Register()
         {
             string? currentRole =
-                HttpContext.Session.GetString(
-                    "UserRole"
-                );
+                HttpContext.Session.GetString("UserRole");
 
             if (!string.IsNullOrWhiteSpace(currentRole))
             {
                 return RedirectToAction(
                     "Index",
-                    "Home"
-                );
+                    "Home");
             }
 
-            return View(
-                new RegisterViewModel()
-            );
+            return View(new RegisterViewModel());
         }
 
         // =====================================================
@@ -427,7 +399,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             }
 
             string username =
-                model.Username.Trim();
+                NormalizeUserName(model.Username);
 
             string email =
                 model.Email.Trim();
@@ -438,56 +410,37 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                         user =>
                             user.Username == username
                             ||
-                            user.Email == email
-                    );
+                            user.Email == email);
 
             if (exists)
             {
                 ModelState.AddModelError(
-                    "",
-                    "❌ Username or Email already exists."
-                );
+                    string.Empty,
+                    "❌ Username or Email already exists.");
 
                 return View(model);
             }
 
             /*
-             * Active Directory سيقوم بفحص
-             * كلمة المرور الحقيقية.
+             * لا يتم حفظ كلمة مرور Active Directory.
              *
-             * لذلك لا نخزن كلمة مرور المستخدم
-             * الحقيقية في قاعدة البيانات.
-             *
-             * يتم وضع قيمة عشوائية فقط لأن
-             * عمود Password موجود حاليًا.
+             * نخزن قيمة عشوائية بسبب وجود عمود Password
+             * في جدول Users.
              */
             var user =
                 new User
                 {
-                    Username =
-                        username,
-
-                    FullName =
-                        model.FullName,
-
-                    Email =
-                        email,
-
-                    PhoneNumber =
-                        model.PhoneNumber,
+                    Username = username,
+                    FullName = model.FullName,
+                    Email = email,
+                    PhoneNumber = model.PhoneNumber,
 
                     Password =
-                        Guid.NewGuid()
-                            .ToString("N"),
+                        Guid.NewGuid().ToString("N"),
 
-                    UserRole =
-                        "Receptionist",
-
-                    IsActive =
-                        0,
-
-                    CreatedDate =
-                        DateTime.Now
+                    UserRole = "Receptionist",
+                    IsActive = 0,
+                    CreatedDate = DateTime.Now
                 };
 
             _context.Users.Add(user);
@@ -499,9 +452,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 + "Use your university password "
                 + "after your account is approved.";
 
-            return RedirectToAction(
-                "Login"
-            );
+            return RedirectToAction("Login");
         }
 
         // =====================================================
@@ -514,52 +465,30 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             return RedirectToAction(
                 "Login",
-                "Account"
-            );
+                "Account");
         }
 
         // =====================================================
         // PENDING USERS
         // =====================================================
 
-        public async Task<IActionResult>
-            PendingUsers()
+        public async Task<IActionResult> PendingUsers()
         {
             string? role =
-                HttpContext.Session.GetString(
-                    "UserRole"
-                );
+                HttpContext.Session.GetString("UserRole");
 
-            if (
-                !string.Equals(
-                    role,
-                    "Admin",
-                    StringComparison.OrdinalIgnoreCase
-                )
-                &&
-                !string.Equals(
-                    role,
-                    "Manager",
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
+            if (!IsAdminOrManager(role))
             {
                 return RedirectToAction(
                     "Login",
-                    "Account"
-                );
+                    "Account");
             }
 
             var pending =
                 await _context.Users
-                    .Where(
-                        user =>
-                            user.IsActive == 0
-                    )
+                    .Where(user => user.IsActive == 0)
                     .OrderByDescending(
-                        user =>
-                            user.CreatedDate
-                    )
+                        user => user.CreatedDate)
                     .ToListAsync();
 
             return View(pending);
@@ -571,58 +500,36 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult>
-            ApproveUser(int id)
+        public async Task<IActionResult> ApproveUser(
+            int id)
         {
             string? role =
-                HttpContext.Session.GetString(
-                    "UserRole"
-                );
+                HttpContext.Session.GetString("UserRole");
 
-            if (
-                !string.Equals(
-                    role,
-                    "Admin",
-                    StringComparison.OrdinalIgnoreCase
-                )
-                &&
-                !string.Equals(
-                    role,
-                    "Manager",
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
+            if (!IsAdminOrManager(role))
             {
                 return RedirectToAction(
                     "Login",
-                    "Account"
-                );
+                    "Account");
             }
 
             var user =
-                await _context.Users
-                    .FindAsync(id);
+                await _context.Users.FindAsync(id);
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            user.IsActive =
-                1;
-
-            user.ModifiedDate =
-                DateTime.Now;
+            user.IsActive = 1;
+            user.ModifiedDate = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
             TempData["Success"] =
-                $"✅ {user.FullName} "
-                + "has been approved!";
+                $"✅ {user.FullName} has been approved!";
 
-            return RedirectToAction(
-                "PendingUsers"
-            );
+            return RedirectToAction("PendingUsers");
         }
 
         // =====================================================
@@ -631,37 +538,21 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult>
-            RejectUser(int id)
+        public async Task<IActionResult> RejectUser(
+            int id)
         {
             string? role =
-                HttpContext.Session.GetString(
-                    "UserRole"
-                );
+                HttpContext.Session.GetString("UserRole");
 
-            if (
-                !string.Equals(
-                    role,
-                    "Admin",
-                    StringComparison.OrdinalIgnoreCase
-                )
-                &&
-                !string.Equals(
-                    role,
-                    "Manager",
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
+            if (!IsAdminOrManager(role))
             {
                 return RedirectToAction(
                     "Login",
-                    "Account"
-                );
+                    "Account");
             }
 
             var user =
-                await _context.Users
-                    .FindAsync(id);
+                await _context.Users.FindAsync(id);
 
             if (user == null)
             {
@@ -673,12 +564,9 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             await _context.SaveChangesAsync();
 
             TempData["Success"] =
-                "🗑️ User has been rejected "
-                + "and removed.";
+                "🗑️ User has been rejected and removed.";
 
-            return RedirectToAction(
-                "PendingUsers"
-            );
+            return RedirectToAction("PendingUsers");
         }
 
         // =====================================================
@@ -688,6 +576,105 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         public IActionResult AccessDenied()
         {
             return View();
+        }
+
+        // =====================================================
+        // HELPERS
+        // =====================================================
+
+        private static bool IsAdminOrManager(
+            string? role)
+        {
+            return
+                string.Equals(
+                    role,
+                    "Admin",
+                    StringComparison.OrdinalIgnoreCase)
+                ||
+                string.Equals(
+                    role,
+                    "Manager",
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string NormalizeUserName(
+            string userName)
+        {
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                return string.Empty;
+            }
+
+            string value = userName.Trim();
+
+            /*
+             * AMMAN\username
+             * يصبح:
+             * username
+             */
+            int slashIndex =
+                value.LastIndexOf('\\');
+
+            if (slashIndex >= 0 &&
+                slashIndex < value.Length - 1)
+            {
+                value =
+                    value[(slashIndex + 1)..];
+            }
+
+            /*
+             * username@amman.local
+             * يصبح:
+             * username
+             */
+            int atIndex =
+                value.IndexOf('@');
+
+            if (atIndex > 0)
+            {
+                value =
+                    value[..atIndex];
+            }
+
+            return value.Trim();
+        }
+
+        private static string CleanActiveDirectoryValue(
+            string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            string result = value.Trim();
+
+            /*
+             * الدوال الموجودة في ActiveDirectoryValidator
+             * ترجع Error كنص بدل رمي Exception.
+             */
+            if (result.StartsWith(
+                    "Error:",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Empty;
+            }
+
+            if (result.StartsWith(
+                    "No given name",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Empty;
+            }
+
+            if (result.StartsWith(
+                    "No surname",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Empty;
+            }
+
+            return result;
         }
     }
 }

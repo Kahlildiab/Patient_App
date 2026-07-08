@@ -1,11 +1,12 @@
 ﻿using DentalCollegeManagementSystem_AAU.Data;
+using DentalCollegeManagementSystem_AAU.Filters;
 using DentalCollegeManagementSystem_AAU.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace DentalCollegeManagementSystem_AAU.Controllers
 {
-    [DentalCollegeManagementSystem_AAU.Filters.AuthFilter]
+    [AuthFilter]
     public class VisitsController : Controller
     {
         private readonly AppDbContext _context;
@@ -36,6 +37,16 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     "Parttime Supervisor",
                     StringComparison.OrdinalIgnoreCase
                 );
+        }
+
+        private string GetCurrentUserName()
+        {
+            return
+                HttpContext.Session.GetString("FullName")
+                ??
+                HttpContext.Session.GetString("Username")
+                ??
+                "Responsible Authority";
         }
 
         private static string? NormalizeCaseComplexity(
@@ -77,15 +88,20 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             return null;
         }
 
-        // POST: Visits/Save
+        // =====================================================
+        // Save new visit
+        // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Save(
             Visit visit,
             string? AppointmentPeriod)
         {
-            visit.AppointmentPeriod = AppointmentPeriod;
-            visit.CreatedDate = DateTime.Now;
+            visit.AppointmentPeriod =
+                AppointmentPeriod;
+
+            visit.CreatedDate =
+                DateTime.Now;
 
             ModelState.Remove("Patient");
             ModelState.Remove("ChiefComplaint");
@@ -96,56 +112,73 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["Error"] =
+                TempData["VisitError"] =
                     "Please fill in all required fields.";
 
-                return RedirectToAction(
-                    "Details",
-                    "Patients",
-                    new
-                    {
-                        id = visit.PatientID,
-                        tab = "todays-visit"
-                    });
+                return RedirectToPatientVisits(
+                    visit.PatientID
+                );
             }
 
+            /*
+             * نظام موافقة واحد:
+             * كل زيارة جديدة تبدأ Pending.
+             *
+             * ويمكن اعتمادها بواسطة:
+             * Admin
+             * Fulltime Supervisor
+             * Parttime Supervisor
+             */
             visit.Attended = false;
 
-            var userRole =
-                HttpContext.Session.GetString("UserRole");
+            visit.IsApproved = false;
+            visit.ApprovedBy = null;
+            visit.ApprovedDate = null;
+            visit.SupervisorComments = null;
 
             visit.AdminApprovalStatus =
-                userRole == "Student"
-                    ? "Pending"
-                    : "Approved";
+                "Pending";
+
+            visit.AdminApprovedBy = null;
+            visit.AdminApprovedDate = null;
 
             _context.Visits.Add(visit);
+
             await _context.SaveChangesAsync();
 
             TempData["VisitSuccess"] =
-                "Visit added successfully.";
+                "Visit added successfully and sent for approval.";
 
-            return RedirectToAction(
-                "Details",
-                "Patients",
-                new
-                {
-                    id = visit.PatientID,
-                    tab = "todays-visit"
-                });
+            return RedirectToPatientVisits(
+                visit.PatientID
+            );
         }
 
+        // =====================================================
+        // End current visit
+        // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EndCurrentVisit(int patientId)
+        public async Task<IActionResult> EndCurrentVisit(
+            int patientId)
         {
-            var currentVisit = await _context.Visits
-                .Where(v =>
-                    v.PatientID == patientId &&
-                    v.IsClosed == false)
-                .OrderByDescending(v => v.VisitDate)
-                .ThenByDescending(v => v.VisitID)
-                .FirstOrDefaultAsync();
+            var currentVisit =
+                await _context.Visits
+                    .Where(
+                        visit =>
+                            visit.PatientID == patientId
+                            &&
+                            visit.IsClosed == false
+                    )
+                    .OrderByDescending(
+                        visit =>
+                            visit.VisitDate
+                    )
+                    .ThenByDescending(
+                        visit =>
+                            visit.VisitID
+                    )
+                    .FirstOrDefaultAsync();
 
             if (currentVisit == null)
             {
@@ -159,21 +192,25 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     {
                         id = patientId,
                         tab = "notes"
-                    });
+                    }
+                );
             }
 
             currentVisit.IsClosed = true;
             currentVisit.ClosedDate = DateTime.Now;
 
             currentVisit.ClosedBy =
-                HttpContext.Session.GetString("UserName")
-                ?? HttpContext.Session.GetString("FullName")
-                ?? "Unknown";
+                HttpContext.Session.GetString("Username")
+                ??
+                HttpContext.Session.GetString("FullName")
+                ??
+                "Unknown";
 
             await _context.SaveChangesAsync();
 
             TempData["VisitSuccess"] =
-                "Visit ended successfully. All information is now view only.";
+                "Visit ended successfully. "
+                + "All information is now view only.";
 
             return RedirectToAction(
                 "Details",
@@ -182,10 +219,13 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 {
                     id = patientId,
                     tab = "notes"
-                });
+                }
+            );
         }
 
-        // POST: Visits/Delete
+        // =====================================================
+        // Delete visit
+        // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(
@@ -198,129 +238,76 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             }
 
             var visit =
-                await _context.Visits.FindAsync(visitId);
+                await _context.Visits
+                    .FirstOrDefaultAsync(
+                        currentVisit =>
+                            currentVisit.VisitID == visitId
+                            &&
+                            currentVisit.PatientID == patientId
+                    );
 
             if (visit != null)
             {
                 _context.Visits.Remove(visit);
+
                 await _context.SaveChangesAsync();
 
                 TempData["VisitSuccess"] =
                     "Visit deleted.";
             }
 
-            return RedirectToAction(
-                "Details",
-                "Patients",
-                new
-                {
-                    id = patientId,
-                    tab = "todays-visit"
-                });
+            return RedirectToPatientVisits(patientId);
         }
 
-        // POST: Visits/Approve
+        // =====================================================
+        // Direct approval is disabled.
+        // Approval must be completed from Admin Approvals.
+        // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Approve(
+        [AuthFilter(
+            "Admin",
+            "Fulltime Supervisor",
+            "Parttime Supervisor"
+        )]
+        public IActionResult Approve(
             int visitId,
             int patientId,
-            string? approvedBy,
             string? supervisorComments)
         {
-            if (await IsReadOnlyAsync(patientId))
-            {
-                return ClosedVisitRedirect(patientId);
-            }
-
-            var visit =
-                await _context.Visits.FindAsync(visitId);
-
-            if (visit != null)
-            {
-                visit.IsApproved = true;
-                visit.ApprovedBy = approvedBy;
-                visit.ApprovedDate = DateTime.Now;
-                visit.SupervisorComments =
-                    supervisorComments;
-
-                bool alreadyExists =
-                    await _context.Appointments
-                        .AnyAsync(a =>
-                            a.PatientID == patientId &&
-                            a.AppointmentDate.Date ==
-                            visit.VisitDate.Date);
-
-                if (!alreadyExists)
-                {
-                    var appointment =
-                        new Appointment
-                        {
-                            PatientID = patientId,
-                            ClinicName = "General",
-                            AppointmentDate =
-                                visit.VisitDate,
-
-                            AppointmentDay =
-                                visit.VisitDate
-                                    .DayOfWeek
-                                    .ToString(),
-
-                            TimeFrom = TimeSpan.Zero,
-                            TimeTo = TimeSpan.Zero,
-
-                            AppointmentStatus =
-                                "Approved",
-
-                            CreatedDate =
-                                DateTime.Now
-                        };
-
-                    _context.Appointments.Add(appointment);
-                }
-
-                await _context.SaveChangesAsync();
-
-                TempData["VisitSuccess"] =
-                    "Visit approved successfully!";
-            }
+            TempData["VisitError"] =
+                "Visit approval must be completed from "
+                + "the Pending Approvals page so that "
+                + "Case Complexity can be selected.";
 
             return RedirectToAction(
-                "Details",
-                "Patients",
-                new
-                {
-                    id = patientId,
-                    tab = "todays-visit"
-                });
+                "Index",
+                "AdminApprovals"
+            );
         }
 
-        // POST: Visits/AdminApprove
+        // =====================================================
+        // Approval from Admin Approvals page
+        // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AuthFilter(
+            "Admin",
+            "Fulltime Supervisor",
+            "Parttime Supervisor"
+        )]
         public async Task<IActionResult> AdminApprove(
             int visitId,
             int patientId,
             string? caseComplexity)
         {
-            string? userRole =
-                HttpContext.Session.GetString("UserRole");
-
-            if (!IsApprovalRole(userRole))
-            {
-                return RedirectToAction(
-                    "Login",
-                    "Account"
-                );
-            }
-
             var visit =
                 await _context.Visits
                     .FirstOrDefaultAsync(
-                        v =>
-                            v.VisitID == visitId
+                        currentVisit =>
+                            currentVisit.VisitID == visitId
                             &&
-                            v.PatientID == patientId
+                            currentVisit.PatientID == patientId
                     );
 
             if (visit == null)
@@ -334,20 +321,35 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
             }
 
+            /*
+             * Case Complexity هي قيمة واحدة للمريض،
+             * ويتم تخزينها في أول زيارة فقط.
+             */
             string? savedComplexity =
                 await _context.Visits
                     .Where(
-                        v =>
-                            v.PatientID == patientId
+                        currentVisit =>
+                            currentVisit.PatientID == patientId
                             &&
-                            v.CaseComplexity != null
+                            currentVisit.CaseComplexity != null
                             &&
-                            v.CaseComplexity != ""
+                            currentVisit.CaseComplexity != ""
                     )
-                    .OrderBy(v => v.VisitDate)
-                    .ThenBy(v => v.VisitID)
-                    .Select(v => v.CaseComplexity)
+                    .OrderBy(
+                        currentVisit =>
+                            currentVisit.VisitDate
+                    )
+                    .ThenBy(
+                        currentVisit =>
+                            currentVisit.VisitID
+                    )
+                    .Select(
+                        currentVisit =>
+                            currentVisit.CaseComplexity
+                    )
                     .FirstOrDefaultAsync();
+
+            bool complexityAddedNow = false;
 
             if (string.IsNullOrWhiteSpace(savedComplexity))
             {
@@ -363,8 +365,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 )
                 {
                     TempData["Error"] =
-                        "⚠️ Please select Case Complexity "
-                        + "for the patient's first visit.";
+                        "Please select Case Complexity "
+                        + "before approving the patient's first visit.";
 
                     return RedirectToAction(
                         "Index",
@@ -372,26 +374,53 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     );
                 }
 
-                visit.CaseComplexity =
+                var firstVisit =
+                    await _context.Visits
+                        .Where(
+                            currentVisit =>
+                                currentVisit.PatientID == patientId
+                        )
+                        .OrderBy(
+                            currentVisit =>
+                                currentVisit.VisitDate
+                        )
+                        .ThenBy(
+                            currentVisit =>
+                                currentVisit.VisitID
+                        )
+                        .FirstOrDefaultAsync();
+
+                if (firstVisit == null)
+                {
+                    TempData["Error"] =
+                        "The patient's first visit was not found.";
+
+                    return RedirectToAction(
+                        "Index",
+                        "AdminApprovals"
+                    );
+                }
+
+                firstVisit.CaseComplexity =
                     normalizedComplexity;
+
+                savedComplexity =
+                    normalizedComplexity;
+
+                complexityAddedNow = true;
             }
 
-            visit.AdminApprovalStatus =
-                "Approved";
-
-            visit.AdminApprovedBy =
-                HttpContext.Session
-                    .GetString("FullName")
-                ?? "Supervisor";
-
-            visit.AdminApprovedDate =
-                DateTime.Now;
-
-            await _context.SaveChangesAsync();
+            await ApproveVisitAsync(
+                visit,
+                null
+            );
 
             TempData["Success"] =
-                "✅ Visit approved successfully. "
-                + "Case Complexity was saved.";
+                complexityAddedNow
+                    ? "Visit approved successfully. "
+                      + $"Case Complexity ({savedComplexity}) was saved."
+                    : "Visit approved successfully. "
+                      + $"Case Complexity: {savedComplexity}.";
 
             return RedirectToAction(
                 "Index",
@@ -399,42 +428,48 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             );
         }
 
-        // POST: Visits/AdminReject
+        // =====================================================
+        // Reject visit from Admin Approvals
+        // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AuthFilter(
+            "Admin",
+            "Fulltime Supervisor",
+            "Parttime Supervisor"
+        )]
         public async Task<IActionResult> AdminReject(
             int visitId,
             int patientId)
         {
-            var userRole =
-                HttpContext.Session.GetString("UserRole");
-
-            if (!IsApprovalRole(userRole))
-            {
-                return RedirectToAction(
-                    "Login",
-                    "Account"
-                );
-            }
-
             var visit =
-                await _context.Visits.FindAsync(visitId);
+                await _context.Visits
+                    .FirstOrDefaultAsync(
+                        currentVisit =>
+                            currentVisit.VisitID == visitId
+                            &&
+                            currentVisit.PatientID == patientId
+                    );
 
             if (visit != null)
             {
                 _context.Visits.Remove(visit);
+
                 await _context.SaveChangesAsync();
 
                 TempData["Success"] =
-                    "🗑️ Visit rejected and removed.";
+                    "Visit rejected and removed.";
             }
 
             return RedirectToAction(
                 "Index",
-                "AdminApprovals");
+                "AdminApprovals"
+            );
         }
 
-        // POST: Visits/MarkAttendance
+        // =====================================================
+        // Mark attendance
+        // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAttendance(
@@ -447,60 +482,71 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             }
 
             var visit =
-                await _context.Visits.FindAsync(visitId);
+                await _context.Visits
+                    .FirstOrDefaultAsync(
+                        currentVisit =>
+                            currentVisit.VisitID == visitId
+                            &&
+                            currentVisit.PatientID == patientId
+                    );
 
             if (visit != null)
             {
+                if (!visit.IsApproved)
+                {
+                    TempData["VisitError"] =
+                        "The visit must be approved before attendance can be updated.";
+
+                    return RedirectToPatientVisits(patientId);
+                }
+
                 if (!visit.Attended)
                 {
                     bool hasDetails =
                         !string.IsNullOrWhiteSpace(
-                            visit.ChiefComplaint)
-
-                        || !string.IsNullOrWhiteSpace(
-                            visit.ProceduresPerformed)
-
-                        || !string.IsNullOrWhiteSpace(
-                            visit.MaterialsUsed)
-
-                        || !string.IsNullOrWhiteSpace(
-                            visit.Complications)
-
-                        || !string.IsNullOrWhiteSpace(
-                            visit.StudentNotes);
+                            visit.ChiefComplaint
+                        )
+                        ||
+                        !string.IsNullOrWhiteSpace(
+                            visit.ProceduresPerformed
+                        )
+                        ||
+                        !string.IsNullOrWhiteSpace(
+                            visit.MaterialsUsed
+                        )
+                        ||
+                        !string.IsNullOrWhiteSpace(
+                            visit.Complications
+                        )
+                        ||
+                        !string.IsNullOrWhiteSpace(
+                            visit.StudentNotes
+                        );
 
                     if (!hasDetails)
                     {
                         TempData["VisitError"] =
-                            "⚠️ Please fill in visit details before marking as attended.";
+                            "Please fill in visit details "
+                            + "before marking as attended.";
 
-                        return RedirectToAction(
-                            "Details",
-                            "Patients",
-                            new
-                            {
-                                id = patientId,
-                                tab = "todays-visit"
-                            });
+                        return RedirectToPatientVisits(
+                            patientId
+                        );
                     }
                 }
 
-                visit.Attended = !visit.Attended;
+                visit.Attended =
+                    !visit.Attended;
 
                 await _context.SaveChangesAsync();
             }
 
-            return RedirectToAction(
-                "Details",
-                "Patients",
-                new
-                {
-                    id = patientId,
-                    tab = "todays-visit"
-                });
+            return RedirectToPatientVisits(patientId);
         }
 
-        // POST: Visits/SaveDetails
+        // =====================================================
+        // Save visit details
+        // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveDetails(
@@ -509,26 +555,60 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         {
             if (await IsReadOnlyAsync(model.PatientID))
             {
-                return ClosedVisitRedirect(model.PatientID);
+                return ClosedVisitRedirect(
+                    model.PatientID
+                );
             }
 
             var visit =
-                await _context.Visits.FindAsync(
-                    model.VisitID);
+                await _context.Visits
+                    .FirstOrDefaultAsync(
+                        currentVisit =>
+                            currentVisit.VisitID
+                                == model.VisitID
+                            &&
+                            currentVisit.PatientID
+                                == model.PatientID
+                    );
 
             if (visit == null)
             {
-                TempData["Error"] =
+                TempData["VisitError"] =
                     "Visit not found.";
 
-                return RedirectToAction(
-                    "Details",
-                    "Patients",
-                    new
-                    {
-                        id = model.PatientID,
-                        tab = "todays-visit"
-                    });
+                return RedirectToPatientVisits(
+                    model.PatientID
+                );
+            }
+
+            /*
+             * الطالب لا يستطيع إدخال تفاصيل الزيارة
+             * قبل اعتمادها.
+             */
+            string userRole =
+                HttpContext.Session.GetString("UserRole")
+                ?? string.Empty;
+
+            bool isStudent =
+                string.Equals(
+                    userRole,
+                    "Student",
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+            if (
+                isStudent
+                &&
+                !visit.IsApproved
+            )
+            {
+                TempData["VisitError"] =
+                    "The visit must be approved "
+                    + "before details can be changed.";
+
+                return RedirectToPatientVisits(
+                    model.PatientID
+                );
             }
 
             visit.VisitDate =
@@ -549,24 +629,22 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             visit.StudentNotes =
                 model.StudentNotes;
 
-            visit.Attended = Attended;
+            visit.Attended =
+                Attended;
 
             await _context.SaveChangesAsync();
 
             TempData["VisitSuccess"] =
-                "Visit details saved successfully!";
+                "Visit details saved successfully.";
 
-            return RedirectToAction(
-                "Details",
-                "Patients",
-                new
-                {
-                    id = model.PatientID,
-                    tab = "todays-visit"
-                });
+            return RedirectToPatientVisits(
+                model.PatientID
+            );
         }
 
-        // POST: Visits/SetAttendance
+        // =====================================================
+        // Set attendance
+        // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetAttendance(
@@ -580,23 +658,119 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             }
 
             var visit =
-                await _context.Visits.FindAsync(visitId);
+                await _context.Visits
+                    .FirstOrDefaultAsync(
+                        currentVisit =>
+                            currentVisit.VisitID == visitId
+                            &&
+                            currentVisit.PatientID == patientId
+                    );
 
             if (visit != null)
             {
-                visit.Attended = attended;
+                if (!visit.IsApproved)
+                {
+                    TempData["VisitError"] =
+                        "The visit must be approved "
+                        + "before attendance can be updated.";
+
+                    return RedirectToPatientVisits(patientId);
+                }
+
+                visit.Attended =
+                    attended;
 
                 await _context.SaveChangesAsync();
             }
 
-            return RedirectToAction(
-                "Details",
-                "Patients",
-                new
-                {
-                    id = patientId,
-                    tab = "todays-visit"
-                });
+            return RedirectToPatientVisits(patientId);
+        }
+
+        // =====================================================
+        // Apply the one unified approval
+        // =====================================================
+        private async Task ApproveVisitAsync(
+            Visit visit,
+            string? comments)
+        {
+            string approverName =
+                GetCurrentUserName();
+
+            DateTime approvalDate =
+                DateTime.Now;
+
+            /*
+             * توحيد حقول الموافقة القديمة والجديدة.
+             * بهذه الطريقة لا يظهر:
+             * Admin Approved + Supervisor Pending
+             * مرة أخرى.
+             */
+            visit.IsApproved = true;
+            visit.ApprovedBy = approverName;
+            visit.ApprovedDate = approvalDate;
+            visit.SupervisorComments =
+                string.IsNullOrWhiteSpace(comments)
+                    ? null
+                    : comments.Trim();
+
+            visit.AdminApprovalStatus =
+                "Approved";
+
+            visit.AdminApprovedBy =
+                approverName;
+
+            visit.AdminApprovedDate =
+                approvalDate;
+
+            bool appointmentExists =
+                await _context.Appointments
+                    .AnyAsync(
+                        appointment =>
+                            appointment.PatientID
+                                == visit.PatientID
+                            &&
+                            appointment.AppointmentDate.Date
+                                == visit.VisitDate.Date
+                    );
+
+            if (!appointmentExists)
+            {
+                var appointment =
+                    new Appointment
+                    {
+                        PatientID =
+                            visit.PatientID,
+
+                        ClinicName =
+                            "General",
+
+                        AppointmentDate =
+                            visit.VisitDate,
+
+                        AppointmentDay =
+                            visit.VisitDate
+                                .DayOfWeek
+                                .ToString(),
+
+                        TimeFrom =
+                            TimeSpan.Zero,
+
+                        TimeTo =
+                            TimeSpan.Zero,
+
+                        AppointmentStatus =
+                            "Approved",
+
+                        CreatedDate =
+                            DateTime.Now
+                    };
+
+                _context.Appointments.Add(
+                    appointment
+                );
+            }
+
+            await _context.SaveChangesAsync();
         }
 
         private bool IsAdmin()
@@ -608,21 +782,34 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             );
         }
 
-        private async Task<bool> IsReadOnlyAsync(int patientId)
+        private async Task<bool> IsReadOnlyAsync(
+            int patientId)
         {
             if (IsAdmin())
             {
                 return false;
             }
 
-            var latestVisit = await _context.Visits
-                .Where(v => v.PatientID == patientId)
-                .OrderByDescending(v => v.VisitDate)
-                .ThenByDescending(v => v.VisitID)
-                .FirstOrDefaultAsync();
+            var latestVisit =
+                await _context.Visits
+                    .Where(
+                        visit =>
+                            visit.PatientID == patientId
+                    )
+                    .OrderByDescending(
+                        visit =>
+                            visit.VisitDate
+                    )
+                    .ThenByDescending(
+                        visit =>
+                            visit.VisitID
+                    )
+                    .FirstOrDefaultAsync();
 
-            return latestVisit != null &&
-                   latestVisit.IsClosed;
+            return
+                latestVisit != null
+                &&
+                latestVisit.IsClosed;
         }
 
         private IActionResult ClosedVisitRedirect(
@@ -630,7 +817,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             string tab = "todays-visit")
         {
             TempData["VisitError"] =
-                "This visit is closed. Only an Administrator can modify it.";
+                "This visit is closed. "
+                + "Only an Administrator can modify it.";
 
             return RedirectToAction(
                 "Details",
@@ -639,6 +827,20 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 {
                     id = patientId,
                     tab
+                }
+            );
+        }
+
+        private IActionResult RedirectToPatientVisits(
+            int patientId)
+        {
+            return RedirectToAction(
+                "Details",
+                "Patients",
+                new
+                {
+                    id = patientId,
+                    tab = "todays-visit"
                 }
             );
         }

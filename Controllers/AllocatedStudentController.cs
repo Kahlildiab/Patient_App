@@ -6,182 +6,981 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DentalCollegeManagementSystem_AAU.Controllers
 {
-    [AuthFilter("Admin", "Fulltime Supervisor", "Parttime Supervisor")]
-
+    /*
+     * Student يستطيع دخول Index لمشاهدة المرضى المسندين إليه فقط.
+     * أما الإسناد والحذف وجلب قائمة الطلاب فهي محمية على مستوى كل Action.
+     */
+    [AuthFilter(
+        "Admin",
+        "Fulltime Supervisor",
+        "Parttime Supervisor",
+        "Student"
+    )]
     public class AllocatedStudentController : Controller
     {
         private readonly AppDbContext _db;
-        public AllocatedStudentController(AppDbContext db) => _db = db;
 
-        // ── Index ─────────────────────────────────────────────
+        public AllocatedStudentController(AppDbContext db)
+        {
+            _db = db;
+        }
+
+        // =====================================================
+        // Index
+        // =====================================================
         public async Task<IActionResult> Index()
         {
-            var userRole = HttpContext.Session.GetString("UserRole");
-            var userIdStr = HttpContext.Session.GetString("AppUserID");
-            int.TryParse(userIdStr, out int userId);
+            string userRole =
+                HttpContext.Session.GetString("UserRole")
+                ?? string.Empty;
 
             List<Patient> patients;
 
-            if (userRole == "Student")
+            if (
+                string.Equals(
+                    userRole,
+                    "Student",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
             {
-                // الطالب يشوف بس المرضى المسندين عليه وحالتهم Allocated
-                var assignedPatientIds = await _db.AllocatedStudents
-                    .Where(a => a.AppUserId == userId)
-                    .Select(a => a.PatientID)
-                    .ToListAsync();
+                /*
+                 * نحاول حل AppUserID حتى لو لم يكن موجوداً في Session.
+                 * يتم الربط باستخدام Username أو Email.
+                 */
+                int appUserId =
+                    await ResolveCurrentStudentAppUserIdAsync();
 
-                patients = await _db.Patients
-                    .Include(p => p.Status)
-                    .Where(p => assignedPatientIds.Contains(p.PatientID)
-                             && p.PatientStatus == "Allocated")
-                    .OrderBy(p => p.FirstName)
-                    .ToListAsync();
+                if (appUserId == 0)
+                {
+                    TempData["Error"] =
+                        "Your student account could not be linked to AppUsers.";
+
+                    return View(new List<Patient>());
+                }
+
+                var assignedPatientIds =
+                    await _db.AllocatedStudents
+                        .AsNoTracking()
+                        .Where(
+                            allocation =>
+                                allocation.AppUserId == appUserId
+                        )
+                        .Select(
+                            allocation =>
+                                allocation.PatientID
+                        )
+                        .Distinct()
+                        .ToListAsync();
+
+                /*
+                 * الطالب يشاهد فقط المرضى المسندين إليه
+                 * والذين حالتهم Allocated.
+                 */
+                patients =
+                    await _db.Patients
+                        .AsNoTracking()
+                        .Include(
+                            patient =>
+                                patient.Status
+                        )
+                        .Where(
+                            patient =>
+                                assignedPatientIds.Contains(
+                                    patient.PatientID
+                                )
+                                &&
+                                patient.PatientStatus == "Allocated"
+                                &&
+                                patient.StatusID != 6
+                        )
+                        .OrderBy(
+                            patient =>
+                                patient.FirstName
+                        )
+                        .ThenBy(
+                            patient =>
+                                patient.FourthName
+                        )
+                        .ToListAsync();
             }
             else
             {
-                // Admin و Supervisor يشوفون كل المرضى
-                patients = await _db.Patients
-                    .Include(p => p.Status)
-                    .OrderBy(p => p.FirstName)
-                    .Where(p => p.StatusID != 6)
-                    .ToListAsync();
+                /*
+                 * Admin وSupervisors يشاهدون جميع المرضى
+                 * باستثناء المرضى المرفوضين.
+                 */
+                patients =
+                    await _db.Patients
+                        .AsNoTracking()
+                        .Include(
+                            patient =>
+                                patient.Status
+                        )
+                        .Where(
+                            patient =>
+                                patient.StatusID != 6
+                        )
+                        .OrderBy(
+                            patient =>
+                                patient.FirstName
+                        )
+                        .ThenBy(
+                            patient =>
+                                patient.FourthName
+                        )
+                        .ToListAsync();
             }
 
             return View(patients);
         }
 
-        // ── GetPatientDetailsJson ─────────────────────────────
+        // =====================================================
+        // Get assigned and available students
+        // =====================================================
         [HttpGet]
-        public async Task<IActionResult> GetPatientDetailsJson(int patientId)
+        [AuthFilter(
+            "Admin",
+            "Fulltime Supervisor",
+            "Parttime Supervisor"
+        )]
+        public async Task<IActionResult> GetPatientDetailsJson(
+            int patientId
+        )
         {
-            var assignedIds = await _db.AllocatedStudents
-                .Where(a => a.PatientID == patientId)
-                .Select(a => a.AppUserId)
-                .ToListAsync();
+            bool patientExists =
+                await _db.Patients
+                    .AsNoTracking()
+                    .AnyAsync(
+                        patient =>
+                            patient.PatientID == patientId
+                    );
 
-            var assigned = await _db.AppUsers
-                .Where(u => assignedIds.Contains(u.Id) && u.Status == "Active")
-                .Include(u => u.UserType)
-                .Select(u => new
+            if (!patientExists)
+            {
+                return NotFound(
+                    new
+                    {
+                        success = false,
+                        message = "Patient not found."
+                    }
+                );
+            }
+
+            /*
+             * مزامنة جميع حسابات Users التي دورها Student
+             * مع جدول AppUsers، ثم الحصول على AppUser IDs
+             * للطلاب الفعالين.
+             */
+            List<int> activeStudentAppUserIds =
+                await EnsureAndGetActiveStudentAppUserIdsAsync();
+
+            /*
+             * الطلاب المسندون للمريض الحالي فقط.
+             */
+            var assignedIds =
+                await _db.AllocatedStudents
+                    .AsNoTracking()
+                    .Where(
+                        allocation =>
+                            allocation.PatientID == patientId
+                    )
+                    .Select(
+                        allocation =>
+                            allocation.AppUserId
+                    )
+                    .Distinct()
+                    .ToListAsync();
+
+            /*
+             * جميع الطلاب الفعالين الموجودين في جدول Users
+             * بعد ربطهم بسجلات AppUsers.
+             */
+            var allStudents =
+                await _db.AppUsers
+                    .AsNoTracking()
+                    .Where(
+                        appUser =>
+                            activeStudentAppUserIds.Contains(
+                                appUser.Id
+                            )
+                    )
+                    .Select(
+                        appUser => new
+                        {
+                            id = appUser.Id,
+
+                            nameEn =
+                                string.IsNullOrWhiteSpace(
+                                    appUser.NameEn
+                                )
+                                    ? appUser.UserLog
+                                    : appUser.NameEn,
+
+                            userTypeEn = "Student",
+
+                            status =
+                                string.IsNullOrWhiteSpace(
+                                    appUser.Status
+                                )
+                                    ? "Active"
+                                    : appUser.Status
+                        }
+                    )
+                    .OrderBy(
+                        student =>
+                            student.nameEn
+                    )
+                    .ToListAsync();
+
+            /*
+             * الطلاب المسندون لهذا المريض.
+             */
+            var assigned =
+                allStudents
+                    .Where(
+                        student =>
+                            assignedIds.Contains(
+                                student.id
+                            )
+                    )
+                    .ToList();
+
+            /*
+             * كل الطلاب غير المسندين لهذا المريض.
+             *
+             * الطالب المسند لمريض آخر يبقى ظاهراً هنا،
+             * ويمكن إسناده لهذا المريض أيضاً.
+             */
+            var available =
+                allStudents
+                    .Where(
+                        student =>
+                            !assignedIds.Contains(
+                                student.id
+                            )
+                    )
+                    .ToList();
+
+            return Json(
+                new
                 {
-                    id = u.Id,
-                    nameEn = u.NameEn,
-                    userTypeEn = u.UserType != null ? u.UserType.NameEn : "—"
-                })
-                .ToListAsync();
-
-            var available = await _db.AppUsers
-                .Where(u => !assignedIds.Contains(u.Id) && u.Status == "Active")
-                .Include(u => u.UserType)
-                .Select(u => new
-                {
-                    id = u.Id,
-                    nameEn = u.NameEn,
-                    userTypeEn = u.UserType != null ? u.UserType.NameEn : "—"
-                })
-                .ToListAsync();
-
-            return Json(new { assigned, available });
+                    success = true,
+                    assigned,
+                    available,
+                    totalStudents = allStudents.Count,
+                    assignedCount = assigned.Count,
+                    availableCount = available.Count
+                }
+            );
         }
 
-        // ── GetStatusHistory ──────────────────────────────────
+        // =====================================================
+        // Status history
+        // =====================================================
         [HttpGet]
-        public async Task<IActionResult> GetStatusHistory(int patientId)
+        [AuthFilter(
+            "Admin",
+            "Fulltime Supervisor",
+            "Parttime Supervisor"
+        )]
+        public async Task<IActionResult> GetStatusHistory(
+            int patientId
+        )
         {
-            var history = await _db.PatientStatusHistories
-                .Where(h => h.PatientID == patientId)
-                .OrderByDescending(h => h.ChangedAt)
-                .Select(h => new
-                {
-                    oldStatus = h.OldStatus,
-                    newStatus = h.NewStatus,
-                    changedAt = h.ChangedAt.ToString("yyyy-MM-dd  HH:mm")
-                })
-                .ToListAsync();
+            var history =
+                await _db.PatientStatusHistories
+                    .AsNoTracking()
+                    .Where(
+                        historyItem =>
+                            historyItem.PatientID == patientId
+                    )
+                    .OrderByDescending(
+                        historyItem =>
+                            historyItem.ChangedAt
+                    )
+                    .Select(
+                        historyItem => new
+                        {
+                            oldStatus =
+                                historyItem.OldStatus,
+
+                            newStatus =
+                                historyItem.NewStatus,
+
+                            changedAt =
+                                historyItem.ChangedAt
+                                    .ToString(
+                                        "yyyy-MM-dd  HH:mm"
+                                    )
+                        }
+                    )
+                    .ToListAsync();
 
             return Json(history);
         }
 
-        // ── Assign ────────────────────────────────────────────
+        // =====================================================
+        // Assign student
+        // =====================================================
         [HttpPost]
-        public async Task<IActionResult> Assign(int patientId, int appUserId)
+        [ValidateAntiForgeryToken]
+        [AuthFilter(
+            "Admin",
+            "Fulltime Supervisor",
+            "Parttime Supervisor"
+        )]
+        public async Task<IActionResult> Assign(
+            int patientId,
+            int appUserId
+        )
         {
-            var exists = await _db.AllocatedStudents
-                .AnyAsync(a => a.PatientID == patientId && a.AppUserId == appUserId);
+            var patient =
+                await _db.Patients
+                    .FirstOrDefaultAsync(
+                        currentPatient =>
+                            currentPatient.PatientID
+                                == patientId
+                    );
 
-            if (!exists)
+            if (patient == null)
             {
-                _db.AllocatedStudents.Add(new AllocatedStudent
-                {
-                    PatientID = patientId,
-                    AppUserId = appUserId,
-                    AssignedDate = DateTime.Now
-                });
-                await _db.SaveChangesAsync();
-
-                // ✅ أول طالب يُسند → حالة المريض تصبح Allocated
-                var patient = await _db.Patients.FindAsync(patientId);
-                if (patient != null && patient.PatientStatus != "Allocated")
-                {
-                    string oldStatus = string.IsNullOrEmpty(patient.PatientStatus)
-                                     ? "Screening" : patient.PatientStatus;
-
-                    patient.PatientStatus = "Allocated";
-
-                    // ✅ تسجيل الـ history
-                    _db.PatientStatusHistories.Add(new PatientStatusHistory
+                return NotFound(
+                    new
                     {
-                        PatientID = patientId,
-                        OldStatus = oldStatus,
-                        NewStatus = "Allocated",
-                        ChangedAt = DateTime.Now
-                    });
-
-                    await _db.SaveChangesAsync();
-                }
+                        success = false,
+                        message = "Patient not found."
+                    }
+                );
             }
 
-            return await GetPatientDetailsJson(patientId);
-        }
+            /*
+             * نسمح فقط بإسناد مستخدم موجود فعلياً
+             * كطالب فعال في جدول Users.
+             */
+            List<int> activeStudentAppUserIds =
+                await EnsureAndGetActiveStudentAppUserIdsAsync();
 
-        // ── Remove ────────────────────────────────────────────
-        [HttpPost]
-        public async Task<IActionResult> Remove(int patientId, int appUserId)
-        {
-            var record = await _db.AllocatedStudents
-                .FirstOrDefaultAsync(a => a.PatientID == patientId && a.AppUserId == appUserId);
-
-            if (record != null)
+            if (
+                !activeStudentAppUserIds.Contains(
+                    appUserId
+                )
+            )
             {
-                _db.AllocatedStudents.Remove(record);
-                await _db.SaveChangesAsync();
-
-                // ✅ إذا انشال آخر طالب → ارجع لـ Screening تلقائياً
-                int remaining = await _db.AllocatedStudents
-                    .CountAsync(a => a.PatientID == patientId);
-
-                if (remaining == 0)
-                {
-                    var patient = await _db.Patients.FindAsync(patientId);
-                    if (patient != null && patient.PatientStatus == "Allocated")
+                return BadRequest(
+                    new
                     {
-                        patient.PatientStatus = "Screening";
+                        success = false,
+                        message =
+                            "The selected account is not an active student."
+                    }
+                );
+            }
 
-                        // ✅ تسجيل الـ history
-                        _db.PatientStatusHistories.Add(new PatientStatusHistory
+            bool allocationExists =
+                await _db.AllocatedStudents
+                    .AnyAsync(
+                        allocation =>
+                            allocation.PatientID
+                                == patientId
+                            &&
+                            allocation.AppUserId
+                                == appUserId
+                    );
+
+            if (!allocationExists)
+            {
+                _db.AllocatedStudents.Add(
+                    new AllocatedStudent
+                    {
+                        PatientID = patientId,
+                        AppUserId = appUserId,
+                        AssignedDate = DateTime.Now
+                    }
+                );
+
+                /*
+                 * عند إسناد أول طالب للمريض:
+                 * تصبح حالة المريض Allocated.
+                 */
+                if (
+                    !string.Equals(
+                        patient.PatientStatus,
+                        "Allocated",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    string oldStatus =
+                        string.IsNullOrWhiteSpace(
+                            patient.PatientStatus
+                        )
+                            ? "Screening"
+                            : patient.PatientStatus;
+
+                    patient.PatientStatus =
+                        "Allocated";
+
+                    _db.PatientStatusHistories.Add(
+                        new PatientStatusHistory
                         {
                             PatientID = patientId,
-                            OldStatus = "Allocated",
-                            NewStatus = "Screening",
+                            OldStatus = oldStatus,
+                            NewStatus = "Allocated",
                             ChangedAt = DateTime.Now
-                        });
+                        }
+                    );
+                }
+
+                await _db.SaveChangesAsync();
+            }
+
+            return await GetPatientDetailsJson(
+                patientId
+            );
+        }
+
+        // =====================================================
+        // Remove student
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [AuthFilter(
+            "Admin",
+            "Fulltime Supervisor",
+            "Parttime Supervisor"
+        )]
+        public async Task<IActionResult> Remove(
+            int patientId,
+            int appUserId
+        )
+        {
+            var allocation =
+                await _db.AllocatedStudents
+                    .FirstOrDefaultAsync(
+                        currentAllocation =>
+                            currentAllocation.PatientID
+                                == patientId
+                            &&
+                            currentAllocation.AppUserId
+                                == appUserId
+                    );
+
+            if (allocation != null)
+            {
+                _db.AllocatedStudents.Remove(
+                    allocation
+                );
+
+                await _db.SaveChangesAsync();
+
+                int remainingStudents =
+                    await _db.AllocatedStudents
+                        .CountAsync(
+                            remainingAllocation =>
+                                remainingAllocation.PatientID
+                                    == patientId
+                        );
+
+                /*
+                 * إذا أزيل آخر طالب من المريض،
+                 * تعود حالته إلى Screening.
+                 */
+                if (remainingStudents == 0)
+                {
+                    var patient =
+                        await _db.Patients
+                            .FirstOrDefaultAsync(
+                                currentPatient =>
+                                    currentPatient.PatientID
+                                        == patientId
+                            );
+
+                    if (
+                        patient != null
+                        &&
+                        string.Equals(
+                            patient.PatientStatus,
+                            "Allocated",
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
+                    {
+                        patient.PatientStatus =
+                            "Screening";
+
+                        _db.PatientStatusHistories.Add(
+                            new PatientStatusHistory
+                            {
+                                PatientID = patientId,
+                                OldStatus = "Allocated",
+                                NewStatus = "Screening",
+                                ChangedAt = DateTime.Now
+                            }
+                        );
 
                         await _db.SaveChangesAsync();
                     }
                 }
             }
 
-            return await GetPatientDetailsJson(patientId);
+            return await GetPatientDetailsJson(
+                patientId
+            );
+        }
+
+        // =====================================================
+        // Ensure all active system students exist in AppUsers
+        // =====================================================
+        private async Task<List<int>>
+            EnsureAndGetActiveStudentAppUserIdsAsync()
+        {
+            /*
+             * جلب أو إنشاء UserType باسم Student.
+             */
+            var studentType =
+                await _db.UserTypes
+                    .FirstOrDefaultAsync(
+                        userType =>
+                            userType.NameEn != null
+                            &&
+                            userType.NameEn
+                                .ToLower() == "student"
+                    );
+
+            if (studentType == null)
+            {
+                studentType =
+                    new UserType
+                    {
+                        NameEn = "Student",
+                        NameAr = "طالب",
+                        Status = "Active"
+                    };
+
+                _db.UserTypes.Add(studentType);
+
+                await _db.SaveChangesAsync();
+            }
+            else if (
+                !string.Equals(
+                    studentType.Status,
+                    "Active",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                studentType.Status = "Active";
+
+                await _db.SaveChangesAsync();
+            }
+
+            /*
+             * نعتبر الطالب فعالاً عندما:
+             * UserRole = Student
+             * IsActive = 1
+             */
+            var systemStudents =
+                await _db.Users
+                    .Where(
+                        user =>
+                            user.IsActive == 1
+                            &&
+                            user.UserRole != null
+                            &&
+                            user.UserRole
+                                .ToLower() == "student"
+                    )
+                    .OrderBy(
+                        user =>
+                            user.FullName
+                    )
+                    .ToListAsync();
+
+            var appUsers =
+                await _db.AppUsers
+                    .ToListAsync();
+
+            bool hasChanges = false;
+
+            foreach (var systemStudent in systemStudents)
+            {
+                string username =
+                    NormalizeValue(
+                        systemStudent.Username
+                    );
+
+                string email =
+                    NormalizeValue(
+                        systemStudent.Email
+                    );
+
+                /*
+                 * الربط يكون بواسطة Username/UserLog،
+                 * أو بواسطة Email عندما يكون موجوداً.
+                 */
+                var appUser =
+                    appUsers.FirstOrDefault(
+                        currentAppUser =>
+                            (
+                                !string.IsNullOrWhiteSpace(
+                                    username
+                                )
+                                &&
+                                string.Equals(
+                                    NormalizeValue(
+                                        currentAppUser.UserLog
+                                    ),
+                                    username,
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
+                            ||
+                            (
+                                !string.IsNullOrWhiteSpace(
+                                    email
+                                )
+                                &&
+                                string.Equals(
+                                    NormalizeValue(
+                                        currentAppUser.Email
+                                    ),
+                                    email,
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
+                    );
+
+                if (appUser == null)
+                {
+                    appUser =
+                        new AppUser
+                        {
+                            UserLog =
+                                systemStudent.Username
+                                ?? string.Empty,
+
+                            Email =
+                                systemStudent.Email
+                                ?? string.Empty,
+
+                            NameEn =
+                                !string.IsNullOrWhiteSpace(
+                                    systemStudent.FullName
+                                )
+                                    ? systemStudent.FullName
+                                    : systemStudent.Username,
+
+                            NameAr =
+                                !string.IsNullOrWhiteSpace(
+                                    systemStudent.FullName
+                                )
+                                    ? systemStudent.FullName
+                                    : systemStudent.Username,
+
+                            Mobile =
+                                systemStudent.PhoneNumber
+                                ?? string.Empty,
+
+                            UserTypeId =
+                                studentType.Id,
+
+                            Notes =
+                                string.Empty,
+
+                            Status =
+                                "Active"
+                        };
+
+                    _db.AppUsers.Add(
+                        appUser
+                    );
+
+                    appUsers.Add(
+                        appUser
+                    );
+
+                    hasChanges = true;
+                }
+                else
+                {
+                    bool appUserChanged = false;
+
+                    if (
+                        appUser.UserTypeId
+                            != studentType.Id
+                    )
+                    {
+                        appUser.UserTypeId =
+                            studentType.Id;
+
+                        appUserChanged = true;
+                    }
+
+                    if (
+                        !string.Equals(
+                            appUser.Status,
+                            "Active",
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
+                    {
+                        appUser.Status = "Active";
+                        appUserChanged = true;
+                    }
+
+                    if (
+                        string.IsNullOrWhiteSpace(
+                            appUser.UserLog
+                        )
+                    )
+                    {
+                        appUser.UserLog =
+                            systemStudent.Username
+                            ?? string.Empty;
+
+                        appUserChanged = true;
+                    }
+
+                    if (
+                        string.IsNullOrWhiteSpace(
+                            appUser.Email
+                        )
+                        &&
+                        !string.IsNullOrWhiteSpace(
+                            systemStudent.Email
+                        )
+                    )
+                    {
+                        appUser.Email =
+                            systemStudent.Email;
+
+                        appUserChanged = true;
+                    }
+
+                    if (
+                        string.IsNullOrWhiteSpace(
+                            appUser.NameEn
+                        )
+                    )
+                    {
+                        appUser.NameEn =
+                            !string.IsNullOrWhiteSpace(
+                                systemStudent.FullName
+                            )
+                                ? systemStudent.FullName
+                                : systemStudent.Username;
+
+                        appUserChanged = true;
+                    }
+
+                    if (
+                        string.IsNullOrWhiteSpace(
+                            appUser.NameAr
+                        )
+                    )
+                    {
+                        appUser.NameAr =
+                            !string.IsNullOrWhiteSpace(
+                                systemStudent.FullName
+                            )
+                                ? systemStudent.FullName
+                                : systemStudent.Username;
+
+                        appUserChanged = true;
+                    }
+
+                    if (
+                        string.IsNullOrWhiteSpace(
+                            appUser.Mobile
+                        )
+                        &&
+                        !string.IsNullOrWhiteSpace(
+                            systemStudent.PhoneNumber
+                        )
+                    )
+                    {
+                        appUser.Mobile =
+                            systemStudent.PhoneNumber;
+
+                        appUserChanged = true;
+                    }
+
+                    if (appUserChanged)
+                    {
+                        hasChanges = true;
+                    }
+                }
+            }
+
+            if (hasChanges)
+            {
+                await _db.SaveChangesAsync();
+            }
+
+            /*
+             * بعد الحفظ تكون IDs للسجلات الجديدة قد تولدت.
+             */
+            var resultIds =
+                new List<int>();
+
+            foreach (var systemStudent in systemStudents)
+            {
+                string username =
+                    NormalizeValue(
+                        systemStudent.Username
+                    );
+
+                string email =
+                    NormalizeValue(
+                        systemStudent.Email
+                    );
+
+                var matchingAppUser =
+                    appUsers.FirstOrDefault(
+                        currentAppUser =>
+                            (
+                                !string.IsNullOrWhiteSpace(
+                                    username
+                                )
+                                &&
+                                string.Equals(
+                                    NormalizeValue(
+                                        currentAppUser.UserLog
+                                    ),
+                                    username,
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
+                            ||
+                            (
+                                !string.IsNullOrWhiteSpace(
+                                    email
+                                )
+                                &&
+                                string.Equals(
+                                    NormalizeValue(
+                                        currentAppUser.Email
+                                    ),
+                                    email,
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
+                    );
+
+                if (
+                    matchingAppUser != null
+                    &&
+                    matchingAppUser.Id > 0
+                )
+                {
+                    resultIds.Add(
+                        matchingAppUser.Id
+                    );
+                }
+            }
+
+            return resultIds
+                .Distinct()
+                .ToList();
+        }
+
+        // =====================================================
+        // Resolve current student's AppUserID
+        // =====================================================
+        private async Task<int>
+            ResolveCurrentStudentAppUserIdAsync()
+        {
+            string appUserIdString =
+                HttpContext.Session.GetString(
+                    "AppUserID"
+                )
+                ?? string.Empty;
+
+            if (
+                int.TryParse(
+                    appUserIdString,
+                    out int existingAppUserId
+                )
+                &&
+                existingAppUserId > 0
+            )
+            {
+                return existingAppUserId;
+            }
+
+            List<int> activeStudentIds =
+                await EnsureAndGetActiveStudentAppUserIdsAsync();
+
+            string username =
+                NormalizeValue(
+                    HttpContext.Session.GetString(
+                        "Username"
+                    )
+                );
+
+            string email =
+                NormalizeValue(
+                    HttpContext.Session.GetString(
+                        "UserEmail"
+                    )
+                );
+
+            var appUser =
+                await _db.AppUsers
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        currentAppUser =>
+                            activeStudentIds.Contains(
+                                currentAppUser.Id
+                            )
+                            &&
+                            (
+                                (
+                                    !string.IsNullOrWhiteSpace(
+                                        username
+                                    )
+                                    &&
+                                    currentAppUser.UserLog
+                                        .ToLower() == username
+                                )
+                                ||
+                                (
+                                    !string.IsNullOrWhiteSpace(
+                                        email
+                                    )
+                                    &&
+                                    currentAppUser.Email
+                                        .ToLower() == email
+                                )
+                            )
+                    );
+
+            if (appUser == null)
+            {
+                return 0;
+            }
+
+            HttpContext.Session.SetString(
+                "AppUserID",
+                appUser.Id.ToString()
+            );
+
+            return appUser.Id;
+        }
+
+        // =====================================================
+        // Normalize comparison values
+        // =====================================================
+        private static string NormalizeValue(
+            string? value
+        )
+        {
+            return string.IsNullOrWhiteSpace(
+                value
+            )
+                ? string.Empty
+                : value.Trim().ToLowerInvariant();
         }
     }
 }

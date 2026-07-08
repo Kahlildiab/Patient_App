@@ -1,95 +1,79 @@
-﻿using System.DirectoryServices.AccountManagement;
+﻿using Microsoft.AspNetCore.Authentication;
+using System;
+using System.DirectoryServices;
+using System.DirectoryServices.AccountManagement;
 
-namespace DentalCollegeManagementSystem_AAU.Services
+public class ActiveDirectoryValidator
 {
-    public sealed class ActiveDirectoryUserInfo
+    private string _ldapPath;
+    private string _filterAttribute;
+
+    public ActiveDirectoryValidator(string ldapPath)
     {
-        public string UserName { get; init; } = string.Empty;
-        public string GivenName { get; init; } = string.Empty;
-        public string Surname { get; init; } = string.Empty;
-        public string DisplayName { get; init; } = string.Empty;
-        public string Email { get; init; } = string.Empty;
+        _ldapPath = ldapPath;
     }
 
-    public sealed class ActiveDirectoryUnavailableException : Exception
+    public bool IsAuthenticated(string domainName, string userName, string password)
     {
-        public ActiveDirectoryUnavailableException(string message, Exception inner)
-            : base(message, inner) { }
+        try
+        {
+            using (PrincipalContext context = new PrincipalContext(ContextType.Domain, domainName))
+            {
+                bool isValid = context.ValidateCredentials(userName, password);
+                if (!isValid) return false;
+
+                // Optionally, you can get the user details
+                //using (UserPrincipal user = UserPrincipal.FindByIdentity(context, userName))
+                //{
+                //    if (user == null)
+                //        return false;
+
+                //    _filterAttribute = user.DisplayName; // or user.Name, user.GivenName, etc.
+                //    _ldapPath = user.DistinguishedName;
+                //}
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Login Error: " + ex.Message);
+        }
     }
 
-    public class ActiveDirectoryValidator
+    public string GetGivenName(string domainName, string userName, string password)
     {
-        private readonly string _domain;
-
-        public ActiveDirectoryValidator(IConfiguration configuration)
+        try
         {
-            _domain = configuration["ActiveDirectory:Domain"]
-                ?? throw new InvalidOperationException(
-                    "ActiveDirectory:Domain is missing from appsettings.json.");
-        }
-
-        public ActiveDirectoryUserInfo? Authenticate(string userName, string password)
-        {
-            if (string.IsNullOrWhiteSpace(userName) ||
-                string.IsNullOrWhiteSpace(password))
-                return null;
-
-            string normalizedUserName = NormalizeUserName(userName);
-
-            try
+            using (PrincipalContext context = new PrincipalContext(ContextType.Domain, domainName, userName, password))
+            using (UserPrincipal user = UserPrincipal.FindByIdentity(context, userName))
             {
-                using var context = new PrincipalContext(ContextType.Domain, _domain);
-
-                bool valid = context.ValidateCredentials(
-                    normalizedUserName,
-                    password,
-                    ContextOptions.Negotiate);
-
-                if (!valid)
-                    return null;
-
-                using var user = UserPrincipal.FindByIdentity(
-                    context,
-                    IdentityType.SamAccountName,
-                    normalizedUserName);
-
-                if (user == null || user.Enabled == false)
-                    return null;
-
-                return new ActiveDirectoryUserInfo
-                {
-                    UserName = user.SamAccountName ?? normalizedUserName,
-                    GivenName = user.GivenName ?? string.Empty,
-                    Surname = user.Surname ?? string.Empty,
-                    DisplayName = user.DisplayName ?? normalizedUserName,
-                    Email = user.EmailAddress ?? string.Empty
-                };
-            }
-            catch (PrincipalServerDownException ex)
-            {
-                throw new ActiveDirectoryUnavailableException(
-                    "The Active Directory server cannot be reached.", ex);
-            }
-            catch (PrincipalOperationException ex)
-            {
-                throw new ActiveDirectoryUnavailableException(
-                    "Active Directory could not complete authentication.", ex);
+                return user?.GivenName ?? "No given name found";
             }
         }
-
-        private static string NormalizeUserName(string userName)
+        catch (Exception ex)
         {
-            string value = userName.Trim();
-
-            int slashIndex = value.LastIndexOf('\\');
-            if (slashIndex >= 0 && slashIndex < value.Length - 1)
-                value = value[(slashIndex + 1)..];
-
-            int atIndex = value.IndexOf('@');
-            if (atIndex > 0)
-                value = value[..atIndex];
-
-            return value;
+            return "Error: " + ex.Message;
         }
     }
+
+    public string GetLastName(string domainName, string userName, string password)
+    {
+        try
+        {
+            using (PrincipalContext context = new PrincipalContext(ContextType.Domain, domainName, userName, password))
+            using (UserPrincipal user = UserPrincipal.FindByIdentity(context, userName))
+            {
+                return user?.Surname ?? "No surname found";
+            }
+        }
+        catch (Exception ex)
+        {
+            return "Error: " + ex.Message;
+        }
+    }
+
+    public string FilterAttribute => _filterAttribute;
+    public string LdapPath => _ldapPath;
 }
+
+

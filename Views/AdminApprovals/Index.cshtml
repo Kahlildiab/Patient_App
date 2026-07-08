@@ -307,11 +307,251 @@
     }
 </style>
 
+<style>
+    /* =========================================================
+           Improved Visits Approval Layout
+           ========================================================= */
+    .ap-visits-section {
+        border: 0;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(26, 35, 126, .08);
+        overflow: hidden;
+    }
+
+        .ap-visits-section .ap-section-header {
+            min-height: 58px;
+            padding: 16px 22px;
+            background: linear-gradient(135deg, #171f70 0%, #283593 100%);
+        }
+
+        .ap-visits-section .ap-section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            letter-spacing: .1px;
+        }
+
+        .ap-visits-section .ap-count-badge {
+            min-width: 82px;
+            padding: 5px 13px;
+            text-align: center;
+            background: #daa328;
+            box-shadow: 0 4px 12px rgba(218, 163, 40, .24);
+        }
+
+        .ap-visits-section .ap-visit-card {
+            display: grid;
+            grid-template-columns: minmax(270px, 1fr) minmax(510px, 620px);
+            align-items: center;
+            gap: 26px;
+            padding: 22px 24px;
+            border-bottom: 1px solid #e9edf5;
+            background: #fff;
+            transition: background .18s ease, transform .18s ease;
+        }
+
+            .ap-visits-section .ap-visit-card:nth-child(odd) {
+                background: #fbfcff;
+            }
+
+            .ap-visits-section .ap-visit-card:hover {
+                background: #f6f8ff;
+            }
+
+        .ap-visits-section .ap-card-info {
+            min-width: 0;
+            padding: 2px 0 2px 4px;
+        }
+
+        .ap-visits-section .ap-card-patient {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 9px;
+            color: #4b5563;
+            font-size: .88rem;
+            font-weight: 700;
+        }
+
+        .ap-visits-section .ap-card-title {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 7px;
+            color: #1a237e;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .ap-visits-section .ap-card-date {
+            color: #94a0b2;
+            font-size: .76rem;
+        }
+
+        .ap-visits-section .ap-actions {
+            display: grid;
+            grid-template-columns: minmax(390px, 1fr) 92px;
+            align-items: end;
+            gap: 10px;
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e1e6f2;
+            border-radius: 13px;
+            background: #f8f9ff;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8);
+        }
+
+    .ap-visit-approve-form {
+        display: grid;
+        grid-template-columns: minmax(240px, 1fr) 96px;
+        align-items: end;
+        gap: 10px;
+        width: 100%;
+        margin: 0;
+    }
+
+    .ap-visit-reject-form {
+        margin: 0;
+        align-self: end;
+    }
+
+    .ap-visits-section .ap-complexity-wrap {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .ap-visits-section .ap-complexity-label {
+        margin-bottom: 7px;
+        color: #313a54;
+        font-size: .76rem;
+        font-weight: 800;
+    }
+
+    .ap-visits-section .ap-complexity-select {
+        width: 100%;
+        min-width: 0;
+        height: 42px;
+        padding: 0 13px;
+        border: 1.5px solid #bcc6e6;
+        border-radius: 9px;
+        background: #fff;
+        color: #1a237e;
+        font-size: .82rem;
+        font-weight: 700;
+        box-shadow: 0 2px 7px rgba(26, 35, 126, .05);
+    }
+
+        .ap-visits-section .ap-complexity-select:hover {
+            border-color: #7d8dc8;
+        }
+
+        .ap-visits-section .ap-complexity-select:focus {
+            border-color: #1a237e;
+            box-shadow: 0 0 0 3px rgba(26, 35, 126, .10);
+        }
+
+    .ap-visits-section .ap-complexity-value {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 16px;
+        border: 1px solid #90caf9;
+        border-radius: 9px;
+        background: linear-gradient(180deg, #edf7ff 0%, #e3f2fd 100%);
+        color: #1565c0;
+        font-size: .82rem;
+        font-weight: 800;
+        box-shadow: 0 2px 7px rgba(21, 101, 192, .06);
+    }
+
+    .ap-visits-section .ap-first-visit-note {
+        margin-top: 6px;
+        color: #e65100;
+        font-size: .69rem;
+        font-weight: 600;
+        line-height: 1.35;
+    }
+
+    .ap-visits-section .ap-approve-btn,
+    .ap-visits-section .ap-reject-btn {
+        width: 100%;
+        height: 42px;
+        padding: 0 14px;
+        border-radius: 9px;
+        font-size: .8rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .ap-visits-section .ap-approve-btn {
+        background: linear-gradient(180deg, #32923a 0%, #2e7d32 100%);
+        box-shadow: 0 5px 12px rgba(46, 125, 50, .18);
+    }
+
+        .ap-visits-section .ap-approve-btn:hover {
+            background: #256b2a;
+            transform: translateY(-1px);
+        }
+
+    .ap-visits-section .ap-reject-btn {
+        background: #fff;
+        box-shadow: 0 3px 9px rgba(229, 57, 53, .06);
+    }
+
+        .ap-visits-section .ap-reject-btn:hover {
+            background: #fff3f3;
+            transform: translateY(-1px);
+        }
+
+    @@media (max-width: 1120px) {
+        .ap-visits-section .ap-visit-card {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .ap-visits-section .ap-actions {
+            max-width: none;
+        }
+    }
+
+    @@media (max-width: 720px) {
+        .ap-visits-section .ap-visit-card {
+            padding: 18px 15px;
+        }
+
+        .ap-visits-section .ap-actions {
+            grid-template-columns: 1fr;
+            padding: 10px;
+        }
+
+        .ap-visit-approve-form {
+            grid-template-columns: 1fr;
+        }
+
+        .ap-visits-section .ap-approve-btn,
+        .ap-visits-section .ap-reject-btn {
+            width: 100%;
+        }
+    }
+</style>
+
+
 @if (TempData["Success"] != null)
 {
     <div style="background:#d1e7dd; color:#0a3622; padding:12px 16px;
         border-radius:8px; margin-bottom:20px; font-size:.88rem;">
         @TempData["Success"]
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div style="background:#fdecea; color:#b71c1c; padding:12px 16px;
+        border:1px solid #ef9a9a; border-radius:8px;
+        margin-bottom:20px; font-size:.88rem;">
+        @TempData["Error"]
     </div>
 }
 
@@ -396,10 +636,15 @@
 </div>
 
 <!-- ===== VISITS ===== -->
-<div class="ap-section">
+<div class="ap-section ap-visits-section">
     <div class="ap-section-header">
         <span class="ap-section-title">📅 Visits</span>
-        <div style="display:flex; align-items:center; gap:12px;">
+
+        <div style="
+            display:flex;
+            align-items:center;
+            gap:12px;">
+
             <span class="ap-count-badge">
                 @pendingVisits.Count pending
             </span>
@@ -408,7 +653,9 @@
 
     @if (!pendingVisits.Any())
     {
-        <div class="ap-empty">✅ No pending visits</div>
+        <div class="ap-empty">
+            ✅ No pending visits
+        </div>
     }
     else
     {
@@ -424,7 +671,7 @@
                     savedComplexity
                 );
 
-            <div class="ap-card">
+            <div class="ap-card ap-visit-card">
                 <div class="ap-card-info">
                     <div class="ap-card-patient">
                         👤 @GetPatientName(v.Patient)
@@ -465,11 +712,7 @@
                     <form asp-controller="Visits"
                           asp-action="AdminApprove"
                           method="post"
-                          style="
-                        display:flex;
-                        gap:8px;
-                        align-items:flex-end;
-                        flex-wrap:wrap;">
+                          class="ap-visit-approve-form">
 
                         @Html.AntiForgeryToken()
 
@@ -495,12 +738,20 @@
                                 <input type="hidden"
                                        name="caseComplexity"
                                        value="@savedComplexity" />
+
+                                <div style="
+                                    margin-top:5px;
+                                    color:#607d8b;
+                                    font-size:.72rem;">
+                                    Saved from the first visit
+                                </div>
                             }
                             else
                             {
                                 <select name="caseComplexity"
                                         class="ap-complexity-select"
                                         required>
+
                                     <option value="">
                                         -- Select Complexity --
                                     </option>
@@ -519,7 +770,8 @@
                                 </select>
 
                                 <div class="ap-first-visit-note">
-                                    Required for the first visit
+                                    Required before approving
+                                    the patient's first visit
                                 </div>
                             }
                         </div>
@@ -533,6 +785,7 @@
                     <form asp-controller="Visits"
                           asp-action="AdminReject"
                           method="post"
+                          class="ap-visit-reject-form"
                           onsubmit="
                         return confirm(
                         'Reject and delete this visit?'
@@ -575,25 +828,6 @@
             <span class="ap-count-badge">
                 @pendingDiagnosisTreatmentPlans.Count pending
             </span>
-
-            @if (pendingDiagnosisTreatmentPlans.Any())
-            {
-                <form asp-controller="AdminApprovals"
-                      asp-action="ApproveAllDiagnosisTreatmentPlans"
-                      method="post"
-                      class="m-0 p-0"
-                      onsubmit="return confirm(
-                    'Approve all @pendingDiagnosisTreatmentPlans.Count pending note(s)?'
-                    )">
-
-                    @Html.AntiForgeryToken()
-
-                    <button type="submit"
-                            class="ap-approve-all-btn">
-                        ✓ Approve All
-                    </button>
-                </form>
-            }
         </div>
     </div>
 
@@ -673,7 +907,8 @@
                     <form asp-controller="TreatmentPlan"
                           asp-action="AdminRejectDiagnosisTreatmentPlan"
                           method="post"
-                          onsubmit="return confirm(
+                          onsubmit="
+                        return confirm(
                         'Reject and remove this note?'
                         )">
 

@@ -26,13 +26,21 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
         public async Task<IActionResult> Index()
         {
+            /*
+             * نجلب أي زيارة لم تتم الموافقة الموحدة عليها بعد.
+             *
+             * الشرط الثاني (!v.IsApproved) يلتقط أيضاً البيانات
+             * القديمة التي قد تكون AdminApprovalStatus فيها Approved
+             * بينما IsApproved ما زالت false.
+             */
             var pendingVisits =
                 await _context.Visits
                     .Include(v => v.Patient)
                     .Where(
                         v =>
-                            v.AdminApprovalStatus
-                            == "Pending"
+                            v.AdminApprovalStatus == "Pending"
+                            ||
+                            !v.IsApproved
                     )
                     .OrderByDescending(
                         v => v.CreatedDate
@@ -86,8 +94,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     .ToListAsync();
 
             /*
-             * Load the saved Case Complexity for patients who
-             * currently have pending visits.
+             * تحميل Case Complexity المحفوظة للمرضى
+             * الذين لديهم زيارات Pending.
              */
             var pendingVisitPatientIds =
                 pendingVisits
@@ -155,6 +163,12 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             return View();
         }
 
+        /*
+         * Bulk approval is kept as a safety endpoint, but it only
+         * approves Treatment Plans whose patient already has a saved
+         * Case Complexity. Plans without Case Complexity must be
+         * approved individually from the page.
+         */
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult>
@@ -173,7 +187,36 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     )
                     .ToListAsync();
 
-            foreach (var item in pending)
+            var patientIds =
+                pending
+                    .Select(d => d.PatientId)
+                    .Distinct()
+                    .ToList();
+
+            var patientsWithComplexity =
+                await _context.Visits
+                    .Where(
+                        v =>
+                            patientIds.Contains(v.PatientID)
+                            &&
+                            v.CaseComplexity != null
+                            &&
+                            v.CaseComplexity != ""
+                    )
+                    .Select(v => v.PatientID)
+                    .Distinct()
+                    .ToListAsync();
+
+            var approvable =
+                pending
+                    .Where(
+                        item =>
+                            patientsWithComplexity
+                                .Contains(item.PatientId)
+                    )
+                    .ToList();
+
+            foreach (var item in approvable)
             {
                 item.AdminApprovalStatus =
                     "Approved";
@@ -187,10 +230,16 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             await _context.SaveChangesAsync();
 
+            int skipped =
+                pending.Count - approvable.Count;
+
             TempData["Success"] =
-                $"✅ {pending.Count} "
-                + "Diagnoses and Treatment-plan "
-                + "note(s) approved successfully.";
+                skipped > 0
+                    ? $"✅ {approvable.Count} plan(s) approved. "
+                      + $"{skipped} plan(s) skipped because "
+                      + "Case Complexity must be selected individually."
+                    : $"✅ {approvable.Count} Diagnoses and "
+                      + "Treatment-plan note(s) approved successfully.";
 
             return RedirectToAction(nameof(Index));
         }
@@ -239,16 +288,17 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         public async Task<IActionResult>
             ApproveAllVisits()
         {
-            string adminName =
+            string approverName =
                 HttpContext.Session.GetString("FullName")
-                ?? "Admin";
+                ?? "Responsible Authority";
 
             var pending =
                 await _context.Visits
                     .Where(
                         v =>
-                            v.AdminApprovalStatus
-                            == "Pending"
+                            v.AdminApprovalStatus == "Pending"
+                            ||
+                            !v.IsApproved
                     )
                     .ToListAsync();
 
@@ -258,6 +308,10 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     .Distinct()
                     .ToList();
 
+            /*
+             * لا تتم الموافقة الجماعية على أول زيارة
+             * ما لم تكن Case Complexity محفوظة مسبقاً.
+             */
             var patientsWithComplexity =
                 await _context.Visits
                     .Where(
@@ -281,16 +335,23 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     )
                     .ToList();
 
+            DateTime approvalDate =
+                DateTime.Now;
+
             foreach (var item in approvable)
             {
+                item.IsApproved = true;
+                item.ApprovedBy = approverName;
+                item.ApprovedDate = approvalDate;
+
                 item.AdminApprovalStatus =
                     "Approved";
 
                 item.AdminApprovedBy =
-                    adminName;
+                    approverName;
 
                 item.AdminApprovedDate =
-                    DateTime.Now;
+                    approvalDate;
             }
 
             await _context.SaveChangesAsync();
@@ -300,10 +361,10 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             TempData["Success"] =
                 skipped > 0
-                    ? $"✅ {approvable.Count} visit(s) approved. "
-                      + $"{skipped} first visit(s) skipped because "
+                    ? $"{approvable.Count} visit(s) approved. "
+                      + $"{skipped} visit(s) skipped because "
                       + "Case Complexity must be selected individually."
-                    : $"✅ {approvable.Count} visit(s) "
+                    : $"{approvable.Count} visit(s) "
                       + "approved successfully.";
 
             return RedirectToAction(nameof(Index));

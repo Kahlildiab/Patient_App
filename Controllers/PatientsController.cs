@@ -332,10 +332,6 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             if (!hasAnyVisit)
             {
-                string userRole =
-                    HttpContext.Session.GetString("UserRole")
-                    ?? string.Empty;
-
                 string appointmentTimeValue =
                     patient.AppointmentTime?.Trim().ToUpperInvariant()
                     ?? string.Empty;
@@ -375,21 +371,32 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                             : "AM";
                 }
 
+                /*
+                 * أول زيارة تبدأ Pending دائماً، مهما كان دور
+                 * المستخدم الذي فتح ملف المريض.
+                 *
+                 * لا يتم تحديد Case Complexity هنا؛ بل يتم تحديدها
+                 * عند اعتماد الزيارة من صفحة Admin Approvals.
+                 */
                 var firstVisit = new Visit
                 {
                     PatientID = id.Value,
                     VisitDate = DateTime.Today,
                     AppointmentPeriod = appointmentPeriod,
+
                     Attended = false,
+
                     IsApproved = false,
-                    AdminApprovalStatus =
-                        string.Equals(
-                            userRole,
-                            "Student",
-                            StringComparison.OrdinalIgnoreCase
-                        )
-                            ? "Pending"
-                            : "Approved",
+                    ApprovedBy = null,
+                    ApprovedDate = null,
+                    SupervisorComments = null,
+
+                    AdminApprovalStatus = "Pending",
+                    AdminApprovedBy = null,
+                    AdminApprovedDate = null,
+
+                    CaseComplexity = null,
+
                     CreatedDate = DateTime.Now,
                     IsClosed = false,
                     ClosedDate = null,
@@ -399,16 +406,6 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 _context.Visits.Add(firstVisit);
                 await _context.SaveChangesAsync();
             }
-
-            var templates = await _context.Competency
-                .Where(c => c.PatientID == null)
-                .OrderBy(c => c.CategoryOrder)
-                .ThenBy(c => c.ItemOrder)
-                .ToListAsync();
-
-            var patientCompetencies = await _context.Competency
-                .Where(c => c.PatientID == id)
-                .ToListAsync();
 
             var medicalHistory = await _context.MedicalHistories.FirstOrDefaultAsync(m => m.PatientID == id);
             var conditions = await _context.Conditions.Where(c => c.PatientID == id).OrderByDescending(c => c.CreatedDate).ToListAsync();
@@ -429,35 +426,6 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                         d => d.PatientId == id.Value
                     );
 
-            int totalCompetencies =
-                templates.Count;
-
-            int completedCompetencies =
-                patientCompetencies.Count(
-                    competency =>
-                        competency.IsCompleted
-                );
-
-            int treatmentProgressPercentage =
-                totalCompetencies > 0
-                    ? (int)Math.Round(
-                        (double)completedCompetencies
-                        / totalCompetencies
-                        * 100
-                    )
-                    : 0;
-
-            ViewBag.AllCompetencies = templates;
-            ViewBag.PatientCompetencies = patientCompetencies;
-
-            ViewBag.TreatmentProgressPercentage =
-                treatmentProgressPercentage;
-
-            ViewBag.CompletedCompetencies =
-                completedCompetencies;
-
-            ViewBag.TotalCompetencies =
-                totalCompetencies;
             ViewBag.MedicalHistory = medicalHistory;
             ViewBag.Conditions = conditions;
             ViewBag.Medications = medications;

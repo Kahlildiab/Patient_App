@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace DentalCollegeManagementSystem_AAU.Filters
@@ -9,29 +10,110 @@ namespace DentalCollegeManagementSystem_AAU.Filters
 
         public AuthFilter(params string[] roles)
         {
-            _allowedRoles = roles;
+            _allowedRoles = roles ?? Array.Empty<string>();
         }
 
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            var session = context.HttpContext.Session;
-            var userRole = session.GetString("UserRole");
+            /*
+             * مهم:
+             * إذا كان الـController أو الـAction يحتوي على [AllowAnonymous]
+             * لا يتم فحص Session ولا يتم تحويل المستخدم إلى Login.
+             */
+            var endpoint = context.HttpContext.GetEndpoint();
 
-            var controller = context.RouteData.Values["controller"]?.ToString();
-            var action = context.RouteData.Values["action"]?.ToString();
+            var allowAnonymous =
+                endpoint?.Metadata.GetMetadata<IAllowAnonymous>() != null;
 
-            if (controller == "Account" && (action == "Login" || action == "Register"))
-                return;
-
-            if (string.IsNullOrEmpty(userRole))
+            if (allowAnonymous)
             {
-                context.Result = new RedirectToActionResult("Login", "Account", null);
                 return;
             }
 
-            if (_allowedRoles.Length > 0 && !_allowedRoles.Contains(userRole))
+            var session = context.HttpContext.Session;
+
+            string? userRole =
+                session.GetString("UserRole");
+
+            string controller =
+                context.RouteData.Values["controller"]?
+                    .ToString() ?? string.Empty;
+
+            string action =
+                context.RouteData.Values["action"]?
+                    .ToString() ?? string.Empty;
+
+            /*
+             * السماح بصفحات الحساب العامة.
+             */
+            if (
+                controller.Equals(
+                    "Account",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                &&
+                (
+                    action.Equals(
+                        "Login",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                    ||
+                    action.Equals(
+                        "Register",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                    ||
+                    action.Equals(
+                        "AccessDenied",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+            )
             {
-                context.Result = new RedirectToActionResult("AccessDenied", "Account", null);
+                return;
+            }
+
+            /*
+             * لا توجد جلسة دخول.
+             */
+            if (string.IsNullOrWhiteSpace(userRole))
+            {
+                context.Result =
+                    new RedirectToActionResult(
+                        "Login",
+                        "Account",
+                        null
+                    );
+
+                return;
+            }
+
+            /*
+             * فحص الصلاحيات المحددة داخل AuthFilter.
+             *
+             * مثال:
+             * [AuthFilter("Admin", "Doctor")]
+             */
+            if (
+                _allowedRoles.Length > 0
+                &&
+                !_allowedRoles.Any(
+                    role =>
+                        string.Equals(
+                            role,
+                            userRole,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                )
+            )
+            {
+                context.Result =
+                    new RedirectToActionResult(
+                        "AccessDenied",
+                        "Account",
+                        null
+                    );
+
                 return;
             }
         }

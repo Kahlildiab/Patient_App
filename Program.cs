@@ -7,50 +7,172 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// =====================================================
+// MVC
+// =====================================================
+
 builder.Services.AddControllersWithViews();
 
+// =====================================================
+// DATABASE
+// =====================================================
+
+string connectionString =
+    builder.Configuration.GetConnectionString("Patient")
+    ?? throw new InvalidOperationException(
+        "ConnectionStrings:Patient is missing.");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Patient")));
+    options.UseSqlServer(connectionString));
+
+// =====================================================
+// SESSION
+// =====================================================
 
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
+
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+
+    options.Cookie.SecurePolicy =
+        CookieSecurePolicy.SameAsRequest;
 });
 
-builder.Services.AddScoped<ActiveDirectoryValidator>();
-builder.Services.AddScoped<JwtTokenService>();
-builder.Services.AddSignalR();
+// =====================================================
+// APPLICATION SERVICES
+// =====================================================
 
-string jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("Jwt:Key is missing.");
-string jwtIssuer = builder.Configuration["Jwt:Issuer"]
-    ?? throw new InvalidOperationException("Jwt:Issuer is missing.");
-string jwtAudience = builder.Configuration["Jwt:Audience"]
-    ?? throw new InvalidOperationException("Jwt:Audience is missing.");
-
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+/*
+ * ActiveDirectoryValidator يحتوي على constructor:
+ *
+ * public ActiveDirectoryValidator(string ldapPath)
+ *
+ * لذلك يجب تزويده بالقيمة يدويًا من appsettings.json.
+ */
+builder.Services.AddScoped<ActiveDirectoryValidator>(
+    serviceProvider =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtIssuer,
-            ValidAudience = jwtAudience,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtKey)),
-            ClockSkew = TimeSpan.FromMinutes(1)
-        };
+        IConfiguration configuration =
+            serviceProvider.GetRequiredService<IConfiguration>();
+
+        string ldapPath =
+            configuration["ActiveDirectory:Server"]
+            ?? configuration["ActiveDirectory:Domain"]
+            ?? throw new InvalidOperationException(
+                "ActiveDirectory:Server or ActiveDirectory:Domain "
+                + "is missing from appsettings.json.");
+
+        return new ActiveDirectoryValidator(ldapPath);
     });
 
+builder.Services.AddScoped<JwtTokenService>();
+
+builder.Services.AddSignalR();
+
+// =====================================================
+// JWT SETTINGS
+// =====================================================
+
+string jwtKey =
+    builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException(
+        "Jwt:Key is missing.");
+
+string jwtIssuer =
+    builder.Configuration["Jwt:Issuer"]
+    ?? throw new InvalidOperationException(
+        "Jwt:Issuer is missing.");
+
+string jwtAudience =
+    builder.Configuration["Jwt:Audience"]
+    ?? throw new InvalidOperationException(
+        "Jwt:Audience is missing.");
+
+if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
+{
+    throw new InvalidOperationException(
+        "Jwt:Key must be at least 32 bytes long.");
+}
+
+// =====================================================
+// AUTHENTICATION
+// =====================================================
+
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme =
+            JwtBearerDefaults.AuthenticationScheme;
+
+        options.DefaultChallengeScheme =
+            JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+
+                ValidIssuer = jwtIssuer,
+                ValidAudience = jwtAudience,
+
+                IssuerSigningKey =
+                    new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(jwtKey)),
+
+                ClockSkew = TimeSpan.FromMinutes(1)
+            };
+
+        /*
+         * AccountController يخزن JWT داخل Session
+         * باسم AccessToken.
+         */
+        options.Events =
+            new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    string? token =
+                        context.HttpContext.Session
+                            .GetString("AccessToken");
+
+                    if (!string.IsNullOrWhiteSpace(token))
+                    {
+                        context.Token = token;
+                    }
+
+                    return Task.CompletedTask;
+                },
+
+                OnAuthenticationFailed = context =>
+                {
+                    Console.WriteLine(
+                        "JWT authentication failed: "
+                        + context.Exception.Message);
+
+                    return Task.CompletedTask;
+                }
+            };
+    });
+
+builder.Services.AddAuthorization();
+
+// =====================================================
+// BUILD APPLICATION
+// =====================================================
+
 var app = builder.Build();
+
+// =====================================================
+// ERROR HANDLING
+// =====================================================
 
 if (!app.Environment.IsDevelopment())
 {
@@ -58,21 +180,44 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+/*
+ * إذا لم يكن HTTPS مربوطًا في IIS،
+ * يمكن تعليق هذا السطر مؤقتًا.
+ */
 app.UseHttpsRedirection();
+
 app.UseStaticFiles();
+
 app.UseRouting();
+
+/*
+ * يجب وضع Session قبل Authentication،
+ * لأن JWT تتم قراءته من Session.
+ */
 app.UseSession();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHub<NotificationHub>("/notificationHub");
+// =====================================================
+// SIGNALR
+// =====================================================
+
+app.MapHub<NotificationHub>(
+    "/notificationHub");
+
+// =====================================================
+// ROUTES
+// =====================================================
 
 app.MapControllerRoute(
     name: "areas",
-    pattern: "{area:exists}/{controller=Users}/{action=PendingUsers}/{id?}");
+    pattern:
+        "{area:exists}/{controller=Users}/{action=PendingUsers}/{id?}");
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}");
+    pattern:
+        "{controller=Account}/{action=Login}/{id?}");
 
 app.Run();

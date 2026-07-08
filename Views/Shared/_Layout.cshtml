@@ -72,71 +72,208 @@
 
             </ul>
 
-            <ul id="Second" class="navbar-nav justify-content-start w-100" style="background: rgb(38, 76, 159);">
+            <ul id="Second"
+                class="navbar-nav justify-content-start w-100"
+                style="background: rgb(38, 76, 159);">
 
                 @{
-                    var role = Context.Session.GetString("UserRole");
+                    var role =
+                        Context.Session.GetString("UserRole");
                 }
 
                 @* Patients *@
-                @if (role == "Admin" || role == "Fulltime Supervisor"
-                  || role == "Parttime Supervisor" || role == "Receptionist" || role == "Student")
+                @if (
+                    role == "Admin"
+                    ||
+                    role == "Fulltime Supervisor"
+                    ||
+                    role == "Parttime Supervisor"
+                    ||
+                    role == "Receptionist"
+                    ||
+                    role == "Student"
+                )
                 {
                     <li class="nav-item">
-                        <a class="nav-link heading15" asp-controller="Home" asp-action="Index">Patients</a>
+                        <a class="nav-link heading15"
+                           asp-controller="Home"
+                           asp-action="Index">
+                            Patients
+                        </a>
                     </li>
                 }
 
                 @* Appointments *@
-                @if (role == "Admin" || role == "Fulltime Supervisor"
-                  || role == "Parttime Supervisor" || role == "Receptionist" || role == "Student")
+                @if (
+                    role == "Admin"
+                    ||
+                    role == "Fulltime Supervisor"
+                    ||
+                    role == "Parttime Supervisor"
+                    ||
+                    role == "Receptionist"
+                    ||
+                    role == "Student"
+                )
                 {
                     <li class="nav-item">
-                        <a class="nav-link heading15" asp-controller="Appointments" asp-action="Index">Appointments</a>
+                        <a class="nav-link heading15"
+                           asp-controller="Appointments"
+                           asp-action="Index">
+                            Appointments
+                        </a>
                     </li>
                 }
 
-                @* AllocatedStudent — Admin + Fulltime + Parttime + Student *@
-                @if (role == "Admin" || role == "Fulltime Supervisor"
-                  || role == "Parttime Supervisor" )
+                @* Allocated Students *@
+                @if (
+                    role == "Admin"
+                    ||
+                    role == "Fulltime Supervisor"
+                    ||
+                    role == "Parttime Supervisor"
+                )
                 {
                     <li class="nav-item">
-                        <a class="nav-link heading15" asp-controller="AllocatedStudent" asp-action="Index">AllocatedStudent</a>
+                        <a class="nav-link heading15"
+                           asp-controller="AllocatedStudent"
+                           asp-action="Index">
+                            AllocatedStudent
+                        </a>
                     </li>
                 }
 
+                @*
+        Competencies
+
+        Admin / Fulltime Supervisor / Parttime Supervisor:
+        يشاهدون جميع الطلاب ويستطيعون التعديل.
+
+        Student:
+        يشاهد Competencies الخاصة به فقط بدون تعديل.
+    *@
+                @if (
+                    role == "Admin"
+                    ||
+                    role == "Fulltime Supervisor"
+                    ||
+                    role == "Parttime Supervisor"
+                    ||
+                    role == "Student"
+                )
+                {
+                    <li class="nav-item">
+                        <a class="nav-link heading15"
+                           asp-controller="Competencies"
+                           asp-action="Index">
+                            Competencies
+                        </a>
+                    </li>
+                }
+
+                @* Admin Pages *@
                 @if (role == "Admin")
                 {
                     <li class="nav-item">
-                        <a class="nav-link heading15" asp-controller="AddNewUsers" asp-action="AddUser">AddUsers</a>
+                        <a class="nav-link heading15"
+                           asp-controller="AddNewUsers"
+                           asp-action="AddUser">
+                            AddUsers
+                        </a>
                     </li>
+
                     <li class="nav-item">
-                        <a class="nav-link heading15" asp-controller="SearchNewUsers" asp-action="SearchUsers">SearchUsers</a>
+                        <a class="nav-link heading15"
+                           asp-controller="SearchNewUsers"
+                           asp-action="SearchUsers">
+                            SearchUsers
+                        </a>
                     </li>
+
                     <li class="nav-item">
-                        <a class="nav-link heading15" asp-controller="UserNewTypes" asp-action="UserTypes">UserTypes</a>
+                        <a class="nav-link heading15"
+                           asp-controller="UserNewTypes"
+                           asp-action="UserTypes">
+                            UserTypes
+                        </a>
                     </li>
+
                     <li class="nav-item">
-                        <a class="nav-link heading15" asp-controller="AdminStatus" asp-action="AdminStatus">AdminStatus</a>
+                        <a class="nav-link heading15"
+                           asp-controller="AdminStatus"
+                           asp-action="AdminStatus">
+                            AdminStatus
+                        </a>
                     </li>
                 }
 
-                @* Approvals — بره الـ Admin block *@
-                @if (role == "Admin" || role == "Fulltime Supervisor" || role == "Parttime Supervisor")
+                @* Approvals *@
+                @if (
+                    role == "Admin"
+                    ||
+                    role == "Fulltime Supervisor"
+                    ||
+                    role == "Parttime Supervisor"
+                )
                 {
                     <li class="nav-item">
-                        <a class="nav-link heading15" asp-controller="AdminApprovals" asp-action="Index">
+                        <a class="nav-link heading15"
+                           asp-controller="AdminApprovals"
+                           asp-action="Index">
+
                             Approvals
+
                             @{
-                                var pendingCount = Context.RequestServices
-                                    .GetService<DentalCollegeManagementSystem_AAU.Data.AppDbContext>();
-                                int cnt = (pendingCount?.Visits.Count(v => v.AdminApprovalStatus == "Pending") ?? 0)
-                                        + (pendingCount?.TreatmentProcedures.Count(p => p.AdminApprovalStatus == "Pending") ?? 0)
-                                        + (pendingCount?.Orders.Count(o => o.AdminApprovalStatus == "Pending") ?? 0);
+                                var pendingCount =
+                                    Context.RequestServices
+                                        .GetService<
+                                            DentalCollegeManagementSystem_AAU.Data.AppDbContext
+                                        >();
+
+                                int cnt =
+                                    (
+                                        pendingCount?
+                                            .Visits
+                                            .Count(
+                                                visit =>
+                                                    visit.AdminApprovalStatus
+                                                        == "Pending"
+                                            )
+                                        ?? 0
+                                    )
+                                    +
+                                    (
+                                        pendingCount?
+                                            .TreatmentProcedures
+                                            .Count(
+                                                procedure =>
+                                                    procedure.AdminApprovalStatus
+                                                        == "Pending"
+                                            )
+                                        ?? 0
+                                    )
+                                    +
+                                    (
+                                        pendingCount?
+                                            .Orders
+                                            .Count(
+                                                order =>
+                                                    order.AdminApprovalStatus
+                                                        == "Pending"
+                                            )
+                                        ?? 0
+                                    );
+
                                 if (cnt > 0)
                                 {
-                                    <span style="background:#e53935; color:#fff; border-radius:20px;
-                                        padding:1px 8px; font-size:.7rem; font-weight:700; margin-left:4px;">
+                                    <span style="
+                                        background:#e53935;
+                                        color:#fff;
+                                        border-radius:20px;
+                                        padding:1px 8px;
+                                        font-size:.7rem;
+                                        font-weight:700;
+                                        margin-left:4px;">
                                         @cnt
                                     </span>
                                 }
@@ -144,7 +281,6 @@
                         </a>
                     </li>
                 }
-
             </ul>
         </div>
 
