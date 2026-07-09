@@ -116,144 +116,251 @@
             : 0;
 }
 
+
+<link rel="stylesheet" href="~/css/Site.css" />
+<link rel="stylesheet" href="~/css/RTE.css" />
+
 <style>
-    .comp-page {
-        max-width: 1250px;
-        margin: 30px auto;
-        padding: 0 18px;
+    :root {
+        --comp-blue: #252468;
+        --comp-blue-light: #eef0f8;
+        --comp-gold: #daa328;
+        --comp-pink: #c81589;
+        --comp-gray-bg: #e9e8e8;
+        --comp-border: #dddddd;
+        --comp-text: #333333;
+        --comp-muted: #777777;
+        --comp-success: #16a34a;
+        --comp-danger: #dc2626;
     }
 
-    .comp-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 16px;
-        flex-wrap: wrap;
-        margin-bottom: 20px;
+    .comp-page-wrapper {
+        width: 100%;
     }
 
-    .comp-title {
-        margin: 0;
-        color: #252468;
-        font-size: 25px;
-        font-weight: 800;
+    .comp-container {
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 0 15px;
     }
 
-    .comp-subtitle {
-        margin-top: 5px;
-        color: #848b99;
-        font-size: 13px;
+    /* ==============================
+           SEARCH AREA — مثل AllocatedStudent
+           ============================== */
+    .comp-search-band {
+        background: var(--comp-gray-bg);
+        width: 100vw;
+        position: relative;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+        padding: 30px 40px;
     }
 
-    .comp-role-badge {
-        display: inline-block;
-        padding: 7px 13px;
-        border: 1px solid #f0cf75;
-        border-radius: 20px;
-        background: #fff8e1;
-        color: #805d0b;
-        font-size: 11px;
-        font-weight: 800;
+    .comp-search-inner {
+        max-width: 1300px;
+        margin: 0 auto;
     }
 
-    .comp-alert {
-        margin-bottom: 18px;
-        border: 1px solid #ef9a9a;
-        border-radius: 8px;
-        padding: 11px 14px;
-        background: #fdecea;
-        color: #b71c1c;
-        font-size: 12px;
+    .comp-search-box {
+        background: #ffffff;
+        padding: 18px 20px;
     }
 
-    .comp-filter-card {
-        margin-bottom: 18px;
-        border: 1px solid #e0e4ee;
-        border-radius: 12px;
-        padding: 16px;
-        background: #fff;
-    }
-
-    .comp-filter-grid {
+    .comp-search-row {
         display: grid;
-        grid-template-columns: 1fr 220px auto;
-        gap: 12px;
-        align-items: end;
+        grid-template-columns: 190px minmax(0, 1fr);
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 16px;
     }
+
+        .comp-search-row:last-child {
+            margin-bottom: 0;
+        }
 
     .comp-label {
-        display: block;
-        margin-bottom: 6px;
-        color: #555d6c;
-        font-size: 12px;
-        font-weight: 700;
+        color: var(--comp-blue);
+        font-size: 13px;
+        font-weight: 600;
+        margin: 0;
     }
 
     .comp-input,
     .comp-select {
         width: 100%;
-        min-height: 42px;
+        min-height: 40px;
+        border: 1px solid var(--comp-border);
+        border-radius: 0;
+        background: #ffffff;
+        color: var(--comp-text);
+        padding: 8px 12px;
+        font-size: 13px;
         box-sizing: border-box;
-        border: 1px solid #cfd6e3;
-        border-radius: 8px;
-        padding: 9px 12px;
-        background: #fff;
-        color: #252468;
-        font-size: 13px;
+        outline: none;
     }
 
-    .comp-filter-btn {
-        min-height: 42px;
+        .comp-input:focus,
+        .comp-select:focus {
+            border-color: var(--comp-blue);
+            box-shadow: 0 0 0 2px rgba(37, 36, 104, .08);
+        }
+
+    .comp-search-button-wrap {
+        text-align: center;
+    }
+
+    .comp-search-button {
+        width: 90%;
+        margin-top: 3px;
         border: 0;
-        border-radius: 8px;
-        padding: 9px 24px;
-        background: #252468;
-        color: #fff;
-        font-size: 13px;
-        font-weight: 700;
+        background: var(--comp-pink);
+        color: #ffffff;
+        padding: 12px;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 1px;
         cursor: pointer;
+        transition: opacity .2s ease;
     }
 
-    .comp-student-table-card {
-        overflow: hidden;
-        border: 1px solid #e0e4ee;
-        border-radius: 12px;
-        background: #fff;
-        box-shadow: 0 4px 16px rgba(37, 36, 104, .05);
+        .comp-search-button:hover {
+            opacity: .9;
+        }
+
+    /* ==============================
+           COMMON CARDS
+           ============================== */
+    .comp-custom-card {
+        background: #ffffff;
+        border: 1px solid #e3e3e3;
+        padding: 22px;
+        box-shadow: 0 3px 14px rgba(37, 36, 104, .07);
+    }
+
+    .comp-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .comp-total-title {
+        color: rgb(38, 76, 159);
+        font-size: 17px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .comp-total-badge {
+        display: inline-block;
+        background: var(--comp-gold);
+        color: #ffffff;
+        padding: 4px 12px;
+        font-weight: 600;
+        margin-left: 5px;
+    }
+
+    .comp-role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #fff8e1;
+        color: #805d0b;
+        border: 1px solid #f0cf75;
+        padding: 5px 11px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .comp-alert {
+        margin-bottom: 16px;
+        background: #fdecea;
+        color: #b71c1c;
+        border: 1px solid #ef9a9a;
+        padding: 11px 14px;
+        font-size: 12px;
+    }
+
+    .comp-active-filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .comp-active-filter-title {
+        color: var(--comp-pink);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .comp-filter-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #e8eaf6;
+        color: var(--comp-blue);
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    /* ==============================
+           STUDENTS TABLE
+           ============================== */
+    .comp-table-responsive {
+        width: 100%;
+        overflow-x: auto;
     }
 
     .comp-table {
         width: 100%;
+        margin-bottom: 0;
         border-collapse: collapse;
         font-size: 13px;
     }
 
         .comp-table th {
-            padding: 13px 15px;
-            background: #252468;
-            color: #fff;
+            background: var(--comp-blue);
+            color: #ffffff;
+            border: 1px solid #dedede;
+            padding: 12px 14px;
             text-align: left;
-            font-weight: 700;
+            vertical-align: middle;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
         .comp-table td {
-            padding: 14px 15px;
-            border-bottom: 1px solid #edf0f5;
+            border: 1px solid #dedede;
+            padding: 12px 14px;
+            color: var(--comp-text);
             vertical-align: middle;
         }
 
+        .comp-table tbody tr:nth-child(odd) {
+            background: #fafafa;
+        }
+
         .comp-table tbody tr:hover {
-            background: #fafbff;
+            background: #f2f4fb;
         }
 
     .comp-student-name {
-        color: #252468;
-        font-weight: 800;
+        color: var(--comp-blue);
+        font-size: 14px;
+        font-weight: 700;
     }
 
     .comp-muted {
         margin-top: 3px;
-        color: #969ba6;
+        color: #8b8b8b;
         font-size: 11px;
     }
 
@@ -266,147 +373,185 @@
 
     .comp-progress-track {
         flex: 1;
-        height: 8px;
+        height: 9px;
         overflow: hidden;
         border-radius: 999px;
-        background: #e8ebf3;
+        background: #e5e7eb;
     }
 
     .comp-progress-fill {
         height: 100%;
         border-radius: 999px;
-        background: linear-gradient( 90deg, #252468, #6d62c7 );
+        background: linear-gradient(90deg, var(--comp-blue), var(--comp-gold));
+        transition: width .3s ease;
     }
 
     .comp-progress-text {
         min-width: 42px;
-        color: #252468;
-        font-weight: 800;
+        color: var(--comp-blue);
         text-align: right;
+        font-size: 12px;
+        font-weight: 700;
     }
 
     .comp-status {
         display: inline-block;
-        border-radius: 20px;
-        padding: 5px 10px;
+        border-radius: 4px;
+        padding: 3px 10px;
         font-size: 11px;
-        font-weight: 800;
+        font-weight: 700;
+        white-space: nowrap;
     }
 
     .comp-status-completed {
-        background: #e8f5e9;
-        color: #25733a;
+        background: #d1e7dd;
+        color: #0f5132;
+        border: 1px solid #a3cfbb;
     }
 
     .comp-status-progress {
-        background: #e8eaf6;
-        color: #252468;
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffc107;
     }
 
     .comp-status-new {
-        background: #f1f2f4;
-        color: #747b88;
-    }
-
-    .comp-open-btn,
-    .comp-back-btn {
-        display: inline-block;
-        border-radius: 7px;
-        padding: 7px 14px;
-        text-decoration: none !important;
-        font-size: 12px;
-        font-weight: 800;
+        background: #e2e3e5;
+        color: #383d41;
+        border: 1px solid #d6d8db;
     }
 
     .comp-open-btn {
-        background: #daa328;
-        color: #fff !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 0;
+        background: none;
+        color: #2563eb !important;
+        padding: 5px 6px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none !important;
+        cursor: pointer;
+    }
+
+        .comp-open-btn:hover {
+            color: var(--comp-pink) !important;
+        }
+
+    .comp-empty {
+        padding: 35px 15px;
+        color: #8e8e8e;
+        text-align: center;
+        font-size: 13px;
+    }
+
+    /* ==============================
+           STUDENT DETAILS
+           ============================== */
+    .comp-back-wrap {
+        margin-bottom: 14px;
     }
 
     .comp-back-btn {
-        border: 1px solid #d8dce6;
-        background: #fff;
-        color: #252468 !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--comp-blue);
+        background: #ffffff;
+        color: var(--comp-blue) !important;
+        padding: 7px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none !important;
     }
 
-    .comp-empty {
-        padding: 40px 20px;
-        color: #8f95a0;
-        text-align: center;
-    }
+        .comp-back-btn:hover {
+            background: var(--comp-blue);
+            color: #ffffff !important;
+        }
 
     .comp-profile-grid {
         display: grid;
-        grid-template-columns: 1fr 230px;
-        gap: 16px;
-        margin-bottom: 18px;
+        grid-template-columns: minmax(0, 1fr) 250px;
+        gap: 14px;
+        margin-bottom: 16px;
     }
 
-    .comp-card {
-        border: 1px solid #e0e4ee;
-        border-radius: 12px;
-        padding: 19px;
-        background: #fff;
-        box-shadow: 0 4px 16px rgba(37, 36, 104, .05);
+    .comp-profile-card,
+    .comp-progress-card {
+        border: 1px solid #dfe3ea;
+        background: #ffffff;
+        padding: 18px;
+    }
+
+    .comp-profile-card {
+        border-left: 5px solid var(--comp-gold);
     }
 
     .comp-profile-name {
-        color: #252468;
-        font-size: 21px;
-        font-weight: 800;
+        color: var(--comp-blue);
+        font-size: 19px;
+        font-weight: 700;
     }
 
     .comp-profile-meta {
-        margin-top: 7px;
-        color: #858b98;
+        margin-top: 8px;
+        color: #666666;
         font-size: 12px;
-        line-height: 1.8;
+        line-height: 1.9;
     }
 
     .comp-total-percentage {
-        color: #252468;
-        font-size: 34px;
-        font-weight: 900;
+        color: var(--comp-blue);
+        font-size: 33px;
+        font-weight: 800;
         text-align: center;
     }
 
-    .comp-total-label {
-        color: #8c929e;
+    .comp-total-label,
+    .comp-total-summary {
+        color: #777777;
         font-size: 11px;
         text-align: center;
     }
 
     .comp-total-summary {
-        margin-top: 9px;
-        color: #6c7380;
+        margin-top: 8px;
         font-size: 12px;
-        text-align: center;
     }
 
     .comp-readonly {
         margin-bottom: 16px;
         border: 1px solid #f0cf75;
-        border-radius: 9px;
-        padding: 12px 15px;
         background: #fff8e1;
         color: #805a00;
+        padding: 12px 15px;
         font-size: 12px;
         font-weight: 600;
     }
 
-    .comp-details-filters {
-        display: grid;
-        grid-template-columns: 1fr 220px;
-        gap: 12px;
+    .comp-details-filter-box {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        padding: 14px;
         margin-bottom: 16px;
     }
 
+    .comp-details-filters {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(220px, 1fr);
+        gap: 12px;
+    }
+
+    /* ==============================
+           COMPETENCY CATEGORIES
+           ============================== */
     .comp-category {
         overflow: hidden;
-        margin-bottom: 14px;
-        border: 1px solid #e0e4ee;
-        border-radius: 11px;
-        background: #fff;
+        margin-bottom: 12px;
+        border: 1px solid #dfe3ea;
+        background: #ffffff;
     }
 
     .comp-category-header {
@@ -414,28 +559,37 @@
         justify-content: space-between;
         align-items: center;
         gap: 14px;
-        padding: 13px 16px;
-        background: #f7f8fc;
+        padding: 12px 16px;
+        background: #f8fafc;
+        border-left: 5px solid var(--comp-gold);
         cursor: pointer;
     }
 
+        .comp-category-header:hover {
+            background: #f1f3f8;
+        }
+
     .comp-category-title {
-        color: #252468;
-        font-size: 13px;
-        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--comp-blue);
+        font-size: 14px;
+        font-weight: 700;
     }
 
     .comp-category-stat {
+        display: inline-block;
+        background: var(--comp-blue);
+        color: #ffffff;
         border-radius: 20px;
-        padding: 4px 10px;
-        background: #252468;
-        color: #fff;
+        padding: 3px 10px;
         font-size: 10px;
-        font-weight: 800;
+        font-weight: 700;
     }
 
     .comp-items {
-        border-top: 1px solid #e9ecf2;
+        border-top: 1px solid #e5e7eb;
     }
 
     .comp-item {
@@ -443,8 +597,8 @@
         justify-content: space-between;
         align-items: center;
         gap: 16px;
-        padding: 12px 17px;
-        border-bottom: 1px solid #edf0f5;
+        padding: 11px 16px;
+        border-bottom: 1px solid #ececec;
     }
 
         .comp-item:last-child {
@@ -452,13 +606,14 @@
         }
 
         .comp-item:hover {
-            background: #fafbff;
+            background: #fafafa;
         }
 
     .comp-item-left {
         display: flex;
         align-items: center;
         gap: 12px;
+        min-width: 0;
     }
 
     .comp-circle {
@@ -468,9 +623,9 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        border: 2px solid #c8cfe0;
+        border: 2px solid #bcc4d1;
         border-radius: 50%;
-        background: #fff;
+        background: #ffffff;
     }
 
         .comp-circle.editable {
@@ -478,13 +633,13 @@
         }
 
             .comp-circle.editable:hover {
-                border-color: #252468;
-                background: #f0f1fa;
+                border-color: var(--comp-blue);
+                background: var(--comp-blue-light);
             }
 
         .comp-circle.done {
-            border-color: #27ae60;
-            background: #27ae60;
+            border-color: var(--comp-success);
+            background: var(--comp-success);
         }
 
             .comp-circle.done::after {
@@ -492,24 +647,24 @@
                 width: 6px;
                 height: 10px;
                 display: block;
-                border: 2px solid #fff;
+                border: 2px solid #ffffff;
                 border-top: 0;
                 border-left: 0;
                 transform: rotate(45deg) translateY(-1px);
             }
 
     .comp-item-name {
-        color: #333a47;
+        color: #333333;
         font-size: 13px;
         font-weight: 600;
     }
 
         .comp-item-name.done {
-            color: #777d88;
+            color: #777777;
         }
 
     .comp-item-meta {
-        color: #9a9fab;
+        color: #999999;
         font-size: 10px;
         text-align: right;
         white-space: nowrap;
@@ -523,48 +678,50 @@
     }
 
     @@media (max-width: 900px) {
-        .comp-filter-grid,
+        .comp-search-band {
+            padding: 25px 15px;
+        }
+
+        .comp-search-row,
         .comp-profile-grid,
         .comp-details-filters {
             grid-template-columns: 1fr;
         }
 
-        .comp-student-table-card {
-            overflow-x: auto;
+        .comp-search-button {
+            width: 100%;
         }
 
         .comp-table {
-            min-width: 800px;
+            min-width: 820px;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .comp-custom-card {
+            padding: 14px;
+        }
+
+        .comp-item {
+            align-items: flex-start;
+        }
+
+        .comp-item-meta {
+            white-space: normal;
         }
     }
 </style>
 
-<div class="comp-page">
 
-    <div class="comp-header">
-        <div>
-            <h1 class="comp-title">
-                Student Competencies
-            </h1>
-
-            <div class="comp-subtitle">
-                Competencies are recorded once for each student.
-            </div>
-        </div>
-
-        <span class="comp-role-badge">
-            @(
-                canEdit
-                    ? "Admin / Supervisor Edit"
-                    : "Student View Only"
-            )
-        </span>
-    </div>
+<div class="comp-page-wrapper">
 
     @if (TempData["CompetencyError"] != null)
     {
-        <div class="comp-alert">
-            @TempData["CompetencyError"]
+        <div class="comp-container">
+            <div class="comp-alert">
+                <i class="fa-solid fa-circle-exclamation me-1"></i>
+                @TempData["CompetencyError"]
+            </div>
         </div>
     }
 
@@ -574,491 +731,670 @@
         selectedStudent == null
     )
     {
-        <form asp-controller="Competencies"
-              asp-action="Index"
-              method="get"
-              class="comp-filter-card">
+        <!-- ═════════ SEARCH ═════════ -->
+        <div class="comp-search-band">
+            <div class="comp-search-inner">
 
-            <div class="comp-filter-grid">
-                <div>
-                    <label class="comp-label">
-                        Search Student
-                    </label>
+                <section id="title-wrapper"
+                         style="justify-content:flex-start;">
 
-                    <input type="text"
-                           name="search"
-                           value="@search"
-                           class="comp-input"
-                           placeholder="Name, username, or email..." />
-                </div>
+                    <div class="lineright"
+                         style="display:block;
+                        background-color:#daa328;
+                        max-width:650px;">
+                    </div>
 
-                <div>
-                    <label class="comp-label">
-                        Completion Status
-                    </label>
+                    <h1 class="sectiontitle heading6">
+                        <p style="text-align:left;">
+                            <span style="color:#252468;">
+                                SEARCH
+                            </span>
+                        </p>
+                    </h1>
+                </section>
 
-                    <select name="status"
-                            class="comp-select">
+                <br />
 
-                        @if (status == "all")
-                        {
-                            <option value="all" selected>
-                                All Students
-                            </option>
-                        }
-                        else
-                        {
-                            <option value="all">
-                                All Students
-                            </option>
-                        }
+                <form asp-controller="Competencies"
+                      asp-action="Index"
+                      method="get">
 
-                        @if (status == "completed")
-                        {
-                            <option value="completed" selected>
-                                Completed
-                            </option>
-                        }
-                        else
-                        {
-                            <option value="completed">
-                                Completed
-                            </option>
-                        }
+                    <div class="comp-search-box">
+                        <div class="comp-search-row">
+                            <label class="comp-label">
+                                Search Student
+                            </label>
 
-                        @if (status == "inprogress")
-                        {
-                            <option value="inprogress" selected>
-                                In Progress
-                            </option>
-                        }
-                        else
-                        {
-                            <option value="inprogress">
-                                In Progress
-                            </option>
-                        }
+                            <input type="text"
+                                   name="search"
+                                   value="@search"
+                                   class="comp-input"
+                                   placeholder="Name, username, or email..." />
+                        </div>
 
-                        @if (status == "notstarted")
-                        {
-                            <option value="notstarted" selected>
-                                Not Started
-                            </option>
-                        }
-                        else
-                        {
-                            <option value="notstarted">
-                                Not Started
-                            </option>
-                        }
-                    </select>
-                </div>
+                        <div class="comp-search-row">
+                            <label class="comp-label">
+                                Completion Status
+                            </label>
 
-                <button type="submit"
-                        class="comp-filter-btn">
-                    Apply Filters
-                </button>
+                            <select name="status"
+                                    class="comp-select">
+
+                                @if (status == "all")
+                                {
+                                    <option value="all" selected>
+                                        All Students
+                                    </option>
+                                }
+                                else
+                                {
+                                    <option value="all">
+                                        All Students
+                                    </option>
+                                }
+
+                                @if (status == "completed")
+                                {
+                                    <option value="completed" selected>
+                                        Completed
+                                    </option>
+                                }
+                                else
+                                {
+                                    <option value="completed">
+                                        Completed
+                                    </option>
+                                }
+
+                                @if (status == "inprogress")
+                                {
+                                    <option value="inprogress" selected>
+                                        In Progress
+                                    </option>
+                                }
+                                else
+                                {
+                                    <option value="inprogress">
+                                        In Progress
+                                    </option>
+                                }
+
+                                @if (status == "notstarted")
+                                {
+                                    <option value="notstarted" selected>
+                                        Not Started
+                                    </option>
+                                }
+                                else
+                                {
+                                    <option value="notstarted">
+                                        Not Started
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="comp-search-button-wrap">
+                        <button type="submit"
+                                class="comp-search-button">
+                            Search
+                            &nbsp;
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
 
-        <div class="comp-student-table-card">
-            @if (!students.Any())
-            {
-                <div class="comp-empty">
-                    No students match the selected filters.
-                </div>
-            }
-            else
-            {
-                <table class="comp-table">
-                    <thead>
-                        <tr>
-                            <th>Student</th>
-                            <th>Username</th>
-                            <th>Progress</th>
-                            <th>Status</th>
-                            <th style="text-align:center;">
-                                Action
-                            </th>
-                        </tr>
-                    </thead>
+        <br />
 
-                    <tbody>
-                        @foreach (var student in students)
+        <!-- ═════════ STUDENTS TABLE ═════════ -->
+        <div class="page-wrapper">
+            <div class="container">
+
+                <section id="title-wrapper"
+                         style="justify-content:End;">
+
+                    <div class="lineleft"></div>
+
+                    <h1 class="sectiontitle heading6">
+                        <p style="text-align:center;">
+                            <span style="color:#252468;">
+                                STUDENT COMPETENCIES
+                            </span>
+                        </p>
+                    </h1>
+
+                    <div class="lineright"
+                         style="display:block;
+                        background-color:#daa328;">
+                    </div>
+                </section>
+
+                <br />
+
+                <div class="comp-custom-card">
+
+                    <div class="comp-card-header">
+                        <h5 class="comp-total-title">
+                            Total Students
+                            <span class="comp-total-badge">
+                                @students.Count
+                            </span>
+                        </h5>
+
+                        <span class="comp-role-badge">
+                            <i class="fa-solid fa-user-shield"></i>
+                            Admin / Supervisor Edit
+                        </span>
+                    </div>
+
+                    @if (
+                        !string.IsNullOrWhiteSpace(search)
+                        ||
+                        status != "all"
+                    )
+                    {
+                        <div class="comp-active-filters">
+                            <span class="comp-active-filter-title">
+                                Active filters:
+                            </span>
+
+                            @if (
+                                !string.IsNullOrWhiteSpace(search)
+                            )
+                            {
+                                <span class="comp-filter-tag">
+                                    <i class="fa-solid fa-user"></i>
+                                    @search
+                                </span>
+                            }
+
+                            @if (status != "all")
+                            {
+                                <span class="comp-filter-tag">
+                                    <i class="fa-solid fa-filter"></i>
+                                    @(
+                                        status == "completed"
+                                            ? "Completed"
+                                            : status == "inprogress"
+                                                ? "In Progress"
+                                                : "Not Started"
+                                    )
+                                </span>
+                            }
+                        </div>
+                    }
+
+                    <div class="comp-table-responsive">
+                        @if (!students.Any())
                         {
-                            int completedCount =
-                                completedCountByStudent
-                                    .TryGetValue(
-                                        student.UserID,
-                                        out int savedCount
-                                    )
-                                        ? Math.Min(
-                                            savedCount,
-                                            totalTemplates
-                                        )
-                                        : 0;
-
-                            int percentage =
-                                totalTemplates > 0
-                                    ? (int)Math.Round(
-                                        (double)completedCount
-                                        / totalTemplates
-                                        * 100
-                                    )
-                                    : 0;
-
-                            string statusText =
-                                completedCount <= 0
-                                    ? "Not Started"
-                                    : (
-                                        totalTemplates > 0
-                                        &&
-                                        completedCount
-                                            >= totalTemplates
-                                    )
-                                        ? "Completed"
-                                        : "In Progress";
-
-                            string statusClass =
-                                statusText == "Completed"
-                                    ? "comp-status-completed"
-                                    : statusText == "In Progress"
-                                        ? "comp-status-progress"
-                                        : "comp-status-new";
-
-                            <tr>
-                                <td>
-                                    <div class="comp-student-name">
-                                        @(
-                                            string.IsNullOrWhiteSpace(
-                                                student.FullName
-                                            )
-                                                ? student.Username
-                                                : student.FullName
-                                        )
-                                    </div>
-
-                                    <div class="comp-muted">
-                                        @(
-                                            string.IsNullOrWhiteSpace(
-                                                student.Email
-                                            )
-                                                ? "No email"
-                                                : student.Email
-                                        )
-                                    </div>
-                                </td>
-
-                                <td>
-                                    @student.Username
-                                </td>
-
-                                <td>
-                                    <div class="comp-progress-row">
-                                        <div class="comp-progress-track">
-                                            <div class="comp-progress-fill"
-                                                 style="width:@percentage%;">
-                                            </div>
-                                        </div>
-
-                                        <span class="comp-progress-text">
-                                            @percentage%
-                                        </span>
-                                    </div>
-
-                                    <div class="comp-muted">
-                                        @completedCount / @totalTemplates
-                                    </div>
-                                </td>
-
-                                <td>
-                                    <span class="comp-status @statusClass">
-                                        @statusText
-                                    </span>
-                                </td>
-
-                                <td style="text-align:center;">
-                                    <a class="comp-open-btn"
-                                       asp-controller="Competencies"
-                                       asp-action="Index"
-                                       asp-route-studentId="@student.UserID"
-                                       asp-route-search="@search"
-                                       asp-route-status="@status">
-                                        View &amp; Manage
-                                    </a>
-                                </td>
-                            </tr>
+                            <div class="comp-empty">
+                                <i class="fa-solid fa-circle-exclamation me-2"></i>
+                                No students match the selected filters.
+                            </div>
                         }
-                    </tbody>
-                </table>
-            }
+                        else
+                        {
+                            <table class="comp-table">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Username</th>
+                                        <th>Progress</th>
+                                        <th>Status</th>
+                                        <th style="text-align:center;">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @foreach (var student in students)
+                                    {
+                                        int completedCount =
+                                            completedCountByStudent
+                                                .TryGetValue(
+                                                    student.UserID,
+                                                    out int savedCount
+                                                )
+                                                    ? Math.Min(
+                                                        savedCount,
+                                                        totalTemplates
+                                                    )
+                                                    : 0;
+
+                                        int percentage =
+                                            totalTemplates > 0
+                                                ? (int)Math.Round(
+                                                    (double)completedCount
+                                                    / totalTemplates
+                                                    * 100
+                                                )
+                                                : 0;
+
+                                        string statusText =
+                                            completedCount <= 0
+                                                ? "Not Started"
+                                                : (
+                                                    totalTemplates > 0
+                                                    &&
+                                                    completedCount
+                                                        >= totalTemplates
+                                                )
+                                                    ? "Completed"
+                                                    : "In Progress";
+
+                                        string statusClass =
+                                            statusText == "Completed"
+                                                ? "comp-status-completed"
+                                                : statusText == "In Progress"
+                                                    ? "comp-status-progress"
+                                                    : "comp-status-new";
+
+                                        <tr>
+                                            <td>
+                                                <div class="comp-student-name">
+                                                    @(
+                                                        string.IsNullOrWhiteSpace(
+                                                            student.FullName
+                                                        )
+                                                            ? student.Username
+                                                            : student.FullName
+                                                    )
+                                                </div>
+
+                                                <div class="comp-muted">
+                                                    @(
+                                                        string.IsNullOrWhiteSpace(
+                                                            student.Email
+                                                        )
+                                                            ? "No email"
+                                                            : student.Email
+                                                    )
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                @student.Username
+                                            </td>
+
+                                            <td>
+                                                <div class="comp-progress-row">
+                                                    <div class="comp-progress-track">
+                                                        <div class="comp-progress-fill"
+                                                             style="width:@percentage%;">
+                                                        </div>
+                                                    </div>
+
+                                                    <span class="comp-progress-text">
+                                                        @percentage%
+                                                    </span>
+                                                </div>
+
+                                                <div class="comp-muted">
+                                                    @completedCount / @totalTemplates
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                <span class="comp-status @statusClass">
+                                                    @statusText
+                                                </span>
+                                            </td>
+
+                                            <td style="text-align:center;
+                                                white-space:nowrap;">
+
+                                                <a class="comp-open-btn"
+                                                   asp-controller="Competencies"
+                                                   asp-action="Index"
+                                                   asp-route-studentId="@student.UserID"
+                                                   asp-route-search="@search"
+                                                   asp-route-status="@status">
+
+                                                    <i class="fa-solid fa-list-check"></i>
+                                                    View &amp; Manage
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+            </div>
         </div>
     }
     else if (selectedStudent != null)
     {
-        @if (!isStudent)
-        {
-            <div style="margin-bottom:14px;">
-                <a class="comp-back-btn"
-                   asp-controller="Competencies"
-                   asp-action="Index"
-                   asp-route-search="@search"
-                   asp-route-status="@status">
-                    ← Back to Students
-                </a>
-            </div>
-        }
+        <!-- ═════════ COMPETENCY DETAILS ═════════ -->
+        <div class="page-wrapper">
+            <div class="container">
 
-        <div class="comp-profile-grid">
-            <div class="comp-card">
-                <div class="comp-profile-name">
-                    @(
-                        string.IsNullOrWhiteSpace(
-                            selectedStudent.FullName
-                        )
-                            ? selectedStudent.Username
-                            : selectedStudent.FullName
-                    )
-                </div>
+                <section id="title-wrapper"
+                         style="justify-content:End;">
 
-                <div class="comp-profile-meta">
-                    <div>
-                        Username:
-                        <strong>
-                            @selectedStudent.Username
-                        </strong>
+                    <div class="lineleft"></div>
+
+                    <h1 class="sectiontitle heading6">
+                        <p style="text-align:center;">
+                            <span style="color:#252468;">
+                                COMPETENCY DETAILS
+                            </span>
+                        </p>
+                    </h1>
+
+                    <div class="lineright"
+                         style="display:block;
+                        background-color:#daa328;">
                     </div>
+                </section>
 
-                    <div>
-                        Email:
-                        <strong>
-                            @(
-                                string.IsNullOrWhiteSpace(
-                                    selectedStudent.Email
-                                )
-                                    ? "---"
-                                    : selectedStudent.Email
-                            )
-                        </strong>
-                    </div>
-                </div>
-            </div>
+                <br />
 
-            <div class="comp-card">
-                <div id="comp-total-percentage"
-                     class="comp-total-percentage">
-                    @selectedPercentage%
-                </div>
-
-                <div class="comp-total-label">
-                    Overall Completion
-                </div>
-
-                <div class="comp-progress-track"
-                     style="margin-top:12px;">
-                    <div id="comp-total-progress"
-                         class="comp-progress-fill"
-                         style="width:@selectedPercentage%;">
-                    </div>
-                </div>
-
-                <div class="comp-total-summary">
-                    <span id="comp-total-completed">
-                        @selectedCompletedCount
-                    </span>
-                    of
-                    <span id="comp-total-items">
-                        @totalTemplates
-                    </span>
-                    completed
-                </div>
-            </div>
-        </div>
-
-        @if (!canEdit)
-        {
-            <div class="comp-readonly">
-                🔒 You can review your competencies only.
-                Admin or Supervisor can update them.
-            </div>
-        }
-
-        <div class="comp-details-filters">
-            <select id="comp-category-filter"
-                    class="comp-select"
-                    onchange="applyCompetencyFilters()">
-
-                <option value="all">
-                    All Categories
-                </option>
-
-                @foreach (var category in categories)
+                @if (!isStudent)
                 {
-                    string categoryKey =
-                        category.Key.CategoryName
-                            .Replace(" ", "-")
-                            .ToLowerInvariant();
+                    <div class="comp-back-wrap">
+                        <a class="comp-back-btn"
+                           asp-controller="Competencies"
+                           asp-action="Index"
+                           asp-route-search="@search"
+                           asp-route-status="@status">
 
-                    <option value="@categoryKey">
-                        @category.Key.CategoryName
-                    </option>
+                            <i class="fa-solid fa-arrow-left"></i>
+                            Back to Students
+                        </a>
+                    </div>
                 }
-            </select>
 
-            <select id="comp-status-filter"
-                    class="comp-select"
-                    onchange="applyCompetencyFilters()">
+                <div class="comp-custom-card">
 
-                <option value="all">
-                    All Statuses
-                </option>
+                    <div class="comp-card-header">
+                        <h5 class="comp-total-title">
+                            Student Competencies
+                        </h5>
 
-                <option value="completed">
-                    Completed
-                </option>
-
-                <option value="incomplete">
-                    Incomplete
-                </option>
-            </select>
-        </div>
-
-        <div id="comp-categories">
-            @foreach (var category in categories)
-            {
-                string categoryKey =
-                    category.Key.CategoryName
-                        .Replace(" ", "-")
-                        .ToLowerInvariant();
-
-                int categoryTotal =
-                    category.Count();
-
-                int categoryCompleted =
-                    category.Count(
-                        item =>
-                            recordsByTemplate
-                                .TryGetValue(
-                                    item.CompetencyID,
-                                    out Competency? saved
-                                )
-                            &&
-                            saved.IsCompleted
-                    );
-
-                int categoryPercentage =
-                    categoryTotal > 0
-                        ? (int)Math.Round(
-                            (double)categoryCompleted
-                            / categoryTotal
-                            * 100
-                        )
-                        : 0;
-
-                <div class="comp-category"
-                     data-category="@categoryKey">
-
-                    <div class="comp-category-header"
-                         onclick="toggleCategory('@categoryKey')">
-
-                        <span class="comp-category-title">
-                            @category.Key.CategoryName
-                        </span>
-
-                        <span id="comp-badge-@categoryKey"
-                              class="comp-category-stat">
-                            @categoryCompleted/@categoryTotal
-                            &nbsp; @categoryPercentage%
+                        <span class="comp-role-badge">
+                            <i class="fa-solid @(canEdit ? "fa-pen-to-square" : "fa-eye")"></i>
+                            @(
+                                canEdit
+                                    ? "Admin / Supervisor Edit"
+                                    : "Student View Only"
+                            )
                         </span>
                     </div>
 
-                    <div id="comp-items-@categoryKey"
-                         class="comp-items">
+                    <div class="comp-profile-grid">
+                        <div class="comp-profile-card">
+                            <div class="comp-profile-name">
+                                @(
+                                    string.IsNullOrWhiteSpace(
+                                        selectedStudent.FullName
+                                    )
+                                        ? selectedStudent.Username
+                                        : selectedStudent.FullName
+                                )
+                            </div>
 
-                        @foreach (
-                            var item in
-                            category.OrderBy(
-                                competency =>
-                                    competency.ItemOrder
-                            )
-                        )
+                            <div class="comp-profile-meta">
+                                <div>
+                                    <strong>Username:</strong>
+                                    @selectedStudent.Username
+                                </div>
+
+                                <div>
+                                    <strong>Email:</strong>
+                                    @(
+                                        string.IsNullOrWhiteSpace(
+                                            selectedStudent.Email
+                                        )
+                                            ? "---"
+                                            : selectedStudent.Email
+                                    )
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="comp-progress-card">
+                            <div id="comp-total-percentage"
+                                 class="comp-total-percentage">
+                                @selectedPercentage%
+                            </div>
+
+                            <div class="comp-total-label">
+                                Overall Completion
+                            </div>
+
+                            <div class="comp-progress-track"
+                                 style="margin-top:12px;">
+                                <div id="comp-total-progress"
+                                     class="comp-progress-fill"
+                                     style="width:@selectedPercentage%;">
+                                </div>
+                            </div>
+
+                            <div class="comp-total-summary">
+                                <span id="comp-total-completed">
+                                    @selectedCompletedCount
+                                </span>
+                                of
+                                <span id="comp-total-items">
+                                    @totalTemplates
+                                </span>
+                                completed
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!canEdit)
+                    {
+                        <div class="comp-readonly">
+                            <i class="fa-solid fa-lock me-1"></i>
+                            You can review your competencies only.
+                            Admin or Supervisor can update them.
+                        </div>
+                    }
+
+                    <div class="comp-details-filter-box">
+                        <div class="comp-details-filters">
+                            <div>
+                                <label class="comp-label">
+                                    Category
+                                </label>
+
+                                <select id="comp-category-filter"
+                                        class="comp-select"
+                                        onchange="applyCompetencyFilters()">
+
+                                    <option value="all">
+                                        All Categories
+                                    </option>
+
+                                    @foreach (var category in categories)
+                                    {
+                                        string categoryKey =
+                                            category.Key.CategoryName
+                                                .Replace(" ", "-")
+                                                .ToLowerInvariant();
+
+                                        <option value="@categoryKey">
+                                            @category.Key.CategoryName
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="comp-label">
+                                    Completion Status
+                                </label>
+
+                                <select id="comp-status-filter"
+                                        class="comp-select"
+                                        onchange="applyCompetencyFilters()">
+
+                                    <option value="all">
+                                        All Statuses
+                                    </option>
+
+                                    <option value="completed">
+                                        Completed
+                                    </option>
+
+                                    <option value="incomplete">
+                                        Incomplete
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="comp-categories">
+                        @foreach (var category in categories)
                         {
-                            recordsByTemplate
-                                .TryGetValue(
-                                    item.CompetencyID,
-                                    out Competency? record
+                            string categoryKey =
+                                category.Key.CategoryName
+                                    .Replace(" ", "-")
+                                    .ToLowerInvariant();
+
+                            int categoryTotal =
+                                category.Count();
+
+                            int categoryCompleted =
+                                category.Count(
+                                    item =>
+                                        recordsByTemplate
+                                            .TryGetValue(
+                                                item.CompetencyID,
+                                                out Competency? saved
+                                            )
+                                        &&
+                                        saved.IsCompleted
                                 );
 
-                            bool completed =
-                                record?.IsCompleted
-                                == true;
+                            int categoryPercentage =
+                                categoryTotal > 0
+                                    ? (int)Math.Round(
+                                        (double)categoryCompleted
+                                        / categoryTotal
+                                        * 100
+                                    )
+                                    : 0;
 
-                            string clickAction =
-                                canEdit
-                                    ? $"toggleCompetency({selectedStudent.UserID}, {item.CompetencyID})"
-                                    : string.Empty;
+                            <div class="comp-category"
+                                 data-category="@categoryKey">
 
-                            <div class="comp-item"
-                                 id="comp-row-@item.CompetencyID"
-                                 data-category="@categoryKey"
-                                 data-status="@(completed ? "completed" : "incomplete")">
+                                <div class="comp-category-header"
+                                     onclick="toggleCategory('@categoryKey')">
 
-                                <div class="comp-item-left">
-                                    <div id="comp-circle-@item.CompetencyID"
-                                         class="comp-circle @(completed ? "done" : "") @(canEdit ? "editable" : "")"
-                                         onclick="@clickAction"
-                                         title="@(canEdit ? "Click to update" : "View only")">
-                                    </div>
+                                    <span class="comp-category-title">
+                                        <i class="fa-solid fa-list-check"></i>
+                                        @category.Key.CategoryName
+                                    </span>
 
-                                    <span id="comp-name-@item.CompetencyID"
-                                          class="comp-item-name @(completed ? "done" : "")">
-                                        @item.ItemName
+                                    <span id="comp-badge-@categoryKey"
+                                          class="comp-category-stat">
+
+                                        @categoryCompleted/@categoryTotal
+                                        &nbsp;
+                                        @categoryPercentage%
                                     </span>
                                 </div>
 
-                                <div id="comp-meta-@item.CompetencyID"
-                                     class="comp-item-meta">
+                                <div id="comp-items-@categoryKey"
+                                     class="comp-items">
 
-                                    @if (completed)
-                                    {
-                                        <div>
-                                            @record?.CompletedDate?
-                                            .ToString(
-                                            "yyyy-MM-dd"
-                                            )
-                                        </div>
-
-                                        @if (
-                                            !string.IsNullOrWhiteSpace(
-                                                record?.UpdatedBy
-                                            )
+                                    @foreach (
+                                        var item in
+                                        category.OrderBy(
+                                            competency =>
+                                                competency.ItemOrder
                                         )
-                                        {
-                                            <div>
-                                                by @record?.UpdatedBy
-                                            </div>
-                                        }
-                                    }
-                                    else
+                                    )
                                     {
-                                        <span>
-                                            Not completed
-                                        </span>
+                                        recordsByTemplate
+                                            .TryGetValue(
+                                                item.CompetencyID,
+                                                out Competency? record
+                                            );
+
+                                        bool completed =
+                                            record?.IsCompleted
+                                            == true;
+
+                                        string clickAction =
+                                            canEdit
+                                                ? $"toggleCompetency({selectedStudent.UserID}, {item.CompetencyID})"
+                                                : string.Empty;
+
+                                        <div class="comp-item"
+                                             id="comp-row-@item.CompetencyID"
+                                             data-category="@categoryKey"
+                                             data-status="@(completed ? "completed" : "incomplete")">
+
+                                            <div class="comp-item-left">
+                                                <div id="comp-circle-@item.CompetencyID"
+                                                     class="comp-circle @(completed ? "done" : "") @(canEdit ? "editable" : "")"
+                                                     onclick="@clickAction"
+                                                     title="@(canEdit ? "Click to update" : "View only")">
+                                                </div>
+
+                                                <span id="comp-name-@item.CompetencyID"
+                                                      class="comp-item-name @(completed ? "done" : "")">
+
+                                                    @item.ItemName
+                                                </span>
+                                            </div>
+
+                                            <div id="comp-meta-@item.CompetencyID"
+                                                 class="comp-item-meta">
+
+                                                @if (completed)
+                                                {
+                                                    <div>
+                                                        @record?.CompletedDate?
+                                                        .ToString(
+                                                        "yyyy-MM-dd"
+                                                        )
+                                                    </div>
+
+                                                    @if (
+                                                        !string.IsNullOrWhiteSpace(
+                                                            record?.UpdatedBy
+                                                        )
+                                                    )
+                                                    {
+                                                        <div>
+                                                            by @record?.UpdatedBy
+                                                        </div>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span>
+                                                        Not completed
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
                                     }
                                 </div>
                             </div>
                         }
                     </div>
+
+                    <div id="comp-no-results"
+                         class="comp-no-results">
+                        No competencies match the selected filters.
+                    </div>
+
+                    @Html.AntiForgeryToken()
                 </div>
-            }
+            </div>
         </div>
-
-        <div id="comp-no-results"
-             class="comp-no-results">
-            No competencies match the selected filters.
-        </div>
-
-        @Html.AntiForgeryToken()
     }
 </div>
 
