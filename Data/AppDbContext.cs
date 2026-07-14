@@ -91,6 +91,36 @@ namespace DentalCollegeManagementSystem_AAU.Data
             base.OnModelCreating(modelBuilder);
 
             // =====================================================
+            // Student Note Approval Workflow
+            // =====================================================
+
+            modelBuilder.Entity<Note>()
+                .Property(note => note.ApprovalStatus)
+                .HasMaxLength(20)
+                .HasDefaultValue("Approved");
+
+            modelBuilder.Entity<Note>()
+                .Property(note => note.CreatedByRole)
+                .HasMaxLength(50)
+                .HasDefaultValue("Unknown");
+
+            modelBuilder.Entity<Note>()
+                .HasOne(note => note.Visit)
+                .WithMany()
+                .HasForeignKey(note => note.VisitId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Note>()
+                .HasIndex(
+                    note =>
+                        new
+                        {
+                            note.VisitId,
+                            note.ApprovalStatus
+                        }
+                );
+
+            // =====================================================
             // Dental Chart Indexes
             // =====================================================
 

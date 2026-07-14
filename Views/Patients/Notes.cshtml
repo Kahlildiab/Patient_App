@@ -13,6 +13,29 @@
     string currentNoteRole =
         Context.Session.GetString("UserRole") ?? "";
 
+    string currentUserName =
+        Context.Session.GetString("FullName")
+        ?? Context.Session.GetString("UserName")
+        ?? Context.Session.GetString("Username")
+        ?? "Unknown";
+
+    bool isStudent =
+        string.Equals(
+            currentNoteRole,
+            "Student",
+            StringComparison.OrdinalIgnoreCase
+        );
+
+    int? currentVisitId =
+        ViewBag.CurrentVisitId == null
+            ? null
+            : (int?)ViewBag.CurrentVisitId;
+
+    bool hasUnapprovedStudentNotes =
+        ViewBag.HasUnapprovedStudentNotes != null
+        &&
+        (bool)ViewBag.HasUnapprovedStudentNotes;
+
     bool isAdmin =
         string.Equals(
             currentNoteRole,
@@ -278,6 +301,61 @@
         font-size: .88rem;
         font-weight: 700;
     }
+
+    .vt-approval-warning {
+        background: #fff8e1;
+        color: #8a5b00;
+        border: 1px solid #f2cf72;
+        border-radius: 6px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        font-size: .88rem;
+        font-weight: 700;
+    }
+
+    .vt-status-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 20px;
+        padding: 4px 11px;
+        font-size: .72rem;
+        font-weight: 800;
+    }
+
+    .vt-status-pending {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffe69c;
+    }
+
+    .vt-status-approved {
+        background: #d1e7dd;
+        color: #0f5132;
+        border: 1px solid #a3cfbb;
+    }
+
+    .vt-status-rejected {
+        background: #f8d7da;
+        color: #842029;
+        border: 1px solid #f1aeb5;
+    }
+
+    .vt-rejection-reason {
+        margin-top: 12px;
+        padding: 10px 12px;
+        background: #fff1f2;
+        color: #9f1239;
+        border-right: 4px solid #e11d48;
+        font-size: .82rem;
+        font-weight: 700;
+        white-space: pre-wrap;
+    }
+
+    .vt-end-visit-btn:disabled {
+        background: #9e9e9e;
+        cursor: not-allowed;
+        opacity: .75;
+    }
 </style>
 
 <div class="vt-container">
@@ -312,39 +390,69 @@
         </div>
     }
 
+    @if (!isReadOnly && hasUnapprovedStudentNotes)
+    {
+        <div class="vt-approval-warning">
+            ⏳ End Visit is disabled until all student notes for the
+            current visit are approved. A rejected note must be edited
+            and submitted again.
+        </div>
+    }
+
     @if (!isReadOnly)
     {
         <div class="vt-top-actions">
 
-            @if (!isReadOnly)
-            {
-                <!-- End Current Visit -->
-                <form asp-controller="Visits"
-                      asp-action="EndCurrentVisit"
-                      method="post"
-                      class="m-0 p-0">
+            <!-- End Current Visit -->
+            <form asp-controller="Visits"
+                  asp-action="EndCurrentVisit"
+                  method="post"
+                  class="m-0 p-0">
 
-                    @Html.AntiForgeryToken()
+                @Html.AntiForgeryToken()
 
-                    <input type="hidden"
-                           name="patientId"
-                           value="@Model.PatientID" />
+                <input type="hidden"
+                       name="patientId"
+                       value="@Model.PatientID" />
 
+                @if (hasUnapprovedStudentNotes)
+                {
+                    <button type="button"
+                            class="vt-end-visit-btn"
+                            disabled
+                            title="All student notes must be approved first.">
+                        End Visit — Waiting for Approval
+                    </button>
+                }
+                else
+                {
                     <button type="submit"
                             class="vt-end-visit-btn"
                             onclick="return confirm('Are you sure you want to end this visit?');">
                         End Visit
                     </button>
-                </form>
-            }
+                }
+            </form>
 
-            <!-- Add Note -->
-            <button type="button"
-                    class="vt-add-btn"
-                    data-bs-toggle="modal"
-                    data-bs-target="#addNoteModal">
-                + Add Note
-            </button>
+            @if (currentVisitId.HasValue)
+            {
+                <!-- Add Note -->
+                <button type="button"
+                        class="vt-add-btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addNoteModal">
+                    + Add Note
+                </button>
+            }
+            else
+            {
+                <button type="button"
+                        class="vt-add-btn"
+                        disabled
+                        title="There is no active visit.">
+                    + Add Note
+                </button>
+            }
 
         </div>
     }
@@ -362,11 +470,98 @@
     {
         foreach (var note in notes)
         {
+            string approvalStatus =
+                string.IsNullOrWhiteSpace(note.ApprovalStatus)
+                    ? "Approved"
+                    : note.ApprovalStatus;
+
+            bool noteOwnedByCurrentStudent =
+                isStudent
+                &&
+                string.Equals(
+                    note.CreatedByRole,
+                    "Student",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                &&
+                string.Equals(
+                    note.CreatedBy,
+                    currentUserName,
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+            bool canStudentEdit =
+                noteOwnedByCurrentStudent
+                &&
+                string.Equals(
+                    approvalStatus,
+                    "Rejected",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                &&
+                note.VisitId == currentVisitId;
+
+            bool canEditNote =
+                !isReadOnly
+                &&
+                (
+                    !isStudent
+                    ||
+                    canStudentEdit
+                );
+
+            bool canDeleteNote =
+                !isReadOnly
+                &&
+                (
+                    !isStudent
+                    ||
+                    (
+                        noteOwnedByCurrentStudent
+                        &&
+                        !string.Equals(
+                            approvalStatus,
+                            "Approved",
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
+                );
+
+            string statusClass =
+                approvalStatus.Equals(
+                    "Pending",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                    ? "vt-status-pending"
+                    : approvalStatus.Equals(
+                        "Rejected",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                        ? "vt-status-rejected"
+                        : "vt-status-approved";
+
+            string statusIcon =
+                approvalStatus.Equals(
+                    "Pending",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                    ? "⏳"
+                    : approvalStatus.Equals(
+                        "Rejected",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                        ? "✗"
+                        : "✓";
+
             <div class="vt-section">
 
                 <div class="vt-past-header">
                     <span class="vt-past-date">
                         📝 @note.CreatedAt.ToString("dd / MM / yyyy HH:mm")
+                    </span>
+
+                    <span class="vt-status-badge @statusClass">
+                        @statusIcon @approvalStatus
                     </span>
                 </div>
 
@@ -380,52 +575,82 @@
                     <span class="vt-pval">@note.CreatedBy</span>
                 </div>
 
-                @if (!isReadOnly)
+                @if (note.VisitId.HasValue)
+                {
+                    <div class="mt-1">
+                        <span class="vt-plabel">Visit: </span>
+                        <span class="vt-pval">#@note.VisitId</span>
+                    </div>
+                }
+
+                @if (
+                    approvalStatus.Equals(
+                        "Approved",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                    &&
+                    !string.IsNullOrWhiteSpace(note.ApprovedBy)
+                )
+                {
+                    <div class="mt-1">
+                        <span class="vt-plabel">Approved by: </span>
+                        <span class="vt-pval">
+                            @note.ApprovedBy
+                            @if (note.ApprovedDate.HasValue)
+                            {
+                                <text>
+                                    — @note.ApprovedDate.Value.ToString(
+                                                                            "dd / MM / yyyy HH:mm"
+                                                                        )
+                                </text>
+                            }
+                        </span>
+                    </div>
+                }
+
+                @if (
+                    approvalStatus.Equals(
+                        "Rejected",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                    &&
+                    !string.IsNullOrWhiteSpace(note.RejectionReason)
+                )
+                {
+                    <div class="vt-rejection-reason">
+                        Rejection reason: @note.RejectionReason
+                    </div>
+                }
+
+                @if (
+                    isStudent
+                    &&
+                    noteOwnedByCurrentStudent
+                    &&
+                    approvalStatus.Equals(
+                        "Pending",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    <div class="vt-approval-warning" style="margin-top:12px; margin-bottom:0;">
+                        Your note is waiting for approval.
+                    </div>
+                }
+
+                @if (canEditNote || canDeleteNote)
                 {
                     <div class="vt-action-bar">
 
-                        <!-- Edit Note -->
-                        <button type="button"
-                                class="vt-edit-btn"
-                                data-bs-toggle="modal"
-                                data-bs-target="#editNoteModal"
-                                data-note-id="@note.Id"
-                                data-note-content="@note.Content">
-
-                            <svg width="13"
-                                 height="13"
-                                 viewBox="0 0 24 24"
-                                 fill="none"
-                                 stroke="currentColor"
-                                 stroke-width="2"
-                                 stroke-linecap="round"
-                                 stroke-linejoin="round">
-                                <path d="M12 20h9" />
-                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                            </svg>
-
-                            Edit
-                        </button>
-
-                        <!-- Delete Note -->
-                        <form asp-controller="Note"
-                              asp-action="Delete"
-                              method="post"
-                              class="m-0 p-0 d-inline">
-
-                            @Html.AntiForgeryToken()
-
-                            <input type="hidden"
-                                   name="noteId"
-                                   value="@note.Id" />
-
-                            <input type="hidden"
-                                   name="patientId"
-                                   value="@Model.PatientID" />
-
-                            <button type="submit"
-                                    class="vt-del-btn"
-                                    onclick="return confirm('Delete this note?');">
+                        @if (canEditNote)
+                        {
+                            <!-- Edit Note -->
+                            <button type="button"
+                                    class="vt-edit-btn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editNoteModal"
+                                    data-note-id="@note.Id"
+                                    data-note-content="@note.Content">
 
                                 <svg width="13"
                                      height="13"
@@ -435,15 +660,54 @@
                                      stroke-width="2"
                                      stroke-linecap="round"
                                      stroke-linejoin="round">
-                                    <polyline points="3 6 5 6 21 6" />
-                                    <path d="M19 6l-1 14H6L5 6" />
-                                    <path d="M10 11v6M14 11v6" />
-                                    <path d="M9 6V4h6v2" />
+                                    <path d="M12 20h9" />
+                                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
                                 </svg>
 
-                                Delete
+                                Edit
                             </button>
-                        </form>
+                        }
+
+                        @if (canDeleteNote)
+                        {
+                            <!-- Delete Note -->
+                            <form asp-controller="Note"
+                                  asp-action="Delete"
+                                  method="post"
+                                  class="m-0 p-0 d-inline">
+
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden"
+                                       name="noteId"
+                                       value="@note.Id" />
+
+                                <input type="hidden"
+                                       name="patientId"
+                                       value="@Model.PatientID" />
+
+                                <button type="submit"
+                                        class="vt-del-btn"
+                                        onclick="return confirm('Delete this note?');">
+
+                                    <svg width="13"
+                                         height="13"
+                                         viewBox="0 0 24 24"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         stroke-width="2"
+                                         stroke-linecap="round"
+                                         stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6" />
+                                        <path d="M19 6l-1 14H6L5 6" />
+                                        <path d="M10 11v6M14 11v6" />
+                                        <path d="M9 6V4h6v2" />
+                                    </svg>
+
+                                    Delete
+                                </button>
+                            </form>
+                        }
 
                     </div>
                 }
@@ -510,7 +774,7 @@
 
                         <button type="submit"
                                 class="vt-modal-save-btn">
-                            Save Note
+                            @(isStudent ? "Submit for Approval" : "Save Note")
                         </button>
                     </div>
 
@@ -579,7 +843,7 @@
 
                         <button type="submit"
                                 class="vt-modal-save-btn">
-                            Save Changes
+                            @(isStudent ? "Resubmit for Approval" : "Save Changes")
                         </button>
                     </div>
 

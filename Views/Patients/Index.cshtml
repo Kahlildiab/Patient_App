@@ -41,6 +41,9 @@
 
     // ✅ FIX 3: جلب خريطة المواعيد القادمة من ViewBag
     var nextApptMap = ViewBag.NextAppointments as Dictionary<int, DentalCollegeManagementSystem_AAU.Models.Appointment>;
+
+    // خريطة المواعيد تستخدم للعرض فقط.
+    // التحقق الحقيقي من تاريخ الموعد يتم داخل HomeController.
 }
 
 <link rel="stylesheet" href="~/css/Site.css" />
@@ -82,6 +85,7 @@
         font-weight: 700;
         white-space: nowrap;
     }
+
     .next-appt-time {
         display: inline-block;
         margin-top: 3px;
@@ -91,6 +95,29 @@
         padding: 2px 8px;
         font-size: 11px;
         font-weight: 700;
+    }
+
+    .details-disabled {
+        background: none;
+        color: #999;
+        border: none;
+        padding: 5px 6px;
+        font-size: 13px;
+        font-weight: 600;
+        margin: 2px;
+        cursor: not-allowed;
+        display: inline-block;
+        opacity: .75;
+    }
+
+    .appointment-lock-message {
+        display: block;
+        color: #c62828;
+        font-size: 10px;
+        font-weight: 600;
+        margin-top: 2px;
+        white-space: normal;
+        max-width: 180px;
     }
 </style>
 
@@ -301,13 +328,27 @@
                                     <td>@item.PhoneNumber</td>
                                     <td style="white-space:nowrap;">
                                         <a asp-controller="Patients" asp-action="Edit" asp-route-id="@item.PatientID"
-                                               style="background:none;color:#3F8CCA;border:none;padding:5px 6px;font-size:13px;font-weight:600;margin:2px;cursor:pointer;text-decoration:none;display:inline-block;">
+                                           style="background:none;color:#3F8CCA;border:none;padding:5px 6px;font-size:13px;font-weight:600;margin:2px;cursor:pointer;text-decoration:none;display:inline-block;">
                                             <i class="fa-solid fa-pen"></i> Edit
                                         </a>
-                                        <a asp-controller="Patients" asp-action="Details" asp-route-id="@item.PatientID"
-                                               style="background:none;color:#3F8CCA;border:none;padding:5px 6px;font-size:13px;font-weight:600;margin:2px;cursor:pointer;text-decoration:none;display:inline-block;">
-                                            <i class="fa-solid fa-eye"></i> Details
-                                        </a>
+                                        <form asp-controller="Home"
+                                              asp-action="AttendAndOpen"
+                                              asp-route-id="@item.PatientID"
+                                              method="post"
+                                              style="display:inline;">
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="returnUrl"
+                                                   value="@(Context.Request.Path + Context.Request.QueryString)" />
+
+                                            <button type="submit"
+                                                    onclick="return confirm('Did the patient attend today? Click OK to continue.');"
+                                                    style="background:none;color:#3F8CCA;border:none;padding:5px 6px;font-size:13px;font-weight:600;margin:2px;cursor:pointer;">
+                                                <i class="fa-solid fa-eye"></i>
+                                                Details
+                                            </button>
+                                        </form>
                                         @if (item.StatusID == 1)
                                         {
                                             <form asp-controller="Patients" asp-action="Accepted" asp-route-id="@item.PatientID" method="post" style="display:inline">
@@ -368,8 +409,8 @@
                         {
                             <li class="page-item @(p == pageNumber ? "active" : "")">
                                 <a class="page-link"
-                                       href="?page=@p&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime"
-                                       style="border-radius:0 !important;border:none !important;box-shadow:none !important;font-weight:600;">
+                                   href="?page=@p&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime"
+                                   style="border-radius:0 !important;border:none !important;box-shadow:none !important;font-weight:600;">
                                     @p
                                 </a>
                             </li>

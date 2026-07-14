@@ -99,10 +99,10 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     p.AppointmentDate.Date == patient.AppointmentDate.Date &&
                     p.AppointmentTime == patient.AppointmentTime);
 
-                if (slotCount >= 20)
+                if (slotCount >= 10)
                 {
                     ModelState.AddModelError(string.Empty,
-                        $"لا تتوفر أماكن في هذه الفترة ({patient.AppointmentTime}) بتاريخ {patient.AppointmentDate:yyyy-MM-dd}. الطاقة ممتلئة (20/20).");
+                        $"لا تتوفر أماكن في هذه الفترة ({patient.AppointmentTime}) بتاريخ {patient.AppointmentDate:yyyy-MM-dd}. الطاقة ممتلئة (10/10).");
                     return View("CreatePublic", patient);
                 }
             }
@@ -152,10 +152,10 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     p.AppointmentDate.Date == patient.AppointmentDate.Date &&
                     p.AppointmentTime == patient.AppointmentTime);
 
-                if (slotCount >= 20)
+                if (slotCount >= 10)
                 {
                     ModelState.AddModelError(string.Empty,
-                        $"لا تتوفر أماكن في هذه الفترة ({patient.AppointmentTime}) بتاريخ {patient.AppointmentDate:yyyy-MM-dd}. الطاقة ممتلئة (20/20).");
+                        $"لا تتوفر أماكن في هذه الفترة ({patient.AppointmentTime}) بتاريخ {patient.AppointmentDate:yyyy-MM-dd}. الطاقة ممتلئة (10/10).");
                     return View("CreatePublic", patient);
                 }
             }
@@ -199,10 +199,10 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                         p.AppointmentDate.Date == patient.AppointmentDate.Date &&
                         p.AppointmentTime == patient.AppointmentTime);
 
-                    if (slotCount >= 20)
+                    if (slotCount >= 10)
                     {
                         ModelState.AddModelError(string.Empty,
-                            $"لا تتوفر أماكن في هذه الفترة ({patient.AppointmentTime}) بتاريخ {patient.AppointmentDate:yyyy-MM-dd}. الطاقة ممتلئة (20/20).");
+                            $"لا تتوفر أماكن في هذه الفترة ({patient.AppointmentTime}) بتاريخ {patient.AppointmentDate:yyyy-MM-dd}. الطاقة ممتلئة (10/10).");
                         return View(patient);
                     }
                 }
@@ -245,13 +245,55 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 ? patient.AppointmentDate
                 : DateTime.Today;
 
-            var timeFrom = patient.AppointmentTime == "PM"
-                ? new TimeSpan(13, 0, 0)
-                : new TimeSpan(8, 0, 0);
+            /*
+             * الوقت القادم من الصفحة أصبح واحداً من قيمتين فقط:
+             *
+             * 09:00 = الفترة الصباحية
+             * 13:00 = الفترة المسائية
+             *
+             * كل موعد مدته ساعتان.
+             */
+            TimeSpan timeFrom;
 
-            var timeTo = patient.AppointmentTime == "PM"
-                ? new TimeSpan(17, 0, 0)
-                : new TimeSpan(12, 0, 0);
+            if (
+                string.Equals(
+                    patient.AppointmentTime,
+                    "13:00",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                ||
+                string.Equals(
+                    patient.AppointmentTime,
+                    "PM",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                ||
+                string.Equals(
+                    patient.AppointmentTime,
+                    "PM|13:00",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                timeFrom =
+                    new TimeSpan(13, 0, 0);
+
+                patient.AppointmentTime =
+                    "13:00";
+            }
+            else
+            {
+                timeFrom =
+                    new TimeSpan(9, 0, 0);
+
+                patient.AppointmentTime =
+                    "09:00";
+            }
+
+            TimeSpan timeTo =
+                timeFrom.Add(
+                    TimeSpan.FromHours(2)
+                );
 
             var appointment = new Appointment
             {
@@ -324,6 +366,83 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             if (patient == null) return NotFound();
 
             /*
+             * حماية السيرفر:
+             * الطالب لا يستطيع فتح ملف المريض قبل يوم الموعد.
+             * لا نعتمد على تعطيل زر Details فقط لأن الرابط يمكن
+             * فتحه مباشرة من المتصفح.
+             */
+            string currentUserRole =
+                HttpContext.Session.GetString("UserRole")
+                ?? string.Empty;
+
+            bool currentUserIsStudent =
+                string.Equals(
+                    currentUserRole,
+                    "Student",
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+            DateTime today = DateTime.Today;
+
+            /*
+             * الموعد القادم غير الملغي هو المرجع الأساسي.
+             * إذا لم يوجد، نستخدم تاريخ الموعد المسجل في Patient.
+             */
+            var accessAppointment =
+                await _context.Appointments
+                    .Where(
+                        appointment =>
+                            appointment.PatientID == id.Value
+                            &&
+                            appointment.AppointmentStatus
+                                != "Cancelled"
+                            &&
+                            appointment.AppointmentDate.Date
+                                >= today
+                    )
+                    .OrderBy(
+                        appointment =>
+                            appointment.AppointmentDate
+                    )
+                    .ThenBy(
+                        appointment =>
+                            appointment.TimeFrom
+                    )
+                    .FirstOrDefaultAsync();
+
+            DateTime? detailsAccessDate =
+                accessAppointment != null
+                    ? accessAppointment.AppointmentDate.Date
+                    : (
+                        patient.AppointmentDate != default
+                            ? patient.AppointmentDate.Date
+                            : null
+                    );
+
+            if (
+                currentUserIsStudent
+                &&
+                (
+                    !detailsAccessDate.HasValue
+                    ||
+                    today < detailsAccessDate.Value
+                )
+            )
+            {
+                TempData["Error"] =
+                    detailsAccessDate.HasValue
+                        ? "Patient details can be opened starting from "
+                          + $"the appointment date: "
+                          + $"{detailsAccessDate.Value:yyyy-MM-dd}."
+                        : "Patient details cannot be opened because "
+                          + "there is no valid appointment.";
+
+                return RedirectToAction(
+                    nameof(Index)
+                );
+            }
+
+            /*
              * أول مرة يتم فتح ملف المريض:
              * أنشئ زيارة أولى مفتوحة تلقائياً إذا لم يكن للمريض أي زيارة سابقة.
              */
@@ -338,7 +457,14 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
                 string? appointmentPeriod = null;
 
-                if (appointmentTimeValue.Contains("AM"))
+                if (accessAppointment != null)
+                {
+                    appointmentPeriod =
+                        accessAppointment.TimeFrom.Hours >= 12
+                            ? "PM"
+                            : "AM";
+                }
+                else if (appointmentTimeValue.Contains("AM"))
                 {
                     appointmentPeriod = "AM";
                 }
@@ -381,7 +507,12 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 var firstVisit = new Visit
                 {
                     PatientID = id.Value,
-                    VisitDate = DateTime.Today,
+
+                    // الزيارة ترتبط بتاريخ الموعد الصحيح.
+                    VisitDate =
+                        detailsAccessDate
+                        ?? DateTime.Today,
+
                     AppointmentPeriod = appointmentPeriod,
 
                     Attended = false,
@@ -506,11 +637,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
              * - يستثني مواعيد اليوم التي انتهى وقتها.
              * - يرتب حسب التاريخ ثم وقت البداية.
              */
-            DateTime today =
-                DateTime.Today;
 
-            TimeSpan currentTime =
-                DateTime.Now.TimeOfDay;
+            TimeSpan currentTime = DateTime.Now.TimeOfDay;
 
             var nextAppointment =
                 await _context.Appointments
@@ -518,28 +646,20 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                         a =>
                             a.PatientID == id
                             &&
-                            a.AppointmentStatus
-                                != "Cancelled"
+                            a.AppointmentStatus != "Cancelled"
                             &&
                             (
-                                a.AppointmentDate.Date
-                                    > today
+                                a.AppointmentDate.Date > today
                                 ||
                                 (
-                                    a.AppointmentDate.Date
-                                        == today
+                                    a.AppointmentDate.Date == today
                                     &&
-                                    a.TimeTo
-                                        >= currentTime
+                                    a.TimeTo >= currentTime
                                 )
                             )
                     )
-                    .OrderBy(
-                        a => a.AppointmentDate
-                    )
-                    .ThenBy(
-                        a => a.TimeFrom
-                    )
+                    .OrderBy(a => a.AppointmentDate)
+                    .ThenBy(a => a.TimeFrom)
                     .FirstOrDefaultAsync();
 
             ViewBag.NextAppointment =
@@ -592,8 +712,43 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             var allAppointments = await _context.Appointments
                 .Where(a => a.PatientID == id)
                 .OrderBy(a => a.AppointmentDate)
+                .ThenBy(a => a.TimeFrom)
                 .ToListAsync();
-            ViewBag.AllAppointments = allAppointments;
+
+            ViewBag.AllAppointments =
+                allAppointments;
+
+            /*
+             * Visit Review:
+             *
+             * الزيارة الأولى لا يظهر فيها Visit Review.
+             * ابتداءً من الزيارة الثانية يظهر القسم.
+             *
+             * يتم احتساب الزيارات التي:
+             * 1- تاريخها اليوم أو قبل اليوم.
+             * 2- حالتها Attended فقط.
+             *
+             * لأن المريض يتم تحويل موعده إلى Attended
+             * قبل الدخول إلى صفحة Details.
+             */
+            int attendedVisitCount =
+                allAppointments.Count(
+                    appointment =>
+                        appointment.AppointmentDate.Date
+                            <= DateTime.Today
+                        &&
+                        string.Equals(
+                            appointment.AppointmentStatus,
+                            "Attended",
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                );
+
+            ViewBag.AttendedVisitCount =
+                attendedVisitCount;
+
+            ViewBag.ShowVisitReview =
+                attendedVisitCount >= 2;
 
             var latestVisit = await _context.Visits
                 .Where(v => v.PatientID == id.Value)
@@ -630,37 +785,56 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 return NotFound();
             }
 
-            var patient = await _context.Patients.FindAsync(id);
+            var patient =
+                await _context.Patients
+                    .FirstOrDefaultAsync(
+                        p => p.PatientID == id.Value
+                    );
 
             if (patient == null)
             {
                 return NotFound();
             }
 
-            var latestVisit = await _context.Visits
-                .Where(v => v.PatientID == id.Value)
-                .OrderByDescending(v => v.VisitDate)
-                .ThenByDescending(v => v.VisitID)
-                .FirstOrDefaultAsync();
+            var latestVisit =
+                await _context.Visits
+                    .Where(
+                        v => v.PatientID == id.Value
+                    )
+                    .OrderByDescending(
+                        v => v.VisitDate
+                    )
+                    .ThenByDescending(
+                        v => v.VisitID
+                    )
+                    .FirstOrDefaultAsync();
 
             bool isAdmin =
                 string.Equals(
-                    HttpContext.Session.GetString("UserRole"),
+                    HttpContext.Session.GetString(
+                        "UserRole"
+                    ),
                     "Admin",
                     StringComparison.OrdinalIgnoreCase
                 );
 
             bool isReadOnly =
-                latestVisit != null &&
-                latestVisit.IsClosed &&
+                latestVisit != null
+                &&
+                latestVisit.IsClosed
+                &&
                 !isAdmin;
 
             ViewBag.IsVisitClosed =
-                latestVisit != null &&
+                latestVisit != null
+                &&
                 latestVisit.IsClosed;
 
-            ViewBag.IsAdmin = isAdmin;
-            ViewBag.IsReadOnly = isReadOnly;
+            ViewBag.IsAdmin =
+                isAdmin;
+
+            ViewBag.IsReadOnly =
+                isReadOnly;
 
             if (isReadOnly)
             {
@@ -677,12 +851,63 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
             }
 
+            /*
+             * نعكس الموعد الحقيقي الموجود في Appointments
+             * داخل شاشة Edit بدلاً من الاعتماد على نسخة قديمة
+             * مخزنة في Patient فقط.
+             */
+            var scheduledAppointment =
+                await _context.Appointments
+                    .Where(
+                        a =>
+                            a.PatientID == id.Value
+                            &&
+                            a.AppointmentStatus == "Scheduled"
+                    )
+                    .OrderBy(a => a.AppointmentDate)
+                    .ThenBy(a => a.TimeFrom)
+                    .FirstOrDefaultAsync();
+
+            if (scheduledAppointment != null)
+            {
+                patient.AppointmentDate =
+                    scheduledAppointment
+                        .AppointmentDate
+                        .Date;
+
+                patient.AppointmentTime =
+                    scheduledAppointment.TimeFrom.Hours >= 12
+                        ? "13:00"
+                        : "09:00";
+            }
+            else
+            {
+                string storedTime =
+                    (
+                        patient.AppointmentTime
+                        ??
+                        string.Empty
+                    )
+                    .Trim()
+                    .ToUpperInvariant();
+
+                patient.AppointmentTime =
+                    storedTime == "PM"
+                    ||
+                    storedTime == "13:00"
+                    ||
+                    storedTime == "PM|13:00"
+                        ? "13:00"
+                        : "09:00";
+            }
+
             return View(patient);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id,
+        public async Task<IActionResult> Edit(
+            int id,
             [Bind("PatientID,FirstName,SecondName,ThirdName,FourthName,NationalID_PassportNumber,Nationality,Gender,DateOfBirth,PhoneNumber,Address,FatherName,FatherPhone,MotherName,MotherPhone,AppointmentDate,AppointmentTime,ProfilePhotoPath")]
             Patient patient,
             IFormFile? ProfilePhotoFile,
@@ -693,22 +918,33 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 return NotFound();
             }
 
-            var latestVisit = await _context.Visits
-                .Where(v => v.PatientID == id)
-                .OrderByDescending(v => v.VisitDate)
-                .ThenByDescending(v => v.VisitID)
-                .FirstOrDefaultAsync();
+            var latestVisit =
+                await _context.Visits
+                    .Where(
+                        v => v.PatientID == id
+                    )
+                    .OrderByDescending(
+                        v => v.VisitDate
+                    )
+                    .ThenByDescending(
+                        v => v.VisitID
+                    )
+                    .FirstOrDefaultAsync();
 
             bool isAdmin =
                 string.Equals(
-                    HttpContext.Session.GetString("UserRole"),
+                    HttpContext.Session.GetString(
+                        "UserRole"
+                    ),
                     "Admin",
                     StringComparison.OrdinalIgnoreCase
                 );
 
             if (
-                latestVisit != null &&
-                latestVisit.IsClosed &&
+                latestVisit != null
+                &&
+                latestVisit.IsClosed
+                &&
                 !isAdmin
             )
             {
@@ -725,62 +961,432 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
             }
 
-            if (ModelState.IsValid)
+            var existingPatient =
+                await _context.Patients
+                    .FirstOrDefaultAsync(
+                        p => p.PatientID == id
+                    );
+
+            if (existingPatient == null)
             {
-                try
-                {
-                    if (RemovePhoto == "true")
-                    {
-                        if (!string.IsNullOrEmpty(patient.ProfilePhotoPath))
-                        {
-                            var oldFile = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot",
-                                patient.ProfilePhotoPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-                            if (System.IO.File.Exists(oldFile)) System.IO.File.Delete(oldFile);
-                        }
-                        patient.ProfilePhotoPath = null;
-                    }
-                    else if (ProfilePhotoFile != null && ProfilePhotoFile.Length > 0)
-                    {
-                        var allowedTypes = new[] { "image/jpeg", "image/png", "image/jpg" };
-                        if (!allowedTypes.Contains(ProfilePhotoFile.ContentType))
-                        {
-                            ModelState.AddModelError("ProfilePhotoFile", "Only JPG or PNG files are supported.");
-                            return View(patient);
-                        }
-                        if (ProfilePhotoFile.Length > 2 * 1024 * 1024)
-                        {
-                            ModelState.AddModelError("ProfilePhotoFile", "Image size must be less than 2MB.");
-                            return View(patient);
-                        }
-
-                        if (!string.IsNullOrEmpty(patient.ProfilePhotoPath))
-                        {
-                            var oldFile = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot",
-                                patient.ProfilePhotoPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-                            if (System.IO.File.Exists(oldFile)) System.IO.File.Delete(oldFile);
-                        }
-
-                        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "patients");
-                        Directory.CreateDirectory(uploadsFolder);
-                        var fileName = $"{Guid.NewGuid()}{Path.GetExtension(ProfilePhotoFile.FileName)}";
-                        var filePath = Path.Combine(uploadsFolder, fileName);
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                            await ProfilePhotoFile.CopyToAsync(stream);
-                        patient.ProfilePhotoPath = $"/uploads/patients/{fileName}";
-                    }
-
-                    _context.Update(patient);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!PatientExists(patient.PatientID)) return NotFound();
-                    else throw;
-                }
-
-                return RedirectToAction("Details", "Patients", new { id = patient.PatientID });
+                return NotFound();
             }
-            return View(patient);
+
+            string submittedTime =
+                (
+                    patient.AppointmentTime
+                    ??
+                    string.Empty
+                )
+                .Trim()
+                .ToUpperInvariant();
+
+            bool isEveningAppointment =
+                submittedTime == "PM"
+                ||
+                submittedTime == "13:00"
+                ||
+                submittedTime == "PM|13:00";
+
+            string normalizedAppointmentTime =
+                isEveningAppointment
+                    ? "13:00"
+                    : "09:00";
+
+            TimeSpan newTimeFrom =
+                isEveningAppointment
+                    ? new TimeSpan(13, 0, 0)
+                    : new TimeSpan(9, 0, 0);
+
+            TimeSpan newTimeTo =
+                newTimeFrom.Add(
+                    TimeSpan.FromHours(2)
+                );
+
+            if (
+                patient.AppointmentDate == default
+                ||
+                patient.AppointmentDate.Year < 2000
+            )
+            {
+                ModelState.AddModelError(
+                    "AppointmentDate",
+                    "Please select a valid appointment date."
+                );
+            }
+
+            /*
+             * نمنع تجاوز سعة 10 مرضى في نفس الموعد.
+             * نستثني المريض الحالي حتى لا يُحسب على نفسه
+             * عند حفظ نفس الموعد من جديد.
+             */
+            int slotCount =
+                await _context.Appointments
+                    .CountAsync(
+                        a =>
+                            a.PatientID != id
+                            &&
+                            a.AppointmentStatus == "Scheduled"
+                            &&
+                            a.AppointmentDate.Date
+                                == patient.AppointmentDate.Date
+                            &&
+                            a.TimeFrom == newTimeFrom
+                    );
+
+            if (slotCount >= 10)
+            {
+                ModelState.AddModelError(
+                    "AppointmentTime",
+                    $"The selected appointment on {patient.AppointmentDate:yyyy-MM-dd} at {normalizedAppointmentTime} is full (10/10)."
+                );
+            }
+
+            if (!ModelState.IsValid)
+            {
+                patient.AppointmentTime =
+                    normalizedAppointmentTime;
+
+                return View(patient);
+            }
+
+            await using var transaction =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+            try
+            {
+                /*
+                 * تحديث بيانات المريض يدوياً حتى لا يتم مسح
+                 * StatusID أو PatientStatus أو AttendanceStatus
+                 * أو أي أعمدة غير موجودة في نموذج Edit.
+                 */
+                existingPatient.FirstName =
+                    patient.FirstName;
+
+                existingPatient.SecondName =
+                    patient.SecondName;
+
+                existingPatient.ThirdName =
+                    patient.ThirdName;
+
+                existingPatient.FourthName =
+                    patient.FourthName;
+
+                existingPatient.NationalID_PassportNumber =
+                    patient.NationalID_PassportNumber;
+
+                existingPatient.Nationality =
+                    patient.Nationality;
+
+                existingPatient.Gender =
+                    patient.Gender;
+
+                existingPatient.DateOfBirth =
+                    patient.DateOfBirth;
+
+                existingPatient.PhoneNumber =
+                    patient.PhoneNumber;
+
+                existingPatient.Address =
+                    patient.Address;
+
+                existingPatient.FatherName =
+                    patient.FatherName;
+
+                existingPatient.FatherPhone =
+                    patient.FatherPhone;
+
+                existingPatient.MotherName =
+                    patient.MotherName;
+
+                existingPatient.MotherPhone =
+                    patient.MotherPhone;
+
+                /*
+                 * تحديث نسخة الموعد الموجودة في Patient
+                 * حتى تبقى الفلاتر والشاشات القديمة متوافقة.
+                 */
+                existingPatient.AppointmentDate =
+                    patient.AppointmentDate.Date;
+
+                existingPatient.AppointmentTime =
+                    normalizedAppointmentTime;
+
+                /*
+                 * تحديث الصورة من دون فقدان الصورة القديمة
+                 * إذا لم يرفع المستخدم ملفاً جديداً.
+                 */
+                if (RemovePhoto == "true")
+                {
+                    if (
+                        !string.IsNullOrWhiteSpace(
+                            existingPatient.ProfilePhotoPath
+                        )
+                    )
+                    {
+                        string oldFilePath =
+                            Path.Combine(
+                                Directory.GetCurrentDirectory(),
+                                "wwwroot",
+                                existingPatient
+                                    .ProfilePhotoPath
+                                    .TrimStart('/')
+                                    .Replace(
+                                        '/',
+                                        Path.DirectorySeparatorChar
+                                    )
+                            );
+
+                        if (
+                            System.IO.File.Exists(
+                                oldFilePath
+                            )
+                        )
+                        {
+                            System.IO.File.Delete(
+                                oldFilePath
+                            );
+                        }
+                    }
+
+                    existingPatient.ProfilePhotoPath =
+                        null;
+                }
+                else if (
+                    ProfilePhotoFile != null
+                    &&
+                    ProfilePhotoFile.Length > 0
+                )
+                {
+                    string[] allowedTypes =
+                    {
+                        "image/jpeg",
+                        "image/png",
+                        "image/jpg"
+                    };
+
+                    if (
+                        !allowedTypes.Contains(
+                            ProfilePhotoFile.ContentType
+                        )
+                    )
+                    {
+                        ModelState.AddModelError(
+                            "ProfilePhotoFile",
+                            "Only JPG or PNG files are supported."
+                        );
+
+                        await transaction.RollbackAsync();
+
+                        patient.ProfilePhotoPath =
+                            existingPatient
+                                .ProfilePhotoPath;
+
+                        patient.AppointmentTime =
+                            normalizedAppointmentTime;
+
+                        return View(patient);
+                    }
+
+                    if (
+                        ProfilePhotoFile.Length
+                        >
+                        2 * 1024 * 1024
+                    )
+                    {
+                        ModelState.AddModelError(
+                            "ProfilePhotoFile",
+                            "Image size must be less than 2MB."
+                        );
+
+                        await transaction.RollbackAsync();
+
+                        patient.ProfilePhotoPath =
+                            existingPatient
+                                .ProfilePhotoPath;
+
+                        patient.AppointmentTime =
+                            normalizedAppointmentTime;
+
+                        return View(patient);
+                    }
+
+                    if (
+                        !string.IsNullOrWhiteSpace(
+                            existingPatient.ProfilePhotoPath
+                        )
+                    )
+                    {
+                        string oldFilePath =
+                            Path.Combine(
+                                Directory.GetCurrentDirectory(),
+                                "wwwroot",
+                                existingPatient
+                                    .ProfilePhotoPath
+                                    .TrimStart('/')
+                                    .Replace(
+                                        '/',
+                                        Path.DirectorySeparatorChar
+                                    )
+                            );
+
+                        if (
+                            System.IO.File.Exists(
+                                oldFilePath
+                            )
+                        )
+                        {
+                            System.IO.File.Delete(
+                                oldFilePath
+                            );
+                        }
+                    }
+
+                    string uploadsFolder =
+                        Path.Combine(
+                            Directory.GetCurrentDirectory(),
+                            "wwwroot",
+                            "uploads",
+                            "patients"
+                        );
+
+                    Directory.CreateDirectory(
+                        uploadsFolder
+                    );
+
+                    string fileName =
+                        $"{Guid.NewGuid()}{Path.GetExtension(ProfilePhotoFile.FileName)}";
+
+                    string filePath =
+                        Path.Combine(
+                            uploadsFolder,
+                            fileName
+                        );
+
+                    await using (
+                        var stream =
+                            new FileStream(
+                                filePath,
+                                FileMode.Create
+                            )
+                    )
+                    {
+                        await ProfilePhotoFile
+                            .CopyToAsync(stream);
+                    }
+
+                    existingPatient.ProfilePhotoPath =
+                        $"/uploads/patients/{fileName}";
+                }
+
+                /*
+                 * هذا هو الإصلاح الأساسي:
+                 * تحديث الموعد الحقيقي في جدول Appointments.
+                 */
+                var scheduledAppointment =
+                    await _context.Appointments
+                        .Where(
+                            a =>
+                                a.PatientID == id
+                                &&
+                                a.AppointmentStatus
+                                    == "Scheduled"
+                        )
+                        .OrderBy(
+                            a => a.AppointmentDate
+                        )
+                        .ThenBy(
+                            a => a.TimeFrom
+                        )
+                        .FirstOrDefaultAsync();
+
+                if (scheduledAppointment == null)
+                {
+                    scheduledAppointment =
+                        new Appointment
+                        {
+                            PatientID =
+                                id,
+
+                            ClinicName =
+                                "General",
+
+                            AppointmentStatus =
+                                "Scheduled",
+
+                            CreatedDate =
+                                DateTime.Now
+                        };
+
+                    _context.Appointments.Add(
+                        scheduledAppointment
+                    );
+                }
+
+                scheduledAppointment.AppointmentDate =
+                    patient.AppointmentDate.Date;
+
+                scheduledAppointment.AppointmentDay =
+                    patient.AppointmentDate
+                        .DayOfWeek
+                        .ToString();
+
+                scheduledAppointment.TimeFrom =
+                    newTimeFrom;
+
+                scheduledAppointment.TimeTo =
+                    newTimeTo;
+
+                scheduledAppointment.AppointmentStatus =
+                    "Scheduled";
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                string formattedTime =
+                    DateTime.Today
+                        .Add(newTimeFrom)
+                        .ToString("hh:mm tt");
+
+                TempData["Success"] =
+                    "Patient appointment was updated successfully to "
+                    +
+                    patient.AppointmentDate
+                        .ToString("yyyy-MM-dd")
+                    +
+                    " at "
+                    +
+                    formattedTime
+                    +
+                    ".";
+
+                /*
+                 * العودة إلى Home/Index حتى تظهر الرسالة
+                 * والموعد المعدل في Next Appointment.
+                 */
+                return RedirectToAction(
+                    "Index",
+                    "Home"
+                );
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync();
+
+                if (!PatientExists(id))
+                {
+                    return NotFound();
+                }
+
+                throw;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         // ─── Delete ───────────────────────────────────────────────────────────────
@@ -813,17 +1419,74 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         // ─── API Endpoints ────────────────────────────────────────────────────────
         [AllowAnonymous]
         [HttpGet]
-        public async Task<IActionResult> CheckSlot(string date, string time)
+        public async Task<IActionResult> CheckSlot(
+            string date,
+            string time,
+            int? excludePatientId = null)
         {
-            if (!DateTime.TryParse(date, out DateTime parsedDate) || string.IsNullOrEmpty(time))
-                return Json(new { available = true, count = 0 });
+            if (
+                !DateTime.TryParse(
+                    date,
+                    out DateTime parsedDate
+                )
+                ||
+                string.IsNullOrWhiteSpace(time)
+            )
+            {
+                return Json(
+                    new
+                    {
+                        available = true,
+                        count = 0
+                    }
+                );
+            }
 
-            int count = await _context.Patients.CountAsync(p =>
-                p.StatusID == 2 &&
-                p.AppointmentDate.Date == parsedDate.Date &&
-                p.AppointmentTime == time);
+            string normalizedTime =
+                time
+                    .Trim()
+                    .ToUpperInvariant();
 
-            return Json(new { available = count < 10, count = count });
+            TimeSpan selectedTime =
+                normalizedTime == "PM"
+                ||
+                normalizedTime == "13:00"
+                ||
+                normalizedTime == "PM|13:00"
+                    ? new TimeSpan(13, 0, 0)
+                    : new TimeSpan(9, 0, 0);
+
+            int count =
+                await _context.Appointments
+                    .CountAsync(
+                        appointment =>
+                            appointment
+                                .AppointmentStatus
+                                == "Scheduled"
+                            &&
+                            appointment
+                                .AppointmentDate
+                                .Date
+                                == parsedDate.Date
+                            &&
+                            appointment.TimeFrom
+                                == selectedTime
+                            &&
+                            (
+                                !excludePatientId.HasValue
+                                ||
+                                appointment.PatientID
+                                    != excludePatientId.Value
+                            )
+                    );
+
+            return Json(
+                new
+                {
+                    available = count < 10,
+                    count
+                }
+            );
         }
 
         [AllowAnonymous]

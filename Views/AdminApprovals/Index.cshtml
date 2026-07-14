@@ -21,6 +21,11 @@
         as List<Order>
         ?? new();
 
+    var pendingStudentNotes =
+        ViewBag.PendingStudentNotes
+        as List<Note>
+        ?? new();
+
     var caseComplexityByPatient =
         ViewBag.CaseComplexityByPatient
         as Dictionary<int, string>
@@ -57,7 +62,7 @@
 
     .ap-stats {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 14px;
         margin-bottom: 28px;
     }
@@ -294,6 +299,44 @@
         word-break: break-word;
     }
 
+    .ap-note-actions {
+        display: grid;
+        grid-template-columns: auto minmax(260px, 1fr);
+        align-items: start;
+        gap: 10px;
+        min-width: 440px;
+    }
+
+    .ap-note-reject-form {
+        display: grid;
+        grid-template-columns: minmax(190px, 1fr) auto;
+        gap: 8px;
+        margin: 0;
+    }
+
+    .ap-note-reason-input {
+        height: 38px;
+        border: 1.5px solid #ef9a9a;
+        border-radius: 6px;
+        padding: 0 10px;
+        font-size: .8rem;
+        outline: none;
+    }
+
+        .ap-note-reason-input:focus {
+            border-color: #e53935;
+            box-shadow: 0 0 0 3px rgba(229, 57, 53, .10);
+        }
+
+    @@media (max-width: 760px) {
+        .ap-note-actions,
+        .ap-note-reject-form {
+            grid-template-columns: 1fr;
+            min-width: 100%;
+            width: 100%;
+        }
+    }
+
     @@media (max-width: 1100px) {
         .ap-stats {
             grid-template-columns: repeat(2, 1fr);
@@ -309,8 +352,8 @@
 
 <style>
     /* =========================================================
-           Improved Visits Approval Layout
-           ========================================================= */
+               Improved Visits Approval Layout
+               ========================================================= */
     .ap-visits-section {
         border: 0;
         border-radius: 16px;
@@ -585,6 +628,24 @@
     </div>
 
     <div class="ap-stat">
+        <div class="ap-stat-icon" style="background:#fff8e1;">
+            <svg width="20"
+                 height="20"
+                 fill="none"
+                 stroke="#b7791f"
+                 stroke-width="2"
+                 viewBox="0 0 24 24">
+                <path d="M4 4h16v16H4z" />
+                <path d="M8 8h8M8 12h8M8 16h5" />
+            </svg>
+        </div>
+        <div>
+            <div class="ap-stat-label">Pending Student Notes</div>
+            <div class="ap-stat-value">@pendingStudentNotes.Count</div>
+        </div>
+    </div>
+
+    <div class="ap-stat">
         <div class="ap-stat-icon"
              style="background:#e3f2fd;">
             <svg width="20"
@@ -635,6 +696,124 @@
     </div>
 </div>
 
+<!-- ===== STUDENT NOTES ===== -->
+<div class="ap-section">
+    <div class="ap-section-header">
+        <span class="ap-section-title">
+            📝 Student Notes
+        </span>
+
+        <span class="ap-count-badge">
+            @pendingStudentNotes.Count pending
+        </span>
+    </div>
+
+    @if (!pendingStudentNotes.Any())
+    {
+        <div class="ap-empty">
+            ✅ No pending student notes
+        </div>
+    }
+    else
+    {
+        foreach (var note in pendingStudentNotes)
+        {
+            <div class="ap-card">
+                <div class="ap-card-info">
+                    <div class="ap-card-patient">
+                        👤 @GetPatientName(note.Patient)
+
+                        <span style="color:#aaa; margin-left:8px;">
+                            by @note.CreatedBy
+                        </span>
+                    </div>
+
+                    <div class="ap-card-title">
+                        Student Note
+                        @if (note.VisitId.HasValue)
+                        {
+                            <span style="
+                                color:#777;
+                                font-size:.76rem;
+                                font-weight:500;
+                                margin-left:6px;">
+                                Visit #@note.VisitId
+                            </span>
+                        }
+                    </div>
+
+                    <div class="ap-general-note-text">
+                        @note.Content
+                    </div>
+
+                    <div class="ap-card-date">
+                        Submitted:
+                        @note.CreatedAt.ToString(
+                            "dd-MM-yyyy hh:mm tt"
+                        )
+
+                        @if (note.Visit != null)
+                        {
+                            <text>
+                                — Visit date:
+                                @note.Visit.VisitDate.ToString(
+                                    "dd-MM-yyyy"
+                                )
+                            </text>
+                        }
+                    </div>
+                </div>
+
+                <div class="ap-note-actions">
+
+                    <form asp-controller="AdminApprovals"
+                          asp-action="ApproveStudentNote"
+                          method="post"
+                          style="margin:0;">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               name="noteId"
+                               value="@note.Id" />
+
+                        <button type="submit"
+                                class="ap-approve-btn">
+                            ✓ Approve
+                        </button>
+                    </form>
+
+                    <form asp-controller="AdminApprovals"
+                          asp-action="RejectStudentNote"
+                          method="post"
+                          class="ap-note-reject-form">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               name="noteId"
+                               value="@note.Id" />
+
+                        <input type="text"
+                               name="rejectionReason"
+                               class="ap-note-reason-input"
+                               maxlength="500"
+                               placeholder="Rejection reason..."
+                               required />
+
+                        <button type="submit"
+                                class="ap-reject-btn"
+                                onclick="return confirm('Reject this note and return it to the student for correction?');">
+                            ✗ Reject
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+
 <!-- ===== VISITS ===== -->
 <div class="ap-section ap-visits-section">
     <div class="ap-section-header">
@@ -679,8 +858,8 @@
 
                     <div class="ap-card-title">
                         📅 @v.VisitDate.ToString(
-                                                    "dd / MM / yyyy"
-                                                )
+                                                                            "dd / MM / yyyy"
+                                                                        )
 
                         @if (
                             !string.IsNullOrWhiteSpace(

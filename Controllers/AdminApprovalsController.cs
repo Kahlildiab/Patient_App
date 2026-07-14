@@ -94,6 +94,25 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     .ToListAsync();
 
             /*
+             * Student notes waiting for Admin / Fulltime Supervisor /
+             * Parttime Supervisor approval.
+             */
+            var pendingStudentNotes =
+                await _context.Notes
+                    .Include(note => note.Patient)
+                    .Include(note => note.Visit)
+                    .Where(
+                        note =>
+                            note.CreatedByRole == "Student"
+                            &&
+                            note.ApprovalStatus == "Pending"
+                    )
+                    .OrderByDescending(
+                        note => note.CreatedAt
+                    )
+                    .ToListAsync();
+
+            /*
              * تحميل Case Complexity المحفوظة للمرضى
              * الذين لديهم زيارات Pending.
              */
@@ -154,8 +173,12 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             ViewBag.PendingOrders =
                 pendingOrders;
 
+            ViewBag.PendingStudentNotes =
+                pendingStudentNotes;
+
             ViewBag.TotalPending =
                 pendingVisits.Count
+                + pendingStudentNotes.Count
                 + pendingDiagnosisTreatmentPlans.Count
                 + pendingProcedures.Count
                 + pendingOrders.Count;
@@ -408,5 +431,125 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+        // =====================================================
+        // Approve a student note
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveStudentNote(
+            int noteId)
+        {
+            var note =
+                await _context.Notes
+                    .FirstOrDefaultAsync(
+                        currentNote =>
+                            currentNote.Id == noteId
+                            &&
+                            currentNote.CreatedByRole == "Student"
+                    );
+
+            if (note == null)
+            {
+                TempData["Error"] =
+                    "Student note was not found.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (
+                !string.Equals(
+                    note.ApprovalStatus,
+                    "Pending",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                TempData["Error"] =
+                    "Only a pending student note can be approved.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            string approverName =
+                HttpContext.Session.GetString("FullName")
+                ?? HttpContext.Session.GetString("UserName")
+                ?? HttpContext.Session.GetString("Username")
+                ?? "Responsible Authority";
+
+            note.ApprovalStatus = "Approved";
+            note.ApprovedBy = approverName;
+            note.ApprovedDate = DateTime.Now;
+            note.RejectionReason = null;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                "Student note approved successfully.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // =====================================================
+        // Reject a student note and return it for correction
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RejectStudentNote(
+            int noteId,
+            string rejectionReason)
+        {
+            if (string.IsNullOrWhiteSpace(rejectionReason))
+            {
+                TempData["Error"] =
+                    "Please enter a rejection reason.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            var note =
+                await _context.Notes
+                    .FirstOrDefaultAsync(
+                        currentNote =>
+                            currentNote.Id == noteId
+                            &&
+                            currentNote.CreatedByRole == "Student"
+                    );
+
+            if (note == null)
+            {
+                TempData["Error"] =
+                    "Student note was not found.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (
+                !string.Equals(
+                    note.ApprovalStatus,
+                    "Pending",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                TempData["Error"] =
+                    "Only a pending student note can be rejected.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            note.ApprovalStatus = "Rejected";
+            note.ApprovedBy = null;
+            note.ApprovedDate = null;
+            note.RejectionReason =
+                rejectionReason.Trim();
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                "Student note rejected and returned for correction.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
     }
 }

@@ -49,6 +49,308 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 "Responsible Authority";
         }
 
+        /*
+         * نتيجة فحص وقت الحضور.
+         */
+        private sealed class AttendanceTimeCheckResult
+        {
+            public bool IsAllowed { get; set; }
+
+            public DateTime ScheduledStart { get; set; }
+
+            public string ErrorMessage { get; set; }
+                = string.Empty;
+        }
+
+        /*
+         * يدعم القيم المخزنة مثل:
+         * AM|09:00
+         * AM|11:00
+         * PM|13:00
+         * PM|15:00
+         * أو قيمة وقت مباشرة مثل 09:00.
+         */
+        private static TimeSpan? ParseAppointmentTime(
+            string? storedValue)
+        {
+            if (string.IsNullOrWhiteSpace(storedValue))
+            {
+                return null;
+            }
+
+            string normalized =
+                storedValue.Trim();
+
+            if (normalized.Contains("|"))
+            {
+                string[] parts =
+                    normalized.Split(
+                        '|',
+                        StringSplitOptions
+                            .RemoveEmptyEntries
+                    );
+
+                if (
+                    parts.Length > 0
+                    &&
+                    TimeSpan.TryParse(
+                        parts[^1].Trim(),
+                        out TimeSpan parsedFromSlot
+                    )
+                )
+                {
+                    return parsedFromSlot;
+                }
+            }
+
+            if (
+                TimeSpan.TryParse(
+                    normalized,
+                    out TimeSpan parsedTime
+                )
+            )
+            {
+                return parsedTime;
+            }
+
+            if (
+                normalized.Equals(
+                    "AM",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return new TimeSpan(8, 0, 0);
+            }
+
+            if (
+                normalized.Equals(
+                    "PM",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return new TimeSpan(13, 0, 0);
+            }
+
+            return null;
+        }
+
+        /*
+         * يمنع تسجيل Attended:
+         *
+         * 1) قبل يوم الموعد.
+         * 2) في يوم آخر غير يوم الموعد.
+         * 3) في نفس يوم الموعد ولكن قبل ساعة البداية.
+         *
+         * يبدأ بالوقت المحفوظ في Patient.AppointmentTime لأنه
+         * قد يحتوي على الوقت الدقيق مثل AM|09:00.
+         * وإذا لم يتوفر يستخدم Appointment.TimeFrom.
+         */
+        private async Task<AttendanceTimeCheckResult>
+            CheckAttendanceTimeAsync(
+                Visit visit)
+        {
+            DateTime now =
+                DateTime.Now;
+
+            DateTime scheduledDate =
+                visit.VisitDate.Date;
+
+            TimeSpan? scheduledTime =
+                null;
+
+            var patientAppointmentData =
+                await _context.Patients
+                    .AsNoTracking()
+                    .Where(
+                        patient =>
+                            patient.PatientID
+                            == visit.PatientID
+                    )
+                    .Select(
+                        patient => new
+                        {
+                            patient.AppointmentDate,
+                            patient.AppointmentTime
+                        }
+                    )
+                    .FirstOrDefaultAsync();
+
+            /*
+             * نستخدم وقت Patient فقط إذا كان تاريخ الموعد
+             * المسجل لديه هو نفس تاريخ هذه الزيارة.
+             */
+            if (
+                patientAppointmentData != null
+                &&
+                patientAppointmentData
+                    .AppointmentDate != default
+                &&
+                patientAppointmentData
+                    .AppointmentDate.Date
+                    == visit.VisitDate.Date
+            )
+            {
+                scheduledDate =
+                    patientAppointmentData
+                        .AppointmentDate.Date;
+
+                scheduledTime =
+                    ParseAppointmentTime(
+                        patientAppointmentData
+                            .AppointmentTime
+                    );
+            }
+
+            /*
+             * البحث عن الموعد الموافق لتاريخ الزيارة.
+             */
+            var appointment =
+                await _context.Appointments
+                    .AsNoTracking()
+                    .Where(
+                        item =>
+                            item.PatientID
+                                == visit.PatientID
+                            &&
+                            item.AppointmentStatus
+                                != "Cancelled"
+                            &&
+                            item.AppointmentDate.Date
+                                == visit.VisitDate.Date
+                    )
+                    .OrderBy(
+                        item => item.TimeFrom
+                    )
+                    .FirstOrDefaultAsync();
+
+            if (appointment != null)
+            {
+                scheduledDate =
+                    appointment.AppointmentDate.Date;
+
+                /*
+                 * لا نستبدل الوقت الدقيق الموجود في Patient
+                 * إذا تمكنا من قراءته.
+                 */
+                if (!scheduledTime.HasValue)
+                {
+                    scheduledTime =
+                        appointment.TimeFrom;
+                }
+            }
+
+            /*
+             * Fallback إذا لم يوجد وقت دقيق.
+             */
+            if (!scheduledTime.HasValue)
+            {
+                if (
+                    string.Equals(
+                        visit.AppointmentPeriod,
+                        "PM",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    scheduledTime =
+                        new TimeSpan(13, 0, 0);
+                }
+                else
+                {
+                    scheduledTime =
+                        new TimeSpan(8, 0, 0);
+                }
+            }
+
+            DateTime scheduledStart =
+                scheduledDate.Add(
+                    scheduledTime.Value
+                );
+
+            if (now.Date < scheduledDate)
+            {
+                return new AttendanceTimeCheckResult
+                {
+                    IsAllowed = false,
+                    ScheduledStart = scheduledStart,
+                    ErrorMessage =
+                        "لسا ما إجا موعدك. "
+                        + "موعد المريض بتاريخ "
+                        + scheduledStart
+                            .ToString("yyyy-MM-dd")
+                        + " الساعة "
+                        + scheduledStart
+                            .ToString("HH:mm")
+                        + "."
+                };
+            }
+
+            if (now.Date > scheduledDate)
+            {
+                return new AttendanceTimeCheckResult
+                {
+                    IsAllowed = false,
+                    ScheduledStart = scheduledStart,
+                    ErrorMessage =
+                        "لا يمكن تسجيل الحضور لأن "
+                        + "موعد هذه الزيارة ليس اليوم. "
+                        + "تاريخ الموعد: "
+                        + scheduledStart
+                            .ToString("yyyy-MM-dd")
+                        + "."
+                };
+            }
+
+            if (now < scheduledStart)
+            {
+                return new AttendanceTimeCheckResult
+                {
+                    IsAllowed = false,
+                    ScheduledStart = scheduledStart,
+                    ErrorMessage =
+                        "لسا ما إجا موعدك. "
+                        + "موعد المريض اليوم الساعة "
+                        + scheduledStart
+                            .ToString("HH:mm")
+                        + "."
+                };
+            }
+
+            return new AttendanceTimeCheckResult
+            {
+                IsAllowed = true,
+                ScheduledStart = scheduledStart
+            };
+        }
+
+        /*
+         * إذا لم يأتِ موعد المريض:
+         * - لا ندخل إلى ملف المريض.
+         * - لا نغيّر Attended.
+         * - نرجع إلى صفحة المواعيد ونظهر رسالة واضحة.
+         */
+        private IActionResult AttendanceTimeBlockedRedirect(
+            int patientId,
+            string message)
+        {
+            /*
+             * نضع المفتاحين حتى تظهر الرسالة سواء كانت
+             * صفحة المواعيد تستخدم Error أو VisitError.
+             */
+            TempData["Error"] =
+                message;
+
+            TempData["VisitError"] =
+                message;
+
+            return RedirectToAction(
+                "Index",
+                "Appointments"
+            );
+        }
+
         private static string? NormalizeCaseComplexity(
             string? value)
         {
@@ -184,6 +486,58 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             {
                 TempData["VisitError"] =
                     "There is no active visit for this patient.";
+
+                return RedirectToAction(
+                    "Details",
+                    "Patients",
+                    new
+                    {
+                        id = patientId,
+                        tab = "notes"
+                    }
+                );
+            }
+
+            /*
+             * End Visit is blocked while this exact visit has
+             * any student note that is not Approved.
+             *
+             * Rejected notes must be corrected and submitted again.
+             */
+            var blockingStudentNotes =
+                await _context.Notes
+                    .Where(
+                        note =>
+                            note.VisitId == currentVisit.VisitID
+                            &&
+                            note.CreatedByRole == "Student"
+                            &&
+                            note.ApprovalStatus != "Approved"
+                    )
+                    .Select(
+                        note => note.ApprovalStatus
+                    )
+                    .ToListAsync();
+
+            if (blockingStudentNotes.Any())
+            {
+                int pendingCount =
+                    blockingStudentNotes.Count(
+                        status =>
+                            status == "Pending"
+                    );
+
+                int rejectedCount =
+                    blockingStudentNotes.Count(
+                        status =>
+                            status == "Rejected"
+                    );
+
+                TempData["VisitError"] =
+                    "The visit cannot be ended. "
+                    + $"Pending student notes: {pendingCount}. "
+                    + $"Rejected notes requiring correction: {rejectedCount}. "
+                    + "All student notes must be approved first.";
 
                 return RedirectToAction(
                     "Details",
@@ -490,58 +844,96 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                             currentVisit.PatientID == patientId
                     );
 
-            if (visit != null)
+            if (visit == null)
             {
-                if (!visit.IsApproved)
-                {
-                    TempData["VisitError"] =
-                        "The visit must be approved before attendance can be updated.";
+                TempData["VisitError"] =
+                    "Visit not found.";
 
-                    return RedirectToPatientVisits(patientId);
-                }
-
-                if (!visit.Attended)
-                {
-                    bool hasDetails =
-                        !string.IsNullOrWhiteSpace(
-                            visit.ChiefComplaint
-                        )
-                        ||
-                        !string.IsNullOrWhiteSpace(
-                            visit.ProceduresPerformed
-                        )
-                        ||
-                        !string.IsNullOrWhiteSpace(
-                            visit.MaterialsUsed
-                        )
-                        ||
-                        !string.IsNullOrWhiteSpace(
-                            visit.Complications
-                        )
-                        ||
-                        !string.IsNullOrWhiteSpace(
-                            visit.StudentNotes
-                        );
-
-                    if (!hasDetails)
-                    {
-                        TempData["VisitError"] =
-                            "Please fill in visit details "
-                            + "before marking as attended.";
-
-                        return RedirectToPatientVisits(
-                            patientId
-                        );
-                    }
-                }
-
-                visit.Attended =
-                    !visit.Attended;
-
-                await _context.SaveChangesAsync();
+                return RedirectToPatientVisits(
+                    patientId
+                );
             }
 
-            return RedirectToPatientVisits(patientId);
+            /*
+             * يتم فحص الموعد فقط عند محاولة تحويل
+             * Attended من false إلى true.
+             */
+            if (!visit.Attended)
+            {
+                AttendanceTimeCheckResult timeCheck =
+                    await CheckAttendanceTimeAsync(
+                        visit
+                    );
+
+                if (!timeCheck.IsAllowed)
+                {
+                    return AttendanceTimeBlockedRedirect(
+                        patientId,
+                        timeCheck.ErrorMessage
+                    );
+                }
+            }
+
+            if (!visit.IsApproved)
+            {
+                TempData["VisitError"] =
+                    "The visit must be approved "
+                    + "before attendance can be updated.";
+
+                return RedirectToPatientVisits(
+                    patientId
+                );
+            }
+
+            if (!visit.Attended)
+            {
+                bool hasDetails =
+                    !string.IsNullOrWhiteSpace(
+                        visit.ChiefComplaint
+                    )
+                    ||
+                    !string.IsNullOrWhiteSpace(
+                        visit.ProceduresPerformed
+                    )
+                    ||
+                    !string.IsNullOrWhiteSpace(
+                        visit.MaterialsUsed
+                    )
+                    ||
+                    !string.IsNullOrWhiteSpace(
+                        visit.Complications
+                    )
+                    ||
+                    !string.IsNullOrWhiteSpace(
+                        visit.StudentNotes
+                    );
+
+                if (!hasDetails)
+                {
+                    TempData["VisitError"] =
+                        "Please fill in visit details "
+                        + "before marking as attended.";
+
+                    return RedirectToPatientVisits(
+                        patientId
+                    );
+                }
+
+                /*
+                 * لا نستخدم toggle حتى لا يتم إلغاء الحضور
+                 * بالضغط مرة أخرى أو بتغيير الطلب.
+                 */
+                visit.Attended = true;
+
+                await _context.SaveChangesAsync();
+
+                TempData["VisitSuccess"] =
+                    "Patient attendance was recorded successfully.";
+            }
+
+            return RedirectToPatientVisits(
+                patientId
+            );
         }
 
         // =====================================================
@@ -581,10 +973,6 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
             }
 
-            /*
-             * الطالب لا يستطيع إدخال تفاصيل الزيارة
-             * قبل اعتمادها.
-             */
             string userRole =
                 HttpContext.Session.GetString("UserRole")
                 ?? string.Empty;
@@ -595,6 +983,30 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     "Student",
                     StringComparison.OrdinalIgnoreCase
                 );
+
+            /*
+             * إذا كان النموذج يحاول تسجيل الحضور لأول مرة،
+             * نتحقق من يوم الموعد وساعة بدايته.
+             */
+            if (
+                Attended
+                &&
+                !visit.Attended
+            )
+            {
+                AttendanceTimeCheckResult timeCheck =
+                    await CheckAttendanceTimeAsync(
+                        visit
+                    );
+
+                if (!timeCheck.IsAllowed)
+                {
+                    return AttendanceTimeBlockedRedirect(
+                        model.PatientID,
+                        timeCheck.ErrorMessage
+                    );
+                }
+            }
 
             if (
                 isStudent
@@ -611,8 +1023,15 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
             }
 
-            visit.VisitDate =
-                model.VisitDate;
+            /*
+             * الطالب لا يستطيع تغيير تاريخ الزيارة
+             * لتجاوز شرط الموعد.
+             */
+            if (!isStudent)
+            {
+                visit.VisitDate =
+                    model.VisitDate;
+            }
 
             visit.ChiefComplaint =
                 model.ChiefComplaint;
@@ -629,8 +1048,15 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             visit.StudentNotes =
                 model.StudentNotes;
 
-            visit.Attended =
-                Attended;
+            /*
+             * إذا تم تسجيل الحضور سابقاً لا نسمح بإلغائه
+             * من خلال تغيير قيمة checkbox أو الطلب.
+             */
+            if (!visit.Attended)
+            {
+                visit.Attended =
+                    Attended;
+            }
 
             await _context.SaveChangesAsync();
 
@@ -666,24 +1092,71 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                             currentVisit.PatientID == patientId
                     );
 
-            if (visit != null)
+            if (visit == null)
             {
-                if (!visit.IsApproved)
-                {
-                    TempData["VisitError"] =
-                        "The visit must be approved "
-                        + "before attendance can be updated.";
+                TempData["VisitError"] =
+                    "Visit not found.";
 
-                    return RedirectToPatientVisits(patientId);
-                }
-
-                visit.Attended =
-                    attended;
-
-                await _context.SaveChangesAsync();
+                return RedirectToPatientVisits(
+                    patientId
+                );
             }
 
-            return RedirectToPatientVisits(patientId);
+            /*
+             * يتم فحص الموعد فقط عند تسجيل الحضور لأول مرة.
+             */
+            if (
+                attended
+                &&
+                !visit.Attended
+            )
+            {
+                AttendanceTimeCheckResult timeCheck =
+                    await CheckAttendanceTimeAsync(
+                        visit
+                    );
+
+                if (!timeCheck.IsAllowed)
+                {
+                    return AttendanceTimeBlockedRedirect(
+                        patientId,
+                        timeCheck.ErrorMessage
+                    );
+                }
+            }
+
+            if (!visit.IsApproved)
+            {
+                TempData["VisitError"] =
+                    "The visit must be approved "
+                    + "before attendance can be updated.";
+
+                return RedirectToPatientVisits(
+                    patientId
+                );
+            }
+
+            /*
+             * نسمح فقط بالتحويل إلى Attended.
+             * لا نسمح بإلغاء الحضور بعد تسجيله.
+             */
+            if (
+                attended
+                &&
+                !visit.Attended
+            )
+            {
+                visit.Attended = true;
+
+                await _context.SaveChangesAsync();
+
+                TempData["VisitSuccess"] =
+                    "Patient attendance was recorded successfully.";
+            }
+
+            return RedirectToPatientVisits(
+                patientId
+            );
         }
 
         // =====================================================

@@ -38,21 +38,21 @@
         border: 1px solid #d9d9d9 !important;
     }
     /*
-                            ملفات الخط يجب أن تكون داخل:
+                                    ملفات الخط يجب أن تكون داخل:
 
-                            wwwroot
-                            └── Fonts
-                                └── NeoSansArabic
-                                    ├── NEOSANSARABIC.TTF
-                                    ├── NEOSANSARABIC-LIGHT.TTF
-                                    ├── NEOSANSARABIC-MEDIUM.TTF
-                                    ├── NEOSANSARABIC-BOLD.TTF
-                                    ├── NEOSANSARABIC-BLACK.TTF
-                                    └── NEOSANSARABIC-ULTRA.TTF
+                                    wwwroot
+                                    └── Fonts
+                                        └── NeoSansArabic
+                                            ├── NEOSANSARABIC.TTF
+                                            ├── NEOSANSARABIC-LIGHT.TTF
+                                            ├── NEOSANSARABIC-MEDIUM.TTF
+                                            ├── NEOSANSARABIC-BOLD.TTF
+                                            ├── NEOSANSARABIC-BLACK.TTF
+                                            └── NEOSANSARABIC-ULTRA.TTF
 
-                            نكتب @@font-face داخل ملف cshtml حتى يقوم Razor
-                            بطباعة font -face بشكل صحيح داخل CSS.
-                    */
+                                    نكتب @@font-face داخل ملف cshtml حتى يقوم Razor
+                                    بطباعة font -face بشكل صحيح داخل CSS.
+                            */
 
     @@font-face {
         font-family: 'NeoSansArabic';
@@ -141,8 +141,8 @@
     }
 
     /*
-                            نحافظ على خط Font Awesome حتى لا تختفي الأيقونات.
-                        */
+                                    نحافظ على خط Font Awesome حتى لا تختفي الأيقونات.
+                                */
     .fa,
     .fas,
     .far,
@@ -194,8 +194,8 @@
         }
 
     /* =============================================
-                       CAPTCHA محلية — بدون Session أو إعدادات إضافية
-                       =============================================== */
+                               CAPTCHA محلية — بدون Session أو إعدادات إضافية
+                               =============================================== */
     .local-captcha-box {
         border: 1px solid #d9d9d9;
         background: #f8f8fb;
@@ -330,15 +330,45 @@
                 </div>
                 <div class="row g-3 mb-2">
                     <div class="col-md-6">
-                        <div class="d-flex align-items-center gap-2">
-                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* الجنسية</label>
-                            <div class="d-flex gap-3 align-items-center">
-                                <label class="d-flex align-items-center gap-1 fw-medium" style="color:#252468;">
-                                    <input type="radio" asp-for="Nationality" value="1" class="form-check-input mt-0" style="accent-color:#252468;" /> أردني
-                                </label>
-                                <label class="d-flex align-items-center gap-1 fw-medium" style="color:#252468;">
-                                    <input type="radio" asp-for="Nationality" value="2" class="form-check-input mt-0" style="accent-color:#252468;" /> غير أردني
-                                </label>
+                        <div class="d-flex align-items-start gap-2">
+                            <label class="fw-semibold text-nowrap"
+                                   style="width:140px; color:#252468;">
+                                * نوع الهوية
+                            </label>
+
+                            <div class="flex-fill">
+                                <div class="d-flex gap-3 align-items-center flex-wrap">
+                                    <label class="d-flex align-items-center gap-1 fw-medium"
+                                           style="color:#252468;">
+                                        <input type="radio"
+                                               asp-for="Nationality"
+                                               id="nationalityJordanian"
+                                               value="1"
+                                               class="form-check-input mt-0"
+                                               style="accent-color:#252468;"
+                                               required />
+                                        أردني
+                                    </label>
+
+                                    <label class="d-flex align-items-center gap-1 fw-medium"
+                                           style="color:#252468;">
+                                        <input type="radio"
+                                               asp-for="Nationality"
+                                               id="nationalityPassport"
+                                               value="2"
+                                               class="form-check-input mt-0"
+                                               style="accent-color:#252468;"
+                                               required />
+                                        جواز سفر / غير أردني
+                                    </label>
+                                </div>
+
+                                <span asp-validation-for="Nationality"
+                                      class="text-danger small"></span>
+
+                                <span id="nationalityClientError"
+                                      class="text-danger small d-none"
+                                      role="alert"></span>
                             </div>
                         </div>
                     </div>
@@ -369,11 +399,30 @@
             <div class="bg-white p-3">
                 <div class="row g-3 mb-2">
                     <div class="col-md-6">
-                        <div class="d-flex align-items-center gap-2">
-                            <label id="idLabel" class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* الرقم الوطني</label>
+                        <div class="d-flex align-items-start gap-2">
+                            <label id="idLabel"
+                                   for="idInput"
+                                   class="fw-semibold text-nowrap"
+                                   style="width:140px; color:#252468;">
+                                * الرقم الوطني / رقم الجواز
+                            </label>
+
                             <div class="flex-fill">
-                                <input asp-for="NationalID_PassportNumber" id="idInput" type="text" class="form-control rounded-0" placeholder="أدخل الرقم الوطني" />
-                                <span asp-validation-for="NationalID_PassportNumber" class="text-danger small"></span>
+                                <input asp-for="NationalID_PassportNumber"
+                                       id="idInput"
+                                       type="text"
+                                       class="form-control rounded-0"
+                                       placeholder="اختر نوع الهوية أولاً"
+                                       autocomplete="off"
+                                       required
+                                       disabled />
+
+                                <span asp-validation-for="NationalID_PassportNumber"
+                                      class="text-danger small"></span>
+
+                                <span id="identityClientError"
+                                      class="text-danger small d-none"
+                                      role="alert"></span>
                             </div>
                         </div>
                     </div>
@@ -459,67 +508,146 @@
 
         <!-- الموعد الأول -->
         <div class="mb-4">
-            <p class="fw-bold fs-5 text-end mb-2" style="color:#252468;">الموعد الأول</p>
+            <p class="fw-bold fs-5 text-end mb-2"
+               style="color:#252468;">
+                الموعد الأول
+            </p>
 
             <div class="bg-white p-3">
 
                 <div class="row g-3 mb-2">
+
+                    <!-- Appointment Date -->
                     <div class="col-md-6">
                         <div class="d-flex align-items-center gap-2">
-                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* تاريخ الموعد</label>
+
+                            <label class="fw-semibold text-nowrap"
+                                   style="width:140px; color:#252468;">
+                                * تاريخ الموعد
+                            </label>
+
                             <div class="flex-fill">
-                                <input asp-for="AppointmentDate" type="text" id="appointmentDatePicker"
-                                       class="form-control rounded-0" placeholder="اختر التاريخ" />
-                                <span asp-validation-for="AppointmentDate" class="text-danger small"></span>
-                                <div class="small mt-1" style="color:#6c757d;">
-                                    الحجز متاح ابتداءً من 26/07/2026، باستثناء يومي الجمعة والسبت.
+
+                                <input asp-for="AppointmentDate"
+                                       type="text"
+                                       id="appointmentDatePicker"
+                                       class="form-control rounded-0"
+                                       placeholder="اختر التاريخ" />
+
+                                <span asp-validation-for="AppointmentDate"
+                                      class="text-danger small"></span>
+
+                                <div class="small mt-1"
+                                     style="color:#6c757d;">
+                                    الحجز متاح ابتداءً من 26/07/2026،
+                                    باستثناء يومي الجمعة والسبت.
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Period -->
                     <div class="col-md-6">
                         <div class="d-flex align-items-center gap-2">
-                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* الفترة</label>
+
+                            <label class="fw-semibold text-nowrap"
+                                   style="width:140px; color:#252468;">
+                                * الفترة
+                            </label>
+
                             <div class="flex-fill">
+
                                 <div class="d-flex gap-3 align-items-center">
-                                    <label class="d-flex align-items-center gap-1 fw-medium" style="color:#252468;">
-                                        <input type="radio" name="TimePeriod" value="AM"
-                                               class="form-check-input mt-0" style="accent-color:#252468;" /> صباحاً
+
+                                    <label class="d-flex align-items-center gap-1 fw-medium"
+                                           style="color:#252468;">
+
+                                        <input type="radio"
+                                               name="TimePeriod"
+                                               value="AM"
+                                               class="form-check-input mt-0"
+                                               style="accent-color:#252468;" />
+
+                                        صباحاً
                                     </label>
-                                    <label class="d-flex align-items-center gap-1 fw-medium" style="color:#252468;">
-                                        <input type="radio" name="TimePeriod" value="PM"
-                                               class="form-check-input mt-0" style="accent-color:#252468;" /> مساءً
+
+                                    <label class="d-flex align-items-center gap-1 fw-medium"
+                                           style="color:#252468;">
+
+                                        <input type="radio"
+                                               name="TimePeriod"
+                                               value="PM"
+                                               class="form-check-input mt-0"
+                                               style="accent-color:#252468;" />
+
+                                        مساءً
                                     </label>
+                                </div>
+
+                                <div class="small mt-1"
+                                     style="color:#6c757d;">
+                                    صباحاً: 09:00 تلقائياً —
+                                    مساءً: 13:00 تلقائياً
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Whole-day warning -->
                 <div id="dayCapacityWarning"
                      class="alert alert-warning rounded-0 mt-3 mb-2 d-none"
                      role="alert"
                      style="border-right:4px solid #daa328; color:#252468;">
+
                     <i class="fa-solid fa-calendar-xmark ms-1"></i>
-                    جميع المواعيد في هذا اليوم ممتلئة. يرجى اختيار موعد في يوم آخر.
+
+                    موعدا هذا اليوم ممتلئان.
+                    يرجى اختيار يوم آخر.
                 </div>
 
-                <div class="row g-3 mb-2" id="slotsRow" style="display:none;">
+                <!-- Automatically selected time -->
+                <div class="row g-3 mb-2"
+                     id="selectedTimeRow"
+                     style="display:none;">
+
                     <div class="col-md-6"></div>
+
                     <div class="col-md-6">
+
                         <div class="d-flex align-items-center gap-2">
-                            <label class="fw-semibold text-nowrap" style="width:140px; color:#252468;">* الوقت</label>
+
+                            <label class="fw-semibold text-nowrap"
+                                   style="width:140px; color:#252468;">
+                                الوقت المحدد
+                            </label>
+
                             <div class="flex-fill">
-                                <select id="slotsContainer" class="form-select rounded-0"
-                                        style="color:#252468; border-color:#ced4da;">
-                                    <option value="">-- اختر الوقت --</option>
-                                </select>
+
+                                <div id="selectedTimeText"
+                                     class="form-control rounded-0"
+                                     style="
+                                    background:#f7f7fb;
+                                    border-color:#ced4da;
+                                    color:#252468;
+                                    font-weight:700;">
+                                    —
+                                </div>
                             </div>
                         </div>
-                        <input asp-for="AppointmentTime" type="hidden" id="AppointmentTimeHidden" />
-                        <span asp-validation-for="AppointmentTime" class="text-danger small d-block mt-1"></span>
-                        <div id="capacityWarning" class="text-danger small mt-1 d-none">
-                            ⚠️ لا تتوفر حجوزات في هذا الوقت، الطاقة الاستيعابية ممتلئة (10/10)
+
+                        <!-- The value sent to ASP.NET -->
+                        <input asp-for="AppointmentTime"
+                               type="hidden"
+                               id="AppointmentTimeHidden" />
+
+                        <span asp-validation-for="AppointmentTime"
+                              class="text-danger small d-block mt-1"></span>
+
+                        <div id="capacityWarning"
+                             class="text-danger small mt-1 d-none">
+                            ⚠️ هذا الموعد ممتلئ (10/10).
+                            يرجى اختيار الفترة الأخرى أو يوماً آخر.
                         </div>
                     </div>
                 </div>
@@ -694,237 +822,516 @@
 <script>
 
     /* =============================================
-    المواعيد المتاحة — الحد الأقصى 10 أشخاص لكل موعد
+    المواعيد المتاحة
+
+    صباحاً = 09:00 فقط
+    مساءً  = 13:00 فقط
+
+    لا توجد قائمة بأربع ساعات.
+    اختيار الفترة يحدد الوقت تلقائياً.
     =============================================== */
-    const BOOKING_START_DATE = "2026-07-26";
 
-    const SLOTS = {
-    AM: [
-    { value: "AM|09:00", label: "9:00 صباحاً" },
-    { value: "AM|11:00", label: "11:00 صباحاً" }
-    ],
-    PM: [
-    { value: "PM|13:00", label: "1:00 مساءً" },
-    { value: "PM|15:00", label: "3:00 مساءً" }
-    ]
-    };
+    const BOOKING_START_DATE =
+    "2026-07-26";
 
-    // تخزن نتيجة الفحص لكل موعد في اليوم المختار.
-    // true = متاح، false = ممتلئ.
-    let slotAvailability = {};
-    let isWholeDayFull = false;
-    let isSelectedSlotFull = false;
+    const DEFAULT_APPOINTMENTS = {
 
-    function getAllSlots() {
-    return [...SLOTS.AM, ...SLOTS.PM];
+    AM: {
+    value: "09:00",
+    label: "09:00 صباحاً"
+    },
+
+    PM: {
+    value: "13:00",
+    label: "01:00 مساءً"
     }
 
-    function setSubmitDisabled(disabled) {
-    const btn = document.getElementById("submitBtn");
-    btn.disabled = disabled;
-    btn.style.opacity = disabled ? "0.6" : "1";
+    };
+
+    /*
+    * true  = الموعد متاح
+    * false = الموعد ممتلئ
+    */
+    let slotAvailability = {};
+
+    let isWholeDayFull =
+    false;
+
+    let isSelectedSlotFull =
+    false;
+
+    function getAllDefaultAppointments() {
+
+    return [
+    DEFAULT_APPOINTMENTS.AM,
+    DEFAULT_APPOINTMENTS.PM
+    ];
+    }
+
+    function setSubmitDisabled(
+    disabled
+    ) {
+
+    const button =
+    document.getElementById(
+    "submitBtn"
+    );
+
+    button.disabled =
+    disabled;
+
+    button.style.opacity =
+    disabled
+    ? "0.6"
+    : "1";
     }
 
     function updateSubmitButtonState() {
-    setSubmitDisabled(isWholeDayFull || isSelectedSlotFull);
+
+    setSubmitDisabled(
+    isWholeDayFull
+    ||
+    isSelectedSlotFull
+    );
     }
 
     function hideCapacityMessages() {
-    document.getElementById("capacityWarning").classList.add("d-none");
-    document.getElementById("dayCapacityWarning").classList.add("d-none");
+
+    document.getElementById(
+    "capacityWarning"
+    ).classList.add(
+    "d-none"
+    );
+
+    document.getElementById(
+    "dayCapacityWarning"
+    ).classList.add(
+    "d-none"
+    );
     }
 
     function clearSelectedAppointment() {
-    document.getElementById("AppointmentTimeHidden").value = "";
 
-    const select = document.getElementById("slotsContainer");
-    select.innerHTML = '<option value="">-- اختر الوقت --</option>';
+    document.getElementById(
+    "AppointmentTimeHidden"
+    ).value = "";
 
-    document.getElementById("slotsRow").style.display = "none";
+    document.getElementById(
+    "selectedTimeText"
+    ).textContent = "—";
 
-    document.querySelectorAll('input[name="TimePeriod"]').forEach(function (radio) {
+    document.getElementById(
+    "selectedTimeRow"
+    ).style.display = "none";
+
+    document.querySelectorAll(
+    'input[name="TimePeriod"]'
+    ).forEach(
+    function (radio) {
+
     radio.checked = false;
     radio.disabled = false;
-    });
+    }
+    );
 
-    isSelectedSlotFull = false;
+    isSelectedSlotFull =
+    false;
+
+    updateSubmitButtonState();
     }
 
-    function renderSlots(period) {
-    const date = document.getElementById("appointmentDatePicker").value;
-    const select = document.getElementById("slotsContainer");
-    const hiddenInput = document.getElementById("AppointmentTimeHidden");
-    const slotsRow = document.getElementById("slotsRow");
-    const warning = document.getElementById("capacityWarning");
+    /*
+    * اختيار صباحاً أو مساءً:
+    *
+    * AM يضع 09:00 تلقائياً.
+    * PM يضع 13:00 تلقائياً.
+    */
+    async function selectDefaultAppointment(
+    period
+    ) {
 
-    select.innerHTML = '<option value="">-- اختر الوقت --</option>';
-    hiddenInput.value = "";
-    warning.classList.add("d-none");
-    isSelectedSlotFull = false;
-    updateSubmitButtonState();
+    const date =
+    document.getElementById(
+    "appointmentDatePicker"
+    ).value;
+
+    const selectedAppointment =
+    DEFAULT_APPOINTMENTS[
+    period
+    ];
+
+    const hiddenInput =
+    document.getElementById(
+    "AppointmentTimeHidden"
+    );
+
+    const selectedTimeText =
+    document.getElementById(
+    "selectedTimeText"
+    );
+
+    const selectedTimeRow =
+    document.getElementById(
+    "selectedTimeRow"
+    );
+
+    const warning =
+    document.getElementById(
+    "capacityWarning"
+    );
+
+    warning.classList.add(
+    "d-none"
+    );
+
+    isSelectedSlotFull =
+    false;
 
     if (!date) {
-    slotsRow.style.display = "none";
+
+    hiddenInput.value = "";
+
+    selectedTimeRow.style.display =
+    "none";
+
+    alert(
+    "يرجى اختيار تاريخ الموعد أولاً."
+    );
+
+    const selectedRadio =
+    document.querySelector(
+    'input[name="TimePeriod"]:checked'
+    );
+
+    if (selectedRadio) {
+    selectedRadio.checked = false;
+    }
+
     return;
     }
 
-    SLOTS[period].forEach(function (slot) {
-    const option = document.createElement("option");
-    const available = slotAvailability[slot.value] !== false;
+    hiddenInput.value =
+    selectedAppointment.value;
 
-    option.value = slot.value;
-    option.text = available
-    ? slot.label
-    : `${slot.label} — ممتلئ (10/10)`;
-    option.disabled = !available;
+    selectedTimeText.textContent =
+    selectedAppointment.label;
 
-    select.appendChild(option);
-    });
+    selectedTimeRow.style.removeProperty(
+    "display"
+    );
 
-    slotsRow.style.removeProperty("display");
+    /*
+    * إذا كانت نتيجة فحص اليوم تؤكد أن الموعد ممتلئ،
+    * نظهر الرسالة مباشرة.
+    */
+    if (
+    slotAvailability[
+    selectedAppointment.value
+    ] === false
+    ) {
 
-    const allPeriodSlotsFull = SLOTS[period].every(function (slot) {
-    return slotAvailability[slot.value] === false;
-    });
+    warning.textContent =
+    "⚠️ هذا الموعد ممتلئ (10/10). "
+    +
+    "يرجى اختيار الفترة الأخرى أو يوماً آخر.";
 
-    if (allPeriodSlotsFull) {
-    warning.textContent = "⚠️ جميع مواعيد هذه الفترة ممتلئة. يرجى اختيار الفترة الأخرى أو يوماً آخر.";
-    warning.classList.remove("d-none");
-    isSelectedSlotFull = true;
+    warning.classList.remove(
+    "d-none"
+    );
+
+    hiddenInput.value = "";
+
+    isSelectedSlotFull =
+    true;
+
     updateSubmitButtonState();
+
+    return;
     }
 
-    select.onchange = async function () {
-    hiddenInput.value = this.value;
-    warning.classList.add("d-none");
-    isSelectedSlotFull = false;
     updateSubmitButtonState();
 
-    if (this.value) {
     await checkCapacity();
     }
-    };
-    }
 
     /* =============================================
-    فحص جميع مواعيد اليوم
+    فحص الموعدين الافتراضيين لليوم
+
+    09:00 و13:00 فقط
     =============================================== */
+
     async function checkDayAvailability() {
-    const date = document.getElementById("appointmentDatePicker").value;
-    const dayWarning = document.getElementById("dayCapacityWarning");
+
+    const date =
+    document.getElementById(
+    "appointmentDatePicker"
+    ).value;
+
+    const dayWarning =
+    document.getElementById(
+    "dayCapacityWarning"
+    );
 
     slotAvailability = {};
-    isWholeDayFull = false;
-    isSelectedSlotFull = false;
+
+    isWholeDayFull =
+    false;
+
+    isSelectedSlotFull =
+    false;
+
     hideCapacityMessages();
+
     updateSubmitButtonState();
 
-    if (!date) return;
+    if (!date) {
+    return;
+    }
 
     try {
-    const results = await Promise.all(
-    getAllSlots().map(async function (slot) {
-    const time = slot.value.split("|")[1];
-    const response = await fetch(
-    `/Patients/CheckSlot?date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}`,
-    { cache: "no-store" }
+
+    const results =
+    await Promise.all(
+
+    getAllDefaultAppointments()
+    .map(
+    async function (
+    appointment
+    ) {
+
+    const response =
+    await fetch(
+    `/Patients/CheckSlot?date=${encodeURIComponent(date)}&time=${encodeURIComponent(appointment.value)}`,
+    {
+    cache: "no-store"
+    }
     );
 
     if (!response.ok) {
-    throw new Error("تعذر فحص الموعد");
+
+    throw new Error(
+    "تعذر فحص الموعد"
+    );
     }
 
-    const data = await response.json();
+    const data =
+    await response.json();
 
     return {
-    value: slot.value,
-    available: data.available === true
+    value:
+    appointment.value,
+
+    available:
+    data.available === true
     };
-    })
+    }
+    )
     );
 
-    results.forEach(function (result) {
-    slotAvailability[result.value] = result.available;
-    });
+    results.forEach(
+    function (
+    result
+    ) {
 
-    isWholeDayFull = results.every(function (result) {
-    return result.available === false;
-    });
+    slotAvailability[
+    result.value
+    ] =
+    result.available;
+    }
+    );
+
+    isWholeDayFull =
+    results.every(
+    function (
+    result
+    ) {
+
+    return (
+    result.available
+    === false
+    );
+    }
+    );
+
+    const morningRadio =
+    document.querySelector(
+    'input[name="TimePeriod"][value="AM"]'
+    );
+
+    const eveningRadio =
+    document.querySelector(
+    'input[name="TimePeriod"][value="PM"]'
+    );
+
+    morningRadio.disabled =
+    slotAvailability["09:00"]
+    === false;
+
+    eveningRadio.disabled =
+    slotAvailability["13:00"]
+    === false;
 
     if (isWholeDayFull) {
-    dayWarning.classList.remove("d-none");
-    document.querySelectorAll('input[name="TimePeriod"]').forEach(function (radio) {
-    radio.disabled = true;
-    });
-    } else {
-    dayWarning.classList.add("d-none");
 
-    // نعطل الفترة فقط إذا كان موعداها كلاهما ممتلئين.
-    document.querySelectorAll('input[name="TimePeriod"]').forEach(function (radio) {
-    radio.disabled = SLOTS[radio.value].every(function (slot) {
-    return slotAvailability[slot.value] === false;
-    });
-    });
+    dayWarning.classList.remove(
+    "d-none"
+    );
+    }
+    else {
+
+    dayWarning.classList.add(
+    "d-none"
+    );
     }
 
     updateSubmitButtonState();
-    } catch (error) {
-    // عند تعذر الاتصال، لا نعتبر الموعد ممتلئاً من الواجهة.
-    // يبقى التحقق النهائي مسؤولية الخادم عند الحفظ.
-    console.warn("فشل فحص مواعيد اليوم:", error);
+    }
+    catch (
+    error
+    ) {
+
+    console.warn(
+    "فشل فحص مواعيد اليوم:",
+    error
+    );
+
+    /*
+    * عند تعذر الاتصال لا نعتبر الموعد ممتلئاً
+    * من الواجهة. يبقى فحص الخادم هو المرجع النهائي.
+    */
     slotAvailability = {};
-    isWholeDayFull = false;
-    dayWarning.classList.add("d-none");
+
+    isWholeDayFull =
+    false;
+
+    dayWarning.classList.add(
+    "d-none"
+    );
+
+    document.querySelectorAll(
+    'input[name="TimePeriod"]'
+    ).forEach(
+    function (
+    radio
+    ) {
+
+    radio.disabled =
+    false;
+    }
+    );
+
     updateSubmitButtonState();
     }
     }
 
     /* =============================================
-    إعادة فحص الموعد المختار مباشرة قبل المتابعة
+    إعادة فحص الموعد المختار قبل الحفظ
     =============================================== */
-    async function checkCapacity() {
-    const date = document.getElementById("appointmentDatePicker").value;
-    const fullValue = document.getElementById("AppointmentTimeHidden").value;
-    const timeValue = fullValue.includes("|") ? fullValue.split("|")[1] : fullValue;
-    const warning = document.getElementById("capacityWarning");
 
-    if (!date || !timeValue) return false;
+    async function checkCapacity() {
+
+    const date =
+    document.getElementById(
+    "appointmentDatePicker"
+    ).value;
+
+    const timeValue =
+    document.getElementById(
+    "AppointmentTimeHidden"
+    ).value;
+
+    const warning =
+    document.getElementById(
+    "capacityWarning"
+    );
+
+    if (
+    !date
+    ||
+    !timeValue
+    ) {
+
+    return false;
+    }
 
     try {
-    const response = await fetch(
+
+    const response =
+    await fetch(
     `/Patients/CheckSlot?date=${encodeURIComponent(date)}&time=${encodeURIComponent(timeValue)}`,
-    { cache: "no-store" }
+    {
+    cache: "no-store"
+    }
     );
 
     if (!response.ok) {
-    throw new Error("تعذر فحص الموعد");
+
+    throw new Error(
+    "تعذر فحص الموعد"
+    );
     }
 
-    const data = await response.json();
-    const available = data.available === true;
+    const data =
+    await response.json();
+
+    const available =
+    data.available === true;
+
+    slotAvailability[
+    timeValue
+    ] =
+    available;
 
     if (!available) {
-    warning.textContent = "⚠️ هذا الموعد ممتلئ (10/10). يرجى اختيار موعد آخر.";
-    warning.classList.remove("d-none");
-    isSelectedSlotFull = true;
-    document.getElementById("AppointmentTimeHidden").value = "";
-    document.getElementById("slotsContainer").value = "";
-    } else {
-    warning.classList.add("d-none");
-    isSelectedSlotFull = false;
-    }
 
-    if (fullValue) {
-    slotAvailability[fullValue] = available;
+    warning.textContent =
+    "⚠️ هذا الموعد ممتلئ (10/10). "
+    +
+    "يرجى اختيار الفترة الأخرى أو يوماً آخر.";
+
+    warning.classList.remove(
+    "d-none"
+    );
+
+    isSelectedSlotFull =
+    true;
+    }
+    else {
+
+    warning.classList.add(
+    "d-none"
+    );
+
+    isSelectedSlotFull =
+    false;
     }
 
     updateSubmitButtonState();
+
     return available;
-    } catch (error) {
-    console.warn("فشل فحص الموعد المختار:", error);
-    warning.classList.add("d-none");
-    isSelectedSlotFull = false;
+    }
+    catch (
+    error
+    ) {
+
+    console.warn(
+    "فشل فحص الموعد المختار:",
+    error
+    );
+
+    warning.classList.add(
+    "d-none"
+    );
+
+    isSelectedSlotFull =
+    false;
+
     updateSubmitButtonState();
+
+    /*
+    * عند تعذر الاتصال لا نوقف المستخدم من الواجهة،
+    * والخادم يعيد التحقق عند الحفظ.
+    */
     return true;
     }
     }
@@ -932,26 +1339,63 @@
     /* =============================================
     Flatpickr — أول يوم متاح 26/07/2026
     =============================================== */
-    flatpickr("#appointmentDatePicker", {
-    dateFormat: "Y-m-d",
-    minDate: BOOKING_START_DATE,
-    disable: [function (date) {
-    // منع الجمعة والسبت.
-    return date.getDay() === 5 || date.getDay() === 6;
-    }],
-    onChange: async function () {
+
+    flatpickr(
+    "#appointmentDatePicker",
+    {
+
+    dateFormat:
+    "Y-m-d",
+
+    minDate:
+    BOOKING_START_DATE,
+
+    disable: [
+    function (
+    date
+    ) {
+
+    /*
+    * منع الجمعة والسبت.
+    */
+    return (
+    date.getDay() === 5
+    ||
+    date.getDay() === 6
+    );
+    }
+    ],
+
+    onChange:
+    async function () {
+
     clearSelectedAppointment();
+
     await checkDayAvailability();
     }
-    });
+    }
+    );
 
     /* =============================================
     اختيار الفترة
     =============================================== */
-    document.querySelectorAll('input[name="TimePeriod"]').forEach(function (radio) {
-    radio.addEventListener("change", function () {
-    renderSlots(this.value);
-    });
+
+    document.querySelectorAll(
+    'input[name="TimePeriod"]'
+    ).forEach(
+    function (
+    radio
+    ) {
+
+    radio.addEventListener(
+    "change",
+    async function () {
+
+    await selectDefaultAppointment(
+    this.value
+    );
+    }
+    );
     });
 
     /* =============================================
@@ -1001,22 +1445,204 @@
     });
 
     /* =============================================
-    الجنسية
+    نوع الهوية: أردني / جواز سفر
     =============================================== */
-    document.addEventListener("DOMContentLoaded", function () {
-    const radios  = document.querySelectorAll('input[name="Nationality"]');
-    const idInput = document.getElementById("idInput");
-    const idLabel = document.getElementById("idLabel");
+    const nationalityRadios =
+    document.querySelectorAll('input[name="Nationality"]');
 
-    function updateIDField() {
-    const selected = document.querySelector('input[name="Nationality"]:checked');
-    if (!selected) return;
-    idLabel.innerText   = selected.value === "1" ? "* الرقم الوطني" : "* رقم الجواز";
-    idInput.placeholder = selected.value === "1" ? "أدخل الرقم الوطني" : "أدخل رقم الجواز";
-    idInput.value       = "";
-    }
-    radios.forEach(function (r) { r.addEventListener("change", updateIDField); });
+    const identityInput =
+    document.getElementById("idInput");
+
+    const identityLabel =
+    document.getElementById("idLabel");
+
+    const identityError =
+    document.getElementById("identityClientError");
+
+    const nationalityError =
+    document.getElementById("nationalityClientError");
+
+    function normalizeArabicDigits(value) {
+    if (!value) return "";
+
+    const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+    const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
+
+    return value
+    .replace(/[٠-٩]/g, function (digit) {
+    return arabicDigits.indexOf(digit).toString();
+    })
+    .replace(/[۰-۹]/g, function (digit) {
+    return persianDigits.indexOf(digit).toString();
     });
+    }
+
+    function getSelectedNationality() {
+    return document.querySelector('input[name="Nationality"]:checked');
+    }
+
+    function showNationalityError(message) {
+    nationalityError.textContent = message || "";
+    nationalityError.classList.toggle("d-none", !message);
+    }
+
+    function showIdentityError(message) {
+    identityError.textContent = message || "";
+    identityError.classList.toggle("d-none", !message);
+    identityInput.classList.toggle("is-invalid", !!message);
+    }
+
+    function configureIdentityField(clearValue) {
+    const selectedNationality = getSelectedNationality();
+
+    showNationalityError("");
+    showIdentityError("");
+
+    if (!selectedNationality) {
+    identityInput.disabled = true;
+    identityInput.value = "";
+    identityInput.placeholder = "اختر نوع الهوية أولاً";
+    identityLabel.textContent = "* الرقم الوطني / رقم الجواز";
+    identityInput.removeAttribute("pattern");
+    identityInput.removeAttribute("maxlength");
+    return;
+    }
+
+    identityInput.disabled = false;
+    identityInput.required = true;
+
+    if (clearValue === true) {
+    identityInput.value = "";
+    }
+
+    if (selectedNationality.value === "1") {
+    identityLabel.textContent = "* الرقم الوطني";
+    identityInput.placeholder = "أدخل الرقم الوطني المكون من 10 أرقام";
+    identityInput.maxLength = 10;
+    identityInput.inputMode = "numeric";
+    identityInput.setAttribute("pattern", "[0-9]{10}");
+    identityInput.setAttribute(
+    "title",
+    "الرقم الوطني يجب أن يتكون من 10 أرقام بالضبط"
+    );
+    } else {
+    identityLabel.textContent = "* رقم جواز السفر";
+    identityInput.placeholder = "أدخل رقم جواز السفر";
+    identityInput.maxLength = 20;
+    identityInput.inputMode = "text";
+    identityInput.setAttribute("pattern", "[A-Za-z0-9-]{5,20}");
+    identityInput.setAttribute(
+    "title",
+    "رقم الجواز يجب أن يكون من 5 إلى 20 خانة من الأحرف الإنجليزية أو الأرقام"
+    );
+    }
+    }
+
+    nationalityRadios.forEach(function (radio) {
+    radio.addEventListener("change", function () {
+    configureIdentityField(true);
+    identityInput.focus();
+    });
+    });
+
+    identityInput.addEventListener("input", function () {
+    const selectedNationality = getSelectedNationality();
+
+    showIdentityError("");
+
+    if (!selectedNationality) {
+    this.value = "";
+    return;
+    }
+
+    let value = normalizeArabicDigits(this.value);
+
+    if (selectedNationality.value === "1") {
+    value = value
+    .replace(/[^0-9]/g, "")
+    .substring(0, 10);
+    } else {
+    value = value
+    .toUpperCase()
+    .replace(/\s+/g, "")
+    .replace(/[^A-Z0-9-]/g, "")
+    .substring(0, 20);
+    }
+
+    this.value = value;
+    });
+
+    function validateNationalityAndIdentity() {
+    const selectedNationality = getSelectedNationality();
+    const identityValue = normalizeArabicDigits(
+    identityInput.value.trim()
+    );
+
+    showNationalityError("");
+    showIdentityError("");
+
+    if (!selectedNationality) {
+    showNationalityError(
+    "⚠️ يرجى اختيار أردني أو جواز سفر."
+    );
+
+    const firstRadio =
+    document.getElementById("nationalityJordanian");
+
+    firstRadio.focus();
+    firstRadio.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+    });
+
+    return false;
+    }
+
+    if (identityValue === "") {
+    showIdentityError(
+    selectedNationality.value === "1"
+    ? "⚠️ يرجى إدخال الرقم الوطني."
+    : "⚠️ يرجى إدخال رقم جواز السفر."
+    );
+
+    identityInput.focus();
+    identityInput.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+    });
+
+    return false;
+    }
+
+    if (selectedNationality.value === "1") {
+    if (!/^[0-9]{10}$/.test(identityValue)) {
+    showIdentityError(
+    "⚠️ الرقم الوطني يجب أن يتكون من 10 أرقام بالضبط."
+    );
+    identityInput.focus();
+    return false;
+    }
+    } else {
+    if (!/^[A-Za-z0-9-]{5,20}$/.test(identityValue)) {
+    showIdentityError(
+    "⚠️ رقم الجواز يجب أن يكون من 5 إلى 20 خانة، ويحتوي على أحرف إنجليزية أو أرقام فقط."
+    );
+    identityInput.focus();
+    return false;
+    }
+    }
+
+    identityInput.value =
+    selectedNationality.value === "1"
+    ? identityValue
+    : identityValue.toUpperCase();
+
+    return true;
+    }
+
+    // في حال رجعت الصفحة من السيرفر وبداخلها قيم سابقة،
+    // نعرض نوع الحقل الصحيح من دون حذف القيمة.
+    configureIdentityField(false);
 
     /* =============================================
     معاينة الصورة
@@ -1144,6 +1770,31 @@
     document.getElementById("mainForm").addEventListener("submit", async function (e) {
     e.preventDefault();
 
+    // التحقق من اختيار نوع الهوية ومن الرقم الوطني أو رقم الجواز.
+    if (!validateNationalityAndIdentity()) {
+    return;
+    }
+
+    // تشغيل تحقق ASP.NET Core / jQuery Validation لجميع حقول الموديل.
+    if (window.jQuery &&
+    $.validator &&
+    !$(this).valid()) {
+    const firstInvalid = this.querySelector(".input-validation-error, .is-invalid");
+    if (firstInvalid) {
+    firstInvalid.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+    });
+    }
+    return;
+    }
+
+    // تحقق HTML5 للحقول التي تحمل required أو pattern.
+    if (!this.checkValidity()) {
+    this.reportValidity();
+    return;
+    }
+
     const pledge          = document.getElementById("pledge");
     const pledgeError     = document.getElementById("pledgeError");
     const capacityWarning    = document.getElementById("capacityWarning");
@@ -1165,12 +1816,41 @@
     return;
     }
 
-    // 3) التحقق من اختيار وقت
+    // 3) التحقق من اختيار الفترة والوقت الافتراضي
     if (!timeValue) {
-    const slotsRow = document.getElementById("slotsRow");
-    if (slotsRow.style.display !== "none") {
-    slotsRow.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    const appointmentDate =
+    document.getElementById(
+    "appointmentDatePicker"
+    ).value;
+
+    if (!appointmentDate) {
+
+    document.getElementById(
+    "appointmentDatePicker"
+    ).scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+    });
+
+    alert(
+    "يرجى اختيار تاريخ الموعد."
+    );
     }
+    else {
+
+    document.querySelector(
+    'input[name="TimePeriod"]'
+    ).scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+    });
+
+    alert(
+    "يرجى اختيار الفترة: صباحاً أو مساءً."
+    );
+    }
+
     return;
     }
 
@@ -1183,7 +1863,7 @@
     // نعيد الفحص قبل الإرسال مباشرة لتقليل احتمال حجز المقعد الأخير بالتزامن.
     const selectedSlotStillAvailable = await checkCapacity();
     if (!selectedSlotStillAvailable) {
-    document.getElementById("slotsContainer")
+    document.getElementById("selectedTimeRow")
     .scrollIntoView({ behavior: "smooth", block: "center" });
     return;
     }

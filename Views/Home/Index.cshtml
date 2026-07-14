@@ -33,9 +33,54 @@
             p.AppointmentDate.Date == parsedDate.Date);
 
     if (!string.IsNullOrEmpty(filterTime))
-        filtered = filtered.Where(p =>
-            p.AppointmentTime != null &&
-            p.AppointmentTime.StartsWith(filterTime, StringComparison.OrdinalIgnoreCase));
+    {
+        if (
+            string.Equals(
+                filterTime,
+                "AM",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            filtered =
+                filtered.Where(
+                    p =>
+                        p.AppointmentTime != null
+                        &&
+                        (
+                            p.AppointmentTime.StartsWith(
+                                "AM",
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                            ||
+                            p.AppointmentTime == "09:00"
+                        )
+                );
+        }
+        else if (
+            string.Equals(
+                filterTime,
+                "PM",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            filtered =
+                filtered.Where(
+                    p =>
+                        p.AppointmentTime != null
+                        &&
+                        (
+                            p.AppointmentTime.StartsWith(
+                                "PM",
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                            ||
+                            p.AppointmentTime == "13:00"
+                        )
+                );
+        }
+    }
 
     if (!string.IsNullOrEmpty(filterStatus))
     {
@@ -53,8 +98,11 @@
                               .Take(pageSize)
                               .ToList();
 
-    var nextApptMap = ViewBag.NextAppointments as Dictionary<int, DentalCollegeManagementSystem_AAU.Models.Appointment>
-                     ?? new Dictionary<int, DentalCollegeManagementSystem_AAU.Models.Appointment>();
+    var nextApptMap =
+        ViewBag.NextAppointments
+        as Dictionary<int, DentalCollegeManagementSystem_AAU.Models.Appointment>
+        ?? new Dictionary<int, DentalCollegeManagementSystem_AAU.Models.Appointment>();
+
 }
 
 <link rel="stylesheet" href="~/css/Site.css" />
@@ -398,7 +446,24 @@
                             foreach (var item in pagedModel)
                             {
                                 DentalCollegeManagementSystem_AAU.Models.Appointment? nxt = null;
-                                nextApptMap.TryGetValue(item.PatientID, out nxt);
+                                nextApptMap.TryGetValue(
+                                    item.PatientID,
+                                    out nxt
+                                );
+
+                                /*
+                                 * Attendance حالة دائمة للمريض:
+                                 *
+                                 * Yes  -> Patient.AttendanceStatus = Attended
+                                 * No   -> Patient.AttendanceStatus = NoShow
+                                 * null -> Pending
+                                 *
+                                 * لا نعتمد على موعد اليوم، لذلك تبقى الحالة
+                                 * ظاهرة في الجدول بعد انتهاء يوم الموعد.
+                                 */
+                                string displayedAttendanceStatus =
+                                    item.AttendanceStatus
+                                    ?? "";
 
                                 <tr>
                                     <td>@item.FirstName @item.SecondName @item.ThirdName @item.FourthName</td>
@@ -420,36 +485,36 @@
                                     <td>
                                         @if (nxt != null)
                                         {
-                                            string rawTime = nxt.Patient?.AppointmentTime ?? "";
-                                            string apptPeriod = "";
-                                            string apptTime = "";
+                                            /*
+                                             * نعرض الوقت مباشرة من سجل Appointments،
+                                             * وليس من Patient.AppointmentTime.
+                                             * لذلك أي تعديل من Edit يظهر فوراً هنا.
+                                             */
+                                            string apptPeriod =
+                                                nxt.TimeFrom.Hours < 12
+                                                    ? "AM"
+                                                    : "PM";
 
-                                            if (rawTime.Contains("|"))
-                                            {
-                                                var parts = rawTime.Split('|');
-                                                apptPeriod = parts[0];
-                                                apptTime = parts[1];
-                                            }
-                                            else if (rawTime == "AM" || rawTime == "PM")
-                                            {
-                                                apptPeriod = rawTime;
-                                                apptTime = rawTime == "AM" ? "09:00" : "13:00";
-                                            }
-                                            else
-                                            {
-                                                apptPeriod = nxt.TimeFrom.Hours < 12 ? "AM" : "PM";
-                                                apptTime = nxt.TimeFrom.Hours < 12 ? "09:00" : "13:00";
-                                            }
+                                            string apptTime =
+                                                DateTime.Today
+                                                    .Add(nxt.TimeFrom)
+                                                    .ToString("hh:mm tt");
+
+                                            string appointmentDay =
+                                                !string.IsNullOrWhiteSpace(
+                                                    nxt.AppointmentDay
+                                                )
+                                                    ? nxt.AppointmentDay
+                                                    : nxt.AppointmentDate
+                                                        .DayOfWeek
+                                                        .ToString();
 
                                             <span class="next-appt-badge">
                                                 <i class="fa-solid fa-calendar-check me-1"></i>
                                                 @nxt.AppointmentDate.ToString("yyyy-MM-dd")
-                                                · @nxt.AppointmentDay
+                                                · @appointmentDay
                                                 · @apptPeriod
-                                                @if (!string.IsNullOrEmpty(apptTime))
-                                                {
-                                                    <span> · @apptTime</span>
-                                                }
+                                                · @apptTime
                                             </span>
                                         }
                                         else
@@ -459,13 +524,13 @@
                                     </td>
 
                                     <td>
-                                        @if (item.AttendanceStatus == "Attended")
+                                        @if (displayedAttendanceStatus == "Attended")
                                         {
                                             <span class="attendance-attended-badge">
                                                 <i class="fa-solid fa-check me-1"></i>Attended
                                             </span>
                                         }
-                                        else if (item.AttendanceStatus == "NoShow")
+                                        else if (displayedAttendanceStatus == "NoShow")
                                         {
                                             <span class="attendance-noshow-badge">
                                                 <i class="fa-solid fa-xmark me-1"></i>No Show
@@ -508,7 +573,7 @@
                                         </a>
 
                                         <button type="button"
-                                                onclick="checkAttendance(@item.PatientID, '@item.FirstName @item.FourthName', '@item.AttendanceStatus', '@userRole')"
+                                                onclick="checkAttendance(@item.PatientID, '@item.FirstName @item.FourthName', '@displayedAttendanceStatus', '@userRole')"
                                                 style="background:none;color:#3F8CCA;border:none;padding:5px 6px;font-size:13px;font-weight:600;margin:2px;cursor:pointer;">
                                             <i class="fa-solid fa-eye"></i> Details
                                         </button>
@@ -575,6 +640,44 @@
     </div>
 </div>
 
+@*
+    هذه النماذج المخفية هي المسؤولة عن إرسال القرار إلى HomeController.
+    لا يوجد انتقال مباشر إلى Patients/Details ولا استدعاء لـ MarkAttendance.
+*@
+<form id="attendAndOpenForm"
+      asp-controller="Home"
+      asp-action="AttendAndOpen"
+      method="post"
+      style="display:none;">
+
+    @Html.AntiForgeryToken()
+
+    <input type="hidden"
+           id="attendPatientId"
+           name="id" />
+
+    <input type="hidden"
+           name="returnUrl"
+           value="@(Context.Request.Path + Context.Request.QueryString)" />
+</form>
+
+<form id="markNoShowForm"
+      asp-controller="Home"
+      asp-action="MarkNoShow"
+      method="post"
+      style="display:none;">
+
+    @Html.AntiForgeryToken()
+
+    <input type="hidden"
+           id="noShowPatientId"
+           name="id" />
+
+    <input type="hidden"
+           name="returnUrl"
+           value="@(Context.Request.Path + Context.Request.QueryString)" />
+</form>
+
 <!-- ✅ Attendance Modal -->
 <div class="modal fade" id="attendanceModal" tabindex="-1">
     <div class="modal-dialog modal-sm">
@@ -607,79 +710,153 @@
 
 <script>
     let _attendancePatientId = null;
-    let _isSubmitting        = false;
+    let _isSubmitting = false;
 
-    function checkAttendance(patientId, patientName, attendanceStatus, userRole) {
+    function submitAttendAndOpen(patientId) {
+        if (!patientId || _isSubmitting) {
+            return;
+        }
+
+        _isSubmitting = true;
+
+        document.getElementById(
+            'attendPatientId'
+        ).value = patientId;
+
+        document.getElementById(
+            'attendAndOpenForm'
+        ).submit();
+    }
+
+    function checkAttendance(
+        patientId,
+        patientName,
+        attendanceStatus,
+        userRole
+    ) {
         if (userRole === 'Receptionist') {
-            alert("⛔ You don't have permission to view patient details.");
+            alert(
+                "⛔ You don't have permission to view patient details."
+            );
+
             return;
         }
-        if (attendanceStatus === 'NoShow') {
-            alert("This patient did not attend. You cannot open details.");
-            return;
-        }
+
+        /*
+         * حتى إذا كانت الحالة Attended،
+         * لا نفتح البروفايل مباشرة.
+         *
+         * نرسل الطلب إلى Home/AttendAndOpen
+         * حتى يعيد السيرفر فحص تاريخ الموعد.
+         */
         if (attendanceStatus === 'Attended') {
-            window.location.href = `/Patients/Details/${patientId}`;
+            submitAttendAndOpen(patientId);
+            return;
+        }
+
+        if (attendanceStatus === 'NoShow') {
+            alert(
+                "This patient did not attend. You cannot open details."
+            );
+
             return;
         }
 
         _attendancePatientId = patientId;
-        document.getElementById('attendancePatientName').textContent = patientName;
 
-        const modalEl = document.getElementById('attendanceModal');
-        const modal   = new bootstrap.Modal(modalEl);
+        document.getElementById(
+            'attendancePatientName'
+        ).textContent = patientName;
 
-        document.getElementById('btnYesAttended').disabled = false;
-        document.getElementById('btnNoAttended').disabled  = false;
+        const modalEl =
+            document.getElementById(
+                'attendanceModal'
+            );
+
+        const modal =
+            bootstrap.Modal.getOrCreateInstance(
+                modalEl
+            );
+
+        document.getElementById(
+            'btnYesAttended'
+        ).disabled = false;
+
+        document.getElementById(
+            'btnNoAttended'
+        ).disabled = false;
+
         _isSubmitting = false;
 
         modal.show();
     }
 
-    document.getElementById('btnYesAttended').addEventListener('click', async function () {
-        if (!_attendancePatientId || _isSubmitting) return;
-        _isSubmitting = true;
-        this.disabled = true;
-        document.getElementById('btnNoAttended').disabled = true;
+    /*
+     * Yes:
+     * يذهب إلى HomeController.AttendAndOpen.
+     *
+     * الكنترولر هو الذي يقرر:
+     * - الموعد اليوم: Attended ثم فتح البروفايل.
+     * - الموعد ليس اليوم: رسالة خطأ ومنع الدخول.
+     */
+    document.getElementById(
+        'btnYesAttended'
+    ).addEventListener(
+        'click',
+        function () {
+            if (
+                !_attendancePatientId
+                ||
+                _isSubmitting
+            ) {
+                return;
+            }
 
-        try {
-            await fetch('/Appointments/MarkAttendance', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: `patientId=${_attendancePatientId}&status=Attended`
-            });
-            window.location.href = `/Patients/Details/${_attendancePatientId}`;
-        } catch (err) {
-            console.error(err);
-            alert('Something went wrong');
-            _isSubmitting = false;
+            this.disabled = true;
+
+            document.getElementById(
+                'btnNoAttended'
+            ).disabled = true;
+
+            submitAttendAndOpen(
+                _attendancePatientId
+            );
         }
-    });
+    );
 
-    document.getElementById('btnNoAttended').addEventListener('click', async function () {
-        if (!_attendancePatientId || _isSubmitting) return;
-        _isSubmitting = true;
-        this.disabled = true;
-        document.getElementById('btnYesAttended').disabled = true;
+    /*
+     * No:
+     * يذهب إلى HomeController.MarkNoShow.
+     * كذلك لا يسمح السيرفر بتسجيل NoShow قبل يوم الموعد.
+     */
+    document.getElementById(
+        'btnNoAttended'
+    ).addEventListener(
+        'click',
+        function () {
+            if (
+                !_attendancePatientId
+                ||
+                _isSubmitting
+            ) {
+                return;
+            }
 
-        try {
-            await fetch('/Appointments/MarkAttendance', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: `patientId=${_attendancePatientId}&status=NoShow`
-            });
-            bootstrap.Modal.getInstance(document.getElementById('attendanceModal')).hide();
-            location.reload();
-        } catch (err) {
-            console.error(err);
-            alert('Something went wrong');
-            _isSubmitting = false;
+            _isSubmitting = true;
+
+            this.disabled = true;
+
+            document.getElementById(
+                'btnYesAttended'
+            ).disabled = true;
+
+            document.getElementById(
+                'noShowPatientId'
+            ).value = _attendancePatientId;
+
+            document.getElementById(
+                'markNoShowForm'
+            ).submit();
         }
-    });
+    );
 </script>

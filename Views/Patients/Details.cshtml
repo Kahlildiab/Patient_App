@@ -28,9 +28,162 @@
         mh?.Allergies == true &&
         !string.IsNullOrWhiteSpace(mh.AllergyNotes);
 
+    /*
+     * Red Flags التلقائية للحالات المرضية.
+     */
+    var automaticRedFlagConditions =
+        new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase
+        )
+        {
+            "Bleeding Disorders",
+            "Infectious Diseases",
+            "Cancer"
+        };
+
+    /*
+     * الاسم العلمي والأسماء التجارية للأدوية
+     * التي يجب اعتبارها Red Flag تلقائياً.
+     */
+    var automaticRedFlagMedicationNames =
+        new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase
+        )
+        {
+            "Warfarin", "Marevan", "Coumadin",
+            "Rivaroxaban", "Xarelto",
+            "Apixaban", "Eliquis",
+            "Dabigatran", "Pradaxa",
+            "Edoxaban", "Lixiana",
+            "Enoxaparin", "Clexane",
+            "Aspirin", "Aspocid", "Cardioprin",
+            "Clopidogrel", "Plavix", "Clopivas",
+
+            "Alendronate", "Fosamax", "Osteomax",
+            "Risedronate", "Actonel",
+            "Ibandronate", "Bonviva",
+            "Zoledronic acid", "Aclasta", "Zometa",
+            "Pamidronate", "Aredia",
+            "Denosumab", "Prolia", "Xgeva",
+
+            "Prednisolone", "Deltacortril",
+            "Prednisolone Kabi",
+            "Methylprednisolone", "Medrol",
+            "Solu-Medrol",
+            "Dexamethasone",
+            "Betamethasone", "Betnesol", "Celestone",
+            "Hydrocortisone", "Solu-Cortef", "Cortef",
+
+            "Cyclosporine", "Sandimmune", "Neoral",
+            "Tacrolimus", "Prograf", "Advagraf",
+            "Methotrexate",
+            "Azathioprine", "Imuran",
+            "Mycophenolate mofetil", "CellCept",
+            "Myfortic",
+            "Adalimumab", "Humira",
+            "Etanercept", "Enbrel",
+            "Rituximab", "Mabthera",
+            "Sirolimus", "Rapamune"
+        };
+
+    bool IsAutomaticConditionRedFlag(
+        string? conditionName)
+    {
+        return
+            !string.IsNullOrWhiteSpace(
+                conditionName
+            )
+            &&
+            automaticRedFlagConditions.Contains(
+                conditionName.Trim()
+            );
+    }
+
+    bool IsAutomaticMedicationRedFlag(
+        string? drugName)
+    {
+        return
+            !string.IsNullOrWhiteSpace(
+                drugName
+            )
+            &&
+            automaticRedFlagMedicationNames.Contains(
+                drugName.Trim()
+            );
+    }
+
+    var redFlagNames =
+        new List<string>();
+
+    if (conditions != null)
+    {
+        redFlagNames.AddRange(
+            conditions
+                .Where(
+                    condition =>
+                        condition.IsFlagged
+                        ||
+                        IsAutomaticConditionRedFlag(
+                            condition.ConditionName
+                        )
+                )
+                .Select(
+                    condition =>
+                        condition.ConditionName
+                )
+                .Where(
+                    name =>
+                        !string.IsNullOrWhiteSpace(
+                            name
+                        )
+                )
+        );
+    }
+
+    if (meds != null)
+    {
+        redFlagNames.AddRange(
+            meds
+                .Where(
+                    medication =>
+                        !string.IsNullOrWhiteSpace(
+                            medication.FlagType
+                        )
+                        ||
+                        IsAutomaticMedicationRedFlag(
+                            medication.DrugName
+                        )
+                )
+                .Select(
+                    medication =>
+                        medication.DrugName
+                )
+                .Where(
+                    name =>
+                        !string.IsNullOrWhiteSpace(
+                            name
+                        )
+                )
+        );
+    }
+
+    redFlagNames =
+        redFlagNames
+            .Distinct(
+                StringComparer.OrdinalIgnoreCase
+            )
+            .ToList();
+
     bool hasRedFlags =
-        conditions != null &&
-        conditions.Any(c => c.IsFlagged);
+        redFlagNames.Any();
+
+    string redFlagText =
+        hasRedFlags
+            ? string.Join(
+                ", ",
+                redFlagNames
+            )
+            : "No red flags";
 
     bool isVisitClosed =
         ViewBag.IsVisitClosed != null &&
@@ -125,6 +278,27 @@
         ?? new List<DentalCollegeManagementSystem_AAU.Models.Appointment>();
 
     int apptCount = allAppts.Count;
+
+    /*
+     * عدد الزيارات التي حضرها المريض حتى تاريخ اليوم.
+     *
+     * عند الدخول لأول مرة تكون النتيجة 1، لذلك لا يظهر Visit Review.
+     * ابتداءً من الزيارة الثانية تصبح النتيجة 2 أو أكثر ويظهر القسم.
+     */
+    int attendedVisitCount =
+        allAppts.Count(
+            a =>
+                a.AppointmentDate.Date <= DateTime.Today
+                &&
+                string.Equals(
+                    a.AppointmentStatus,
+                    "Attended",
+                    StringComparison.OrdinalIgnoreCase
+                )
+        );
+
+    bool showVisitReview =
+        attendedVisitCount >= 2;
 
     string[] suffixes =
     {
@@ -453,6 +627,73 @@
         margin-bottom: 0;
     }
 
+    /* ===== MEDICATION AUTOCOMPLETE ===== */
+    .medication-search-wrapper {
+        position: relative;
+    }
+
+    .medication-suggestions {
+        display: none;
+        position: absolute;
+        top: calc(100% + 3px);
+        left: 0;
+        right: 0;
+        z-index: 10050;
+        max-height: 240px;
+        overflow-y: auto;
+        background: #ffffff;
+        border: 1px solid #cfd3dc;
+        border-radius: 5px;
+        box-shadow: 0 8px 24px rgba(37, 36, 104, .18);
+    }
+
+    .medication-suggestion-item {
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid #eeeeee;
+        background: #ffffff;
+        padding: 9px 11px;
+        text-align: left;
+        cursor: pointer;
+    }
+
+        .medication-suggestion-item:last-child {
+            border-bottom: 0;
+        }
+
+        .medication-suggestion-item:hover,
+        .medication-suggestion-item.active {
+            background: #eef0f8;
+        }
+
+    .medication-suggestion-generic {
+        color: #252468;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .medication-suggestion-brands {
+        margin-top: 2px;
+        color: #777777;
+        font-size: 11px;
+    }
+
+    .automatic-red-flag-hint {
+        display: none;
+        margin-top: 5px;
+        color: #c0392b;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .automatic-condition-hint {
+        display: none;
+        margin-top: 5px;
+        color: #c0392b;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
 </style>
 
 <!-- ===== PATIENT DETAILS CARD ===== -->
@@ -621,8 +862,8 @@
                 font-size:13px;
                 font-weight:600;
                 color:@(nextAppt != null
-                                     ? "#252468"
-                                     : "#999");
+                                                                       ? "#252468"
+                                                                       : "#999");
                 margin-top:4px;
                 white-space:nowrap;
                 overflow:hidden;
@@ -654,7 +895,7 @@
                      == "No student assigned"
                          ? "#999"
                          : "#252468"
-                             );
+                                                       );
                 margin-top:4px;
                 white-space:nowrap;
                 overflow:hidden;
@@ -686,20 +927,40 @@
         </div>
 
         <!-- Red Flags Box -->
-        <div style="background:@(hasRedFlags ? "#FDECEA" : "#EAF7EE"); border:0.5px solid @(hasRedFlags ? "#D9534F" : "#27AE60"); border-radius:8px; padding:10px 16px; display:flex; align-items:center; gap:10px;">
-            <div style="width:8px; height:8px; border-radius:50%; background:@(hasRedFlags ? "#A32D2D" : "#1E8449"); flex-shrink:0;"></div>
+        <div id="info-bar-red-flags-wrapper"
+             style="
+            background:@(hasRedFlags ? "#FDECEA" : "#EAF7EE");
+            border:0.5px solid @(hasRedFlags ? "#D9534F" : "#27AE60");
+            border-radius:8px;
+            padding:10px 16px;
+            display:flex;
+            align-items:center;
+            gap:10px;">
+
+            <div id="info-bar-red-flags-dot"
+                 style="
+                width:8px;
+                height:8px;
+                border-radius:50%;
+                background:@(hasRedFlags ? "#A32D2D" : "#1E8449");
+                flex-shrink:0;">
+            </div>
+
             <div>
-                <div style="font-size:11px; color:@(hasRedFlags ? "#791F1F" : "#1A5C35");">Red Flags</div>
-                @if (hasRedFlags)
-                {
-                    <div style="font-size:13px; font-weight:500; color:#501313;">
-                        @string.Join(", ", conditions.Where(c => c.IsFlagged).Select(c => c.ConditionName))
-                    </div>
-                }
-                else
-                {
-                    <div style="font-size:13px; font-weight:500; color:#145A32;">No red flags</div>
-                }
+                <div id="info-bar-red-flags-label"
+                     style="
+                    font-size:11px;
+                    color:@(hasRedFlags ? "#791F1F" : "#1A5C35");">
+                    Red Flags
+                </div>
+
+                <div id="info-bar-red-flags"
+                     style="
+                    font-size:13px;
+                    font-weight:500;
+                    color:@(hasRedFlags ? "#501313" : "#145A32");">
+                    @redFlagText
+                </div>
             </div>
         </div>
 
@@ -760,18 +1021,18 @@
                 <li>
                     <a id="dentalChartLink"
                        href="@Url.Action(
-                                                                         "Index",
-                                                                         "DentalChartPage",
-                                                                         new
-                                                                         {
-                                                                             patientId = Model.PatientID
-                                                                         })"
+                                                                                                                       "Index",
+                                                                                                                       "DentalChartPage",
+                                                                                                                       new
+                                                                                                                       {
+                                                                                                                           patientId = Model.PatientID
+                                                                                                                       })"
                        target="_blank"
                        rel="noopener noreferrer"
                        class="LinkFontStyle sidebar-link dental-chart-link"
                        title="@(isReadOnly
-                                                                         ? "View only — this visit is closed."
-                                                                         : "Open Dental Charting")">
+                                                                                                                       ? "View only — this visit is closed."
+                                                                                                                       : "Open Dental Charting")">
 
                         <span>
                             Dental Charting
@@ -901,25 +1162,117 @@
                         <input type="hidden" name="MedicalHistoryVerified" value="true" />
                     }
 
-                    <!-- Visit Review -->
-                    <div style="border:1.5px solid #252468; border-radius:6px; padding:16px 20px; margin-bottom:16px;">
-                        <div style="font-weight:700; font-size:14px; color:#252468; margin-bottom:10px;">📊 Visit Review</div>
-                        <div style="font-size:12px; font-weight:600; color:#333; margin-bottom:6px;">Changes Status:</div>
-                        <div style="display:flex; gap:24px; margin-bottom:10px;">
-                            <label style="display:flex; align-items:center; gap:6px; font-size:13px;">
-                                <input type="radio" name="ChangesStatus" value="NoChanges" @(mh?.ChangesStatus == DentalCollegeManagementSystem_AAU.Models.ChangesStatusType.NoChanges || mh == null ? "checked" : "") />
-                                No changes in medical history
-                            </label>
-                            <label style="display:flex; align-items:center; gap:6px; font-size:13px;">
-                                <input type="radio" name="ChangesStatus" value="ChangesReported" @(mh?.ChangesStatus == DentalCollegeManagementSystem_AAU.Models.ChangesStatusType.ChangesReported ? "checked" : "") />
-                                Changes reported
-                            </label>
+                    @*
+                        Visit Review يظهر ابتداءً من الزيارة الثانية فقط.
+                        الزيارة الأولى: attendedVisitCount = 1، لذلك لا يظهر.
+                    *@
+                    @if (showVisitReview)
+                    {
+                        <!-- Visit Review -->
+                        <div id="visitReviewSection"
+                             style="border:1.5px solid #252468;
+                            border-radius:6px;
+                            padding:16px 20px;
+                            margin-bottom:16px;">
+
+                            <div style="font-weight:700;
+                                font-size:14px;
+                                color:#252468;
+                                margin-bottom:10px;">
+                                📊 Visit Review
+                            </div>
+
+                            <div style="font-size:12px;
+                                font-weight:600;
+                                color:#333;
+                                margin-bottom:6px;">
+                                Changes Status:
+                            </div>
+
+                            <div style="display:flex;
+                                gap:24px;
+                                margin-bottom:10px;">
+
+                                <label style="display:flex;
+                                    align-items:center;
+                                    gap:6px;
+                                    font-size:13px;
+                                    cursor:pointer;">
+
+                                    <input type="radio"
+                                           id="noChangesRadio"
+                                           name="ChangesStatus"
+                                           value="NoChanges"
+                                    @(mh?.ChangesStatus ==
+                                                      DentalCollegeManagementSystem_AAU.Models.ChangesStatusType.NoChanges
+                                                      ? "checked"
+                                                      : "") />
+
+                                    No changes in medical history
+                                </label>
+
+                                <label style="display:flex;
+                                    align-items:center;
+                                    gap:6px;
+                                    font-size:13px;
+                                    cursor:pointer;">
+
+                                    <input type="radio"
+                                           id="changesReportedRadio"
+                                           name="ChangesStatus"
+                                           value="ChangesReported"
+                                    @(mh?.ChangesStatus ==
+                                                      DentalCollegeManagementSystem_AAU.Models.ChangesStatusType.ChangesReported
+                                                      ? "checked"
+                                                      : "") />
+
+                                    Changes reported
+                                </label>
+                            </div>
+
+                            <div style="font-size:12px;
+                                font-weight:600;
+                                color:#333;
+                                margin-bottom:6px;">
+                                Review Date:
+                            </div>
+
+                            <input type="date"
+                                   id="reviewDateInput"
+                                   name="ReviewDate"
+                                   value="@(
+                                   mh?.ReviewDate.HasValue == true
+                                       ? mh.ReviewDate.Value.ToString("yyyy-MM-dd")
+                                       : DateTime.Today.ToString("yyyy-MM-dd")
+                                                                                                 )"
+                                   readonly
+                                   title="The date is entered automatically when Changes reported is selected."
+                                   style="border:1px solid #ccc;
+                            padding:6px 10px;
+                            font-size:13px;
+                            border-radius:4px;
+                            background:#f5f5f5;
+                            color:#333;
+                            cursor:not-allowed;" />
+
+                            <div style="font-size:11px;
+                                color:#888;
+                                margin-top:5px;">
+                                The review date is updated automatically when changes are reported.
+                            </div>
                         </div>
-                        <div style="font-size:12px; font-weight:600; color:#333; margin-bottom:6px;">Review Date:</div>
-                        <input type="date" name="ReviewDate"
-                               value="@(mh?.ReviewDate.HasValue == true ? mh.ReviewDate.Value.ToString("yyyy-MM-dd") : DateTime.Today.ToString("yyyy-MM-dd"))"
-                               style="border:1px solid #ccc; padding:6px 10px; font-size:13px; border-radius:4px;" />
-                    </div>
+                    }
+                    else
+                    {
+                        @*
+                            في الزيارة الأولى لا نعرض Visit Review.
+                            نرسل فقط القيمة الافتراضية حتى لا يحدث
+                            Model Binding Error إذا كان ChangesStatus مطلوبًا.
+                        *@
+                        <input type="hidden"
+                               name="ChangesStatus"
+                               value="NoChanges" />
+                    }
 
                     <!-- 1. Allergies -->
                     <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:12px;">
@@ -1003,17 +1356,29 @@
                     <!-- 5. Conditions -->
                     <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:12px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-                            <div style="font-weight:700; font-size:13px; color:#252468;">5. Diagnosed Medical Conditions</div>
-                            <button type="button" onclick="openConditionModal()"
+                            <div style="font-weight:700; font-size:13px; color:#252468;">
+                                5. Diagnosed Medical Conditions
+                            </div>
+
+                            <button type="button"
+                                    onclick="openConditionModal()"
                                     style="background:#252468; color:white; border:none; padding:5px 14px; font-size:12px; font-weight:600; cursor:pointer; border-radius:4px;">
                                 + Add Condition
                             </button>
                         </div>
+
+                        <div style="font-size:11px; color:#777; margin-bottom:10px;">
+                            Bleeding Disorders, Infectious Diseases, and Cancer
+                            are marked as 🚩 Red Flag automatically.
+                        </div>
+
                         <div id="conditions-display">
                             @if (conditions != null && conditions.Any())
                             {
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-striped" style="font-size:12px;" id="conditions-table">
+                                    <table class="table table-bordered table-striped"
+                                           style="font-size:12px;"
+                                           id="conditions-table">
                                         <thead>
                                             <tr>
                                                 <th>Condition</th>
@@ -1024,33 +1389,65 @@
                                                 <th style="text-align:center;">Action</th>
                                             </tr>
                                         </thead>
+
                                         <tbody id="conditions-tbody">
                                             @foreach (var c in conditions)
                                             {
+                                                bool conditionIsFlagged =
+                                                    c.IsFlagged
+                                                    ||
+                                                    IsAutomaticConditionRedFlag(
+                                                        c.ConditionName
+                                                    );
+
                                                 <tr>
-                                                    <td style="font-weight:600; color:#252468;">@c.ConditionName</td>
-                                                    <td>@(c.YearOfDiagnosis.HasValue ? c.YearOfDiagnosis.ToString() : "---")</td>
-                                                    <td>@(string.IsNullOrEmpty(c.Notes) ? "---" : c.Notes)</td>
+                                                    <td class="condition-name-cell"
+                                                        style="font-weight:600; color:#252468;">
+                                                        @c.ConditionName
+                                                    </td>
+
+                                                    <td>
+                                                        @(c.YearOfDiagnosis.HasValue
+                                                            ? c.YearOfDiagnosis.ToString()
+                                                            : "---")
+                                                    </td>
+
+                                                    <td>
+                                                        @(string.IsNullOrEmpty(c.Notes)
+                                                            ? "---"
+                                                            : c.Notes)
+                                                    </td>
+
                                                     <td>
                                                         @if (c.IsCurrentlyActive)
                                                         {
-                                                            <span style="color:#27ae60; font-weight:600;">Active</span>
+                                                            <span style="color:#27ae60; font-weight:600;">
+                                                                Active
+                                                            </span>
                                                         }
                                                         else
                                                         {
-                                                            <span style="color:#aaa;">Inactive</span>
+                                                            <span style="color:#aaa;">
+                                                                Inactive
+                                                            </span>
                                                         }
                                                     </td>
-                                                    <td>
-                                                        @if (c.IsFlagged)
+
+                                                    <td class="condition-flag-cell">
+                                                        @if (conditionIsFlagged)
                                                         {
-                                                            <span style="color:#c0392b; font-weight:700; font-size:13px;">🚩 Yes</span>
+                                                            <span style="color:#c0392b; font-weight:700; font-size:13px;">
+                                                                🚩 Yes
+                                                            </span>
                                                         }
                                                         else
                                                         {
-                                                            <span style="color:#aaa; font-size:11px;">No</span>
+                                                            <span style="color:#aaa; font-size:11px;">
+                                                                No
+                                                            </span>
                                                         }
                                                     </td>
+
                                                     <td style="text-align:center; white-space:nowrap;">
                                                         <button type="button"
                                                                 class="edit-condition-btn"
@@ -1058,14 +1455,17 @@
                                                                 data-name="@c.ConditionName"
                                                                 data-year="@(c.YearOfDiagnosis.HasValue ? c.YearOfDiagnosis.ToString() : "")"
                                                                 data-active="@(c.IsCurrentlyActive ? "true" : "false")"
-                                                                data-flagged="@(c.IsFlagged ? "true" : "false")"
+                                                                data-flagged="@(conditionIsFlagged ? "true" : "false")"
                                                                 data-notes="@(c.Notes ?? "")"
-                                                                style="background:none; border:none; color:#252468; cursor:pointer; margin-right:8px;" title="Edit">
+                                                                style="background:none; border:none; color:#252468; cursor:pointer; margin-right:8px;"
+                                                                title="Edit">
                                                             <i class="fa-solid fa-pen-to-square"></i>
                                                         </button>
+
                                                         <button type="button"
                                                                 onclick="deleteCondition(this, @c.ConditionID)"
-                                                                style="background:none; border:none; color:#c0392b; cursor:pointer;" title="Delete">
+                                                                style="background:none; border:none; color:#c0392b; cursor:pointer;"
+                                                                title="Delete">
                                                             <i class="fa-solid fa-trash"></i>
                                                         </button>
                                                     </td>
@@ -1077,18 +1477,27 @@
                             }
                             else
                             {
-                                <div id="no-conditions-msg" style="font-size:12px; color:#888;">No conditions recorded yet.</div>
-                                <div class="table-responsive" id="conditions-table" style="display:none;">
-                                    <table class="table table-bordered table-striped" style="font-size:12px;">
+                                <div id="no-conditions-msg"
+                                     style="font-size:12px; color:#888;">
+                                    No conditions recorded yet.
+                                </div>
+
+                                <div class="table-responsive"
+                                     id="conditions-table"
+                                     style="display:none;">
+                                    <table class="table table-bordered table-striped"
+                                           style="font-size:12px;">
                                         <thead>
                                             <tr>
                                                 <th>Condition</th>
                                                 <th>Year</th>
                                                 <th>Notes</th>
+                                                <th>Case</th>
                                                 <th>Red Flag</th>
                                                 <th style="text-align:center;">Action</th>
                                             </tr>
                                         </thead>
+
                                         <tbody id="conditions-tbody"></tbody>
                                     </table>
                                 </div>
@@ -1099,53 +1508,91 @@
                     <!-- 6. Medications -->
                     <div style="border:1px solid #ddd; border-radius:4px; padding:16px 20px; margin-bottom:24px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                            <div style="font-weight:700; font-size:13px; color:#252468;">6. Medications</div>
-                            <button type="button" onclick="openMedicationModal()"
+                            <div style="font-weight:700; font-size:13px; color:#252468;">
+                                6. Medications
+                            </div>
+
+                            <button type="button"
+                                    onclick="openMedicationModal()"
                                     style="background:#252468; color:white; border:none; padding:5px 14px; font-size:12px; font-weight:600; cursor:pointer; border-radius:4px;">
                                 + Add Medication
                             </button>
                         </div>
+
+                        <div style="font-size:11px; color:#777; margin-bottom:10px;">
+                            Start typing a generic or brand name and select it
+                            from the search results. Listed medicines are marked
+                            as 🚩 Red Flag automatically.
+                        </div>
+
                         <div id="medications-display">
                             @if (meds != null && meds.Any())
                             {
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-striped" style="font-size:12px;" id="medications-table">
+                                    <table class="table table-bordered table-striped"
+                                           style="font-size:12px;"
+                                           id="medications-table">
                                         <thead>
                                             <tr>
                                                 <th>Drug Name</th>
                                                 <th>Dose</th>
                                                 <th>Frequency</th>
                                                 <th>Duration</th>
-                                                <th>Flags</th>
+                                                <th>Red Flag</th>
                                                 <th style="text-align:center;">Action</th>
                                             </tr>
                                         </thead>
+
                                         <tbody id="medications-tbody">
                                             @foreach (var med in meds)
                                             {
+                                                bool medicationIsFlagged =
+                                                    !string.IsNullOrWhiteSpace(
+                                                        med.FlagType
+                                                    )
+                                                    ||
+                                                    IsAutomaticMedicationRedFlag(
+                                                        med.DrugName
+                                                    );
+
                                                 <tr>
-                                                    <td>@med.DrugName</td>
-                                                    <td>@(string.IsNullOrEmpty(med.Dose) ? "---" : med.Dose)</td>
-                                                    <td>@(string.IsNullOrEmpty(med.Frequency) ? "---" : med.Frequency)</td>
-                                                    <td>@(string.IsNullOrEmpty(med.Duration) ? "---" : med.Duration)</td>
+                                                    <td class="medication-name-cell">
+                                                        @med.DrugName
+                                                    </td>
+
                                                     <td>
-                                                        @if (string.IsNullOrEmpty(med.FlagType))
+                                                        @(string.IsNullOrEmpty(med.Dose)
+                                                            ? "---"
+                                                            : med.Dose)
+                                                    </td>
+
+                                                    <td>
+                                                        @(string.IsNullOrEmpty(med.Frequency)
+                                                            ? "---"
+                                                            : med.Frequency)
+                                                    </td>
+
+                                                    <td>
+                                                        @(string.IsNullOrEmpty(med.Duration)
+                                                            ? "---"
+                                                            : med.Duration)
+                                                    </td>
+
+                                                    <td class="medication-flag-cell">
+                                                        @if (medicationIsFlagged)
                                                         {
-                                                            <span style="color:#aaa; font-size:11px;">---</span>
+                                                            <span style="color:#c0392b; font-weight:700; font-size:13px;">
+                                                                🚩 Yes
+                                                            </span>
                                                         }
                                                         else
                                                         {
-                                                            string flagClass = med.FlagType switch
-                                                            {
-                                                                "Anticoagulant" => "flag-anticoagulant",
-                                                                "Bisphosphonates" => "flag-bisphosphonates",
-                                                                "Steroids" => "flag-steroids",
-                                                                "Immunosuppressants" => "flag-immunosuppressants",
-                                                                _ => ""
-                                                            };
-                                                            <span class="flag-badge @flagClass">@med.FlagType</span>
+                                                            <span style="color:#aaa; font-size:11px;">
+                                                                No
+                                                            </span>
                                                         }
                                                     </td>
+
                                                     <td style="text-align:center; white-space:nowrap;">
                                                         <button type="button"
                                                                 class="edit-med-btn"
@@ -1155,11 +1602,15 @@
                                                                 data-frequency="@(med.Frequency ?? "")"
                                                                 data-duration="@(med.Duration ?? "")"
                                                                 data-flag="@(med.FlagType ?? "")"
-                                                                style="background:none; border:none; color:#252468; cursor:pointer; margin-right:8px;" title="Edit">
+                                                                style="background:none; border:none; color:#252468; cursor:pointer; margin-right:8px;"
+                                                                title="Edit">
                                                             <i class="fa-solid fa-pen-to-square"></i>
                                                         </button>
-                                                        <button type="button" onclick="deleteMedication(this, @med.MedicationID)"
-                                                                style="background:none; border:none; color:#c0392b; cursor:pointer;" title="Delete">
+
+                                                        <button type="button"
+                                                                onclick="deleteMedication(this, @med.MedicationID)"
+                                                                style="background:none; border:none; color:#c0392b; cursor:pointer;"
+                                                                title="Delete">
                                                             <i class="fa-solid fa-trash"></i>
                                                         </button>
                                                     </td>
@@ -1171,19 +1622,27 @@
                             }
                             else
                             {
-                                <div id="no-medications-msg" style="font-size:12px; color:#888;">No medications recorded yet.</div>
-                                <div class="table-responsive" id="medications-table" style="display:none;">
-                                    <table class="table table-bordered table-striped" style="font-size:12px;">
+                                <div id="no-medications-msg"
+                                     style="font-size:12px; color:#888;">
+                                    No medications recorded yet.
+                                </div>
+
+                                <div class="table-responsive"
+                                     id="medications-table"
+                                     style="display:none;">
+                                    <table class="table table-bordered table-striped"
+                                           style="font-size:12px;">
                                         <thead>
                                             <tr>
                                                 <th>Drug Name</th>
                                                 <th>Dose</th>
                                                 <th>Frequency</th>
                                                 <th>Duration</th>
-                                                <th>Flags</th>
+                                                <th>Red Flag</th>
                                                 <th style="text-align:center;">Action</th>
                                             </tr>
                                         </thead>
+
                                         <tbody id="medications-tbody"></tbody>
                                     </table>
                                 </div>
@@ -1255,8 +1714,16 @@
             <input type="hidden" id="editConditionID" name="ConditionID" />
             <div style="margin-bottom:12px;">
                 <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">Condition Name</label>
-                <input type="text" id="editConditionName" name="ConditionName"
+                <input type="text"
+                       id="editConditionName"
+                       name="ConditionName"
+                       oninput="applyEditConditionAutoFlag()"
                        style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 12px; font-size:13px; box-sizing:border-box;" />
+
+                <div id="editConditionAutomaticHint"
+                     class="automatic-condition-hint">
+                    🚩 This condition is an automatic Red Flag.
+                </div>
             </div>
             <div style="margin-bottom:12px;">
                 <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">Year of Diagnosis</label>
@@ -1269,7 +1736,13 @@
                     <input type="checkbox" id="editConditionActive" name="IsCurrentlyActive" value="true" style="accent-color:#252468;" /> Currently Active
                 </label>
                 <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#c0392b; font-weight:600;">
-                    <input type="checkbox" id="editConditionFlagged" name="IsFlagged" value="true" style="accent-color:#c0392b;" /> 🚩 Red Flag
+                    <input type="checkbox"
+                           id="editConditionFlagged"
+                           name="IsFlagged"
+                           value="true"
+                           onclick="enforceEditConditionAutoFlag()"
+                           style="accent-color:#c0392b;" />
+                    🚩 Red Flag
                 </label>
             </div>
             <div style="margin-bottom:20px;">
@@ -1309,49 +1782,114 @@
 </div>
 
 <!-- ===== Medication EDIT Modal ===== -->
-<div id="editMedicationModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+<div id="editMedicationModal"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+
     <div style="background:white; border-radius:10px; padding:28px; width:560px; max-width:95vw; max-height:90vh; overflow-y:auto;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 style="font-size:16px; font-weight:700; color:#252468; margin:0;">Edit Medication</h2>
-            <button onclick="closeEditMedicationModal()" type="button" style="background:none; border:none; font-size:20px; cursor:pointer; color:#888;">✕</button>
+            <h2 style="font-size:16px; font-weight:700; color:#252468; margin:0;">
+                Edit Medication
+            </h2>
+
+            <button onclick="closeEditMedicationModal()"
+                    type="button"
+                    style="background:none; border:none; font-size:20px; cursor:pointer; color:#888;">
+                ✕
+            </button>
         </div>
+
         <form id="editMedicationForm">
             @Html.AntiForgeryToken()
-            <input type="hidden" id="editMedID" name="MedicationID" />
-            <div style="margin-bottom:12px;">
-                <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">Flag Type</label>
-                <select id="editMedFlagType" name="FlagType"
-                        style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 12px; font-size:13px; box-sizing:border-box;">
-                    <option value="">-- None --</option>
-                    <option value="Anticoagulant">Anticoagulant</option>
-                    <option value="Bisphosphonates">Bisphosphonates / Antiresorptive</option>
-                    <option value="Steroids">Steroids (Systemic)</option>
-                    <option value="Immunosuppressants">Immunosuppressants</option>
-                </select>
-            </div>
+
+            <input type="hidden"
+                   id="editMedID"
+                   name="MedicationID" />
+
+            @*
+                FlagType لم يعد اختياراً يدوياً.
+                يتم تحديده تلقائياً من اسم الدواء.
+            *@
+            <input type="hidden"
+                   id="editMedFlagType"
+                   name="FlagType" />
+
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:12px;">
                 <div>
-                    <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">Drug Name</label>
-                    <input type="text" id="editMedDrugName" name="DrugName" style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 12px; font-size:13px; box-sizing:border-box;" />
+                    <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">
+                        Drug Name
+                    </label>
+
+                    <div class="medication-search-wrapper">
+                        <input type="text"
+                               id="editMedDrugName"
+                               name="DrugName"
+                               class="medication-drug-input"
+                               data-suggestions-id="editMedicationSuggestions"
+                               data-flag-target="editMedFlagType"
+                               autocomplete="off"
+                               placeholder="Search generic or brand name..."
+                               style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 12px; font-size:13px; box-sizing:border-box;" />
+
+                        <div id="editMedicationSuggestions"
+                             class="medication-suggestions">
+                        </div>
+                    </div>
+
+                    <div id="editMedicationAutomaticFlagHint"
+                         class="automatic-red-flag-hint">
+                        🚩 Red Flag will be assigned automatically.
+                    </div>
                 </div>
+
                 <div>
-                    <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">Dose</label>
-                    <input type="text" id="editMedDose" name="Dose" style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 12px; font-size:13px; box-sizing:border-box;" />
+                    <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">
+                        Dose
+                    </label>
+
+                    <input type="text"
+                           id="editMedDose"
+                           name="Dose"
+                           style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 12px; font-size:13px; box-sizing:border-box;" />
                 </div>
             </div>
+
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;">
                 <div>
-                    <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">Frequency</label>
-                    <input type="text" id="editMedFrequency" name="Frequency" style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 12px; font-size:13px; box-sizing:border-box;" />
+                    <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">
+                        Frequency
+                    </label>
+
+                    <input type="text"
+                           id="editMedFrequency"
+                           name="Frequency"
+                           style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 12px; font-size:13px; box-sizing:border-box;" />
                 </div>
+
                 <div>
-                    <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">Duration</label>
-                    <input type="text" id="editMedDuration" name="Duration" style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 12px; font-size:13px; box-sizing:border-box;" />
+                    <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">
+                        Duration
+                    </label>
+
+                    <input type="text"
+                           id="editMedDuration"
+                           name="Duration"
+                           style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 12px; font-size:13px; box-sizing:border-box;" />
                 </div>
             </div>
+
             <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button type="button" onclick="closeEditMedicationModal()" style="background:white; color:#555; border:1px solid #ddd; padding:10px 24px; font-size:13px; border-radius:5px; cursor:pointer;">Cancel</button>
-                <button type="button" onclick="submitEditMedication()" id="editMedSaveBtn" style="background:#252468; color:white; border:none; padding:10px 28px; font-size:13px; font-weight:600; border-radius:5px; cursor:pointer;">Save Changes</button>
+                <button type="button"
+                        onclick="closeEditMedicationModal()"
+                        style="background:white; color:#555; border:1px solid #ddd; padding:10px 24px; font-size:13px; border-radius:5px; cursor:pointer;">
+                    Cancel
+                </button>
+
+                <button type="button"
+                        onclick="submitEditMedication()"
+                        id="editMedSaveBtn"
+                        style="background:#252468; color:white; border:none; padding:10px 28px; font-size:13px; font-weight:600; border-radius:5px; cursor:pointer;">
+                    Save Changes
+                </button>
             </div>
         </form>
     </div>
@@ -1370,6 +1908,81 @@
 
         const isReadOnly =
         @isReadOnly.ToString().ToLower();
+
+        // =====================================================
+        // VISIT REVIEW
+        // عند اختيار Changes reported يتم وضع تاريخ اليوم تلقائياً.
+        // حقل التاريخ readonly لذلك لا يمكن تغييره يدوياً.
+        // =====================================================
+
+        const changesReportedRadio =
+        document.getElementById(
+        "changesReportedRadio"
+        );
+
+        const reviewDateInput =
+        document.getElementById(
+        "reviewDateInput"
+        );
+
+        function getLocalTodayDate() {
+
+        const todayDate =
+        new Date();
+
+        const year =
+        todayDate.getFullYear();
+
+        const month =
+        String(
+        todayDate.getMonth() + 1
+        ).padStart(
+        2,
+        "0"
+        );
+
+        const day =
+        String(
+        todayDate.getDate()
+        ).padStart(
+        2,
+        "0"
+        );
+
+        return (
+        year
+        +
+        "-"
+        +
+        month
+        +
+        "-"
+        +
+        day
+        );
+        }
+
+        if (
+        changesReportedRadio
+        &&
+        reviewDateInput
+        ) {
+
+        changesReportedRadio.addEventListener(
+        "change",
+        function () {
+
+        if (
+        this.checked
+        &&
+        !isReadOnly
+        ) {
+        reviewDateInput.value =
+        getLocalTodayDate();
+        }
+        }
+        );
+        }
 
         if (isReadOnly) {
 
