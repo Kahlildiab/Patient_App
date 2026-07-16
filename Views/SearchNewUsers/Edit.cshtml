@@ -1,27 +1,21 @@
-﻿@model DentalCollegeManagementSystem_AAU.Models.AppUser
-@using DentalCollegeManagementSystem_AAU.Models
+﻿@model DentalCollegeManagementSystem_AAU.Models.User
 
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    var userTypes =
-        ViewBag.UserTypes as List<UserType>
-        ?? new List<UserType>();
-
-    string selectedStatus =
-        string.IsNullOrWhiteSpace(Model.Status)
-            ? "Active"
-            : Model.Status;
+    var roles =
+        ViewBag.Roles as List<string>
+        ?? new List<string>();
 }
 
 <style>
-    .edit-user-page {
-        max-width: 1100px;
+    .edit-login-user-page {
+        max-width: 1050px;
         margin: 30px auto;
         padding: 0 15px;
     }
 
-    .edit-user-title {
+    .edit-login-user-title {
         text-align: center;
         color: #252468;
         font-size: 1.55rem;
@@ -29,7 +23,7 @@
         margin-bottom: 28px;
     }
 
-    .edit-user-title-line {
+    .edit-login-user-title-line {
         display: block;
         width: 220px;
         height: 3px;
@@ -37,14 +31,14 @@
         background: #daa328;
     }
 
-    .edit-user-card {
+    .edit-login-user-card {
         border: 2px solid #daa328;
         border-radius: 8px;
         background: #fff;
         padding: 30px;
     }
 
-    .edit-user-label {
+    .edit-login-user-label {
         display: block;
         margin-bottom: 7px;
         color: #252468;
@@ -52,8 +46,8 @@
         font-weight: 800;
     }
 
-    .edit-user-input,
-    .edit-user-select {
+    .edit-login-user-input,
+    .edit-login-user-select {
         width: 100%;
         min-height: 44px;
         border: 1px solid #d6d6d6;
@@ -65,35 +59,44 @@
         outline: none;
     }
 
-        .edit-user-input:focus,
-        .edit-user-select:focus {
+        .edit-login-user-input:focus,
+        .edit-login-user-select:focus {
             border-color: #252468;
             box-shadow: 0 0 0 3px rgba(37, 36, 104, .10);
         }
 
-    .status-panel {
+    .edit-status-panel {
         border: 1px solid #d9dced;
         border-radius: 7px;
         background: #f8f9ff;
         padding: 14px;
     }
 
-    .status-description {
+    .edit-status-description {
         margin-top: 8px;
         font-size: .77rem;
         font-weight: 700;
-        line-height: 1.45;
     }
 
-        .status-description.active {
+        .edit-status-description.active {
             color: #217a36;
         }
 
-        .status-description.unactive {
+        .edit-status-description.unactive {
             color: #b42318;
         }
 
-    .edit-user-actions {
+    .password-message {
+        border: 1px solid #b8c4e4;
+        border-radius: 7px;
+        background: #f5f7ff;
+        color: #3949ab;
+        padding: 11px 13px;
+        font-size: .8rem;
+        font-weight: 700;
+    }
+
+    .edit-login-user-actions {
         display: flex;
         justify-content: center;
         gap: 12px;
@@ -101,7 +104,7 @@
         margin-top: 28px;
     }
 
-    .edit-user-save {
+    .edit-login-user-save {
         min-width: 180px;
         border: none;
         border-radius: 4px;
@@ -113,11 +116,11 @@
         cursor: pointer;
     }
 
-        .edit-user-save:hover {
+        .edit-login-user-save:hover {
             background: #a6005b;
         }
 
-    .edit-user-cancel {
+    .edit-login-user-cancel {
         min-width: 180px;
         border-radius: 4px;
         padding: 12px 28px;
@@ -129,23 +132,23 @@
         text-decoration: none;
     }
 
-        .edit-user-cancel:hover {
+        .edit-login-user-cancel:hover {
             background: #4b5563;
             color: #fff;
         }
 
     @@media (max-width: 767px) {
-        .edit-user-card {
+        .edit-login-user-card {
             padding: 20px 15px;
         }
     }
 </style>
 
-<div class="edit-user-page">
+<div class="edit-login-user-page">
 
-    <h2 class="edit-user-title">
+    <h2 class="edit-login-user-title">
         EDIT USER
-        <span class="edit-user-title-line"></span>
+        <span class="edit-login-user-title-line"></span>
     </h2>
 
     @if (TempData["Errors"] != null)
@@ -155,7 +158,12 @@
         </div>
     }
 
-    <div class="edit-user-card">
+    <div asp-validation-summary="All"
+         class="alert alert-danger"
+         style="display:@(ViewData.ModelState.IsValid ? "none" : "block");">
+    </div>
+
+    <div class="edit-login-user-card">
 
         <form method="post"
               asp-controller="SearchNewUsers"
@@ -164,93 +172,91 @@
             @Html.AntiForgeryToken()
 
             <input type="hidden"
-                   name="Id"
-                   value="@Model.Id" />
+                   name="UserID"
+                   value="@Model.UserID" />
 
             <div class="row g-3">
 
                 <div class="col-md-6">
-                    <label class="edit-user-label">
-                        * User Log
+                    <label class="edit-login-user-label">
+                        * Username
                     </label>
 
-                    <input name="UserLog"
-                           value="@Model.UserLog"
-                           class="edit-user-input"
+                    <input type="text"
+                           name="Username"
+                           value="@Model.Username"
+                           class="edit-login-user-input"
                            required />
                 </div>
 
                 <div class="col-md-6">
-                    <label class="edit-user-label">
+                    <label class="edit-login-user-label">
+                        * Full Name
+                    </label>
+
+                    <input type="text"
+                           name="FullName"
+                           value="@Model.FullName"
+                           class="edit-login-user-input"
+                           required />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="edit-login-user-label">
                         * Email
                     </label>
 
-                    <input name="Email"
+                    <input type="email"
+                           name="Email"
                            value="@Model.Email"
-                           type="email"
-                           class="edit-user-input"
+                           class="edit-login-user-input"
                            required />
                 </div>
 
                 <div class="col-md-6">
-                    <label class="edit-user-label">
-                        * Name in English
+                    <label class="edit-login-user-label">
+                        Phone Number
                     </label>
 
-                    <input name="NameEn"
-                           value="@Model.NameEn"
-                           class="edit-user-input"
-                           required />
+                    <input type="text"
+                           name="PhoneNumber"
+                           value="@Model.PhoneNumber"
+                           maxlength="15"
+                           class="edit-login-user-input" />
                 </div>
 
                 <div class="col-md-6">
-                    <label class="edit-user-label">
-                        * Name in Arabic
+                    <label class="edit-login-user-label">
+                        * User Role
                     </label>
 
-                    <input name="NameAr"
-                           value="@Model.NameAr"
-                           class="edit-user-input"
-                           required />
-                </div>
-
-                <div class="col-md-6">
-                    <label class="edit-user-label">
-                        * Mobile
-                    </label>
-
-                    <input name="Mobile"
-                           value="@Model.Mobile"
-                           class="edit-user-input"
-                           required />
-                </div>
-
-                <div class="col-md-6">
-                    <label class="edit-user-label">
-                        * User Type
-                    </label>
-
-                    <select name="UserTypeId"
-                            class="edit-user-select"
+                    <select name="UserRole"
+                            class="edit-login-user-select"
                             required>
 
                         <option value="">
-                            -- Select User Type --
+                            -- Select User Role --
                         </option>
 
-                        @foreach (var type in userTypes)
+                        @foreach (string role in roles)
                         {
-                            if (type.Id == Model.UserTypeId)
+                            if (
+                                string.Equals(
+                                    role,
+                                    Model.UserRole,
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
                             {
-                                <option value="@type.Id"
+                                <option value="@role"
                                         selected="selected">
-                                    @type.NameEn
+                                    @role
                                 </option>
                             }
                             else
                             {
-                                <option value="@type.Id">
-                                    @type.NameEn
+                                <option value="@role">
+                                    @role
                                 </option>
                             }
                         }
@@ -258,42 +264,36 @@
                 </div>
 
                 <div class="col-md-6">
-                    <div class="status-panel">
+                    <div class="edit-status-panel">
 
-                        <label class="edit-user-label">
+                        <label class="edit-login-user-label">
                             * User Status
                         </label>
 
-                        <select name="Status"
+                        <select name="IsActive"
                                 id="userStatus"
-                                class="edit-user-select"
+                                class="edit-login-user-select"
                                 onchange="updateStatusDescription()"
                                 required>
 
-                            @if (
-                                string.Equals(
-                                    selectedStatus,
-                                    "Active",
-                                    StringComparison.OrdinalIgnoreCase
-                                )
-                            )
+                            @if (Model.IsActive == 1)
                             {
-                                <option value="Active"
+                                <option value="1"
                                         selected="selected">
                                     Active
                                 </option>
 
-                                <option value="UnActive">
+                                <option value="0">
                                     UnActive
                                 </option>
                             }
                             else
                             {
-                                <option value="Active">
+                                <option value="1">
                                     Active
                                 </option>
 
-                                <option value="UnActive"
+                                <option value="0"
                                         selected="selected">
                                     UnActive
                                 </option>
@@ -302,35 +302,31 @@
                         </select>
 
                         <div id="statusDescription"
-                             class="status-description">
+                             class="edit-status-description">
                         </div>
 
                     </div>
                 </div>
 
                 <div class="col-md-12">
-                    <label class="edit-user-label">
-                        Notes
-                    </label>
-
-                    <input name="Notes"
-                           value="@Model.Notes"
-                           class="edit-user-input" />
+                    <div class="password-message">
+                        🔒 The password is not changed from this page.
+                    </div>
                 </div>
 
             </div>
 
-            <div class="edit-user-actions">
+            <div class="edit-login-user-actions">
 
                 <button type="submit"
-                        class="edit-user-save">
+                        class="edit-login-user-save">
                     Save Changes
                 </button>
 
                 <a asp-controller="SearchNewUsers"
                    asp-action="Details"
-                   asp-route-id="@Model.Id"
-                   class="edit-user-cancel">
+                   asp-route-id="@Model.UserID"
+                   class="edit-login-user-cancel">
                     Cancel
                 </a>
 
@@ -339,6 +335,7 @@
         </form>
 
     </div>
+
 </div>
 
 <script>
@@ -353,16 +350,16 @@
             return;
         }
 
-        if (select.value === "Active") {
+        if (select.value === "1") {
             description.className =
-                "status-description active";
+                "edit-status-description active";
 
             description.textContent =
                 "Active: Users.IsActive will be saved as 1.";
         }
         else {
             description.className =
-                "status-description unactive";
+                "edit-status-description unactive";
 
             description.textContent =
                 "UnActive: Users.IsActive will be saved as 0.";

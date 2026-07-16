@@ -1,62 +1,364 @@
-﻿@model DentalCollegeManagementSystem_AAU.Models.AppUser
+﻿@model DentalCollegeManagementSystem_AAU.Models.User
+
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    bool isActive =
+        Model.IsActive == 1;
 }
 
-<h2 class="text-center mt-4" style="color:#252468;font-weight:700;">
-    USER INFO
-    <span style="border-bottom:3px solid #daa328;display:inline-block;width:200px;"></span>
-</h2>
+<style>
+    .user-details-page {
+        max-width: 900px;
+        margin: 30px auto;
+        padding: 0 15px;
+    }
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success text-center">@TempData["Success"]</div>
-}
+    .user-details-title {
+        text-align: center;
+        color: #252468;
+        font-size: 1.55rem;
+        font-weight: 800;
+        margin-bottom: 28px;
+    }
 
-<div class="container mt-4" style="max-width:800px;">
+    .user-details-title-line {
+        display: block;
+        width: 220px;
+        height: 3px;
+        margin: 8px auto 0;
+        background: #daa328;
+    }
 
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <span>Status: <span style="color:#2f9e44;font-weight:bold;">@Model.Status</span></span>
+    .user-details-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+    }
+
+    .user-details-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .user-details-edit {
+        color: #252468;
+        font-weight: 800;
+        text-decoration: none;
+    }
+
+    .user-details-delete {
+        border: none;
+        background: transparent;
+        color: #dc2626;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .details-status {
+        display: inline-block;
+        border-radius: 20px;
+        padding: 5px 13px;
+        font-size: .76rem;
+        font-weight: 800;
+    }
+
+        .details-status.active {
+            border: 1px solid #a3cfbb;
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .details-status.unactive {
+            border: 1px solid #f1aeb5;
+            background: #f8d7da;
+            color: #842029;
+        }
+
+    .user-details-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 180px;
+        gap: 30px;
+        align-items: start;
+        border: 2px solid #252468;
+        border-radius: 8px;
+        background: #fff;
+        padding: 30px;
+    }
+
+    .detail-row {
+        display: grid;
+        grid-template-columns: 150px minmax(0, 1fr);
+        gap: 12px;
+        padding: 9px 0;
+        border-bottom: 1px solid #edf0f5;
+    }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+    .detail-label {
+        color: #727887;
+        font-size: .82rem;
+        font-weight: 700;
+    }
+
+    .detail-value {
+        color: #252468;
+        font-size: .9rem;
+        font-weight: 700;
+        word-break: break-word;
+    }
+
+    .user-photo-placeholder {
+        width: 180px;
+        height: 180px;
+        border-radius: 8px;
+        background: #eee;
+        color: #aaa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .user-details-badges {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+    }
+
+    .user-details-badge {
+        border-radius: 6px;
+        padding: 8px 16px;
+        color: #fff;
+        font-size: .82rem;
+        font-weight: 700;
+    }
+
+    @@media (max-width: 720px) {
+        .user-details-card {
+            grid-template-columns: 1fr;
+        }
+
+        .user-photo-placeholder {
+            width: 100%;
+        }
+
+        .detail-row {
+            grid-template-columns: 1fr;
+            gap: 4px;
+        }
+    }
+</style>
+
+<div class="user-details-page">
+
+    <h2 class="user-details-title">
+        USER INFO
+        <span class="user-details-title-line"></span>
+    </h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success text-center">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger text-center">
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="user-details-top">
+
         <div>
-            <a href="/SearchNewUsers/Edit/@Model.Id"
-               style="color:#252468;font-weight:bold;margin-right:15px;">✏️ Edit</a>
+            Status:
 
-            <form method="post" asp-action="Delete" asp-route-id="@Model.Id"
-                  style="display:inline"
-                  onsubmit="return confirm('Are you sure you want to delete this user?')">
+            @if (isActive)
+            {
+                <span class="details-status active">
+                    Active
+                </span>
+            }
+            else
+            {
+                <span class="details-status unactive">
+                    UnActive
+                </span>
+            }
+        </div>
+
+        <div class="user-details-actions">
+
+            <a asp-controller="SearchNewUsers"
+               asp-action="Edit"
+               asp-route-id="@Model.UserID"
+               class="user-details-edit">
+                ✏️ Edit
+            </a>
+
+            <form method="post"
+                  asp-controller="SearchNewUsers"
+                  asp-action="Delete"
+                  asp-route-id="@Model.UserID"
+                  style="display:inline;"
+                  onsubmit="return confirm('Are you sure you want to delete this login account?');">
+
                 @Html.AntiForgeryToken()
+
                 <button type="submit"
-                        style="background:none;border:none;color:#dc2626;font-weight:bold;cursor:pointer;">
+                        class="user-details-delete">
                     🗑 Delete
                 </button>
             </form>
+
         </div>
     </div>
 
-    <div style="border:2px solid #252468;border-radius:8px;padding:30px;display:flex;gap:30px;align-items:flex-start;">
-        
-        <div style="flex:1;">
-            <p style="font-weight:bold;font-size:18px;">@Model.UserLog</p>
-            <p style="font-weight:bold;">@Model.NameEn</p>
-            <p style="font-weight:bold;">@Model.NameAr</p>
-            <p>Mobile: @Model.Mobile</p>
-            <p>User Type: @Model.UserType?.NameEn</p>
-            <p>Note: @Model.Notes</p>
+    <div class="user-details-card">
+
+        <div>
+
+            <div class="detail-row">
+                <div class="detail-label">
+                    User ID
+                </div>
+                <div class="detail-value">
+                    @Model.UserID
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-label">
+                    Username
+                </div>
+                <div class="detail-value">
+                    @Model.Username
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-label">
+                    Full Name
+                </div>
+                <div class="detail-value">
+                    @Model.FullName
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-label">
+                    Email
+                </div>
+                <div class="detail-value">
+                    @Model.Email
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-label">
+                    Phone Number
+                </div>
+                <div class="detail-value">
+                    @Model.PhoneNumber
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-label">
+                    User Role
+                </div>
+                <div class="detail-value">
+                    @Model.UserRole
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-label">
+                    Created Date
+                </div>
+                <div class="detail-value">
+                    @Model.CreatedDate.ToString(
+                        "dd-MM-yyyy HH:mm"
+                    )
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-label">
+                    Last Login
+                </div>
+                <div class="detail-value">
+                    @if (Model.LastLoginDate.HasValue)
+                    {
+                        @Model.LastLoginDate.Value.ToString(
+                            "dd-MM-yyyy HH:mm"
+                        )
+                    }
+                    else
+                    {
+                        <span style="color:#aaa;">
+                            Never
+                        </span>
+                    }
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="detail-label">
+                    Modified Date
+                </div>
+                <div class="detail-value">
+                    @if (Model.ModifiedDate.HasValue)
+                    {
+                        @Model.ModifiedDate.Value.ToString(
+                            "dd-MM-yyyy HH:mm"
+                        )
+                    }
+                    else
+                    {
+                        <span style="color:#aaa;">
+                            Not modified
+                        </span>
+                    }
+                </div>
+            </div>
+
         </div>
 
-        <div style="width:180px;height:180px;background:#eee;display:flex;align-items:center;justify-content:center;border-radius:8px;">
-            <span style="color:#aaa;">No Photo</span>
+        <div class="user-photo-placeholder">
+            No Photo
         </div>
 
     </div>
 
-    <div class="mt-3" style="display:flex;gap:10px;">
-        <span style="background:#252468;color:#fff;padding:8px 16px;border-radius:6px;">
+    <div class="user-details-badges">
+
+        <span class="user-details-badge"
+              style="background:#252468;">
             @Model.Email
         </span>
-        <span style="background:#daa328;color:#fff;padding:8px 16px;border-radius:6px;">
-            ID: @Model.Id
+
+        <span class="user-details-badge"
+              style="background:#daa328;">
+            ID: @Model.UserID
         </span>
+
+        <span class="user-details-badge"
+              style="background:#c0006a;">
+            @Model.UserRole
+        </span>
+
     </div>
 
 </div>

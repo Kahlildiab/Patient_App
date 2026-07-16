@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DentalCollegeManagementSystem_AAU.Data;
@@ -21,18 +22,56 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         }
 
         // =====================================================
-        // Search Users
+        // Roles helper
         // =====================================================
-        [HttpGet]
-        public async Task<IActionResult> SearchUsers(string? search)
+        private async Task<List<string>> GetAvailableRolesAsync(
+            string? currentRole = null)
         {
-            var model = new SearchUserViewModel
+            var standardRoles = new List<string>
             {
-                SearchTerm = search
+                "Admin",
+                "Fulltime Supervisor",
+                "Parttime Supervisor",
+                "Receptionist",
+                "Student"
             };
 
-            var query = _context.AppUsers
-                .Include(user => user.UserType)
+            var databaseRoles = await _context.Users
+                .AsNoTracking()
+                .Where(user =>
+                    user.UserRole != null &&
+                    user.UserRole != "")
+                .Select(user => user.UserRole)
+                .Distinct()
+                .ToListAsync();
+
+            var roles = standardRoles
+                .Concat(databaseRoles);
+
+            if (!string.IsNullOrWhiteSpace(currentRole))
+            {
+                roles = roles.Append(currentRole.Trim());
+            }
+
+            return roles
+                .Where(role => !string.IsNullOrWhiteSpace(role))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(role => role)
+                .ToList();
+        }
+
+        // =====================================================
+        // Search Users
+        // This page reads directly from dbo.Users.
+        // =====================================================
+        [HttpGet]
+        public async Task<IActionResult> SearchUsers(
+            string? search,
+            string? roleFilter,
+            int? statusFilter)
+        {
+            var query = _context.Users
+                .AsNoTracking()
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -40,15 +79,39 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 string searchValue = search.Trim();
 
                 query = query.Where(user =>
-                    user.NameEn.Contains(searchValue) ||
-                    user.NameAr.Contains(searchValue) ||
+                    user.Username.Contains(searchValue) ||
+                    user.FullName.Contains(searchValue) ||
                     user.Email.Contains(searchValue) ||
-                    user.UserLog.Contains(searchValue));
+                    user.PhoneNumber.Contains(searchValue) ||
+                    user.UserRole.Contains(searchValue));
             }
 
-            model.Results = await query
-                .OrderByDescending(user => user.Id)
-                .ToListAsync();
+            if (!string.IsNullOrWhiteSpace(roleFilter))
+            {
+                string selectedRole = roleFilter.Trim();
+
+                query = query.Where(user =>
+                    user.UserRole == selectedRole);
+            }
+
+            if (statusFilter.HasValue)
+            {
+                query = query.Where(user =>
+                    user.IsActive == statusFilter.Value);
+            }
+
+            var model = new SearchUserViewModel
+            {
+                SearchTerm = search,
+                RoleFilter = roleFilter,
+                StatusFilter = statusFilter,
+
+                Results = await query
+                    .OrderByDescending(user => user.UserID)
+                    .ToListAsync(),
+
+                Roles = await GetAvailableRolesAsync()
+            };
 
             return View(model);
         }
@@ -59,9 +122,10 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
-            var user = await _context.AppUsers
-                .Include(item => item.UserType)
-                .FirstOrDefaultAsync(item => item.Id == id);
+            var user = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(item =>
+                    item.UserID == id);
 
             if (user == null)
             {
@@ -77,81 +141,146 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            var appUser = await _context.AppUsers
-                .FirstOrDefaultAsync(item => item.Id == id);
+            var user = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(item =>
+                    item.UserID == id);
 
-            if (appUser == null)
+            if (user == null)
             {
                 return NotFound();
             }
 
-            /*
-             * نحاول قراءة الحالة الحقيقية من جدول Users
-             * لأن تسجيل الدخول يعتمد على Users.IsActive.
-             */
-            var loginUser = await _context.Users
-                .AsNoTracking()
-                .FirstOrDefaultAsync(user =>
-                    user.Username == appUser.UserLog);
+            ViewBag.Roles =
+                await GetAvailableRolesAsync(
+                    user.UserRole
+                );
 
-            if (loginUser != null)
-            {
-                appUser.Status =
-                    loginUser.IsActive == 1
-                        ? "Active"
-                        : "UnActive";
-            }
-
-            ViewBag.UserTypes = await _context.UserTypes
-                .OrderBy(type => type.NameEn)
-                .ToListAsync();
-
-            return View(appUser);
+            return View(user);
         }
 
         // =====================================================
         // Edit - POST
         //
-        // Active   => Users.IsActive = 1
-        // UnActive => Users.IsActive = 0
+        // Active   => IsActive = 1
+        // UnActive => IsActive = 0
         //
-        // AppUsers.Status is also updated to keep both tables
-        // synchronized.
+        // Password is not changed by this page.
         // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(AppUser model)
+        public async Task<IActionResult> Edit(
+            int UserID,
+            string Username,
+            string FullName,
+            string Email,
+            string PhoneNumber,
+            string UserRole,
+            int IsActive)
         {
-            ModelState.Remove("UserType");
+            Username =
+                (Username ?? string.Empty).Trim();
 
-            string normalizedStatus =
-                (model.Status ?? string.Empty).Trim();
+            FullName =
+                (FullName ?? string.Empty).Trim();
 
-            bool isActiveStatus =
-                normalizedStatus.Equals(
-                    "Active",
-                    StringComparison.OrdinalIgnoreCase
-                );
+            Email =
+                (Email ?? string.Empty).Trim();
 
-            bool isUnActiveStatus =
-                normalizedStatus.Equals(
-                    "UnActive",
-                    StringComparison.OrdinalIgnoreCase
-                );
+            PhoneNumber =
+                (PhoneNumber ?? string.Empty).Trim();
 
-            if (!isActiveStatus && !isUnActiveStatus)
+            UserRole =
+                (UserRole ?? string.Empty).Trim();
+
+            if (UserID <= 0)
+            {
+                return NotFound();
+            }
+
+            if (string.IsNullOrWhiteSpace(Username))
             {
                 ModelState.AddModelError(
-                    "Status",
+                    "Username",
+                    "Username is required."
+                );
+            }
+
+            if (string.IsNullOrWhiteSpace(FullName))
+            {
+                ModelState.AddModelError(
+                    "FullName",
+                    "Full name is required."
+                );
+            }
+
+            if (string.IsNullOrWhiteSpace(Email))
+            {
+                ModelState.AddModelError(
+                    "Email",
+                    "Email is required."
+                );
+            }
+
+            if (string.IsNullOrWhiteSpace(UserRole))
+            {
+                ModelState.AddModelError(
+                    "UserRole",
+                    "User role is required."
+                );
+            }
+
+            if (IsActive != 0 && IsActive != 1)
+            {
+                ModelState.AddModelError(
+                    "IsActive",
                     "Please select Active or UnActive."
+                );
+            }
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(item =>
+                    item.UserID == UserID);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            bool duplicateUsername =
+                await _context.Users.AnyAsync(item =>
+                    item.UserID != UserID &&
+                    item.Username == Username);
+
+            if (duplicateUsername)
+            {
+                ModelState.AddModelError(
+                    "Username",
+                    "This username is already used by another account."
                 );
             }
 
             if (!ModelState.IsValid)
             {
-                ViewBag.UserTypes = await _context.UserTypes
-                    .OrderBy(type => type.NameEn)
-                    .ToListAsync();
+                var editModel = new User
+                {
+                    UserID = UserID,
+                    Username = Username,
+                    Password = user.Password,
+                    FullName = FullName,
+                    Email = Email,
+                    PhoneNumber = PhoneNumber,
+                    UserRole = UserRole,
+                    IsActive = IsActive,
+                    CreatedDate = user.CreatedDate,
+                    LastLoginDate = user.LastLoginDate,
+                    ModifiedDate = user.ModifiedDate
+                };
+
+                ViewBag.Roles =
+                    await GetAvailableRolesAsync(
+                        UserRole
+                    );
 
                 TempData["Errors"] = string.Join(
                     " | ",
@@ -160,149 +289,25 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                         .Select(error => error.ErrorMessage)
                 );
 
-                return View(model);
+                return View(editModel);
             }
 
-            var appUser = await _context.AppUsers
-                .FirstOrDefaultAsync(item => item.Id == model.Id);
-
-            if (appUser == null)
-            {
-                return NotFound();
-            }
-
-            string oldUserLog =
-                (appUser.UserLog ?? string.Empty).Trim();
-
-            string newUserLog =
-                (model.UserLog ?? string.Empty).Trim();
+            user.Username = Username;
+            user.FullName = FullName;
+            user.Email = Email;
+            user.PhoneNumber = PhoneNumber;
+            user.UserRole = UserRole;
 
             /*
-             * منع تكرار UserLog داخل AppUsers.
+             * This is the actual login status stored in dbo.Users.
              */
-            bool duplicateAppUser =
-                await _context.AppUsers.AnyAsync(item =>
-                    item.Id != model.Id &&
-                    item.UserLog == newUserLog);
+            user.IsActive = IsActive;
+            user.ModifiedDate = DateTime.Now;
 
-            if (duplicateAppUser)
-            {
-                ModelState.AddModelError(
-                    "UserLog",
-                    "This User Log is already used by another user."
-                );
-
-                ViewBag.UserTypes = await _context.UserTypes
-                    .OrderBy(type => type.NameEn)
-                    .ToListAsync();
-
-                TempData["Errors"] =
-                    "This User Log is already used by another user.";
-
-                return View(model);
-            }
-
-            /*
-             * نبحث عن حساب الدخول أولاً بالرقم القديم،
-             * ثم بالرقم الجديد إذا لم يتم العثور عليه.
-             */
-            var loginUser = await _context.Users
-                .FirstOrDefaultAsync(user =>
-                    user.Username == oldUserLog);
-
-            if (loginUser == null)
-            {
-                loginUser = await _context.Users
-                    .FirstOrDefaultAsync(user =>
-                        user.Username == newUserLog);
-            }
-
-            if (loginUser == null)
-            {
-                ModelState.AddModelError(
-                    string.Empty,
-                    "The matching login account was not found in the Users table."
-                );
-
-                ViewBag.UserTypes = await _context.UserTypes
-                    .OrderBy(type => type.NameEn)
-                    .ToListAsync();
-
-                TempData["Errors"] =
-                    "The matching login account was not found in the Users table.";
-
-                return View(model);
-            }
-
-            /*
-             * إذا تغير اسم المستخدم، نتأكد أنه غير مستخدم
-             * في جدول Users.
-             */
-            bool duplicateLoginUser =
-                await _context.Users.AnyAsync(user =>
-                    user.UserID != loginUser.UserID &&
-                    user.Username == newUserLog);
-
-            if (duplicateLoginUser)
-            {
-                ModelState.AddModelError(
-                    "UserLog",
-                    "This username is already used in the Users table."
-                );
-
-                ViewBag.UserTypes = await _context.UserTypes
-                    .OrderBy(type => type.NameEn)
-                    .ToListAsync();
-
-                TempData["Errors"] =
-                    "This username is already used in the Users table.";
-
-                return View(model);
-            }
-
-            int newIsActiveValue =
-                isActiveStatus
-                    ? 1
-                    : 0;
-
-            /*
-             * تحديث AppUsers.
-             */
-            appUser.UserLog = newUserLog;
-            appUser.Email = (model.Email ?? string.Empty).Trim();
-            appUser.NameEn = (model.NameEn ?? string.Empty).Trim();
-            appUser.NameAr = (model.NameAr ?? string.Empty).Trim();
-            appUser.Mobile = (model.Mobile ?? string.Empty).Trim();
-            appUser.UserTypeId = model.UserTypeId;
-            appUser.Notes = model.Notes?.Trim();
-
-            appUser.Status =
-                newIsActiveValue == 1
-                    ? "Active"
-                    : "UnActive";
-
-            /*
-             * تحديث Users.
-             * هذا هو الجدول الذي يعتمد عليه تسجيل الدخول.
-             */
-            loginUser.Username = newUserLog;
-            loginUser.FullName = appUser.NameEn;
-            loginUser.Email = appUser.Email;
-            loginUser.PhoneNumber = appUser.Mobile;
-
-            loginUser.IsActive =
-                newIsActiveValue;
-
-            loginUser.ModifiedDate =
-                DateTime.Now;
-
-            /*
-             * SaveChanges واحدة تحفظ تعديل الجدولين معاً.
-             */
             await _context.SaveChangesAsync();
 
             TempData["Success"] =
-                newIsActiveValue == 1
+                IsActive == 1
                     ? "✅ User updated and activated successfully."
                     : "✅ User updated and deactivated successfully.";
 
@@ -310,7 +315,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 nameof(Details),
                 new
                 {
-                    id = model.Id
+                    id = UserID
                 }
             );
         }
@@ -322,24 +327,70 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var user = await _context.AppUsers
-                .FirstOrDefaultAsync(item => item.Id == id);
+            var user = await _context.Users
+                .FirstOrDefaultAsync(item =>
+                    item.UserID == id);
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            _context.AppUsers.Remove(user);
+            string currentUsername =
+                HttpContext.Session.GetString("Username")
+                ?? string.Empty;
 
-            await _context.SaveChangesAsync();
+            if (
+                string.Equals(
+                    currentUsername,
+                    user.Username,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                TempData["Error"] =
+                    "You cannot delete the account currently signed in.";
 
-            TempData["Success"] =
-                "🗑️ User deleted successfully!";
+                return RedirectToAction(
+                    nameof(Details),
+                    new
+                    {
+                        id
+                    }
+                );
+            }
 
-            return RedirectToAction(
-                nameof(SearchUsers)
-            );
+            try
+            {
+                _context.Users.Remove(user);
+
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] =
+                    "🗑️ User deleted successfully.";
+
+                return RedirectToAction(
+                    nameof(SearchUsers)
+                );
+            }
+            catch (DbUpdateException)
+            {
+                /*
+                 * Some users may be linked to competencies or other
+                 * records. In this case deactivating is safer.
+                 */
+                TempData["Error"] =
+                    "This user cannot be deleted because related records exist. "
+                    + "Change the status to UnActive instead.";
+
+                return RedirectToAction(
+                    nameof(Details),
+                    new
+                    {
+                        id
+                    }
+                );
+            }
         }
     }
 }

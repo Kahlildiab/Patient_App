@@ -1,57 +1,483 @@
 ﻿@model DentalCollegeManagementSystem_AAU.Models.ViewModels.SearchUserViewModel
+
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    int activeCount =
+        Model.Results.Count(user => user.IsActive == 1);
+
+    int unActiveCount =
+        Model.Results.Count(user => user.IsActive == 0);
 }
 
-<h2 class="text-center mt-4" style="color:#252468;font-weight:700;">SEARCH USER <span style="border-bottom:3px solid #daa328;display:inline-block;width:200px;"></span></h2>
+<style>
+    .users-page {
+        max-width: 1400px;
+        margin: 28px auto;
+        padding: 0 16px;
+    }
 
-<div class="container mt-4" style="border:2px solid #daa328;border-radius:8px;padding:30px;">
-    <form method="get">
-        <div class="row">
-            <div class="col-md-2 fw-bold">Search by Name:</div>
-            <div class="col-md-10"><input name="search" value="@Model.SearchTerm" class="form-control" placeholder="Type name or email..." /></div>
+    .users-title {
+        text-align: center;
+        color: #252468;
+        font-size: 1.55rem;
+        font-weight: 800;
+        margin-bottom: 26px;
+    }
+
+    .users-title-line {
+        display: block;
+        width: 220px;
+        height: 3px;
+        margin: 8px auto 0;
+        background: #daa328;
+    }
+
+    .users-search-card {
+        border: 2px solid #daa328;
+        border-radius: 8px;
+        background: #fff;
+        padding: 24px;
+        margin-bottom: 30px;
+    }
+
+    .users-search-label {
+        display: block;
+        margin-bottom: 7px;
+        color: #252468;
+        font-size: .82rem;
+        font-weight: 800;
+    }
+
+    .users-search-input,
+    .users-search-select {
+        width: 100%;
+        min-height: 44px;
+        border: 1px solid #d6d6d6;
+        border-radius: 4px;
+        padding: 9px 12px;
+        background: #fff;
+        color: #333;
+        outline: none;
+    }
+
+        .users-search-input:focus,
+        .users-search-select:focus {
+            border-color: #252468;
+            box-shadow: 0 0 0 3px rgba(37, 36, 104, .10);
+        }
+
+    .users-search-actions {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+    }
+
+    .users-search-button {
+        min-width: 180px;
+        border: none;
+        border-radius: 4px;
+        padding: 11px 24px;
+        background: #c0006a;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .users-clear-button {
+        min-width: 140px;
+        border: none;
+        border-radius: 4px;
+        padding: 11px 24px;
+        background: #6b7280;
+        color: #fff;
+        font-weight: 700;
+        text-align: center;
+        text-decoration: none;
+    }
+
+    .users-summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(160px, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .users-summary-card {
+        border: 1px solid #e1e4ef;
+        border-radius: 8px;
+        background: #fff;
+        padding: 14px 18px;
+    }
+
+    .users-summary-label {
+        color: #7a8191;
+        font-size: .78rem;
+    }
+
+    .users-summary-value {
+        color: #252468;
+        font-size: 1.45rem;
+        font-weight: 800;
+    }
+
+    .users-table-card {
+        border: 1px solid #e0e4f0;
+        border-radius: 10px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .users-table {
+        width: 100%;
+        margin: 0;
+        border-collapse: collapse;
+    }
+
+        .users-table th {
+            background: #252468;
+            color: #fff;
+            padding: 12px 10px;
+            font-size: .78rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .users-table td {
+            border-bottom: 1px solid #edf0f5;
+            padding: 11px 10px;
+            color: #394150;
+            font-size: .8rem;
+            vertical-align: middle;
+        }
+
+        .users-table tbody tr:hover {
+            background: #fafbff;
+        }
+
+    .status-badge {
+        display: inline-block;
+        min-width: 82px;
+        border-radius: 20px;
+        padding: 4px 10px;
+        text-align: center;
+        font-size: .72rem;
+        font-weight: 800;
+    }
+
+    .status-active {
+        border: 1px solid #a3cfbb;
+        background: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .status-unactive {
+        border: 1px solid #f1aeb5;
+        background: #f8d7da;
+        color: #842029;
+    }
+
+    .users-more-link {
+        color: #252468;
+        font-weight: 800;
+        text-decoration: none;
+    }
+
+        .users-more-link:hover {
+            color: #c0006a;
+        }
+
+    .users-empty {
+        padding: 35px;
+        text-align: center;
+        color: #8a8f9c;
+    }
+
+    @@media (max-width: 767px) {
+        .users-summary {
+            grid-template-columns: 1fr;
+        }
+
+        .users-search-card {
+            padding: 18px 14px;
+        }
+    }
+</style>
+
+<div class="users-page">
+
+    <h2 class="users-title">
+        SEARCH USERS
+        <span class="users-title-line"></span>
+    </h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success text-center">
+            @TempData["Success"]
         </div>
-        <div class="text-center mt-3">
-            <button type="submit" class="btn btn-lg px-5" style="background:#c0006a;color:#fff;">Search 🔍</button>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger text-center">
+            @TempData["Error"]
         </div>
-    </form>
-</div>
+    }
 
-<h2 class="text-center mt-5" style="color:#252468;font-weight:700;">SEARCH RESULT <span style="border-bottom:3px solid #daa328;display:inline-block;width:200px;"></span></h2>
+    <div class="users-search-card">
 
-<div class="container mt-3">
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>User ID</th>
-                <th>User Log</th>
-                <th>Email</th>
-                <th>Name (EN)</th>
-                <th>Name (AR)</th>
-                <th>Type</th>
-                <th>Notes</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var u in Model.Results)
-            {
-                <tr>
-                    <td>@u.Id</td>
-                    <td>@u.UserLog</td>
-                    <td>@u.Email</td>
-                    <td>@u.NameEn</td>
-                    <td>@u.NameAr</td>
-                    <td>@u.UserType?.NameEn</td>
-                    <td>@u.Notes</td>
-                    <td>@u.Status</td>
-                    <td>
-                        <a href="/SearchNewUsers/Details/@u.Id"
-                           style="color:#252468;font-weight:bold;">More...</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+        <form method="get"
+              asp-controller="SearchNewUsers"
+              asp-action="SearchUsers">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label class="users-search-label">
+                        Search
+                    </label>
+
+                    <input type="text"
+                           name="search"
+                           value="@Model.SearchTerm"
+                           class="users-search-input"
+                           placeholder="Username, full name, email, phone or role..." />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="users-search-label">
+                        User Role
+                    </label>
+
+                    <select name="roleFilter"
+                            class="users-search-select">
+
+                        <option value="">
+                            -- All Roles --
+                        </option>
+
+                        @foreach (string role in Model.Roles)
+                        {
+                            if (
+                                string.Equals(
+                                    role,
+                                    Model.RoleFilter,
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
+                            {
+                                <option value="@role"
+                                        selected="selected">
+                                    @role
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="@role">
+                                    @role
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="users-search-label">
+                        Status
+                    </label>
+
+                    <select name="statusFilter"
+                            class="users-search-select">
+
+                        <option value="">
+                            -- All Statuses --
+                        </option>
+
+                        @if (Model.StatusFilter == 1)
+                        {
+                            <option value="1"
+                                    selected="selected">
+                                Active
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="1">
+                                Active
+                            </option>
+                        }
+
+                        @if (Model.StatusFilter == 0)
+                        {
+                            <option value="0"
+                                    selected="selected">
+                                UnActive
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="0">
+                                UnActive
+                            </option>
+                        }
+
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="users-search-actions">
+
+                <button type="submit"
+                        class="users-search-button">
+                    Search 🔍
+                </button>
+
+                <a asp-controller="SearchNewUsers"
+                   asp-action="SearchUsers"
+                   class="users-clear-button">
+                    Clear
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <h2 class="users-title">
+        USERS
+        <span class="users-title-line"></span>
+    </h2>
+
+    <div class="users-summary">
+
+        <div class="users-summary-card">
+            <div class="users-summary-label">
+                Displayed Users
+            </div>
+            <div class="users-summary-value">
+                @Model.Results.Count
+            </div>
+        </div>
+
+        <div class="users-summary-card">
+            <div class="users-summary-label">
+                Active
+            </div>
+            <div class="users-summary-value">
+                @activeCount
+            </div>
+        </div>
+
+        <div class="users-summary-card">
+            <div class="users-summary-label">
+                UnActive
+            </div>
+            <div class="users-summary-value">
+                @unActiveCount
+            </div>
+        </div>
+
+    </div>
+
+    <div class="users-table-card">
+        <div class="table-responsive">
+
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Username</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @if (!Model.Results.Any())
+                    {
+                        <tr>
+                            <td colspan="10"
+                                class="users-empty">
+                                No users found.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var user in Model.Results)
+                        {
+                            <tr>
+                                <td>@user.UserID</td>
+                                <td>@user.Username</td>
+                                <td>@user.FullName</td>
+                                <td>@user.Email</td>
+                                <td>@user.PhoneNumber</td>
+                                <td>@user.UserRole</td>
+
+                                <td>
+                                    @if (user.IsActive == 1)
+                                    {
+                                        <span class="status-badge status-active">
+                                            Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-unactive">
+                                            UnActive
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @user.CreatedDate.ToString(
+                                        "dd-MM-yyyy"
+                                    )
+                                </td>
+
+                                <td>
+                                    @if (user.LastLoginDate.HasValue)
+                                    {
+                                        @user.LastLoginDate.Value.ToString(
+                                            "dd-MM-yyyy HH:mm"
+                                        )
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#aaa;">
+                                            Never
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <a asp-controller="SearchNewUsers"
+                                       asp-action="Details"
+                                       asp-route-id="@user.UserID"
+                                       class="users-more-link">
+                                        More...
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
 </div>
