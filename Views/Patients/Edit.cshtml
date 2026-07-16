@@ -405,8 +405,17 @@
                 <div class="form-row">
                     <div class="form-col">
                         <label class="required">Date of Appointment</label>
-                        <input asp-for="AppointmentDate" type="date" />
-                        <span asp-validation-for="AppointmentDate" class="validation-msg"></span>
+                        <input asp-for="AppointmentDate"
+                               type="date"
+                               id="appointmentDateInput"
+                               min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="AppointmentDate"
+                              class="validation-msg"></span>
+                        <span id="appointmentDateClientError"
+                              class="validation-msg"
+                              style="display:none;">
+                            You cannot select a past date. Please choose today or a future date.
+                        </span>
                     </div>
                     <div class="form-col">
                         <label class="required">Time</label>
@@ -612,6 +621,93 @@
 
             radios.forEach(r => r.addEventListener('change', () => updateIDField(true)));
             updateIDField(false);
+        });
+
+        // ===== Prevent Past Appointment Dates =====
+        document.addEventListener("DOMContentLoaded", function () {
+            const appointmentDateInput =
+                document.getElementById("appointmentDateInput");
+
+            const appointmentDateError =
+                document.getElementById("appointmentDateClientError");
+
+            if (!appointmentDateInput || !appointmentDateError) {
+                return;
+            }
+
+            const today =
+                '@DateTime.Today.ToString("yyyy-MM-dd")';
+
+            /*
+             * يمنع اختيار أي تاريخ قبل تاريخ اليوم من التقويم.
+             */
+            appointmentDateInput.min =
+                today;
+
+            function validateAppointmentDate() {
+                const selectedDate =
+                    appointmentDateInput.value;
+
+                if (
+                    selectedDate
+                    &&
+                    selectedDate < today
+                ) {
+                    const message =
+                        "You cannot select a past appointment date. Please choose today or a future date.";
+
+                    appointmentDateInput.setCustomValidity(
+                        message
+                    );
+
+                    appointmentDateError.textContent =
+                        message;
+
+                    appointmentDateError.style.display =
+                        "block";
+
+                    return false;
+                }
+
+                appointmentDateInput.setCustomValidity(
+                    ""
+                );
+
+                appointmentDateError.style.display =
+                    "none";
+
+                return true;
+            }
+
+            appointmentDateInput.addEventListener(
+                "input",
+                validateAppointmentDate
+            );
+
+            appointmentDateInput.addEventListener(
+                "change",
+                validateAppointmentDate
+            );
+
+            const editForm =
+                appointmentDateInput.closest("form");
+
+            if (editForm) {
+                editForm.addEventListener(
+                    "submit",
+                    function (event) {
+                        if (!validateAppointmentDate()) {
+                            event.preventDefault();
+                            event.stopPropagation();
+
+                            appointmentDateInput.focus();
+                            appointmentDateInput.reportValidity();
+                        }
+                    }
+                );
+            }
+
+            validateAppointmentDate();
         });
 
         // ===== Photo Preview & Validation =====

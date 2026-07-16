@@ -927,70 +927,36 @@ function toggleHospitalizationNotes(show) {
 // ═══════════════════════════════════════════════
 //  Info Bar — Red Flags updater
 // ═══════════════════════════════════════════════
-function updateRedFlagsInfoBar() {
-    const flaggedNames = [];
-
-    document.querySelectorAll(
-        '#conditions-tbody tr'
-    )
-        .forEach(function (row) {
-            const name =
-                row.querySelector(
-                    '.condition-name-cell'
-                )?.textContent.trim();
-
-            const flagged =
-                row.querySelector(
-                    '.condition-flag-cell'
-                )?.textContent.includes('Yes');
-
-            if (name && flagged) {
-                flaggedNames.push(name);
-            }
-        });
-
-    document.querySelectorAll(
-        '#medications-tbody tr'
-    )
-        .forEach(function (row) {
-            const name =
-                row.querySelector(
-                    '.medication-name-cell'
-                )?.textContent.trim();
-
-            const flagged =
-                row.querySelector(
-                    '.medication-flag-cell'
-                )?.textContent.includes('Yes');
-
-            if (name && flagged) {
-                flaggedNames.push(name);
-            }
-        });
-
+function updateSingleRedFlagBox(
+    prefix,
+    names,
+    emptyText
+) {
     const uniqueNames =
         Array.from(
-            new Set(flaggedNames)
+            new Set(
+                names.filter(Boolean)
+            )
         );
 
     const wrapper =
         document.getElementById(
-            'info-bar-red-flags-wrapper'
+            `info-bar-${prefix}-red-flags-wrapper`
         );
 
     const dot =
         document.getElementById(
-            'info-bar-red-flags-dot'
+            `info-bar-${prefix}-red-flags-dot`
         );
 
     const label =
         document.getElementById(
-            'info-bar-red-flags-label'
+            `info-bar-${prefix}-red-flags-label`
         );
 
     const text =
         document.getElementById(
-            'info-bar-red-flags'
+            `info-bar-${prefix}-red-flags`
         );
 
     if (!wrapper || !text) {
@@ -1032,7 +998,66 @@ function updateRedFlagsInfoBar() {
     text.textContent =
         hasFlags
             ? uniqueNames.join(', ')
-            : 'No red flags';
+            : emptyText;
+}
+
+function updateRedFlagsInfoBar() {
+    const conditionFlaggedNames = [];
+    const medicationFlaggedNames = [];
+
+    document.querySelectorAll(
+        '#conditions-tbody tr'
+    )
+        .forEach(function (row) {
+            const name =
+                row.querySelector(
+                    '.condition-name-cell'
+                )?.textContent.trim();
+
+            const flagged =
+                row.querySelector(
+                    '.condition-flag-cell'
+                )?.textContent.includes('Yes');
+
+            if (name && flagged) {
+                conditionFlaggedNames.push(
+                    name
+                );
+            }
+        });
+
+    document.querySelectorAll(
+        '#medications-tbody tr'
+    )
+        .forEach(function (row) {
+            const name =
+                row.querySelector(
+                    '.medication-name-cell'
+                )?.textContent.trim();
+
+            const flagged =
+                row.querySelector(
+                    '.medication-flag-cell'
+                )?.textContent.includes('Yes');
+
+            if (name && flagged) {
+                medicationFlaggedNames.push(
+                    name
+                );
+            }
+        });
+
+    updateSingleRedFlagBox(
+        'condition',
+        conditionFlaggedNames,
+        'No condition red flags'
+    );
+
+    updateSingleRedFlagBox(
+        'medication',
+        medicationFlaggedNames,
+        'No medication red flags'
+    );
 }
 
 // ═══════════════════════════════════════════════

@@ -756,6 +756,22 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 .ThenByDescending(v => v.VisitID)
                 .FirstOrDefaultAsync();
 
+            /*
+             * The open visit is used by the Notes tab.
+             * Every newly added note is linked to this exact visit.
+             */
+            var currentOpenVisit =
+                await _context.Visits
+                    .Where(
+                        v =>
+                            v.PatientID == id.Value
+                            &&
+                            !v.IsClosed
+                    )
+                    .OrderByDescending(v => v.VisitDate)
+                    .ThenByDescending(v => v.VisitID)
+                    .FirstOrDefaultAsync();
+
             bool isAdmin =
                 string.Equals(
                     HttpContext.Session.GetString("UserRole"),
@@ -773,6 +789,44 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 latestVisit != null &&
                 latestVisit.IsClosed &&
                 !isAdmin;
+
+            /*
+             * Required by the Notes page:
+             * - CurrentVisitId enables Add Note only when a visit is open.
+             * - A student can end the visit after adding at least one note.
+             * - The note does not need to be approved before End Visit.
+             */
+            ViewBag.CurrentVisitId =
+                currentOpenVisit?.VisitID;
+
+            string currentNotesUserName =
+                HttpContext.Session.GetString("FullName")
+                ??
+                HttpContext.Session.GetString("UserName")
+                ??
+                HttpContext.Session.GetString("Username")
+                ??
+                "Unknown";
+
+            bool hasCurrentStudentNote =
+                currentOpenVisit != null
+                &&
+                await _context.Notes.AnyAsync(
+                    note =>
+                        note.VisitId == currentOpenVisit.VisitID
+                        &&
+                        note.CreatedByRole == "Student"
+                        &&
+                        note.CreatedBy == currentNotesUserName
+                );
+
+            ViewBag.HasCurrentStudentNote =
+                hasCurrentStudentNote;
+
+            ViewBag.CanEndCurrentVisit =
+                !currentUserIsStudent
+                ||
+                hasCurrentStudentNote;
 
             return View(patient);
         }
@@ -1003,43 +1057,66 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     TimeSpan.FromHours(2)
                 );
 
-            if (
-                patient.AppointmentDate == default
-                ||
-                patient.AppointmentDate.Year < 2000
-            )
+            bool appointmentDateIsValid =
+                patient.AppointmentDate != default
+                &&
+                patient.AppointmentDate.Year >= 2000;
+
+            if (!appointmentDateIsValid)
             {
                 ModelState.AddModelError(
                     "AppointmentDate",
                     "Please select a valid appointment date."
                 );
             }
+            else if (
+                patient.AppointmentDate.Date
+                <
+                DateTime.Today
+            )
+            {
+                ModelState.AddModelError(
+                    "AppointmentDate",
+                    "You cannot select a past appointment date. Please choose today or a future date."
+                );
+            }
 
             /*
              * نمنع تجاوز سعة 10 مرضى في نفس الموعد.
+             * لا يتم تنفيذ فحص السعة إذا كان التاريخ غير صالح
+             * أو كان أقدم من تاريخ اليوم.
+             *
              * نستثني المريض الحالي حتى لا يُحسب على نفسه
              * عند حفظ نفس الموعد من جديد.
              */
-            int slotCount =
-                await _context.Appointments
-                    .CountAsync(
-                        a =>
-                            a.PatientID != id
-                            &&
-                            a.AppointmentStatus == "Scheduled"
-                            &&
-                            a.AppointmentDate.Date
-                                == patient.AppointmentDate.Date
-                            &&
-                            a.TimeFrom == newTimeFrom
-                    );
-
-            if (slotCount >= 10)
+            if (
+                appointmentDateIsValid
+                &&
+                patient.AppointmentDate.Date
+                    >= DateTime.Today
+            )
             {
-                ModelState.AddModelError(
-                    "AppointmentTime",
-                    $"The selected appointment on {patient.AppointmentDate:yyyy-MM-dd} at {normalizedAppointmentTime} is full (10/10)."
-                );
+                int slotCount =
+                    await _context.Appointments
+                        .CountAsync(
+                            a =>
+                                a.PatientID != id
+                                &&
+                                a.AppointmentStatus == "Scheduled"
+                                &&
+                                a.AppointmentDate.Date
+                                    == patient.AppointmentDate.Date
+                                &&
+                                a.TimeFrom == newTimeFrom
+                        );
+
+                if (slotCount >= 10)
+                {
+                    ModelState.AddModelError(
+                        "AppointmentTime",
+                        $"The selected appointment on {patient.AppointmentDate:yyyy-MM-dd} at {normalizedAppointmentTime} is full (10/10)."
+                    );
+                }
             }
 
             if (!ModelState.IsValid)
@@ -1438,6 +1515,23 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     {
                         available = true,
                         count = 0
+                    }
+                );
+            }
+
+            if (
+                parsedDate.Date
+                <
+                DateTime.Today
+            )
+            {
+                return Json(
+                    new
+                    {
+                        available = false,
+                        count = 0,
+                        message =
+                            "You cannot select a past appointment date. Please choose today or a future date."
                     }
                 );
             }

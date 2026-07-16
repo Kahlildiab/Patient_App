@@ -112,78 +112,83 @@
             );
     }
 
-    var redFlagNames =
-        new List<string>();
-
-    if (conditions != null)
-    {
-        redFlagNames.AddRange(
-            conditions
-                .Where(
-                    condition =>
-                        condition.IsFlagged
-                        ||
-                        IsAutomaticConditionRedFlag(
-                            condition.ConditionName
-                        )
-                )
-                .Select(
-                    condition =>
+    var conditionRedFlagNames =
+        conditions?
+            .Where(
+                condition =>
+                    condition.IsFlagged
+                    ||
+                    IsAutomaticConditionRedFlag(
                         condition.ConditionName
-                )
-                .Where(
-                    name =>
-                        !string.IsNullOrWhiteSpace(
-                            name
-                        )
-                )
-        );
-    }
-
-    if (meds != null)
-    {
-        redFlagNames.AddRange(
-            meds
-                .Where(
-                    medication =>
-                        !string.IsNullOrWhiteSpace(
-                            medication.FlagType
-                        )
-                        ||
-                        IsAutomaticMedicationRedFlag(
-                            medication.DrugName
-                        )
-                )
-                .Select(
-                    medication =>
-                        medication.DrugName
-                )
-                .Where(
-                    name =>
-                        !string.IsNullOrWhiteSpace(
-                            name
-                        )
-                )
-        );
-    }
-
-    redFlagNames =
-        redFlagNames
+                    )
+            )
+            .Select(
+                condition =>
+                    condition.ConditionName
+            )
+            .Where(
+                name =>
+                    !string.IsNullOrWhiteSpace(
+                        name
+                    )
+            )
             .Distinct(
                 StringComparer.OrdinalIgnoreCase
             )
-            .ToList();
+            .ToList()
+        ??
+        new List<string>();
 
-    bool hasRedFlags =
-        redFlagNames.Any();
+    var medicationRedFlagNames =
+        meds?
+            .Where(
+                medication =>
+                    !string.IsNullOrWhiteSpace(
+                        medication.FlagType
+                    )
+                    ||
+                    IsAutomaticMedicationRedFlag(
+                        medication.DrugName
+                    )
+            )
+            .Select(
+                medication =>
+                    medication.DrugName
+            )
+            .Where(
+                name =>
+                    !string.IsNullOrWhiteSpace(
+                        name
+                    )
+            )
+            .Distinct(
+                StringComparer.OrdinalIgnoreCase
+            )
+            .ToList()
+        ??
+        new List<string>();
 
-    string redFlagText =
-        hasRedFlags
+    bool hasConditionRedFlags =
+        conditionRedFlagNames.Any();
+
+    bool hasMedicationRedFlags =
+        medicationRedFlagNames.Any();
+
+    string conditionRedFlagText =
+        hasConditionRedFlags
             ? string.Join(
                 ", ",
-                redFlagNames
+                conditionRedFlagNames
             )
-            : "No red flags";
+            : "No condition red flags";
+
+    string medicationRedFlagText =
+        hasMedicationRedFlags
+            ? string.Join(
+                ", ",
+                medicationRedFlagNames
+            )
+            : "No medication red flags";
 
     bool isVisitClosed =
         ViewBag.IsVisitClosed != null &&
@@ -198,6 +203,27 @@
             "Admin",
             StringComparison.OrdinalIgnoreCase
         );
+
+    bool isFulltimeSupervisor =
+        string.Equals(
+            currentVisitAccessRole,
+            "Fulltime Supervisor",
+            StringComparison.OrdinalIgnoreCase
+        );
+
+    bool isParttimeSupervisor =
+        string.Equals(
+            currentVisitAccessRole,
+            "Parttime Supervisor",
+            StringComparison.OrdinalIgnoreCase
+        );
+
+    bool canEditCaseComplexity =
+        isAdmin
+        ||
+        isFulltimeSupervisor
+        ||
+        isParttimeSupervisor;
 
     bool isReadOnly =
         isVisitClosed &&
@@ -694,6 +720,12 @@
         font-weight: 700;
     }
 
+    @@media (max-width: 900px) {
+        .patient-alert-grid {
+            grid-template-columns: 1fr !important;
+        }
+    }
+
 </style>
 
 <!-- ===== PATIENT DETAILS CARD ===== -->
@@ -813,15 +845,156 @@
     </div>
 }
 
+@if (TempData["CaseComplexitySuccess"] != null)
+{
+    <div style="
+        max-width:1200px;
+        margin:0 auto 12px;
+        padding:10px 14px;
+        border:1px solid #27ae60;
+        border-radius:6px;
+        background:#EAF7EE;
+        color:#145A32;
+        font-size:13px;
+        font-weight:600;">
+        @TempData["CaseComplexitySuccess"]
+    </div>
+}
+
+@if (TempData["CaseComplexityError"] != null)
+{
+    <div style="
+        max-width:1200px;
+        margin:0 auto 12px;
+        padding:10px 14px;
+        border:1px solid #D9534F;
+        border-radius:6px;
+        background:#FDECEA;
+        color:#791F1F;
+        font-size:13px;
+        font-weight:600;">
+        @TempData["CaseComplexityError"]
+    </div>
+}
+
 <!-- ===== INFO BAR ===== -->
 <div class="info-bar" style="background:white; border:0.5px solid #ddd; border-radius:12px; padding:1rem 1.5rem;">
 
     <!-- السطر الأول: المعلومات الأساسية -->
     <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:12px;">
 
-        <div style="background:#f5f5f5; border-radius:8px; padding:12px 16px;">
-            <div style="font-size:12px; color:#888;">Case Complexity</div>
-            <div style="font-size:16px; font-weight:500;">@complexity</div>
+        <div style="
+            background:#f5f5f5;
+            border-radius:8px;
+            padding:12px 16px;
+            min-width:0;">
+
+            <div style="
+                font-size:12px;
+                color:#888;">
+                Case Complexity
+            </div>
+
+            @if (canEditCaseComplexity)
+            {
+                <form asp-controller="CaseComplexity"
+                      asp-action="Update"
+                      method="post"
+                      style="
+                    display:flex;
+                    align-items:center;
+                    gap:6px;
+                    margin-top:5px;">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="patientId"
+                           value="@Model.PatientID" />
+
+                    <input type="hidden"
+                           name="returnTab"
+                           value="@activeTab" />
+
+                    <select name="caseComplexity"
+                            required
+                            aria-label="Case Complexity"
+                            style="
+                        flex:1;
+                        min-width:0;
+                        height:32px;
+                        border:1px solid #cfd3dc;
+                        border-radius:4px;
+                        background:#ffffff;
+                        color:#252468;
+                        padding:4px 7px;
+                        font-size:12px;
+                        font-weight:700;">
+
+                        <option value=""
+                                disabled
+                                selected="@(complexity == "---" ? "selected" : null)">
+                            -- Select --
+                        </option>
+
+                        <option value="Mild"
+                                selected="@(string.Equals(
+                                                                    complexity,
+                                                                    "Mild",
+                                                                    StringComparison.OrdinalIgnoreCase
+                                                                ) ? "selected" : null)">
+                            Mild
+                        </option>
+
+                        <option value="Moderate"
+                                selected="@(string.Equals(
+                                                                    complexity,
+                                                                    "Moderate",
+                                                                    StringComparison.OrdinalIgnoreCase
+                                                                ) ? "selected" : null)">
+                            Moderate
+                        </option>
+
+                        <option value="Advance"
+                                selected="@(string.Equals(
+                                                                    complexity,
+                                                                    "Advance",
+                                                                    StringComparison.OrdinalIgnoreCase
+                                                                ) ? "selected" : null)">
+                            Advance
+                        </option>
+                    </select>
+
+                    <button type="submit"
+                            title="Save Case Complexity"
+                            style="
+                        height:32px;
+                        border:0;
+                        border-radius:4px;
+                        background:#252468;
+                        color:#ffffff;
+                        padding:0 10px;
+                        font-size:11px;
+                        font-weight:700;
+                        cursor:pointer;">
+                        Save
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div style="
+                    font-size:16px;
+                    font-weight:700;
+                    color:@(
+                     complexity == "---"
+                         ? "#999"
+                         : "#252468"
+                                     );
+                    margin-top:4px;">
+                    @complexity
+                </div>
+            }
         </div>
 
         <!-- Treatment Progress -->
@@ -862,8 +1035,8 @@
                 font-size:13px;
                 font-weight:600;
                 color:@(nextAppt != null
-                                                                       ? "#252468"
-                                                                       : "#999");
+                                                                                        ? "#252468"
+                                                                                        : "#999");
                 margin-top:4px;
                 white-space:nowrap;
                 overflow:hidden;
@@ -895,7 +1068,7 @@
                      == "No student assigned"
                          ? "#999"
                          : "#252468"
-                                                       );
+                                                                    );
                 margin-top:4px;
                 white-space:nowrap;
                 overflow:hidden;
@@ -908,58 +1081,136 @@
 
     </div>
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+    <div class="patient-alert-grid"
+         style="
+        display:grid;
+        grid-template-columns:repeat(3, minmax(0, 1fr));
+        gap:12px;">
 
         <!-- Allergies Box -->
-        <div style="background:@(hasAllergies ? "#FDECEA" : "#EAF7EE"); border:0.5px solid @(hasAllergies ? "#D9534F" : "#27AE60"); border-radius:8px; padding:10px 16px; display:flex; align-items:center; gap:10px;">
-            <div style="width:8px; height:8px; border-radius:50%; background:@(hasAllergies ? "#A32D2D" : "#1E8449"); flex-shrink:0;"></div>
-            <div>
-                <div style="font-size:11px; color:@(hasAllergies ? "#791F1F" : "#1A5C35");">Allergies</div>
-                @if (hasAllergies)
-                {
-                    <div style="font-size:13px; font-weight:500; color:@(hasAllergies ? "#501313" : "#145A32");">@mh.AllergyNotes</div>
-                }
-                else
-                {
-                    <div style="font-size:13px; font-weight:500; color:#145A32;">No allergies</div>
-                }
-            </div>
-        </div>
-
-        <!-- Red Flags Box -->
-        <div id="info-bar-red-flags-wrapper"
-             style="
-            background:@(hasRedFlags ? "#FDECEA" : "#EAF7EE");
-            border:0.5px solid @(hasRedFlags ? "#D9534F" : "#27AE60");
+        <div style="
+            background:@(hasAllergies ? "#FDECEA" : "#EAF7EE");
+            border:0.5px solid @(hasAllergies ? "#D9534F" : "#27AE60");
             border-radius:8px;
             padding:10px 16px;
             display:flex;
             align-items:center;
-            gap:10px;">
+            gap:10px;
+            min-width:0;">
 
-            <div id="info-bar-red-flags-dot"
+            <div style="
+                width:8px;
+                height:8px;
+                border-radius:50%;
+                background:@(hasAllergies ? "#A32D2D" : "#1E8449");
+                flex-shrink:0;">
+            </div>
+
+            <div style="min-width:0;">
+                <div style="
+                    font-size:11px;
+                    color:@(hasAllergies ? "#791F1F" : "#1A5C35");">
+                    Allergies
+                </div>
+
+                @if (hasAllergies)
+                {
+                    <div style="
+                        font-size:13px;
+                        font-weight:500;
+                        color:#501313;
+                        overflow-wrap:anywhere;">
+                        @mh.AllergyNotes
+                    </div>
+                }
+                else
+                {
+                    <div style="
+                        font-size:13px;
+                        font-weight:500;
+                        color:#145A32;">
+                        No allergies
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Condition Red Flags -->
+        <div id="info-bar-condition-red-flags-wrapper"
+             style="
+            background:@(hasConditionRedFlags ? "#FDECEA" : "#EAF7EE");
+            border:0.5px solid @(hasConditionRedFlags ? "#D9534F" : "#27AE60");
+            border-radius:8px;
+            padding:10px 16px;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            min-width:0;">
+
+            <div id="info-bar-condition-red-flags-dot"
                  style="
                 width:8px;
                 height:8px;
                 border-radius:50%;
-                background:@(hasRedFlags ? "#A32D2D" : "#1E8449");
+                background:@(hasConditionRedFlags ? "#A32D2D" : "#1E8449");
                 flex-shrink:0;">
             </div>
 
-            <div>
-                <div id="info-bar-red-flags-label"
+            <div style="min-width:0;">
+                <div id="info-bar-condition-red-flags-label"
                      style="
                     font-size:11px;
-                    color:@(hasRedFlags ? "#791F1F" : "#1A5C35");">
-                    Red Flags
+                    color:@(hasConditionRedFlags ? "#791F1F" : "#1A5C35");">
+                    Condition Red Flags
                 </div>
 
-                <div id="info-bar-red-flags"
+                <div id="info-bar-condition-red-flags"
                      style="
                     font-size:13px;
                     font-weight:500;
-                    color:@(hasRedFlags ? "#501313" : "#145A32");">
-                    @redFlagText
+                    color:@(hasConditionRedFlags ? "#501313" : "#145A32");
+                    overflow-wrap:anywhere;">
+                    @conditionRedFlagText
+                </div>
+            </div>
+        </div>
+
+        <!-- Medication Red Flags -->
+        <div id="info-bar-medication-red-flags-wrapper"
+             style="
+            background:@(hasMedicationRedFlags ? "#FDECEA" : "#EAF7EE");
+            border:0.5px solid @(hasMedicationRedFlags ? "#D9534F" : "#27AE60");
+            border-radius:8px;
+            padding:10px 16px;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            min-width:0;">
+
+            <div id="info-bar-medication-red-flags-dot"
+                 style="
+                width:8px;
+                height:8px;
+                border-radius:50%;
+                background:@(hasMedicationRedFlags ? "#A32D2D" : "#1E8449");
+                flex-shrink:0;">
+            </div>
+
+            <div style="min-width:0;">
+                <div id="info-bar-medication-red-flags-label"
+                     style="
+                    font-size:11px;
+                    color:@(hasMedicationRedFlags ? "#791F1F" : "#1A5C35");">
+                    Medication Red Flags
+                </div>
+
+                <div id="info-bar-medication-red-flags"
+                     style="
+                    font-size:13px;
+                    font-weight:500;
+                    color:@(hasMedicationRedFlags ? "#501313" : "#145A32");
+                    overflow-wrap:anywhere;">
+                    @medicationRedFlagText
                 </div>
             </div>
         </div>
@@ -1021,18 +1272,18 @@
                 <li>
                     <a id="dentalChartLink"
                        href="@Url.Action(
-                                                                                                                       "Index",
-                                                                                                                       "DentalChartPage",
-                                                                                                                       new
-                                                                                                                       {
-                                                                                                                           patientId = Model.PatientID
-                                                                                                                       })"
+                                                                                                                                              "Index",
+                                                                                                                                              "DentalChartPage",
+                                                                                                                                              new
+                                                                                                                                              {
+                                                                                                                                                  patientId = Model.PatientID
+                                                                                                                                              })"
                        target="_blank"
                        rel="noopener noreferrer"
                        class="LinkFontStyle sidebar-link dental-chart-link"
                        title="@(isReadOnly
-                                                                                                                       ? "View only — this visit is closed."
-                                                                                                                       : "Open Dental Charting")">
+                                                                                                                                              ? "View only — this visit is closed."
+                                                                                                                                              : "Open Dental Charting")">
 
                         <span>
                             Dental Charting
@@ -1084,14 +1335,14 @@
                     </a>
                 </li>
 
-                <li>
+                @*  <li>
                     <a href="@TabUrl("competencies")"
                        class="LinkFontStyle sidebar-link @GetTabClass("competencies") @dentalDisabled"
                        data-target="competencies"
                        style="@dentalStyle">
                         <span>Competencies</span>
                     </a>
-                </li>
+                </li> *@
 
                 <li>
                     <a href="@TabUrl("orders")"
@@ -1204,9 +1455,9 @@
                                            name="ChangesStatus"
                                            value="NoChanges"
                                     @(mh?.ChangesStatus ==
-                                                      DentalCollegeManagementSystem_AAU.Models.ChangesStatusType.NoChanges
-                                                      ? "checked"
-                                                      : "") />
+                                                             DentalCollegeManagementSystem_AAU.Models.ChangesStatusType.NoChanges
+                                                             ? "checked"
+                                                             : "") />
 
                                     No changes in medical history
                                 </label>
@@ -1222,9 +1473,9 @@
                                            name="ChangesStatus"
                                            value="ChangesReported"
                                     @(mh?.ChangesStatus ==
-                                                      DentalCollegeManagementSystem_AAU.Models.ChangesStatusType.ChangesReported
-                                                      ? "checked"
-                                                      : "") />
+                                                             DentalCollegeManagementSystem_AAU.Models.ChangesStatusType.ChangesReported
+                                                             ? "checked"
+                                                             : "") />
 
                                     Changes reported
                                 </label>
@@ -1244,7 +1495,7 @@
                                    mh?.ReviewDate.HasValue == true
                                        ? mh.ReviewDate.Value.ToString("yyyy-MM-dd")
                                        : DateTime.Today.ToString("yyyy-MM-dd")
-                                                                                                 )"
+                                                                                                                                )"
                                    readonly
                                    title="The date is entered automatically when Changes reported is selected."
                                    style="border:1px solid #ccc;

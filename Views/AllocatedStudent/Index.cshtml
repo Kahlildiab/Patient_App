@@ -1,104 +1,489 @@
 ﻿@model List<DentalCollegeManagementSystem_AAU.Models.Patient>
+
 @{
     ViewData["Title"] = "Allocated Students";
-    
-    var userRole = Context.Session.GetString("UserRole");
+
+    string userRole =
+        Context.Session.GetString("UserRole")
+        ?? string.Empty;
 
     int pageSize = 10;
-    int pageNumber = Context.Request.Query.ContainsKey("page")
-        ? int.Parse(Context.Request.Query["page"]) : 1;
 
-    string searchName = Context.Request.Query["searchName"].ToString().Trim().ToLower();
-    string searchID   = Context.Request.Query["searchID"].ToString().Trim().ToLower();
+    int pageNumber = 1;
 
-    var filtered = Model.AsEnumerable();
+    if (
+        Context.Request.Query.ContainsKey("page")
+        &&
+        int.TryParse(
+            Context.Request.Query["page"],
+            out int requestedPage
+        )
+        &&
+        requestedPage > 0
+    )
+    {
+        pageNumber = requestedPage;
+    }
 
-    if (!string.IsNullOrEmpty(searchName))
-        filtered = filtered.Where(p =>
-            (p.FirstName + " " + p.SecondName + " " + p.ThirdName + " " + p.FourthName)
-            .ToLower().Contains(searchName));
+    string searchName =
+        Context.Request.Query["searchName"]
+            .ToString()
+            .Trim();
 
-    if (!string.IsNullOrEmpty(searchID))
-        filtered = filtered.Where(p =>
-            p.NationalID_PassportNumber != null &&
-            p.NationalID_PassportNumber.ToLower().Contains(searchID));
+    string searchID =
+        Context.Request.Query["searchID"]
+            .ToString()
+            .Trim();
 
-    int totalItems = filtered.Count();
-    int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
-    var pagedModel = filtered.OrderByDescending(p => p.PatientID)
-                             .Skip((pageNumber - 1) * pageSize)
-                             .Take(pageSize)
-                             .ToList();
+    string caseComplexityFilter =
+        Context.Request.Query["caseComplexity"]
+            .ToString()
+            .Trim();
+
+    var caseComplexityByPatient =
+        ViewBag.CaseComplexityByPatient
+            as Dictionary<int, string>
+        ??
+        new Dictionary<int, string>();
+
+    string normalizedSearchName =
+        searchName.ToLowerInvariant();
+
+    string normalizedSearchID =
+        searchID.ToLowerInvariant();
+
+    var filtered =
+        Model.AsEnumerable();
+
+    if (
+        !string.IsNullOrWhiteSpace(
+            normalizedSearchName
+        )
+    )
+    {
+        filtered =
+            filtered.Where(
+                patient =>
+                    (
+                        (
+                            patient.FirstName
+                            ?? string.Empty
+                        )
+                        +
+                        " "
+                        +
+                        (
+                            patient.SecondName
+                            ?? string.Empty
+                        )
+                        +
+                        " "
+                        +
+                        (
+                            patient.ThirdName
+                            ?? string.Empty
+                        )
+                        +
+                        " "
+                        +
+                        (
+                            patient.FourthName
+                            ?? string.Empty
+                        )
+                    )
+                    .ToLowerInvariant()
+                    .Contains(
+                        normalizedSearchName
+                    )
+            );
+    }
+
+    if (
+        !string.IsNullOrWhiteSpace(
+            normalizedSearchID
+        )
+    )
+    {
+        filtered =
+            filtered.Where(
+                patient =>
+                    !string.IsNullOrWhiteSpace(
+                        patient.NationalID_PassportNumber
+                    )
+                    &&
+                    patient
+                        .NationalID_PassportNumber
+                        .ToLowerInvariant()
+                        .Contains(
+                            normalizedSearchID
+                        )
+            );
+    }
+
+    if (
+        !string.IsNullOrWhiteSpace(
+            caseComplexityFilter
+        )
+    )
+    {
+        if (
+            string.Equals(
+                caseComplexityFilter,
+                "Not Set",
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
+        {
+            filtered =
+                filtered.Where(
+                    patient =>
+                        !caseComplexityByPatient
+                            .TryGetValue(
+                                patient.PatientID,
+                                out string? complexity
+                            )
+                        ||
+                        string.IsNullOrWhiteSpace(
+                            complexity
+                        )
+                );
+        }
+        else
+        {
+            filtered =
+                filtered.Where(
+                    patient =>
+                        caseComplexityByPatient
+                            .TryGetValue(
+                                patient.PatientID,
+                                out string? complexity
+                            )
+                        &&
+                        string.Equals(
+                            complexity,
+                            caseComplexityFilter,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                );
+        }
+    }
+
+    int totalItems =
+        filtered.Count();
+
+    int totalPages =
+        (int)Math.Ceiling(
+            (double)totalItems
+            /
+            pageSize
+        );
+
+    if (totalPages > 0 && pageNumber > totalPages)
+    {
+        pageNumber = totalPages;
+    }
+
+    var pagedModel =
+        filtered
+            .OrderByDescending(
+                patient =>
+                    patient.PatientID
+            )
+            .Skip(
+                (pageNumber - 1)
+                *
+                pageSize
+            )
+            .Take(pageSize)
+            .ToList();
+
+    string GetComplexityClass(
+        string complexity)
+    {
+        return complexity
+            .Trim()
+            .ToLowerInvariant()
+            switch
+        {
+            "mild" =>
+                "complexity-mild",
+
+            "moderate" =>
+                "complexity-moderate",
+
+            "advance" =>
+                "complexity-advance",
+
+            _ =>
+                "complexity-not-set"
+        };
+    }
 }
 
 <link rel="stylesheet" href="~/css/Site.css" />
 <link rel="stylesheet" href="~/css/RTE.css" />
 
 <style>
-    .active-filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+    .active-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
     .filter-tag {
-        background:#e8eaf6; color:#252468; border-radius:20px;
-        padding:4px 12px; font-size:12px; font-weight:600;
-        display:inline-flex; align-items:center; gap:6px;
+        background: #e8eaf6;
+        color: #252468;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
     /* ── Student rows ── */
     .stu-row {
-        display:flex; align-items:center; justify-content:space-between;
-        background:#f8fafc; border:1px solid #e5e7eb;
-        border-radius:8px; padding:8px 12px; margin-bottom:6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 6px;
     }
-    .stu-name { font-size:14px; font-weight:600; }
-    .stu-type { font-size:12px; color:#6b7280; }
-    .btn-assign { background:#16a34a; color:#fff; border:none; border-radius:6px; width:30px; height:30px; font-size:18px; cursor:pointer; }
-    .btn-remove { background:#dc2626; color:#fff; border:none; border-radius:6px; width:30px; height:30px; font-size:18px; cursor:pointer; }
-    .col-assigned  { border:1px solid #bbf7d0; border-radius:10px; padding:12px; background:#f0fdf4; }
-    .col-available { border:1px solid #bfdbfe; border-radius:10px; padding:12px; background:#eff6ff; }
-    .empty-msg { color:#9ca3af; font-size:13px; text-align:center; padding:12px; }
+
+    .stu-name {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .stu-type {
+        font-size: 12px;
+        color: #6b7280;
+    }
+
+    .btn-assign {
+        background: #16a34a;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        width: 30px;
+        height: 30px;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    .btn-remove {
+        background: #dc2626;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        width: 30px;
+        height: 30px;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    .col-assigned {
+        border: 1px solid #bbf7d0;
+        border-radius: 10px;
+        padding: 12px;
+        background: #f0fdf4;
+    }
+
+    .col-available {
+        border: 1px solid #bfdbfe;
+        border-radius: 10px;
+        padding: 12px;
+        background: #eff6ff;
+    }
+
+    .empty-msg {
+        color: #9ca3af;
+        font-size: 13px;
+        text-align: center;
+        padding: 12px;
+    }
+
     .stu-search {
-        width:100%; border:1px solid #ddd; border-radius:6px;
-        padding:7px 12px; font-size:13px; margin-bottom:10px;
+        width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 7px 12px;
+        font-size: 13px;
+        margin-bottom: 10px;
     }
-    .col-title { font-weight:700; font-size:14px; margin-bottom:8px; }
+
+    .col-title {
+        font-weight: 700;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
     .count-badge {
-        display:inline-block; background:#e0f2fe; color:#0369a1;
-        border-radius:20px; font-size:11px; font-weight:700;
-        padding:1px 7px; margin-left:4px; vertical-align:middle;
+        display: inline-block;
+        background: #e0f2fe;
+        color: #0369a1;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 1px 7px;
+        margin-left: 4px;
+        vertical-align: middle;
     }
     /* ── Modal Pagination ── */
-    .modal-pg { display:flex; justify-content:center; align-items:center; gap:5px; margin-top:12px; flex-wrap:wrap; }
-    .modal-pg button {
-        border:1px solid #ddd; background:#fff; border-radius:6px;
-        padding:3px 11px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s;
+    .modal-pg {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        margin-top: 12px;
+        flex-wrap: wrap;
     }
-    .modal-pg button:hover:not(:disabled) { background:#f0f0f0; }
-    .modal-pg button:disabled { opacity:.4; cursor:default; }
-    .modal-pg button.pg-active { background:#252468; color:#fff; border-color:#252468; }
-    .modal-pg-info { font-size:12px; color:#6b7280; margin-left:6px; }
+
+        .modal-pg button {
+            border: 1px solid #ddd;
+            background: #fff;
+            border-radius: 6px;
+            padding: 3px 11px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+            .modal-pg button:hover:not(:disabled) {
+                background: #f0f0f0;
+            }
+
+            .modal-pg button:disabled {
+                opacity: .4;
+                cursor: default;
+            }
+
+            .modal-pg button.pg-active {
+                background: #252468;
+                color: #fff;
+                border-color: #252468;
+            }
+
+    .modal-pg-info {
+        font-size: 12px;
+        color: #6b7280;
+        margin-left: 6px;
+    }
 
     /* ── History Timeline ── */
-    .hist-timeline { position:relative; padding-left:28px; }
-    .hist-timeline::before {
-        content:''; position:absolute; left:10px; top:0; bottom:0;
-        width:2px; background:#e5e7eb;
+    .hist-timeline {
+        position: relative;
+        padding-left: 28px;
     }
+
+        .hist-timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e5e7eb;
+        }
+
     .hist-row {
-        position:relative; margin-bottom:16px;
+        position: relative;
+        margin-bottom: 16px;
     }
-    .hist-row::before {
-        content:''; position:absolute; left:-22px; top:6px;
-        width:10px; height:10px; border-radius:50%;
-        background:#252468; border:2px solid white;
-        box-shadow:0 0 0 2px #252468;
+
+        .hist-row::before {
+            content: '';
+            position: absolute;
+            left: -22px;
+            top: 6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #252468;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #252468;
+        }
+
+    .hist-date {
+        font-size: 11px;
+        color: #9ca3af;
+        margin-bottom: 3px;
     }
-    .hist-date { font-size:11px; color:#9ca3af; margin-bottom:3px; }
-    .hist-badges { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+
+    .hist-badges {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
     .hist-badge {
-        border-radius:4px; padding:2px 10px;
-        font-size:.72rem; font-weight:700; white-space:nowrap;
+        border-radius: 4px;
+        padding: 2px 10px;
+        font-size: .72rem;
+        font-weight: 700;
+        white-space: nowrap;
     }
-    .hist-badge-screening  { background:#fff3cd; color:#856404; border:1px solid #ffc107; }
-    .hist-badge-allocated  { background:#d1e7dd; color:#0f5132; border:1px solid #a3cfbb; }
-    .hist-badge-discharged { background:#e2e3e5; color:#383d41; border:1px solid #d6d8db; }
+
+    .hist-badge-screening {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffc107;
+    }
+
+    .hist-badge-allocated {
+        background: #d1e7dd;
+        color: #0f5132;
+        border: 1px solid #a3cfbb;
+    }
+
+    .hist-badge-discharged {
+        background: #e2e3e5;
+        color: #383d41;
+        border: 1px solid #d6d8db;
+    }
+
+    /* ── Case Complexity ── */
+    .complexity-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 82px;
+        border-radius: 20px;
+        padding: 4px 11px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .complexity-mild {
+        background: #d1e7dd;
+        color: #0f5132;
+        border: 1px solid #a3cfbb;
+    }
+
+    .complexity-moderate {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffc107;
+    }
+
+    .complexity-advance {
+        background: #f8d7da;
+        color: #842029;
+        border: 1px solid #f1aeb5;
+    }
+
+    .complexity-not-set {
+        background: #e2e3e5;
+        color: #5f6368;
+        border: 1px solid #d6d8db;
+    }
 </style>
 
 <!-- ════ SEARCH ════ -->
@@ -113,25 +498,144 @@
         <br />
         <form method="get">
             <div style="background:white; padding:16px 20px;">
-                <div class="row align-items-center mb-2">
+
+                <div class="row align-items-center mb-3">
                     <div class="col-md-2">
-                        <label style="font-weight:600; font-size:13px; color:#252468; margin:0;">Search by Name</label>
+                        <label style="font-weight:600; font-size:13px; color:#252468; margin:0;">
+                            Search by Name
+                        </label>
                     </div>
+
                     <div class="col-md-10">
-                        <input type="text" name="searchName" value="@searchName"
+                        <input type="text"
+                               name="searchName"
+                               value="@searchName"
                                placeholder="e.g. Ahmad Mohammad"
-                               class="form-control" style="border:1px solid #ddd; border-radius:0;" />
+                               class="form-control"
+                               style="border:1px solid #ddd; border-radius:0;" />
                     </div>
                 </div>
-                <br />
-                <div class="row align-items-center">
+
+                <div class="row align-items-center mb-3">
                     <div class="col-md-2">
-                        <label style="font-weight:600; font-size:13px; color:#252468; margin:0;">National ID / Passport</label>
+                        <label style="font-weight:600; font-size:13px; color:#252468; margin:0;">
+                            National ID / Passport
+                        </label>
                     </div>
+
                     <div class="col-md-4">
-                        <input type="text" name="searchID" value="@searchID"
+                        <input type="text"
+                               name="searchID"
+                               value="@searchID"
                                placeholder="e.g. 9876543210"
-                               class="form-control" style="border:1px solid #ddd; border-radius:0;" />
+                               class="form-control"
+                               style="border:1px solid #ddd; border-radius:0;" />
+                    </div>
+
+                    <div class="col-md-2">
+                        <label style="font-weight:600; font-size:13px; color:#252468; margin:0;">
+                            Case Complexity
+                        </label>
+                    </div>
+
+                    <div class="col-md-4">
+                        <select name="caseComplexity"
+                                class="form-select"
+                                style="border:1px solid #ddd; border-radius:0;">
+
+                            @if (
+                                string.IsNullOrWhiteSpace(
+                                    caseComplexityFilter
+                                )
+                            )
+                            {
+                                <option value="" selected>
+                                    All Case Complexities
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="">
+                                    All Case Complexities
+                                </option>
+                            }
+
+                            @if (
+                                string.Equals(
+                                    caseComplexityFilter,
+                                    "Mild",
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
+                            {
+                                <option value="Mild" selected>
+                                    1 - Mild
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="Mild">
+                                    1 - Mild
+                                </option>
+                            }
+
+                            @if (
+                                string.Equals(
+                                    caseComplexityFilter,
+                                    "Moderate",
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
+                            {
+                                <option value="Moderate" selected>
+                                    2 - Moderate
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="Moderate">
+                                    2 - Moderate
+                                </option>
+                            }
+
+                            @if (
+                                string.Equals(
+                                    caseComplexityFilter,
+                                    "Advance",
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
+                            {
+                                <option value="Advance" selected>
+                                    3 - Advance
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="Advance">
+                                    3 - Advance
+                                </option>
+                            }
+
+                            @if (
+                                string.Equals(
+                                    caseComplexityFilter,
+                                    "Not Set",
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
+                            {
+                                <option value="Not Set" selected>
+                                    Not Set
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="Not Set">
+                                    Not Set
+                                </option>
+                            }
+                        </select>
                     </div>
                 </div>
             </div>
@@ -169,14 +673,56 @@
                 </h5>
             </div>
 
-            @if (!string.IsNullOrEmpty(searchName) || !string.IsNullOrEmpty(searchID))
+            @if (
+                !string.IsNullOrWhiteSpace(searchName)
+                ||
+                !string.IsNullOrWhiteSpace(searchID)
+                ||
+                !string.IsNullOrWhiteSpace(
+                    caseComplexityFilter
+                )
+            )
             {
                 <div class="active-filters">
-                    <span style="font-size:12px;font-weight:600;color:#C81587;align-self:center;">Active filters:</span>
-                    @if (!string.IsNullOrEmpty(searchName))
-                    { <span class="filter-tag"><i class="fa-solid fa-user me-1"></i> @searchName</span> }
-                    @if (!string.IsNullOrEmpty(searchID))
-                    { <span class="filter-tag"><i class="fa-solid fa-id-card me-1"></i> @searchID</span> }
+                    <span style="font-size:12px; font-weight:600; color:#C81587; align-self:center;">
+                        Active filters:
+                    </span>
+
+                    @if (
+                        !string.IsNullOrWhiteSpace(
+                            searchName
+                        )
+                    )
+                    {
+                        <span class="filter-tag">
+                            <i class="fa-solid fa-user me-1"></i>
+                            @searchName
+                        </span>
+                    }
+
+                    @if (
+                        !string.IsNullOrWhiteSpace(
+                            searchID
+                        )
+                    )
+                    {
+                        <span class="filter-tag">
+                            <i class="fa-solid fa-id-card me-1"></i>
+                            @searchID
+                        </span>
+                    }
+
+                    @if (
+                        !string.IsNullOrWhiteSpace(
+                            caseComplexityFilter
+                        )
+                    )
+                    {
+                        <span class="filter-tag">
+                            <i class="fa-solid fa-layer-group me-1"></i>
+                            @caseComplexityFilter
+                        </span>
+                    }
                 </div>
             }
 
@@ -189,6 +735,9 @@
                             <th>Gender</th>
                             <th>Age</th>
                             <th>Phone</th>
+                            <th style="white-space:nowrap;">
+                                Case Complexity
+                            </th>
                             <th style="white-space:nowrap; text-align:center;">Actions</th>
                         </tr>
                     </thead>
@@ -196,7 +745,7 @@
                         @if (!pagedModel.Any())
                         {
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">
+                                <td colspan="7" class="text-center text-muted py-4">
                                     <i class="fa-solid fa-circle-exclamation me-2"></i>
                                     No patients found.
                                 </td>
@@ -217,13 +766,47 @@
                                             if (item.DateOfBirth.Value.Date > DateTime.Today.AddYears(-age)) age--;
                                             @age
                                         }
-                                        else { <span style="color:#aaa;">—</span> }
+                                        else
+                                        {
+
+                                            <span style="color:#aaa;">—</span>
+                                        }
                                     </td>
                                     <td>@item.PhoneNumber</td>
+
+                                    <td>
+                                        @{
+                                            bool hasComplexity =
+                                                caseComplexityByPatient
+                                                    .TryGetValue(
+                                                        item.PatientID,
+                                                        out string? itemComplexity
+                                                    )
+                                                &&
+                                                !string.IsNullOrWhiteSpace(
+                                                    itemComplexity
+                                                );
+
+                                            string displayedComplexity =
+                                                hasComplexity
+                                                    ? itemComplexity!
+                                                    : "Not Set";
+
+                                            string complexityClass =
+                                                GetComplexityClass(
+                                                    displayedComplexity
+                                                );
+                                        }
+
+                                        <span class="complexity-badge @complexityClass">
+                                            @displayedComplexity
+                                        </span>
+                                    </td>
+
                                     <td style="white-space:nowrap; text-align:center;">
 
-                                        @* ── More button ── *@
-                                        @if (userRole != "Student")
+                                        @* @* ── More button ── *@
+                                        @*if (userRole != "Student")
                                         {
                                             <button type="button"
                                                     onclick="openModal(@item.PatientID, '@item.FirstName @item.FourthName', 'available')"
@@ -231,12 +814,12 @@
                                                 font-size:13px; font-weight:600; cursor:pointer;">
                                                 <i class="fa-solid fa-users me-1"></i> More...
                                             </button>
-                                        }
+                                        }*@ 
                                         @* ── History button ── *@
                                         <button type="button"
                                                 onclick="openHistory(@item.PatientID, '@item.FirstName @item.FourthName')"
                                                 style="background:none; color:#7c3aed; border:none; padding:5px 6px;
-                                                       font-size:13px; font-weight:600; cursor:pointer;">
+                                            font-size:13px; font-weight:600; cursor:pointer;">
                                             <i class="fa-solid fa-clock-rotate-left me-1"></i> History
                                         </button>
 
@@ -253,20 +836,20 @@
                 <nav class="mt-3">
                     <ul class="pagination justify-content-center">
                         <li class="page-item @(pageNumber == 1 ? "disabled" : "")">
-                            <a class="page-link" href="?page=@(pageNumber-1)&searchName=@searchName&searchID=@searchID">←</a>
+                            <a class="page-link" href="?page=@(pageNumber - 1)&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&caseComplexity=@Uri.EscapeDataString(caseComplexityFilter)">←</a>
                         </li>
                         @for (int pg = 1; pg <= totalPages; pg++)
                         {
                             <li class="page-item @(pg == pageNumber ? "active" : "")">
                                 <a class="page-link"
-                                   href="?page=@pg&searchName=@searchName&searchID=@searchID"
+                                   href="?page=@pg&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&caseComplexity=@Uri.EscapeDataString(caseComplexityFilter)"
                                    style="border-radius:0 !important; border:none !important; font-weight:600;">
                                     @pg
                                 </a>
                             </li>
                         }
                         <li class="page-item @(pageNumber == totalPages ? "disabled" : "")">
-                            <a class="page-link" href="?page=@(pageNumber+1)&searchName=@searchName&searchID=@searchID">→</a>
+                            <a class="page-link" href="?page=@(pageNumber + 1)&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&caseComplexity=@Uri.EscapeDataString(caseComplexityFilter)">→</a>
                         </li>
                     </ul>
                 </nav>
@@ -363,197 +946,197 @@
 
 
 <script>
-// ══════════════════════════════════════════════════════
-//  HISTORY MODAL
-// ══════════════════════════════════════════════════════
-async function openHistory(patientId, patientName) {
-    document.getElementById('histPatientName').textContent = patientName;
-    document.getElementById('histModalBody').innerHTML =
-        '<div class="text-center py-5"><i class="fa-solid fa-spinner fa-spin fa-2x text-muted"></i></div>';
-
-    const modal = bootstrap.Modal.getInstance(document.getElementById('historyModal'))
-                  || new bootstrap.Modal(document.getElementById('historyModal'));
-    modal.show();
-
-    const res  = await fetch(`/AllocatedStudent/GetStatusHistory?patientId=${patientId}`);
-    const data = await res.json();
-
-    if (!data.length) {
+    // ══════════════════════════════════════════════════════
+    //  HISTORY MODAL
+    // ══════════════════════════════════════════════════════
+    async function openHistory(patientId, patientName) {
+        document.getElementById('histPatientName').textContent = patientName;
         document.getElementById('histModalBody').innerHTML =
-            '<div class="text-center text-muted py-5"><i class="fa-solid fa-circle-info me-2"></i>No status changes recorded yet.</div>';
-        return;
+            '<div class="text-center py-5"><i class="fa-solid fa-spinner fa-spin fa-2x text-muted"></i></div>';
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('historyModal'))
+                      || new bootstrap.Modal(document.getElementById('historyModal'));
+        modal.show();
+
+        const res  = await fetch(`/AllocatedStudent/GetStatusHistory?patientId=${patientId}`);
+        const data = await res.json();
+
+        if (!data.length) {
+            document.getElementById('histModalBody').innerHTML =
+                '<div class="text-center text-muted py-5"><i class="fa-solid fa-circle-info me-2"></i>No status changes recorded yet.</div>';
+            return;
+        }
+
+        const badgeClass = s =>
+            s === 'Allocated'  ? 'hist-badge-allocated'  :
+            s === 'Discharged' ? 'hist-badge-discharged' :
+                                 'hist-badge-screening';
+
+        const icon = s =>
+            s === 'Allocated'  ? 'fa-user-check'  :
+            s === 'Discharged' ? 'fa-door-open'   :
+                                 'fa-microscope';
+
+        const rows = data.map(h => `
+            <div class="hist-row">
+                <div class="hist-date"><i class="fa-solid fa-calendar-clock me-1"></i>${h.changedAt}</div>
+                <div class="hist-badges">
+                    <span class="hist-badge ${badgeClass(h.oldStatus)}">
+                        <i class="fa-solid ${icon(h.oldStatus)} me-1"></i>${h.oldStatus}
+                    </span>
+                    <i class="fa-solid fa-arrow-right" style="color:#252468;font-size:.8rem;"></i>
+                    <span class="hist-badge ${badgeClass(h.newStatus)}">
+                        <i class="fa-solid ${icon(h.newStatus)} me-1"></i>${h.newStatus}
+                    </span>
+                </div>
+            </div>`).join('');
+
+        document.getElementById('histModalBody').innerHTML =
+            `<div class="hist-timeline">${rows}</div>`;
     }
 
-    const badgeClass = s =>
-        s === 'Allocated'  ? 'hist-badge-allocated'  :
-        s === 'Discharged' ? 'hist-badge-discharged' :
-                             'hist-badge-screening';
+    // ══════════════════════════════════════════════════════
+    //  STUDENT ALLOCATION MODAL (unchanged logic)
+    // ══════════════════════════════════════════════════════
+    let _currentPatientId = null;
+    let _assignedData     = [];
+    let _availableData    = [];
 
-    const icon = s =>
-        s === 'Allocated'  ? 'fa-user-check'  :
-        s === 'Discharged' ? 'fa-door-open'   :
-                             'fa-microscope';
+    const MODAL_PAGE_SIZE = 10;
+    let _assignedPage  = 1;
+    let _availablePage = 1;
 
-    const rows = data.map(h => `
-        <div class="hist-row">
-            <div class="hist-date"><i class="fa-solid fa-calendar-clock me-1"></i>${h.changedAt}</div>
-            <div class="hist-badges">
-                <span class="hist-badge ${badgeClass(h.oldStatus)}">
-                    <i class="fa-solid ${icon(h.oldStatus)} me-1"></i>${h.oldStatus}
-                </span>
-                <i class="fa-solid fa-arrow-right" style="color:#252468;font-size:.8rem;"></i>
-                <span class="hist-badge ${badgeClass(h.newStatus)}">
-                    <i class="fa-solid ${icon(h.newStatus)} me-1"></i>${h.newStatus}
-                </span>
-            </div>
-        </div>`).join('');
+    function openModal(patientId, patientName, tab) {
+        _currentPatientId = patientId;
+        _assignedPage  = 1;
+        _availablePage = 1;
 
-    document.getElementById('histModalBody').innerHTML =
-        `<div class="hist-timeline">${rows}</div>`;
-}
+        document.getElementById('modalPatientName').textContent = patientName;
+        document.getElementById('modalLoading').style.display   = 'block';
+        document.getElementById('panel-assigned').style.display  = 'none';
+        document.getElementById('panel-available').style.display = 'none';
+        document.getElementById('searchAssigned').value  = '';
+        document.getElementById('searchAvailable').value = '';
 
-// ══════════════════════════════════════════════════════
-//  STUDENT ALLOCATION MODAL (unchanged logic)
-// ══════════════════════════════════════════════════════
-let _currentPatientId = null;
-let _assignedData     = [];
-let _availableData    = [];
+        const modal = new bootstrap.Modal(document.getElementById('studentModal'));
+        modal.show();
 
-const MODAL_PAGE_SIZE = 10;
-let _assignedPage  = 1;
-let _availablePage = 1;
+        fetch('/AllocatedStudent/GetPatientDetailsJson?patientId=' + patientId)
+            .then(r => r.json())
+            .then(data => {
+                _assignedData  = data.assigned;
+                _availableData = data.available;
+                renderList('assigned');
+                renderList('available');
+                updateCounts();
+                document.getElementById('modalLoading').style.display = 'none';
+                switchTab(tab);
+            });
+    }
 
-function openModal(patientId, patientName, tab) {
-    _currentPatientId = patientId;
-    _assignedPage  = 1;
-    _availablePage = 1;
+    function switchTab(tab) {
+        document.getElementById('panel-assigned').style.display  = tab === 'assigned'  ? 'block' : 'none';
+        document.getElementById('panel-available').style.display = tab === 'available' ? 'block' : 'none';
+        document.getElementById('tab-assigned').classList.toggle('active',  tab === 'assigned');
+        document.getElementById('tab-available').classList.toggle('active', tab === 'available');
+    }
 
-    document.getElementById('modalPatientName').textContent = patientName;
-    document.getElementById('modalLoading').style.display   = 'block';
-    document.getElementById('panel-assigned').style.display  = 'none';
-    document.getElementById('panel-available').style.display = 'none';
-    document.getElementById('searchAssigned').value  = '';
-    document.getElementById('searchAvailable').value = '';
+    function renderList(type) {
+        const q    = document.getElementById('search' + (type === 'assigned' ? 'Assigned' : 'Available')).value.toLowerCase();
+        const data = type === 'assigned' ? _assignedData : _availableData;
+        const el   = document.getElementById('list-' + type);
 
-    const modal = new bootstrap.Modal(document.getElementById('studentModal'));
-    modal.show();
+        const filtered = data.filter(s =>
+            s.nameEn.toLowerCase().includes(q) ||
+            (s.userTypeEn || '').toLowerCase().includes(q));
 
-    fetch('/AllocatedStudent/GetPatientDetailsJson?patientId=' + patientId)
-        .then(r => r.json())
-        .then(data => {
+        const totalPages = Math.max(1, Math.ceil(filtered.length / MODAL_PAGE_SIZE));
+        let   page = type === 'assigned' ? _assignedPage : _availablePage;
+        if (page > totalPages) {
+            page = 1;
+            if (type === 'assigned') _assignedPage = 1;
+            else                     _availablePage = 1;
+        }
+
+        if (!filtered.length) {
+            el.innerHTML = `<div class="empty-msg">${type === 'assigned' ? 'No students assigned yet.' : 'No students available.'}</div>`;
+            return;
+        }
+
+        const paged = filtered.slice((page - 1) * MODAL_PAGE_SIZE, page * MODAL_PAGE_SIZE);
+
+        let html = paged.map(s => `
+            <div class="stu-row">
+                <div>
+                    <div class="stu-name">${s.nameEn}</div>
+                    <div class="stu-type">${s.userTypeEn || '—'}</div>
+                </div>
+                ${type === 'assigned'
+                    ? `<button class="btn-remove" onclick="doRemove(${s.id})" title="Remove">−</button>`
+                    : `<button class="btn-assign" onclick="doAssign(${s.id})" title="Assign">+</button>`
+                }
+            </div>`).join('');
+
+        if (totalPages > 1) {
+            html += `<div class="modal-pg">`;
+            html += `<button onclick="changePage('${type}', ${page - 1})" ${page === 1 ? 'disabled' : ''}>←</button>`;
+            for (let pg = 1; pg <= totalPages; pg++) {
+                html += `<button onclick="changePage('${type}', ${pg})" class="${pg === page ? 'pg-active' : ''}">${pg}</button>`;
+            }
+            html += `<button onclick="changePage('${type}', ${page + 1})" ${page === totalPages ? 'disabled' : ''}>→</button>`;
+            html += `<span class="modal-pg-info">${filtered.length} total</span>`;
+            html += `</div>`;
+        }
+
+        el.innerHTML = html;
+    }
+
+    function changePage(type, page) {
+        if (type === 'assigned') _assignedPage  = page;
+        else                     _availablePage = page;
+        renderList(type);
+    }
+
+    function filterList(type) {
+        if (type === 'assigned') _assignedPage  = 1;
+        else                     _availablePage = 1;
+        renderList(type);
+    }
+
+    function updateCounts() {
+        document.getElementById('assignedCount').textContent  = _assignedData.length;
+        document.getElementById('availableCount').textContent = _availableData.length;
+    }
+
+    function doAssign(appUserId) {
+        fetch('/AllocatedStudent/Assign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'patientId=' + _currentPatientId + '&appUserId=' + appUserId
+        }).then(r => r.json()).then(data => {
             _assignedData  = data.assigned;
             _availableData = data.available;
+            _assignedPage  = 1;
+            _availablePage = 1;
             renderList('assigned');
             renderList('available');
             updateCounts();
-            document.getElementById('modalLoading').style.display = 'none';
-            switchTab(tab);
         });
-}
-
-function switchTab(tab) {
-    document.getElementById('panel-assigned').style.display  = tab === 'assigned'  ? 'block' : 'none';
-    document.getElementById('panel-available').style.display = tab === 'available' ? 'block' : 'none';
-    document.getElementById('tab-assigned').classList.toggle('active',  tab === 'assigned');
-    document.getElementById('tab-available').classList.toggle('active', tab === 'available');
-}
-
-function renderList(type) {
-    const q    = document.getElementById('search' + (type === 'assigned' ? 'Assigned' : 'Available')).value.toLowerCase();
-    const data = type === 'assigned' ? _assignedData : _availableData;
-    const el   = document.getElementById('list-' + type);
-
-    const filtered = data.filter(s =>
-        s.nameEn.toLowerCase().includes(q) ||
-        (s.userTypeEn || '').toLowerCase().includes(q));
-
-    const totalPages = Math.max(1, Math.ceil(filtered.length / MODAL_PAGE_SIZE));
-    let   page = type === 'assigned' ? _assignedPage : _availablePage;
-    if (page > totalPages) {
-        page = 1;
-        if (type === 'assigned') _assignedPage = 1;
-        else                     _availablePage = 1;
     }
 
-    if (!filtered.length) {
-        el.innerHTML = `<div class="empty-msg">${type === 'assigned' ? 'No students assigned yet.' : 'No students available.'}</div>`;
-        return;
+    function doRemove(appUserId) {
+        fetch('/AllocatedStudent/Remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'patientId=' + _currentPatientId + '&appUserId=' + appUserId
+        }).then(r => r.json()).then(data => {
+            _assignedData  = data.assigned;
+            _availableData = data.available;
+            _assignedPage  = 1;
+            _availablePage = 1;
+            renderList('assigned');
+            renderList('available');
+            updateCounts();
+        });
     }
-
-    const paged = filtered.slice((page - 1) * MODAL_PAGE_SIZE, page * MODAL_PAGE_SIZE);
-
-    let html = paged.map(s => `
-        <div class="stu-row">
-            <div>
-                <div class="stu-name">${s.nameEn}</div>
-                <div class="stu-type">${s.userTypeEn || '—'}</div>
-            </div>
-            ${type === 'assigned'
-                ? `<button class="btn-remove" onclick="doRemove(${s.id})" title="Remove">−</button>`
-                : `<button class="btn-assign" onclick="doAssign(${s.id})" title="Assign">+</button>`
-            }
-        </div>`).join('');
-
-    if (totalPages > 1) {
-        html += `<div class="modal-pg">`;
-        html += `<button onclick="changePage('${type}', ${page - 1})" ${page === 1 ? 'disabled' : ''}>←</button>`;
-        for (let pg = 1; pg <= totalPages; pg++) {
-            html += `<button onclick="changePage('${type}', ${pg})" class="${pg === page ? 'pg-active' : ''}">${pg}</button>`;
-        }
-        html += `<button onclick="changePage('${type}', ${page + 1})" ${page === totalPages ? 'disabled' : ''}>→</button>`;
-        html += `<span class="modal-pg-info">${filtered.length} total</span>`;
-        html += `</div>`;
-    }
-
-    el.innerHTML = html;
-}
-
-function changePage(type, page) {
-    if (type === 'assigned') _assignedPage  = page;
-    else                     _availablePage = page;
-    renderList(type);
-}
-
-function filterList(type) {
-    if (type === 'assigned') _assignedPage  = 1;
-    else                     _availablePage = 1;
-    renderList(type);
-}
-
-function updateCounts() {
-    document.getElementById('assignedCount').textContent  = _assignedData.length;
-    document.getElementById('availableCount').textContent = _availableData.length;
-}
-
-function doAssign(appUserId) {
-    fetch('/AllocatedStudent/Assign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'patientId=' + _currentPatientId + '&appUserId=' + appUserId
-    }).then(r => r.json()).then(data => {
-        _assignedData  = data.assigned;
-        _availableData = data.available;
-        _assignedPage  = 1;
-        _availablePage = 1;
-        renderList('assigned');
-        renderList('available');
-        updateCounts();
-    });
-}
-
-function doRemove(appUserId) {
-    fetch('/AllocatedStudent/Remove', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'patientId=' + _currentPatientId + '&appUserId=' + appUserId
-    }).then(r => r.json()).then(data => {
-        _assignedData  = data.assigned;
-        _availableData = data.available;
-        _assignedPage  = 1;
-        _availablePage = 1;
-        renderList('assigned');
-        renderList('available');
-        updateCounts();
-    });
-}
 </script>

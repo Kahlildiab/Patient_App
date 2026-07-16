@@ -56,7 +56,12 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     TempData["Error"] =
                         "Your student account could not be linked to AppUsers.";
 
-                    return View(new List<Patient>());
+                    ViewBag.CaseComplexityByPatient =
+                        new Dictionary<int, string>();
+
+                    return View(
+                        new List<Patient>()
+                    );
                 }
 
                 var assignedPatientIds =
@@ -131,6 +136,83 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                         )
                         .ToListAsync();
             }
+
+            /*
+             * Case Complexity محفوظة داخل جدول Visits.
+             *
+             * نعتمد أول قيمة غير فارغة للمريض، وهو نفس
+             * المنطق المستخدم داخل صفحة Patient Details.
+             */
+            var patientIds =
+                patients
+                    .Select(
+                        patient =>
+                            patient.PatientID
+                    )
+                    .Distinct()
+                    .ToList();
+
+            var caseComplexityByPatient =
+                new Dictionary<int, string>();
+
+            if (patientIds.Any())
+            {
+                var complexityRows =
+                    await _db.Visits
+                        .AsNoTracking()
+                        .Where(
+                            visit =>
+                                patientIds.Contains(
+                                    visit.PatientID
+                                )
+                                &&
+                                visit.CaseComplexity != null
+                                &&
+                                visit.CaseComplexity != ""
+                        )
+                        .OrderBy(
+                            visit =>
+                                visit.VisitDate
+                        )
+                        .ThenBy(
+                            visit =>
+                                visit.VisitID
+                        )
+                        .Select(
+                            visit => new
+                            {
+                                visit.PatientID,
+                                visit.CaseComplexity
+                            }
+                        )
+                        .ToListAsync();
+
+                caseComplexityByPatient =
+                    complexityRows
+                        .Where(
+                            row =>
+                                !string.IsNullOrWhiteSpace(
+                                    row.CaseComplexity
+                                )
+                        )
+                        .GroupBy(
+                            row =>
+                                row.PatientID
+                        )
+                        .ToDictionary(
+                            group =>
+                                group.Key,
+
+                            group =>
+                                group
+                                    .First()
+                                    .CaseComplexity!
+                                    .Trim()
+                        );
+            }
+
+            ViewBag.CaseComplexityByPatient =
+                caseComplexityByPatient;
 
             return View(patients);
         }

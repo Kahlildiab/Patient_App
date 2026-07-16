@@ -44,6 +44,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             return
                 HttpContext.Session.GetString("FullName")
                 ??
+                HttpContext.Session.GetString("UserName")
+                ??
                 HttpContext.Session.GetString("Username")
                 ??
                 "Responsible Authority";
@@ -498,73 +500,75 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
             }
 
+            string currentRole =
+                HttpContext.Session.GetString("UserRole")
+                ?? string.Empty;
+
+            bool isStudent =
+                string.Equals(
+                    currentRole,
+                    "Student",
+                    StringComparison.OrdinalIgnoreCase
+                );
+
             /*
-             * End Visit is blocked while this exact visit has
-             * any student note that is not Approved.
+             * The student may end the visit before the note is approved,
+             * but the student must first add at least one note that belongs
+             * to this exact visit.
              *
-             * Rejected notes must be corrected and submitted again.
+             * "No Comment" is accepted because it is still a non-empty note.
              */
-            var blockingStudentNotes =
-                await _context.Notes
-                    .Where(
+            if (isStudent)
+            {
+                string currentUserName =
+                    GetCurrentUserName();
+
+                bool hasStudentNote =
+                    await _context.Notes.AnyAsync(
                         note =>
                             note.VisitId == currentVisit.VisitID
                             &&
                             note.CreatedByRole == "Student"
                             &&
-                            note.ApprovalStatus != "Approved"
-                    )
-                    .Select(
-                        note => note.ApprovalStatus
-                    )
-                    .ToListAsync();
-
-            if (blockingStudentNotes.Any())
-            {
-                int pendingCount =
-                    blockingStudentNotes.Count(
-                        status =>
-                            status == "Pending"
+                            note.CreatedBy == currentUserName
                     );
 
-                int rejectedCount =
-                    blockingStudentNotes.Count(
-                        status =>
-                            status == "Rejected"
+                if (!hasStudentNote)
+                {
+                    TempData["VisitError"] =
+                        "You must add at least one note before ending "
+                        + "the visit. If there is nothing to add, "
+                        + "enter \"No Comment\" as the note.";
+
+                    return RedirectToAction(
+                        "Details",
+                        "Patients",
+                        new
+                        {
+                            id = patientId,
+                            tab = "notes"
+                        }
                     );
-
-                TempData["VisitError"] =
-                    "The visit cannot be ended. "
-                    + $"Pending student notes: {pendingCount}. "
-                    + $"Rejected notes requiring correction: {rejectedCount}. "
-                    + "All student notes must be approved first.";
-
-                return RedirectToAction(
-                    "Details",
-                    "Patients",
-                    new
-                    {
-                        id = patientId,
-                        tab = "notes"
-                    }
-                );
+                }
             }
 
+            /*
+             * Pending approval does not prevent End Visit.
+             * The note remains visible in Pending Approvals so an
+             * Admin or Supervisor can edit and approve it afterward.
+             */
             currentVisit.IsClosed = true;
             currentVisit.ClosedDate = DateTime.Now;
 
             currentVisit.ClosedBy =
-                HttpContext.Session.GetString("Username")
-                ??
-                HttpContext.Session.GetString("FullName")
-                ??
-                "Unknown";
+                GetCurrentUserName();
 
             await _context.SaveChangesAsync();
 
             TempData["VisitSuccess"] =
                 "Visit ended successfully. "
-                + "All information is now view only.";
+                + "The visit is now read only for the student, "
+                + "and the note remains available for approval.";
 
             return RedirectToAction(
                 "Details",

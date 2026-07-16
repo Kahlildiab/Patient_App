@@ -263,6 +263,83 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 }
             }
 
+            /*
+             * إذا تم تسجيل حضور المريض سابقاً، يبقى ملفه مفتوحاً دائماً.
+             *
+             * نتحقق من مكانين:
+             * 1) Patient.AttendanceStatus
+             * 2) أي موعد سابق حالته Attended
+             *
+             * هذا مهم لأن بعض البيانات القديمة قد تكون حالة الموعد
+             * محفوظة كـ Attended بينما حقل AttendanceStatus في Patient
+             * فارغ أو لم تتم مزامنته.
+             */
+            bool patientAlreadyAttended =
+                string.Equals(
+                    patient.AttendanceStatus?.Trim(),
+                    "Attended",
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+            bool hasAttendedAppointment =
+                await _context.Appointments
+                    .AsNoTracking()
+                    .AnyAsync(
+                        a =>
+                            a.PatientID == id
+                            &&
+                            a.AppointmentStatus != null
+                            &&
+                            a.AppointmentStatus.Trim().ToLower()
+                                == "attended"
+                    );
+
+            if (
+                patientAlreadyAttended
+                ||
+                hasAttendedAppointment
+            )
+            {
+                /*
+                 * مزامنة حالة المريض إذا كان الموعد Attended
+                 * لكن Patient.AttendanceStatus غير محدث.
+                 */
+                if (!patientAlreadyAttended)
+                {
+                    patient.AttendanceStatus =
+                        "Attended";
+
+                    await _context.SaveChangesAsync();
+                }
+
+                return RedirectToAction(
+                    "Details",
+                    "Patients",
+                    new
+                    {
+                        id = patient.PatientID
+                    }
+                );
+            }
+
+            /*
+             * إذا كانت الحالة NoShow فلا نسمح بفتح الملف
+             * من خلال AttendAndOpen.
+             */
+            if (
+                string.Equals(
+                    patient.AttendanceStatus?.Trim(),
+                    "NoShow",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                TempData["Error"] =
+                    "This patient was marked as No Show. Patient details cannot be opened.";
+
+                return ReturnToPatientsList();
+            }
+
             DateTime today =
                 DateTime.Today;
 

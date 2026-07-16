@@ -462,7 +462,7 @@
                                  * ظاهرة في الجدول بعد انتهاء يوم الموعد.
                                  */
                                 string displayedAttendanceStatus =
-                                    item.AttendanceStatus
+                                    item.AttendanceStatus?.Trim()
                                     ?? "";
 
                                 <tr>
@@ -749,12 +749,28 @@
          * نرسل الطلب إلى Home/AttendAndOpen
          * حتى يعيد السيرفر فحص تاريخ الموعد.
          */
-        if (attendanceStatus === 'Attended') {
-            submitAttendAndOpen(patientId);
+        const normalizedAttendanceStatus =
+            (attendanceStatus || '')
+                .trim()
+                .toLowerCase();
+
+        /*
+         * إذا تم تسجيل الحضور سابقاً، نفتح البروفايل مباشرة
+         * ولا نعيد فحص تاريخ الموعد من Home/AttendAndOpen.
+         */
+        if (normalizedAttendanceStatus === 'attended') {
+            const detailsUrl =
+                '@Url.Action("Details", "Patients")';
+
+            window.location.href =
+                detailsUrl
+                + '?id='
+                + encodeURIComponent(patientId);
+
             return;
         }
 
-        if (attendanceStatus === 'NoShow') {
+        if (normalizedAttendanceStatus === 'noshow') {
             alert(
                 "This patient did not attend. You cannot open details."
             );

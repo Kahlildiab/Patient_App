@@ -300,11 +300,74 @@
     }
 
     .ap-note-actions {
+        display: block;
+        min-width: 520px;
+        max-width: 650px;
+        flex: 1;
+    }
+
+    .ap-note-edit-form {
+        margin: 0 0 10px;
+        padding: 12px;
+        border: 1px solid #d9def0;
+        border-radius: 9px;
+        background: #f8f9ff;
+    }
+
+    .ap-note-edit-label {
+        display: block;
+        margin-bottom: 6px;
+        color: #1a237e;
+        font-size: .76rem;
+        font-weight: 800;
+    }
+
+    .ap-note-content-input {
+        width: 100%;
+        min-height: 105px;
+        resize: vertical;
+        border: 1.5px solid #b8c1df;
+        border-radius: 7px;
+        padding: 10px 12px;
+        color: #263238;
+        background: #fff;
+        font-size: .84rem;
+        line-height: 1.55;
+        outline: none;
+        box-sizing: border-box;
+    }
+
+        .ap-note-content-input:focus {
+            border-color: #1a237e;
+            box-shadow: 0 0 0 3px rgba(26, 35, 126, .10);
+        }
+
+    .ap-note-save-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+
+    .ap-note-save-btn {
+        background: #1565c0;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 7px 18px;
+        font-size: .82rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+        .ap-note-save-btn:hover {
+            background: #0d47a1;
+        }
+
+    .ap-note-decision-row {
         display: grid;
         grid-template-columns: auto minmax(260px, 1fr);
         align-items: start;
         gap: 10px;
-        min-width: 440px;
     }
 
     .ap-note-reject-form {
@@ -328,11 +391,26 @@
             box-shadow: 0 0 0 3px rgba(229, 57, 53, .10);
         }
 
+    .ap-note-closed-info {
+        padding: 9px 11px;
+        border: 1px solid #90caf9;
+        border-radius: 7px;
+        background: #e3f2fd;
+        color: #0d47a1;
+        font-size: .77rem;
+        font-weight: 700;
+        line-height: 1.45;
+    }
+
     @@media (max-width: 760px) {
-        .ap-note-actions,
+        .ap-note-actions {
+            min-width: 100%;
+            width: 100%;
+        }
+
+        .ap-note-decision-row,
         .ap-note-reject-form {
             grid-template-columns: 1fr;
-            min-width: 100%;
             width: 100%;
         }
     }
@@ -352,8 +430,8 @@
 
 <style>
     /* =========================================================
-               Improved Visits Approval Layout
-               ========================================================= */
+                           Improved Visits Approval Layout
+                           ========================================================= */
     .ap-visits-section {
         border: 0;
         border-radius: 16px;
@@ -385,7 +463,7 @@
 
         .ap-visits-section .ap-visit-card {
             display: grid;
-            grid-template-columns: minmax(270px, 1fr) minmax(510px, 620px);
+            grid-template-columns: minmax(270px, 1fr) minmax(620px, 760px);
             align-items: center;
             gap: 26px;
             padding: 22px 24px;
@@ -433,12 +511,9 @@
         }
 
         .ap-visits-section .ap-actions {
-            display: grid;
-            grid-template-columns: minmax(390px, 1fr) 92px;
-            align-items: end;
-            gap: 10px;
+            display: block;
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             border: 1px solid #e1e6f2;
             border-radius: 13px;
             background: #f8f9ff;
@@ -447,9 +522,9 @@
 
     .ap-visit-approve-form {
         display: grid;
-        grid-template-columns: minmax(240px, 1fr) 96px;
+        grid-template-columns: minmax(0, 1fr) 155px;
         align-items: end;
-        gap: 10px;
+        gap: 14px;
         width: 100%;
         margin: 0;
     }
@@ -464,6 +539,15 @@
         width: 100%;
     }
 
+    .ap-visits-section .ap-visit-approve-form .ap-complexity-wrap {
+        flex: 1;
+    }
+
+    .ap-visits-section .ap-visit-approve-form .ap-approve-btn {
+        align-self: anchor-center;
+        letter-spacing: .1px;
+    }
+
     .ap-visits-section .ap-complexity-label {
         margin-bottom: 7px;
         color: #313a54;
@@ -474,8 +558,8 @@
     .ap-visits-section .ap-complexity-select {
         width: 100%;
         min-width: 0;
-        height: 42px;
-        padding: 0 13px;
+        height: 46px;
+        padding: 0 15px;
         border: 1.5px solid #bcc6e6;
         border-radius: 9px;
         background: #fff;
@@ -498,7 +582,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 42px;
+        min-height: 46px;
         padding: 0 16px;
         border: 1px solid #90caf9;
         border-radius: 9px;
@@ -520,10 +604,11 @@
     .ap-visits-section .ap-approve-btn,
     .ap-visits-section .ap-reject-btn {
         width: 100%;
-        height: 42px;
-        padding: 0 14px;
+        min-width: 155px;
+        height: 46px;
+        padding: 0 22px;
         border-radius: 9px;
-        font-size: .8rem;
+        font-size: .88rem;
         font-weight: 800;
         white-space: nowrap;
     }
@@ -565,7 +650,7 @@
         }
 
         .ap-visits-section .ap-actions {
-            grid-template-columns: 1fr;
+            display: block;
             padding: 10px;
         }
 
@@ -696,6 +781,324 @@
     </div>
 </div>
 
+
+
+<style>
+    /* =========================================================
+           Search design + Independent Pagination (5 cards per section)
+           ========================================================= */
+    .ap-search-shell {
+        width: 100vw;
+        position: relative;
+        left: 50%;
+        margin-left: -50vw;
+        box-sizing: border-box;
+        padding: 30px 40px;
+        margin-bottom: 28px;
+        background: #e9e8e8;
+    }
+
+    .ap-search-inner {
+        width: 100%;
+        max-width: 1300px;
+        margin: 0 auto;
+    }
+
+    .ap-search-heading {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .ap-search-gold-line {
+        display: block;
+        width: 100%;
+        max-width: 650px;
+        height: 4px;
+        margin-bottom: 7px;
+        background: #daa328;
+    }
+
+    .ap-search-main-title {
+        margin: 0;
+        color: #252468;
+        font-size: 1.65rem;
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: .2px;
+    }
+
+    .ap-search-form {
+        margin-top: 22px;
+    }
+
+    .ap-search-white-box {
+        padding: 16px 20px;
+        background: #fff;
+    }
+
+    .ap-search-field-row {
+        display: grid;
+        grid-template-columns: 190px minmax(0, 1fr) 90px;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .ap-search-field-label {
+        margin: 0;
+        color: #252468;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .ap-search-input-wrap {
+        position: relative;
+        min-width: 0;
+    }
+
+    .ap-search-icon {
+        position: absolute;
+        top: 50%;
+        left: 13px;
+        transform: translateY(-50%);
+        color: #7b86a6;
+        pointer-events: none;
+    }
+
+    .ap-search-input {
+        width: 100%;
+        height: 42px;
+        box-sizing: border-box;
+        padding: 0 14px 0 40px;
+        border: 1px solid #ddd;
+        border-radius: 0;
+        background: #fff;
+        color: #263238;
+        font-size: .88rem;
+        outline: none;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+        .ap-search-input:focus {
+            border-color: #252468;
+            box-shadow: 0 0 0 2px rgba(37, 36, 104, .10);
+        }
+
+    .ap-search-clear {
+        width: 100%;
+        height: 42px;
+        border: 1px solid #ddd;
+        border-radius: 0;
+        background: #f8f8f8;
+        color: #252468;
+        font-size: .8rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .15s, color .15s;
+    }
+
+        .ap-search-clear:hover {
+            background: #ecebfa;
+            color: #1a237e;
+        }
+
+    .ap-search-submit-wrap {
+        text-align: center;
+    }
+
+    .ap-search-submit {
+        width: 90%;
+        margin-top: 3px;
+        padding: 12px;
+        border: none;
+        border-radius: 0;
+        background: #c81589;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: background .15s;
+    }
+
+        .ap-search-submit:hover {
+            background: #a90f70;
+        }
+
+    .ap-search-summary {
+        margin-top: 10px;
+        color: #6f7480;
+        font-size: .76rem;
+        text-align: center;
+    }
+
+    .ap-section-search-empty {
+        display: none;
+        padding: 26px 20px;
+        text-align: center;
+        color: #8d96aa;
+        font-size: .85rem;
+        background: #fbfcff;
+    }
+
+    .ap-pagination {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 18px;
+        border-top: 1px solid #e9edf5;
+        background: #fafbff;
+        flex-wrap: wrap;
+    }
+
+    .ap-pagination-info {
+        color: #737d92;
+        font-size: .76rem;
+        font-weight: 700;
+    }
+
+    .ap-pagination-buttons {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .ap-page-btn {
+        min-width: 34px;
+        height: 34px;
+        padding: 0 10px;
+        border: 1px solid #cdd4e8;
+        border-radius: 7px;
+        background: #fff;
+        color: #1a237e;
+        font-size: .78rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: background .15s, border-color .15s, color .15s;
+    }
+
+        .ap-page-btn:hover:not(:disabled):not(.active) {
+            background: #e8eaf6;
+            border-color: #9fa8da;
+        }
+
+        .ap-page-btn.active {
+            background: #1a237e;
+            border-color: #1a237e;
+            color: #fff;
+        }
+
+        .ap-page-btn:disabled {
+            cursor: not-allowed;
+            opacity: .45;
+        }
+
+    .ap-page-dots {
+        min-width: 24px;
+        text-align: center;
+        color: #8b94a8;
+        font-weight: 800;
+    }
+
+    @@media (max-width: 760px) {
+        .ap-search-shell {
+            padding: 24px 15px;
+        }
+
+        .ap-search-field-row {
+            grid-template-columns: 1fr;
+        }
+
+        .ap-search-clear {
+            width: 100%;
+        }
+
+        .ap-search-submit {
+            width: 100%;
+        }
+
+        .ap-pagination {
+            justify-content: center;
+        }
+
+        .ap-pagination-info {
+            width: 100%;
+            text-align: center;
+        }
+
+        .ap-pagination-buttons {
+            justify-content: center;
+        }
+    }
+</style>
+
+
+<!-- ===== GLOBAL SEARCH ===== -->
+<div class="ap-search-shell">
+    <div class="ap-search-inner">
+
+        <div class="ap-search-heading">
+            <span class="ap-search-gold-line"></span>
+
+            <h1 class="ap-search-main-title">
+                SEARCH
+            </h1>
+        </div>
+
+        <form id="apSearchForm"
+              class="ap-search-form"
+              autocomplete="off">
+
+            <div class="ap-search-white-box">
+                <div class="ap-search-field-row">
+
+                    <label for="apGlobalSearch"
+                           class="ap-search-field-label">
+                        Search Pending Approvals
+                    </label>
+
+                    <div class="ap-search-input-wrap">
+                        <span class="ap-search-icon"
+                              aria-hidden="true">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+
+                        <input type="search"
+                               id="apGlobalSearch"
+                               class="ap-search-input"
+                               placeholder="Search by patient, student, note, visit, procedure, order or date..."
+                               autocomplete="off" />
+                    </div>
+
+                    <button type="button"
+                            id="apClearSearch"
+                            class="ap-search-clear">
+                        Clear
+                    </button>
+                </div>
+            </div>
+
+            <div class="ap-search-submit-wrap">
+                <button type="submit"
+                        class="ap-search-submit">
+                    Search
+                    &nbsp;
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
+        </form>
+
+        <div id="apSearchSummary"
+             class="ap-search-summary">
+            Showing all pending records. Each section displays 5 records per page.
+        </div>
+    </div>
+</div>
+
+
 <!-- ===== STUDENT NOTES ===== -->
 <div class="ap-section">
     <div class="ap-section-header">
@@ -718,6 +1121,11 @@
     {
         foreach (var note in pendingStudentNotes)
         {
+            bool noteVisitIsClosed =
+                note.Visit != null
+                &&
+                note.Visit.IsClosed;
+
             <div class="ap-card">
                 <div class="ap-card-info">
                     <div class="ap-card-patient">
@@ -730,6 +1138,7 @@
 
                     <div class="ap-card-title">
                         Student Note
+
                         @if (note.VisitId.HasValue)
                         {
                             <span style="
@@ -740,10 +1149,21 @@
                                 Visit #@note.VisitId
                             </span>
                         }
-                    </div>
 
-                    <div class="ap-general-note-text">
-                        @note.Content
+                        @if (noteVisitIsClosed)
+                        {
+                            <span style="
+                                display:inline-block;
+                                margin-left:7px;
+                                padding:2px 8px;
+                                border-radius:12px;
+                                background:#ffebee;
+                                color:#b71c1c;
+                                font-size:.7rem;
+                                font-weight:800;">
+                                Visit Closed
+                            </span>
+                        }
                     </div>
 
                     <div class="ap-card-date">
@@ -766,10 +1186,11 @@
 
                 <div class="ap-note-actions">
 
+                    <!-- Admin / Supervisor may edit even after End Visit -->
                     <form asp-controller="AdminApprovals"
-                          asp-action="ApproveStudentNote"
+                          asp-action="EditStudentNote"
                           method="post"
-                          style="margin:0;">
+                          class="ap-note-edit-form">
 
                         @Html.AntiForgeryToken()
 
@@ -777,36 +1198,79 @@
                                name="noteId"
                                value="@note.Id" />
 
-                        <button type="submit"
-                                class="ap-approve-btn">
-                            ✓ Approve
-                        </button>
+                        <label class="ap-note-edit-label">
+                            Note Content — Editable by Admin / Supervisor
+                        </label>
+
+                        <textarea name="content"
+                                  class="ap-note-content-input"
+                                  maxlength="4000"
+                                  required>@note.Content</textarea>
+
+                        <div class="ap-note-save-row">
+                            <button type="submit"
+                                    class="ap-note-save-btn">
+                                ✎ Save Changes
+                            </button>
+                        </div>
                     </form>
 
-                    <form asp-controller="AdminApprovals"
-                          asp-action="RejectStudentNote"
-                          method="post"
-                          class="ap-note-reject-form">
+                    <div class="ap-note-decision-row">
 
-                        @Html.AntiForgeryToken()
+                        <form asp-controller="AdminApprovals"
+                              asp-action="ApproveStudentNote"
+                              method="post"
+                              style="margin:0;">
 
-                        <input type="hidden"
-                               name="noteId"
-                               value="@note.Id" />
+                            @Html.AntiForgeryToken()
 
-                        <input type="text"
-                               name="rejectionReason"
-                               class="ap-note-reason-input"
-                               maxlength="500"
-                               placeholder="Rejection reason..."
-                               required />
+                            <input type="hidden"
+                                   name="noteId"
+                                   value="@note.Id" />
 
-                        <button type="submit"
-                                class="ap-reject-btn"
-                                onclick="return confirm('Reject this note and return it to the student for correction?');">
-                            ✗ Reject
-                        </button>
-                    </form>
+                            <button type="submit"
+                                    class="ap-approve-btn"
+                                    onclick="return confirm('Approve this student note?');">
+                                ✓ Approve
+                            </button>
+                        </form>
+
+                        @if (noteVisitIsClosed)
+                        {
+                            <div class="ap-note-closed-info">
+                                The visit is closed and the student cannot
+                                revise the note. Edit it above when needed,
+                                then approve it.
+                            </div>
+                        }
+                        else
+                        {
+                            <form asp-controller="AdminApprovals"
+                                  asp-action="RejectStudentNote"
+                                  method="post"
+                                  class="ap-note-reject-form">
+
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden"
+                                       name="noteId"
+                                       value="@note.Id" />
+
+                                <input type="text"
+                                       name="rejectionReason"
+                                       class="ap-note-reason-input"
+                                       maxlength="500"
+                                       placeholder="Rejection reason..."
+                                       required />
+
+                                <button type="submit"
+                                        class="ap-reject-btn"
+                                        onclick="return confirm('Reject this note and return it to the student for correction?');">
+                                    ✗ Reject
+                                </button>
+                            </form>
+                        }
+                    </div>
                 </div>
             </div>
         }
@@ -858,8 +1322,8 @@
 
                     <div class="ap-card-title">
                         📅 @v.VisitDate.ToString(
-                                                                            "dd / MM / yyyy"
-                                                                        )
+                                                                                                                                                    "dd / MM / yyyy"
+                                                                                                                                                )
 
                         @if (
                             !string.IsNullOrWhiteSpace(
@@ -961,7 +1425,7 @@
                         </button>
                     </form>
 
-                    <form asp-controller="Visits"
+                    @* <form asp-controller="Visits"
                           asp-action="AdminReject"
                           method="post"
                           class="ap-visit-reject-form"
@@ -984,7 +1448,7 @@
                                 class="ap-reject-btn">
                             ✗ Reject
                         </button>
-                    </form>
+                    </form> *@
                 </div>
             </div>
         }
@@ -1242,3 +1706,444 @@
         }
     }
 </div>
+
+<script>
+    (function () {
+        "use strict";
+
+        const PAGE_SIZE = 5;
+
+        function initializeApprovalPagination() {
+            const searchForm =
+                document.getElementById("apSearchForm");
+
+            const searchInput =
+                document.getElementById("apGlobalSearch");
+
+            const clearButton =
+                document.getElementById("apClearSearch");
+
+            const searchSummary =
+                document.getElementById("apSearchSummary");
+
+            if (
+                !searchForm
+                || !searchInput
+                || !clearButton
+                || !searchSummary
+            ) {
+                return;
+            }
+
+            const sections =
+                Array.from(document.querySelectorAll(".ap-section"))
+                    .map(function (section, index) {
+                        const cards =
+                            Array.from(section.children)
+                                .filter(function (child) {
+                                    return child.classList.contains("ap-card");
+                                });
+
+                        if (cards.length === 0) {
+                            return null;
+                        }
+
+                        const existingEmpty =
+                            Array.from(section.children)
+                                .find(function (child) {
+                                    return child.classList.contains("ap-empty");
+                                });
+
+                        const searchEmpty =
+                            document.createElement("div");
+
+                        searchEmpty.className =
+                            "ap-section-search-empty";
+
+                        searchEmpty.textContent =
+                            "No matching records were found in this section.";
+
+                        const pagination =
+                            document.createElement("div");
+
+                        pagination.className =
+                            "ap-pagination";
+
+                        const paginationInfo =
+                            document.createElement("div");
+
+                        paginationInfo.className =
+                            "ap-pagination-info";
+
+                        const paginationButtons =
+                            document.createElement("div");
+
+                        paginationButtons.className =
+                            "ap-pagination-buttons";
+
+                        pagination.appendChild(paginationInfo);
+                        pagination.appendChild(paginationButtons);
+                        section.appendChild(searchEmpty);
+                        section.appendChild(pagination);
+
+                        cards.forEach(function (card) {
+                            card.dataset.apSearchText =
+                                getCardSearchText(card);
+                        });
+
+                        return {
+                            id: index,
+                            section: section,
+                            cards: cards,
+                            existingEmpty: existingEmpty,
+                            searchEmpty: searchEmpty,
+                            pagination: pagination,
+                            paginationInfo: paginationInfo,
+                            paginationButtons: paginationButtons,
+                            filteredCards: cards.slice(),
+                            currentPage: 1
+                        };
+                    })
+                    .filter(Boolean);
+
+            function normalizeText(value) {
+                return (value || "")
+                    .toString()
+                    .toLocaleLowerCase()
+                    .replace(/\s+/g, " ")
+                    .trim();
+            }
+
+            function getCardSearchText(card) {
+                const fieldValues =
+                    Array.from(
+                        card.querySelectorAll(
+                            "input:not([type='hidden']), textarea, select"
+                        )
+                    )
+                    .map(function (field) {
+                        if (field.tagName === "SELECT") {
+                            const option =
+                                field.options[field.selectedIndex];
+
+                            return option
+                                ? option.text + " " + option.value
+                                : field.value;
+                        }
+
+                        return field.value || "";
+                    })
+                    .join(" ");
+
+                return normalizeText(
+                    card.innerText
+                    + " "
+                    + card.textContent
+                    + " "
+                    + fieldValues
+                );
+            }
+
+            function createPageButton(
+                label,
+                page,
+                isActive,
+                isDisabled,
+                state
+            ) {
+                const button =
+                    document.createElement("button");
+
+                button.type = "button";
+                button.className =
+                    "ap-page-btn"
+                    + (isActive ? " active" : "");
+
+                button.textContent = label;
+                button.disabled = isDisabled;
+
+                button.addEventListener("click", function () {
+                    if (isDisabled || state.currentPage === page) {
+                        return;
+                    }
+
+                    state.currentPage = page;
+                    renderSection(state, true);
+                });
+
+                return button;
+            }
+
+            function appendDots(container) {
+                const dots =
+                    document.createElement("span");
+
+                dots.className = "ap-page-dots";
+                dots.textContent = "…";
+                container.appendChild(dots);
+            }
+
+            function getVisiblePageNumbers(
+                currentPage,
+                totalPages
+            ) {
+                if (totalPages <= 7) {
+                    return Array.from(
+                        { length: totalPages },
+                        function (_, index) {
+                            return index + 1;
+                        }
+                    );
+                }
+
+                const pages = [1];
+                let start = Math.max(2, currentPage - 1);
+                let end = Math.min(totalPages - 1, currentPage + 1);
+
+                if (currentPage <= 3) {
+                    start = 2;
+                    end = 4;
+                }
+                else if (currentPage >= totalPages - 2) {
+                    start = totalPages - 3;
+                    end = totalPages - 1;
+                }
+
+                for (let page = start; page <= end; page++) {
+                    pages.push(page);
+                }
+
+                pages.push(totalPages);
+                return pages;
+            }
+
+            function renderPaginationButtons(
+                state,
+                totalPages
+            ) {
+                const container =
+                    state.paginationButtons;
+
+                container.innerHTML = "";
+
+                container.appendChild(
+                    createPageButton(
+                        "‹ Previous",
+                        Math.max(1, state.currentPage - 1),
+                        false,
+                        state.currentPage === 1,
+                        state
+                    )
+                );
+
+                const pages =
+                    getVisiblePageNumbers(
+                        state.currentPage,
+                        totalPages
+                    );
+
+                let previousPage = null;
+
+                pages.forEach(function (page) {
+                    if (
+                        previousPage !== null
+                        && page - previousPage > 1
+                    ) {
+                        appendDots(container);
+                    }
+
+                    container.appendChild(
+                        createPageButton(
+                            page.toString(),
+                            page,
+                            page === state.currentPage,
+                            false,
+                            state
+                        )
+                    );
+
+                    previousPage = page;
+                });
+
+                container.appendChild(
+                    createPageButton(
+                        "Next ›",
+                        Math.min(
+                            totalPages,
+                            state.currentPage + 1
+                        ),
+                        false,
+                        state.currentPage === totalPages,
+                        state
+                    )
+                );
+            }
+
+            function renderSection(
+                state,
+                scrollToSection
+            ) {
+                const totalItems =
+                    state.filteredCards.length;
+
+                const totalPages =
+                    Math.max(
+                        1,
+                        Math.ceil(totalItems / PAGE_SIZE)
+                    );
+
+                if (state.currentPage > totalPages) {
+                    state.currentPage = totalPages;
+                }
+
+                state.cards.forEach(function (card) {
+                    card.hidden = true;
+                });
+
+                if (state.existingEmpty) {
+                    state.existingEmpty.style.display = "none";
+                }
+
+                if (totalItems === 0) {
+                    state.searchEmpty.style.display = "block";
+                    state.pagination.style.display = "none";
+                    return;
+                }
+
+                state.searchEmpty.style.display = "none";
+
+                const startIndex =
+                    (state.currentPage - 1) * PAGE_SIZE;
+
+                const endIndex =
+                    Math.min(
+                        startIndex + PAGE_SIZE,
+                        totalItems
+                    );
+
+                state.filteredCards
+                    .slice(startIndex, endIndex)
+                    .forEach(function (card) {
+                        card.hidden = false;
+                    });
+
+                state.paginationInfo.textContent =
+                    "Showing "
+                    + (startIndex + 1)
+                    + "–"
+                    + endIndex
+                    + " of "
+                    + totalItems;
+
+                if (totalPages > 1) {
+                    state.pagination.style.display = "flex";
+                    renderPaginationButtons(state, totalPages);
+                }
+                else {
+                    state.pagination.style.display = "flex";
+                    state.paginationButtons.innerHTML = "";
+                }
+
+                if (scrollToSection) {
+                    const header =
+                        state.section.querySelector(
+                            ".ap-section-header"
+                        );
+
+                    if (header) {
+                        header.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start"
+                        });
+                    }
+                }
+            }
+
+            function applySearch() {
+                const query =
+                    normalizeText(searchInput.value);
+
+                let totalMatches = 0;
+                let totalRecords = 0;
+
+                sections.forEach(function (state) {
+                    totalRecords += state.cards.length;
+
+                    /* Refresh the searchable text so edited textarea
+                       content is included before filtering. */
+                    state.cards.forEach(function (card) {
+                        card.dataset.apSearchText =
+                            getCardSearchText(card);
+                    });
+
+                    state.filteredCards =
+                        query.length === 0
+                            ? state.cards.slice()
+                            : state.cards.filter(function (card) {
+                                return (
+                                    card.dataset.apSearchText || ""
+                                ).includes(query);
+                            });
+
+                    totalMatches +=
+                        state.filteredCards.length;
+
+                    state.currentPage = 1;
+                    renderSection(state, false);
+                });
+
+                if (query.length === 0) {
+                    searchSummary.textContent =
+                        "Showing all "
+                        + totalRecords
+                        + " pending records. Each section displays "
+                        + PAGE_SIZE
+                        + " records per page.";
+                }
+                else {
+                    searchSummary.textContent =
+                        totalMatches
+                        + " matching record(s) found across all sections.";
+                }
+            }
+
+            let searchTimer = null;
+
+            searchForm.addEventListener(
+                "submit",
+                function (event) {
+                    event.preventDefault();
+                    window.clearTimeout(searchTimer);
+                    applySearch();
+                }
+            );
+
+            searchInput.addEventListener("input", function () {
+                window.clearTimeout(searchTimer);
+
+                searchTimer = window.setTimeout(
+                    applySearch,
+                    150
+                );
+            });
+
+            clearButton.addEventListener("click", function () {
+                searchInput.value = "";
+                applySearch();
+                searchInput.focus();
+            });
+
+            applySearch();
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener(
+                "DOMContentLoaded",
+                initializeApprovalPagination
+            );
+        }
+        else {
+            initializeApprovalPagination();
+        }
+    })();
+</script>

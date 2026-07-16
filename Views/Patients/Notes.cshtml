@@ -31,21 +31,23 @@
             ? null
             : (int?)ViewBag.CurrentVisitId;
 
-    bool hasUnapprovedStudentNotes =
-        ViewBag.HasUnapprovedStudentNotes != null
+    bool hasCurrentStudentNote =
+        ViewBag.HasCurrentStudentNote != null
         &&
-        (bool)ViewBag.HasUnapprovedStudentNotes;
+        (bool)ViewBag.HasCurrentStudentNote;
 
-    bool isAdmin =
-        string.Equals(
-            currentNoteRole,
-            "Admin",
-            StringComparison.OrdinalIgnoreCase
-        );
+    bool canEndCurrentVisit =
+        ViewBag.CanEndCurrentVisit != null
+            ? (bool)ViewBag.CanEndCurrentVisit
+            : !isStudent;
 
+    /*
+     * After End Visit, the Notes tab becomes read only for everyone.
+     * Admins and Supervisors can still edit the pending student note
+     * from the Pending Approvals page.
+     */
     bool isReadOnly =
-        isVisitClosed &&
-        !isAdmin;
+        isVisitClosed;
 
     string? successMessage =
         TempData["NoteSuccess"]?.ToString()
@@ -379,23 +381,29 @@
         <div class="vt-closed-message">
             <span>🔒</span>
             <span>
-                This visit is closed. Notes are available for viewing only.
+                This visit is closed. The student cannot add, edit,
+                delete, or submit anything after End Visit.
+                Pending notes can still be edited and approved from
+                the Pending Approvals page.
             </span>
         </div>
     }
-    else if (isVisitClosed && isAdmin)
-    {
-        <div class="vt-alert-success">
-            Visit closed — Administrator edit mode.
-        </div>
-    }
 
-    @if (!isReadOnly && hasUnapprovedStudentNotes)
+    @if (
+        !isReadOnly
+        &&
+        isStudent
+        &&
+        currentVisitId.HasValue
+        &&
+        !hasCurrentStudentNote
+    )
     {
         <div class="vt-approval-warning">
-            ⏳ End Visit is disabled until all student notes for the
-            current visit are approved. A rejected note must be edited
-            and submitted again.
+            📝 Add at least one note before End Visit.
+            If there is nothing to add, enter
+            <strong>No Comment</strong>.
+            The note may remain Pending and can be approved later.
         </div>
     }
 
@@ -415,20 +423,29 @@
                        name="patientId"
                        value="@Model.PatientID" />
 
-                @if (hasUnapprovedStudentNotes)
+                @if (!currentVisitId.HasValue)
                 {
                     <button type="button"
                             class="vt-end-visit-btn"
                             disabled
-                            title="All student notes must be approved first.">
-                        End Visit — Waiting for Approval
+                            title="There is no active visit.">
+                        End Visit — No Active Visit
+                    </button>
+                }
+                else if (isStudent && !canEndCurrentVisit)
+                {
+                    <button type="button"
+                            class="vt-end-visit-btn"
+                            disabled
+                            title="Add at least one note before ending the visit.">
+                        End Visit — Add Note First
                     </button>
                 }
                 else
                 {
                     <button type="submit"
                             class="vt-end-visit-btn"
-                            onclick="return confirm('Are you sure you want to end this visit?');">
+                            onclick="return confirm('Are you sure you want to end this visit? You will not be able to make changes afterward.');">
                         End Visit
                     </button>
                 }
@@ -600,8 +617,8 @@
                             {
                                 <text>
                                     — @note.ApprovedDate.Value.ToString(
-                                                                            "dd / MM / yyyy HH:mm"
-                                                                        )
+                                                                                                                "dd / MM / yyyy HH:mm"
+                                                                                                            )
                                 </text>
                             }
                         </span>

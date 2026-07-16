@@ -431,13 +431,28 @@
                             </li>
                         </ul>
                     </li>
+                }
 
-                    @* Admin Status remains a separate direct link *@
+                @*
+                    Admin Status
+                    يظهر لكل من:
+                    Admin
+                    Fulltime Supervisor
+                    Parttime Supervisor
+                *@
+                @if (
+                    role == "Admin"
+                    ||
+                    role == "Fulltime Supervisor"
+                    ||
+                    role == "Parttime Supervisor"
+                )
+                {
                     <li class="nav-item">
                         <a class="nav-link heading15"
                            asp-controller="AdminStatus"
                            asp-action="AdminStatus">
-                            AdminStatus
+                            Admin Status
                         </a>
                     </li>
                 }

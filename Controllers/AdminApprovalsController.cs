@@ -432,6 +432,78 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             return RedirectToAction(nameof(Index));
         }
         // =====================================================
+        // Edit a pending student note
+        // Admin / Fulltime Supervisor / Parttime Supervisor
+        // may edit it even after the visit has been closed.
+        // =====================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditStudentNote(
+            int noteId,
+            string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                TempData["Error"] =
+                    "Please enter the note content.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            var note =
+                await _context.Notes
+                    .FirstOrDefaultAsync(
+                        currentNote =>
+                            currentNote.Id == noteId
+                            &&
+                            currentNote.CreatedByRole == "Student"
+                    );
+
+            if (note == null)
+            {
+                TempData["Error"] =
+                    "Student note was not found.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (
+                !string.Equals(
+                    note.ApprovalStatus,
+                    "Pending",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                TempData["Error"] =
+                    "Only a pending student note can be edited "
+                    + "from the Pending Approvals page.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            note.Content =
+                content.Trim();
+
+            /*
+             * Editing does not approve the note automatically.
+             * It remains Pending until Approve is pressed.
+             */
+            note.ApprovalStatus = "Pending";
+            note.ApprovedBy = null;
+            note.ApprovedDate = null;
+            note.RejectionReason = null;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                "Student note updated successfully. "
+                + "It is still pending approval.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // =====================================================
         // Approve a student note
         // =====================================================
         [HttpPost]
@@ -508,6 +580,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             var note =
                 await _context.Notes
+                    .Include(currentNote => currentNote.Visit)
                     .FirstOrDefaultAsync(
                         currentNote =>
                             currentNote.Id == noteId
@@ -519,6 +592,20 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             {
                 TempData["Error"] =
                     "Student note was not found.";
+
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (
+                note.Visit != null
+                &&
+                note.Visit.IsClosed
+            )
+            {
+                TempData["Error"] =
+                    "The visit is already closed. The student cannot "
+                    + "revise the note. Please edit the note from this "
+                    + "page and then approve it instead of rejecting it.";
 
                 return RedirectToAction(nameof(Index));
             }
