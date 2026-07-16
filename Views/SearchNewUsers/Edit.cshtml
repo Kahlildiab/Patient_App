@@ -1,81 +1,376 @@
 ﻿@model DentalCollegeManagementSystem_AAU.Models.AppUser
+@using DentalCollegeManagementSystem_AAU.Models
+
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var userTypes =
+        ViewBag.UserTypes as List<UserType>
+        ?? new List<UserType>();
+
+    string selectedStatus =
+        string.IsNullOrWhiteSpace(Model.Status)
+            ? "Active"
+            : Model.Status;
 }
 
-<h2 class="text-center mt-4" style="color:#252468;font-weight:700;">
-    EDIT USER
-    <span style="border-bottom:3px solid #daa328;display:inline-block;width:200px;"></span>
-</h2>
+<style>
+    .edit-user-page {
+        max-width: 1100px;
+        margin: 30px auto;
+        padding: 0 15px;
+    }
 
-<div class="container mt-4" style="border:2px solid #daa328;border-radius:8px;padding:30px;">
-    <form method="post" asp-action="Edit" asp-controller="SearchNewUsers">
-        @Html.AntiForgeryToken()
-        <input type="hidden" name="Id" value="@Model.Id" />
+    .edit-user-title {
+        text-align: center;
+        color: #252468;
+        font-size: 1.55rem;
+        font-weight: 800;
+        margin-bottom: 28px;
+    }
 
-        <div class="row mb-3">
-            <div class="col-md-2 fw-bold">* User Log:</div>
-            <div class="col-md-4">
-                <input name="UserLog" value="@Model.UserLog" class="form-control" required />
-            </div>
-            <div class="col-md-2 fw-bold">* Email:</div>
-            <div class="col-md-4">
-                <input name="Email" value="@Model.Email" type="email" class="form-control" required />
-            </div>
+    .edit-user-title-line {
+        display: block;
+        width: 220px;
+        height: 3px;
+        margin: 8px auto 0;
+        background: #daa328;
+    }
+
+    .edit-user-card {
+        border: 2px solid #daa328;
+        border-radius: 8px;
+        background: #fff;
+        padding: 30px;
+    }
+
+    .edit-user-label {
+        display: block;
+        margin-bottom: 7px;
+        color: #252468;
+        font-size: .88rem;
+        font-weight: 800;
+    }
+
+    .edit-user-input,
+    .edit-user-select {
+        width: 100%;
+        min-height: 44px;
+        border: 1px solid #d6d6d6;
+        border-radius: 4px;
+        padding: 9px 12px;
+        background: #fff;
+        color: #333;
+        font-size: .9rem;
+        outline: none;
+    }
+
+        .edit-user-input:focus,
+        .edit-user-select:focus {
+            border-color: #252468;
+            box-shadow: 0 0 0 3px rgba(37, 36, 104, .10);
+        }
+
+    .status-panel {
+        border: 1px solid #d9dced;
+        border-radius: 7px;
+        background: #f8f9ff;
+        padding: 14px;
+    }
+
+    .status-description {
+        margin-top: 8px;
+        font-size: .77rem;
+        font-weight: 700;
+        line-height: 1.45;
+    }
+
+        .status-description.active {
+            color: #217a36;
+        }
+
+        .status-description.unactive {
+            color: #b42318;
+        }
+
+    .edit-user-actions {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 28px;
+    }
+
+    .edit-user-save {
+        min-width: 180px;
+        border: none;
+        border-radius: 4px;
+        padding: 12px 28px;
+        background: #c0006a;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+        .edit-user-save:hover {
+            background: #a6005b;
+        }
+
+    .edit-user-cancel {
+        min-width: 180px;
+        border-radius: 4px;
+        padding: 12px 28px;
+        background: #6b7280;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 700;
+        text-align: center;
+        text-decoration: none;
+    }
+
+        .edit-user-cancel:hover {
+            background: #4b5563;
+            color: #fff;
+        }
+
+    @@media (max-width: 767px) {
+        .edit-user-card {
+            padding: 20px 15px;
+        }
+    }
+</style>
+
+<div class="edit-user-page">
+
+    <h2 class="edit-user-title">
+        EDIT USER
+        <span class="edit-user-title-line"></span>
+    </h2>
+
+    @if (TempData["Errors"] != null)
+    {
+        <div class="alert alert-danger text-center">
+            @TempData["Errors"]
         </div>
+    }
 
-        <div class="row mb-3">
-            <div class="col-md-2 fw-bold">* Name in English:</div>
-            <div class="col-md-4">
-                <input name="NameEn" value="@Model.NameEn" class="form-control" required />
-            </div>
-            <div class="col-md-2 fw-bold">* Name in Arabic:</div>
-            <div class="col-md-4">
-                <input name="NameAr" value="@Model.NameAr" class="form-control" required />
-            </div>
-        </div>
+    <div class="edit-user-card">
 
-        <div class="row mb-3">
-            <div class="col-md-2 fw-bold">* Mobile:</div>
-            <div class="col-md-4">
-                <input name="Mobile" value="@Model.Mobile" class="form-control" required />
-            </div>
-            <div class="col-md-2 fw-bold">* User Type:</div>
-            <div class="col-md-4">
-                <select name="UserTypeId" class="form-control" required>
-                    <option value="">-- Select User Type --</option>
-                    @foreach (var t in ViewBag.UserTypes as List<DentalCollegeManagementSystem_AAU.Models.UserType>)
-                    {
-                        if (t.Id == Model.UserTypeId)
+        <form method="post"
+              asp-controller="SearchNewUsers"
+              asp-action="Edit">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden"
+                   name="Id"
+                   value="@Model.Id" />
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label class="edit-user-label">
+                        * User Log
+                    </label>
+
+                    <input name="UserLog"
+                           value="@Model.UserLog"
+                           class="edit-user-input"
+                           required />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="edit-user-label">
+                        * Email
+                    </label>
+
+                    <input name="Email"
+                           value="@Model.Email"
+                           type="email"
+                           class="edit-user-input"
+                           required />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="edit-user-label">
+                        * Name in English
+                    </label>
+
+                    <input name="NameEn"
+                           value="@Model.NameEn"
+                           class="edit-user-input"
+                           required />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="edit-user-label">
+                        * Name in Arabic
+                    </label>
+
+                    <input name="NameAr"
+                           value="@Model.NameAr"
+                           class="edit-user-input"
+                           required />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="edit-user-label">
+                        * Mobile
+                    </label>
+
+                    <input name="Mobile"
+                           value="@Model.Mobile"
+                           class="edit-user-input"
+                           required />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="edit-user-label">
+                        * User Type
+                    </label>
+
+                    <select name="UserTypeId"
+                            class="edit-user-select"
+                            required>
+
+                        <option value="">
+                            -- Select User Type --
+                        </option>
+
+                        @foreach (var type in userTypes)
                         {
-                            <option value="@t.Id" selected="selected">@t.NameEn</option>
+                            if (type.Id == Model.UserTypeId)
+                            {
+                                <option value="@type.Id"
+                                        selected="selected">
+                                    @type.NameEn
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="@type.Id">
+                                    @type.NameEn
+                                </option>
+                            }
                         }
-                        else
-                        {
-                            <option value="@t.Id">@t.NameEn</option>
-                        }
-                    }
-                </select>
-            </div>
-        </div>
+                    </select>
+                </div>
 
-        <div class="row mb-3">
-            <div class="col-md-2 fw-bold">Notes:</div>
-            <div class="col-md-10">
-                <input name="Notes" value="@Model.Notes" class="form-control" />
-            </div>
-        </div>
+                <div class="col-md-6">
+                    <div class="status-panel">
 
-        <div class="text-center mt-4">
-            <button type="submit" class="btn btn-lg px-5" 
-                    style="background:#c0006a;color:#fff;border-radius:4px;">
-                Save
-            </button>
-            <a href="/SearchNewUsers/Details/@Model.Id" 
-               class="btn btn-lg px-5 ms-2" 
-               style="background:#6b7280;color:#fff;border-radius:4px;">
-                Cancel
-            </a>
-        </div>
-    </form>
+                        <label class="edit-user-label">
+                            * User Status
+                        </label>
+
+                        <select name="Status"
+                                id="userStatus"
+                                class="edit-user-select"
+                                onchange="updateStatusDescription()"
+                                required>
+
+                            @if (
+                                string.Equals(
+                                    selectedStatus,
+                                    "Active",
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
+                            {
+                                <option value="Active"
+                                        selected="selected">
+                                    Active
+                                </option>
+
+                                <option value="UnActive">
+                                    UnActive
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="Active">
+                                    Active
+                                </option>
+
+                                <option value="UnActive"
+                                        selected="selected">
+                                    UnActive
+                                </option>
+                            }
+
+                        </select>
+
+                        <div id="statusDescription"
+                             class="status-description">
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="edit-user-label">
+                        Notes
+                    </label>
+
+                    <input name="Notes"
+                           value="@Model.Notes"
+                           class="edit-user-input" />
+                </div>
+
+            </div>
+
+            <div class="edit-user-actions">
+
+                <button type="submit"
+                        class="edit-user-save">
+                    Save Changes
+                </button>
+
+                <a asp-controller="SearchNewUsers"
+                   asp-action="Details"
+                   asp-route-id="@Model.Id"
+                   class="edit-user-cancel">
+                    Cancel
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
 </div>
+
+<script>
+    function updateStatusDescription() {
+        const select =
+            document.getElementById("userStatus");
+
+        const description =
+            document.getElementById("statusDescription");
+
+        if (!select || !description) {
+            return;
+        }
+
+        if (select.value === "Active") {
+            description.className =
+                "status-description active";
+
+            description.textContent =
+                "Active: Users.IsActive will be saved as 1.";
+        }
+        else {
+            description.className =
+                "status-description unactive";
+
+            description.textContent =
+                "UnActive: Users.IsActive will be saved as 0.";
+        }
+    }
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        updateStatusDescription
+    );
+</script>
