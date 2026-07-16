@@ -567,10 +567,18 @@
 
                                     <td>@item.PhoneNumber</td>
                                     <td style="white-space:nowrap;">
-                                        <a asp-controller="Patients" asp-action="Edit" asp-route-id="@item.PatientID"
-                                           style="background:none;color:#3F8CCA;border:none;padding:5px 6px;font-size:13px;font-weight:600;margin:2px;cursor:pointer;text-decoration:none;display:inline-block;">
-                                            <i class="fa-solid fa-pen"></i> Edit
-                                        </a>
+                                        @if (!string.Equals(
+         userRole,
+         "Student",
+         StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <a asp-controller="Patients"
+                                               asp-action="Edit"
+                                               asp-route-id="@item.PatientID"
+                                               style="background:none;color:#3F8CCA;border:none;padding:5px 6px;font-size:13px;font-weight:600;margin:2px;cursor:pointer;text-decoration:none;display:inline-block;">
+                                                <i class="fa-solid fa-pen"></i> Edit
+                                            </a>
+                                        }
 
                                         <button type="button"
                                                 onclick="checkAttendance(@item.PatientID, '@item.FirstName @item.FourthName', '@displayedAttendanceStatus', '@userRole')"
