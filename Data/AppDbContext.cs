@@ -91,6 +91,27 @@ namespace DentalCollegeManagementSystem_AAU.Data
             base.OnModelCreating(modelBuilder);
 
             // =====================================================
+            // Users - Nullable Fields
+            // =====================================================
+
+            modelBuilder.Entity<User>(
+                entity =>
+                {
+                    entity.Property(
+                            user => user.PhoneNumber)
+                        .HasMaxLength(15)
+                        .IsRequired(false);
+
+                    entity.Property(
+                            user => user.LastLoginDate)
+                        .IsRequired(false);
+
+                    entity.Property(
+                            user => user.ModifiedDate)
+                        .IsRequired(false);
+                });
+
+            // =====================================================
             // Student Note Approval Workflow
             // =====================================================
 

@@ -302,7 +302,7 @@
 <div id="intraoralReadOnlyRoot" class="@(pageReadOnly ? "closed-visit-readonly" : "")">
 
 
-    @using (Html.BeginForm("Save", "IntraoralExams", FormMethod.Post, new { enctype = "multipart/form-data" }))
+    @using (Html.BeginForm("SaveAjax", "IntraoralExams", FormMethod.Post, new { enctype = "multipart/form-data", id = "intraoralExamForm" }))
     {
         @Html.AntiForgeryToken()
         <input type="hidden" name="PatientID" value="@Model.PatientID" />
@@ -473,365 +473,1199 @@
         </script>
     }
 
+    
     <script>
-            const IE_FORM_KEY = 'intraoralExamForm_@Model.PatientID';
+            const IE_FORM_KEY =
+                'intraoralExamForm_@Model.PatientID';
 
-            // ─── Session Storage ───────────────────────────────────────
+            const IE_URLS = {
+                save:
+                    '@Url.Action("SaveAjax", "IntraoralExams")',
+
+                uploadPhoto:
+                    '@Url.Action("UploadPhotoAjax", "IntraoralExams")',
+
+                deletePhoto:
+                    '@Url.Action("DeletePhoto", "IntraoralExams")'
+            };
+
+            function getIntraoralExamForm() {
+                return document.getElementById(
+                    'intraoralExamForm'
+                );
+            }
+
+            function showIEMessage(
+                message,
+                type
+            ) {
+                if (
+                    typeof window.showToast
+                    === 'function'
+                ) {
+                    window.showToast(
+                        message,
+                        type
+                    );
+
+                    return;
+                }
+
+                window.alert(message);
+            }
+
+            async function readJsonResponse(
+                response
+            ) {
+                const responseText =
+                    await response.text();
+
+                if (!response.ok) {
+                    throw new Error(
+                        responseText
+                        ||
+                        `HTTP ${response.status}`
+                    );
+                }
+
+                if (!responseText) {
+                    return {};
+                }
+
+                try {
+                    return JSON.parse(
+                        responseText
+                    );
+                }
+                catch {
+                    throw new Error(
+                        'The server returned an invalid response.'
+                    );
+                }
+            }
+
+            // ─────────────────────────────────────────────
+            // Session Storage
+            // ─────────────────────────────────────────────
+
             function restoreIEFormData() {
-                const saved = sessionStorage.getItem(IE_FORM_KEY);
-                if (!saved) return;
-                JSON.parse(saved).forEach(({ name, value, type, checked }) => {
-                    document.querySelectorAll(`form[action*="IntraoralExams"] [name="${name}"]`).forEach(el => {
-                        if (type === 'file') return;
-                        if (type === 'radio')         { if (el.value === value) el.checked = true; }
-                        else if (type === 'checkbox') { if (el.value === value) el.checked = checked; }
-                        else el.value = value;
-                    });
-                });
+                const saved =
+                    sessionStorage.getItem(
+                        IE_FORM_KEY
+                    );
+
+                if (!saved) {
+                    return;
+                }
+
+                let items;
+
+                try {
+                    items = JSON.parse(saved);
+                }
+                catch {
+                    sessionStorage.removeItem(
+                        IE_FORM_KEY
+                    );
+
+                    return;
+                }
+
+                const form =
+                    getIntraoralExamForm();
+
+                if (!form) {
+                    return;
+                }
+
+                items.forEach(
+                    function (item) {
+                        const elements =
+                            form.querySelectorAll(
+                                `[name="${CSS.escape(item.name)}"]`
+                            );
+
+                        elements.forEach(
+                            function (element) {
+                                if (
+                                    item.type === 'file'
+                                ) {
+                                    return;
+                                }
+
+                                if (
+                                    item.type === 'radio'
+                                ) {
+                                    element.checked =
+                                        element.value
+                                        === item.value;
+
+                                    return;
+                                }
+
+                                if (
+                                    item.type === 'checkbox'
+                                ) {
+                                    element.checked =
+                                        item.checked === true;
+
+                                    return;
+                                }
+
+                                element.value =
+                                    item.value ?? '';
+                            }
+                        );
+                    }
+                );
             }
 
             function saveIEFormData() {
-                const form = document.querySelector('form[action*="IntraoralExams"]');
-                if (!form) return;
-                const data = [];
-                form.querySelectorAll('input, select, textarea').forEach(el => {
-                    if (!el.name || el.type === 'file' ||
-                        ['__RequestVerificationToken', 'PatientID', 'IntraoralExamID'].includes(el.name)) return;
-                    data.push({ name: el.name, value: el.value, type: el.type, checked: el.checked });
-                });
-                sessionStorage.setItem(IE_FORM_KEY, JSON.stringify(data));
-            }
+                const form =
+                    getIntraoralExamForm();
 
-            // ─── DOM Ready ─────────────────────────────────────────────
-            document.addEventListener('DOMContentLoaded', function () {
-                restoreIEFormData();
-
-                const form = document.querySelector('form[action*="IntraoralExams"]');
-                if (!form) return;
-
-                form.addEventListener('change', saveIEFormData);
-                form.addEventListener('input',  saveIEFormData);
-                form.addEventListener('submit', function (e) {
-                    e.preventDefault();
-                    saveIntraoralExam(form);
-                });
-
-                document.querySelectorAll('[id^="ieDropZone_"]').forEach(zone => {
-                    const sectionKey = zone.id.replace('ieDropZone_', '');
-                    zone.addEventListener('dragover',  e  => { e.preventDefault(); zone.classList.add('drag-over'); });
-                    zone.addEventListener('dragleave', ()  => { zone.classList.remove('drag-over'); });
-                    zone.addEventListener('drop',      e  => {
-                // تسجيل Drag & Drop لكل قسم
-                document.querySelectorAll('.photo-drop-zone').forEach(zone => {
-                    const sectionKey = zone.id.replace('ieDropZone_', '');
-
-                    zone.addEventListener('dragover', e => {
-                        e.preventDefault();
-                        zone.classList.add('drag-over');
-                    });
-                    zone.addEventListener('dragleave', () => {
-                        zone.classList.remove('drag-over');
-                    });
-                    zone.addEventListener('drop', e => {
-                        e.preventDefault();
-                        zone.classList.remove('drag-over');
-                        const input = document.getElementById(`iePhotoInput_${sectionKey}`);
-                        if (input && e.dataTransfer.files.length) {
-                            const dt = new DataTransfer();
-                            Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
-                            input.files = dt.files;
-                            uploadIEPhotos(input, sectionKey);
-                        }
-                    });
-                });
-            });
-
-            // ─── Save Exam (AJAX) ──────────────────────────────────────
-            function saveIntraoralExam(form) {
-                const saveBtn = form.querySelector('button[type="submit"]');
-                saveBtn.disabled = true;
-                saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-
-                fetch('/IntraoralExams/SaveAjax', { method: 'POST', body: new FormData(form) })
-                    .then(res => res.json())
-                    .then(result => {
-                        if (result.success) {
-                            sessionStorage.removeItem(IE_FORM_KEY);
-                            showToast('Intraoral Exam saved successfully.', 'success');
-                            if (result.examId) {
-                                let h = form.querySelector('[name="IntraoralExamID"]');
-
-                                if (!h) { h = document.createElement('input'); h.type = 'hidden'; h.name = 'IntraoralExamID'; form.appendChild(h); }
-
-                                if (!h) {
-                                    h = document.createElement('input');
-                                    h.type = 'hidden'; h.name = 'IntraoralExamID';
-                                    form.appendChild(h);
-                                }
-
-                                h.value = result.examId;
-                            }
-                        } else {
-                            showToast(result.message || 'Error saving.', 'error');
-                        }
-                    })
-                    .catch(() => showToast('Server error.', 'error'))
-                    .finally(() => { saveBtn.disabled = false; saveBtn.innerHTML = 'Save'; });
-            }
-
-
-
-            // ─── Upload Photos (per section) ──────────────────────────
-
-            function uploadIEPhotos(input, sectionKey) {
-                if (!input.files || input.files.length === 0) return;
-
-                const token   = document.querySelector('form[action*="IntraoralExams"] [name="__RequestVerificationToken"]')?.value ?? '';
-                const gallery = document.getElementById(`iePhotoGallery_${sectionKey}`);
-                if (!gallery) return;
-
-                Array.from(input.files).forEach(file => {
-
-                    const spinnerId = `ie_spinner_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-                    // Spinner placeholder
-                    const spinnerId = `spinner_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-                    const spinnerEl = document.createElement('div');
-                    spinnerEl.className = 'ie-photo-uploading';
-                    spinnerEl.id = spinnerId;
-                    spinnerEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Uploading...</span>`;
-                    gallery.appendChild(spinnerEl);
-
-                    const formData = new FormData();
-                    formData.append('patientId',    '@Model.PatientID');
-                    formData.append('photo',        file);
-                    formData.append('photoSection', sectionKey);
-                    formData.append('__RequestVerificationToken', token);
-
-                    fetch('/IntraoralExams/UploadPhotoAjax', { method: 'POST', body: formData })
-                        .then(res => res.json())
-                        .then(result => {
-                            document.getElementById(spinnerId)?.remove();
-
-                            if (result.success) {
-                                const form = document.querySelector('form[action*="IntraoralExams"]');
-                                let h = form.querySelector('[name="IntraoralExamID"]');
-                                if (!h) { h = document.createElement('input'); h.type = 'hidden'; h.name = 'IntraoralExamID'; form.appendChild(h); }
-                                h.value = result.examId;
-
-                                const item = document.createElement('div');
-                                item.className = 'ie-photo-item';
-                                item.id = `ieExamPhoto_${result.photoId}`;
-                                item.innerHTML = `
-                                    <img src="${result.photoPath}" alt="${sectionKey}" />
-                                    <button type="button" class="delete-btn"
-                                            onclick="deleteIEPhoto(${result.photoId}, '${sectionKey}')"
-                                            title="Delete">✕</button>`;
-                                gallery.appendChild(item);
-                                item.scrollIntoView({ behavior: 'smooth', inline: 'end' });
-
-                                updateIESectionCount(sectionKey);
-                                syncPhotoToPhotosTab('ie', sectionKey, result.photoPath, result.photoId);
-                            if (result.success) {
-                                const form = document.querySelector('form[action*="IntraoralExams"]');
-                                let h = form.querySelector('[name="IntraoralExamID"]');
-                                if (!h) {
-                                    h = document.createElement('input');
-                                    h.type = 'hidden'; h.name = 'IntraoralExamID';
-                                    form.appendChild(h);
-                                }
-                                h.value = result.examId;
-
-                                const item = document.createElement('div');
-                                item.className = 'ie-photo-item';
-                                item.id = `iePhoto_${result.photoId}`;
-                                item.innerHTML = `
-                                    <img src="${result.photoPath}" alt="${sectionKey}" />
-                                    <button type="button" class="delete-btn"
-                                            onclick="deleteIEPhoto(${result.photoId}, '${sectionKey}')"
-                                            title="Delete">✕</button>`;
-                                gallery.appendChild(item);
-                                item.scrollIntoView({ behavior: 'smooth', inline: 'end' });
-
-                                updateIESectionCount(sectionKey);
-
-                                showToast('Photo uploaded.', 'success');
-                            } else {
-                                showToast('Failed to upload: ' + file.name, 'error');
-                            }
-                        })
-                        .catch(() => {
-                            document.getElementById(spinnerId)?.remove();
-                            showToast('Server error uploading: ' + file.name, 'error');
-                        });
-                });
-
-                input.value = '';
-            }
-
-
-
-            // ─── Delete Photo ──────────────────────────────────────────
-
-            function deleteIEPhoto(photoId, sectionKey) {
-                if (!confirm('Delete this photo?')) return;
-
-                const token = document.querySelector('form[action*="IntraoralExams"] [name="__RequestVerificationToken"]')?.value ?? '';
-
-                fetch('/IntraoralExams/DeletePhoto', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `photoId=${photoId}&__RequestVerificationToken=${encodeURIComponent(token)}`
-                })
-                    .then(res => res.json())
-                    .then(result => {
-                        if (result.success) {
-                            document.getElementById(`ieExamPhoto_${photoId}`)?.remove();
-                            updateIESectionCount(sectionKey);
-                            removePhotoFromPhotosTab('ie', photoId);
-
-                            document.getElementById(`iePhoto_${photoId}`)?.remove();
-                            if (sectionKey) updateIESectionCount(sectionKey);
-
-                            showToast('Photo deleted.', 'success');
-                        } else {
-                            showToast('Error deleting.', 'error');
-                        }
-                    })
-                    .catch(() => showToast('Server error.', 'error'));
-            }
-
-
-
-            // ─── Update Section Counter Badge ─────────────────────────
-
-            function updateIESectionCount(sectionKey) {
-                const gallery    = document.getElementById(`iePhotoGallery_${sectionKey}`);
-                const countBadge = document.getElementById(`ieCount_${sectionKey}`);
-                if (!gallery || !countBadge) return;
-                const count = gallery.querySelectorAll('.ie-photo-item').length;
-                countBadge.textContent = `${count} photo${count !== 1 ? 's' : ''}`;
-            }
-
-
-            function syncPhotoToPhotosTab(prefix, sectionKey, photoPath, photoId) {
-                const map = {
-                    galleryId  : { ee: 'ph_extraoralGallery', ie: 'ph_intraoralGallery' },
-                    emptyId    : { ee: 'ph_extraoralEmpty',   ie: 'ph_intraoralEmpty'   },
-                    wrapperId  : { ee: 'ph_extraoralWrapper',  ie: 'ph_intraoralWrapper' },
-                    sourceLabel: { ee: 'Extraoral Exam',       ie: 'Intraoral Exam'      }
-                };
-
-                const wrapper = document.getElementById(map.wrapperId[prefix]);
-                if (!wrapper) return;
-
-                document.getElementById(map.emptyId[prefix])?.remove();
-
-                let gallery = document.getElementById(map.galleryId[prefix]);
-                if (!gallery) {
-                    gallery = document.createElement('div');
-                    gallery.className = 'ph-flat-gallery';
-                    gallery.id        = map.galleryId[prefix];
-                    wrapper.appendChild(gallery);
+                if (!form) {
+                    return;
                 }
 
-                const srcs = Array.from(gallery.querySelectorAll('img')).map(i => `'${i.src}'`);
-                srcs.push(`'${photoPath}'`);
-                const allPaths = `[${srcs.join(',')}]`;
+                const ignoredNames = [
+                    '__RequestVerificationToken',
+                    'PatientID',
+                    'IntraoralExamID'
+                ];
 
-                gallery.querySelectorAll('.ph-photo-card').forEach(c => {
-                    const s   = c.querySelector('img')?.src;
-                    const cap = c.querySelector('.ph-info-section-name')?.textContent ?? '';
-                    const dt  = c.querySelector('.ph-info-date')?.textContent ?? '';
-                    if (s) c.setAttribute('onclick', `openLightbox('${s}', ${allPaths}, '${cap} · ${dt}')`);
-                });
+                const data = [];
 
-                const today     = new Date().toLocaleDateString('en-GB');
-                const labelText = sectionKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                form.querySelectorAll(
+                    'input, select, textarea'
+                )
+                    .forEach(
+                        function (element) {
+                            if (
+                                !element.name
+                                ||
+                                element.type === 'file'
+                                ||
+                                ignoredNames.includes(
+                                    element.name
+                                )
+                            ) {
+                                return;
+                            }
 
-                const card = document.createElement('div');
-                card.className = 'ph-photo-card';
-                card.id        = `ph_${prefix}Photo_${photoId}`;
-                card.setAttribute('onclick', `openLightbox('${photoPath}', ${allPaths}, '${labelText} · ${today}')`);
+                            data.push(
+                                {
+                                    name:
+                                        element.name,
 
-                card.innerHTML = `
-                    <div class="ph-img-wrap">
-                        <img src="${photoPath}" alt="${labelText}" />
-                        <div class="ph-type-pill">${labelText}</div>
-                        <div class="ph-lock-icon">🔒</div>
-                    </div>
-                    <div class="ph-photo-info">
-                        <div class="ph-info-row">
-                            <div class="ph-icon-sq">
-                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                    <circle cx="12" cy="7" r="4"/>
-                                </svg>
-                            </div>
-                            <span class="ph-info-section-name">${labelText}</span>
-                        </div>
-                        <div class="ph-info-divider"></div>
-                        <div class="ph-info-row">
-                            <div class="ph-icon-sq">
-                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5">
-                                    <rect x="3" y="4" width="18" height="18" rx="2"/>
-                                    <line x1="16" y1="2" x2="16" y2="6"/>
-                                    <line x1="8"  y1="2" x2="8"  y2="6"/>
-                                    <line x1="3"  y1="10" x2="21" y2="10"/>
-                                </svg>
-                            </div>
-                            <span class="ph-info-date">${today}</span>
-                        </div>
-                        <div class="ph-source-tag">${map.sourceLabel[prefix]}</div>
-                    </div>`;
+                                    value:
+                                        element.value,
 
-                gallery.appendChild(card);
+                                    type:
+                                        element.type,
+
+                                    checked:
+                                        element.checked
+                                }
+                            );
+                        }
+                    );
+
+                sessionStorage.setItem(
+                    IE_FORM_KEY,
+                    JSON.stringify(data)
+                );
             }
 
-            function removePhotoFromPhotosTab(prefix, photoId) {
+            // ─────────────────────────────────────────────
+            // Save Exam
+            // ─────────────────────────────────────────────
+
+            async function saveIntraoralExam(
+                form
+            ) {
+                const saveButton =
+                    form.querySelector(
+                        'button[type="submit"]'
+                    );
+
+                const originalHtml =
+                    saveButton
+                        ? saveButton.innerHTML
+                        : '';
+
+                if (saveButton) {
+                    saveButton.disabled = true;
+
+                    saveButton.innerHTML =
+                        '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+                }
+
+                try {
+                    const response =
+                        await fetch(
+                            IE_URLS.save,
+                            {
+                                method: 'POST',
+                                body:
+                                    new FormData(form),
+
+                                headers: {
+                                    'X-Requested-With':
+                                        'XMLHttpRequest'
+                                }
+                            }
+                        );
+
+                    const result =
+                        await readJsonResponse(
+                            response
+                        );
+
+                    if (!result.success) {
+                        throw new Error(
+                            result.message
+                            ||
+                            'Error saving the intraoral examination.'
+                        );
+                    }
+
+                    sessionStorage.removeItem(
+                        IE_FORM_KEY
+                    );
+
+                    if (result.examId) {
+                        setIntraoralExamId(
+                            result.examId
+                        );
+                    }
+
+                    showIEMessage(
+                        'Intraoral Exam saved successfully.',
+                        'success'
+                    );
+                }
+                catch (error) {
+                    console.error(
+                        'SaveAjax failed:',
+                        error
+                    );
+
+                    showIEMessage(
+                        error.message
+                        ||
+                        'Server error while saving.',
+                        'error'
+                    );
+                }
+                finally {
+                    if (saveButton) {
+                        saveButton.disabled = false;
+
+                        saveButton.innerHTML =
+                            originalHtml;
+                    }
+                }
+            }
+
+            function setIntraoralExamId(
+                examId
+            ) {
+                const form =
+                    getIntraoralExamForm();
+
+                if (!form || !examId) {
+                    return;
+                }
+
+                let hiddenInput =
+                    form.querySelector(
+                        '[name="IntraoralExamID"]'
+                    );
+
+                if (!hiddenInput) {
+                    hiddenInput =
+                        document.createElement(
+                            'input'
+                        );
+
+                    hiddenInput.type =
+                        'hidden';
+
+                    hiddenInput.name =
+                        'IntraoralExamID';
+
+                    form.appendChild(
+                        hiddenInput
+                    );
+                }
+
+                hiddenInput.value =
+                    examId;
+            }
+
+            // ─────────────────────────────────────────────
+            // Upload Photos
+            // ─────────────────────────────────────────────
+
+            async function uploadIEPhotos(
+                input,
+                sectionKey
+            ) {
+                if (
+                    !input.files
+                    ||
+                    input.files.length === 0
+                ) {
+                    return;
+                }
+
+                const form =
+                    getIntraoralExamForm();
+
+                const token =
+                    form
+                        ?.querySelector(
+                            '[name="__RequestVerificationToken"]'
+                        )
+                        ?.value
+                    ?? '';
+
+                const gallery =
+                    document.getElementById(
+                        `iePhotoGallery_${sectionKey}`
+                    );
+
+                if (!form || !gallery) {
+                    return;
+                }
+
+                const files =
+                    Array.from(
+                        input.files
+                    );
+
+                input.value = '';
+
+                for (const file of files) {
+                    const spinnerId =
+                        `ieSpinner_${Date.now()}_${Math.random()
+                            .toString(36)
+                            .slice(2)}`;
+
+                    const spinner =
+                        document.createElement(
+                            'div'
+                        );
+
+                    spinner.className =
+                        'ie-photo-uploading';
+
+                    spinner.id =
+                        spinnerId;
+
+                    spinner.innerHTML =
+                        '<i class="fa-solid fa-spinner fa-spin"></i>'
+                        +
+                        '<span>Uploading...</span>';
+
+                    gallery.appendChild(
+                        spinner
+                    );
+
+                    try {
+                        const formData =
+                            new FormData();
+
+                        formData.append(
+                            'patientId',
+                            '@Model.PatientID'
+                        );
+
+                        const currentExamId =
+                            form.querySelector(
+                                '[name="IntraoralExamID"]'
+                            )
+                                ?.value;
+
+                        if (currentExamId) {
+                            formData.append(
+                                'intraoralExamId',
+                                currentExamId
+                            );
+                        }
+
+                        formData.append(
+                            'photo',
+                            file
+                        );
+
+                        formData.append(
+                            'photoSection',
+                            sectionKey
+                        );
+
+                        formData.append(
+                            '__RequestVerificationToken',
+                            token
+                        );
+
+                        const response =
+                            await fetch(
+                                IE_URLS.uploadPhoto,
+                                {
+                                    method: 'POST',
+                                    body: formData,
+                                    headers: {
+                                        'X-Requested-With':
+                                            'XMLHttpRequest'
+                                    }
+                                }
+                            );
+
+                        const result =
+                            await readJsonResponse(
+                                response
+                            );
+
+                        if (!result.success) {
+                            throw new Error(
+                                result.message
+                                ||
+                                `Failed to upload ${file.name}.`
+                            );
+                        }
+
+                        if (result.examId) {
+                            setIntraoralExamId(
+                                result.examId
+                            );
+                        }
+
+                        addUploadedIEPhoto(
+                            gallery,
+                            sectionKey,
+                            result
+                        );
+
+                        updateIESectionCount(
+                            sectionKey
+                        );
+
+                        if (
+                            result.photoPath
+                            &&
+                            result.photoId
+                        ) {
+                            syncPhotoToPhotosTab(
+                                'ie',
+                                sectionKey,
+                                result.photoPath,
+                                result.photoId
+                            );
+                        }
+
+                        showIEMessage(
+                            'Photo uploaded.',
+                            'success'
+                        );
+                    }
+                    catch (error) {
+                        console.error(
+                            'UploadPhotoAjax failed:',
+                            error
+                        );
+
+                        showIEMessage(
+                            error.message
+                            ||
+                            `Server error uploading ${file.name}.`,
+                            'error'
+                        );
+                    }
+                    finally {
+                        document.getElementById(
+                            spinnerId
+                        )
+                            ?.remove();
+                    }
+                }
+            }
+
+            function addUploadedIEPhoto(
+                gallery,
+                sectionKey,
+                result
+            ) {
+                if (
+                    !result.photoId
+                    ||
+                    !result.photoPath
+                ) {
+                    return;
+                }
+
+                document.getElementById(
+                    `ieExamPhoto_${result.photoId}`
+                )
+                    ?.remove();
+
+                const item =
+                    document.createElement(
+                        'div'
+                    );
+
+                item.className =
+                    'ie-photo-item';
+
+                item.id =
+                    `ieExamPhoto_${result.photoId}`;
+
+                const image =
+                    document.createElement(
+                        'img'
+                    );
+
+                image.src =
+                    result.photoPath;
+
+                image.alt =
+                    sectionKey;
+
+                const deleteButton =
+                    document.createElement(
+                        'button'
+                    );
+
+                deleteButton.type =
+                    'button';
+
+                deleteButton.className =
+                    'delete-btn';
+
+                deleteButton.title =
+                    'Delete';
+
+                deleteButton.textContent =
+                    '✕';
+
+                deleteButton.addEventListener(
+                    'click',
+                    function () {
+                        deleteIEPhoto(
+                            result.photoId,
+                            sectionKey
+                        );
+                    }
+                );
+
+                item.appendChild(image);
+                item.appendChild(deleteButton);
+
+                gallery.appendChild(item);
+
+                item.scrollIntoView(
+                    {
+                        behavior: 'smooth',
+                        inline: 'end',
+                        block: 'nearest'
+                    }
+                );
+            }
+
+            // ─────────────────────────────────────────────
+            // Delete Photo
+            // ─────────────────────────────────────────────
+
+            async function deleteIEPhoto(
+                photoId,
+                sectionKey
+            ) {
+                if (
+                    !window.confirm(
+                        'Delete this photo?'
+                    )
+                ) {
+                    return;
+                }
+
+                const form =
+                    getIntraoralExamForm();
+
+                const token =
+                    form
+                        ?.querySelector(
+                            '[name="__RequestVerificationToken"]'
+                        )
+                        ?.value
+                    ?? '';
+
+                try {
+                    const body =
+                        new URLSearchParams();
+
+                    body.append(
+                        'photoId',
+                        photoId
+                    );
+
+                    body.append(
+                        '__RequestVerificationToken',
+                        token
+                    );
+
+                    const response =
+                        await fetch(
+                            IE_URLS.deletePhoto,
+                            {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type':
+                                        'application/x-www-form-urlencoded;charset=UTF-8',
+
+                                    'X-Requested-With':
+                                        'XMLHttpRequest'
+                                },
+                                body:
+                                    body.toString()
+                            }
+                        );
+
+                    const result =
+                        await readJsonResponse(
+                            response
+                        );
+
+                    if (!result.success) {
+                        throw new Error(
+                            result.message
+                            ||
+                            'Error deleting the photo.'
+                        );
+                    }
+
+                    document.getElementById(
+                        `ieExamPhoto_${photoId}`
+                    )
+                        ?.remove();
+
+                    updateIESectionCount(
+                        sectionKey
+                    );
+
+                    removePhotoFromPhotosTab(
+                        'ie',
+                        photoId
+                    );
+
+                    showIEMessage(
+                        'Photo deleted.',
+                        'success'
+                    );
+                }
+                catch (error) {
+                    console.error(
+                        'DeletePhoto failed:',
+                        error
+                    );
+
+                    showIEMessage(
+                        error.message
+                        ||
+                        'Server error while deleting.',
+                        'error'
+                    );
+                }
+            }
+
+            function updateIESectionCount(
+                sectionKey
+            ) {
+                const gallery =
+                    document.getElementById(
+                        `iePhotoGallery_${sectionKey}`
+                    );
+
+                const countBadge =
+                    document.getElementById(
+                        `ieCount_${sectionKey}`
+                    );
+
+                if (!gallery || !countBadge) {
+                    return;
+                }
+
+                const count =
+                    gallery.querySelectorAll(
+                        '.ie-photo-item'
+                    )
+                        .length;
+
+                countBadge.textContent =
+                    `${count} photo${count !== 1 ? 's' : ''}`;
+            }
+
+            // ─────────────────────────────────────────────
+            // Drag and Drop + Form Events
+            // ─────────────────────────────────────────────
+
+            document.addEventListener(
+                'DOMContentLoaded',
+                function () {
+                    const form =
+                        getIntraoralExamForm();
+
+                    if (!form) {
+                        return;
+                    }
+
+                    restoreIEFormData();
+
+                    form.addEventListener(
+                        'change',
+                        saveIEFormData
+                    );
+
+                    form.addEventListener(
+                        'input',
+                        saveIEFormData
+                    );
+
+                    form.addEventListener(
+                        'submit',
+                        function (event) {
+                            event.preventDefault();
+                            event.stopPropagation();
+
+                            saveIntraoralExam(
+                                form
+                            );
+                        }
+                    );
+
+                    document.querySelectorAll(
+                        '[id^="ieDropZone_"]'
+                    )
+                        .forEach(
+                            function (zone) {
+                                const sectionKey =
+                                    zone.id.replace(
+                                        'ieDropZone_',
+                                        ''
+                                    );
+
+                                zone.addEventListener(
+                                    'dragover',
+                                    function (event) {
+                                        event.preventDefault();
+
+                                        zone.classList.add(
+                                            'drag-over'
+                                        );
+                                    }
+                                );
+
+                                zone.addEventListener(
+                                    'dragleave',
+                                    function () {
+                                        zone.classList.remove(
+                                            'drag-over'
+                                        );
+                                    }
+                                );
+
+                                zone.addEventListener(
+                                    'drop',
+                                    function (event) {
+                                        event.preventDefault();
+
+                                        zone.classList.remove(
+                                            'drag-over'
+                                        );
+
+                                        const files =
+                                            event.dataTransfer
+                                                ?.files;
+
+                                        if (
+                                            !files
+                                            ||
+                                            files.length === 0
+                                        ) {
+                                            return;
+                                        }
+
+                                        const input =
+                                            document.getElementById(
+                                                `iePhotoInput_${sectionKey}`
+                                            );
+
+                                        if (!input) {
+                                            return;
+                                        }
+
+                                        const transfer =
+                                            new DataTransfer();
+
+                                        Array.from(files)
+                                            .forEach(
+                                                function (file) {
+                                                    transfer.items.add(
+                                                        file
+                                                    );
+                                                }
+                                            );
+
+                                        input.files =
+                                            transfer.files;
+
+                                        uploadIEPhotos(
+                                            input,
+                                            sectionKey
+                                        );
+                                    }
+                                );
+                            }
+                        );
+                }
+            );
+
+            // ─────────────────────────────────────────────
+            // Photos Tab Synchronization
+            // ─────────────────────────────────────────────
+
+            function syncPhotoToPhotosTab(
+                prefix,
+                sectionKey,
+                photoPath,
+                photoId
+            ) {
                 const map = {
-                    galleryId : { ee: 'ph_extraoralGallery', ie: 'ph_intraoralGallery' },
-                    emptyId   : { ee: 'ph_extraoralEmpty',   ie: 'ph_intraoralEmpty'   },
-                    wrapperId : { ee: 'ph_extraoralWrapper',  ie: 'ph_intraoralWrapper' }
+                    galleryId: {
+                        ee:
+                            'ph_extraoralGallery',
+
+                        ie:
+                            'ph_intraoralGallery'
+                    },
+
+                    emptyId: {
+                        ee:
+                            'ph_extraoralEmpty',
+
+                        ie:
+                            'ph_intraoralEmpty'
+                    },
+
+                    wrapperId: {
+                        ee:
+                            'ph_extraoralWrapper',
+
+                        ie:
+                            'ph_intraoralWrapper'
+                    },
+
+                    sourceLabel: {
+                        ee:
+                            'Extraoral Exam',
+
+                        ie:
+                            'Intraoral Exam'
+                    }
                 };
 
-                document.getElementById(`ph_${prefix}Photo_${photoId}`)?.remove();
+                const wrapper =
+                    document.getElementById(
+                        map.wrapperId[prefix]
+                    );
 
-                const gallery = document.getElementById(map.galleryId[prefix]);
-                if (!gallery) return;
+                if (!wrapper) {
+                    return;
+                }
 
-                const remaining = gallery.querySelectorAll('.ph-photo-card').length;
+                document.getElementById(
+                    map.emptyId[prefix]
+                )
+                    ?.remove();
+
+                let gallery =
+                    document.getElementById(
+                        map.galleryId[prefix]
+                    );
+
+                if (!gallery) {
+                    gallery =
+                        document.createElement(
+                            'div'
+                        );
+
+                    gallery.className =
+                        'ph-flat-gallery';
+
+                    gallery.id =
+                        map.galleryId[prefix];
+
+                    wrapper.appendChild(
+                        gallery
+                    );
+                }
+
+                const today =
+                    new Date()
+                        .toLocaleDateString(
+                            'en-GB'
+                        );
+
+                const labelText =
+                    sectionKey
+                        .replace(/_/g, ' ')
+                        .replace(
+                            /\b\w/g,
+                            function (letter) {
+                                return letter.toUpperCase();
+                            }
+                        );
+
+                const card =
+                    document.createElement(
+                        'div'
+                    );
+
+                card.className =
+                    'ph-photo-card';
+
+                card.id =
+                    `ph_${prefix}Photo_${photoId}`;
+
+                card.innerHTML = `
+                            <div class="ph-img-wrap">
+                                <img src="${escapeIEHtml(photoPath)}"
+                                     alt="${escapeIEHtml(labelText)}" />
+
+                                <div class="ph-type-pill">
+                                    ${escapeIEHtml(labelText)}
+                                </div>
+
+                                <div class="ph-lock-icon">
+                                    🔒
+                                </div>
+                            </div>
+
+                            <div class="ph-photo-info">
+
+                                <div class="ph-info-row">
+                                    <span class="ph-info-section-name">
+                                        ${escapeIEHtml(labelText)}
+                                    </span>
+                                </div>
+
+                                <div class="ph-info-divider"></div>
+
+                                <div class="ph-info-row">
+                                    <span class="ph-info-date">
+                                        ${escapeIEHtml(today)}
+                                    </span>
+                                </div>
+
+                                <div class="ph-source-tag">
+                                    ${escapeIEHtml(map.sourceLabel[prefix])}
+                                </div>
+
+                            </div>`;
+
+                gallery.appendChild(
+                    card
+                );
+
+                refreshIEPhotosLightbox(
+                    gallery
+                );
+            }
+
+            function removePhotoFromPhotosTab(
+                prefix,
+                photoId
+            ) {
+                const map = {
+                    galleryId: {
+                        ee:
+                            'ph_extraoralGallery',
+
+                        ie:
+                            'ph_intraoralGallery'
+                    },
+
+                    emptyId: {
+                        ee:
+                            'ph_extraoralEmpty',
+
+                        ie:
+                            'ph_intraoralEmpty'
+                    },
+
+                    wrapperId: {
+                        ee:
+                            'ph_extraoralWrapper',
+
+                        ie:
+                            'ph_intraoralWrapper'
+                    }
+                };
+
+                document.getElementById(
+                    `ph_${prefix}Photo_${photoId}`
+                )
+                    ?.remove();
+
+                const gallery =
+                    document.getElementById(
+                        map.galleryId[prefix]
+                    );
+
+                if (!gallery) {
+                    return;
+                }
+
+                const remaining =
+                    gallery.querySelectorAll(
+                        '.ph-photo-card'
+                    )
+                        .length;
 
                 if (remaining === 0) {
                     gallery.remove();
-                    const wrapper = document.getElementById(map.wrapperId[prefix]);
-                    if (wrapper && !document.getElementById(map.emptyId[prefix])) {
-                        const p = document.createElement('p');
-                        p.className   = 'ph-empty';
-                        p.id          = map.emptyId[prefix];
-                        p.textContent = 'No intraoral photos yet.';
-                        wrapper.appendChild(p);
+
+                    const wrapper =
+                        document.getElementById(
+                            map.wrapperId[prefix]
+                        );
+
+                    if (
+                        wrapper
+                        &&
+                        !document.getElementById(
+                            map.emptyId[prefix]
+                        )
+                    ) {
+                        const emptyMessage =
+                            document.createElement(
+                                'p'
+                            );
+
+                        emptyMessage.className =
+                            'ph-empty';
+
+                        emptyMessage.id =
+                            map.emptyId[prefix];
+
+                        emptyMessage.textContent =
+                            'No intraoral photos yet.';
+
+                        wrapper.appendChild(
+                            emptyMessage
+                        );
                     }
-                } else {
-                    const srcs     = Array.from(gallery.querySelectorAll('img')).map(i => `'${i.src}'`);
-                    const allPaths = `[${srcs.join(',')}]`;
-                    gallery.querySelectorAll('.ph-photo-card').forEach(c => {
-                        const s   = c.querySelector('img')?.src;
-                        const cap = c.querySelector('.ph-info-section-name')?.textContent ?? '';
-                        const dt  = c.querySelector('.ph-info-date')?.textContent ?? '';
-                        if (s) c.setAttribute('onclick', `openLightbox('${s}', ${allPaths}, '${cap} · ${dt}')`);
-                    });
+
+                    return;
                 }
+
+                refreshIEPhotosLightbox(
+                    gallery
+                );
+            }
+
+            function refreshIEPhotosLightbox(
+                gallery
+            ) {
+                if (
+                    typeof window.openLightbox
+                    !== 'function'
+                ) {
+                    return;
+                }
+
+                const paths =
+                    Array.from(
+                        gallery.querySelectorAll(
+                            '.ph-photo-card img'
+                        )
+                    )
+                        .map(
+                            function (image) {
+                                return image.getAttribute(
+                                    'src'
+                                );
+                            }
+                        )
+                        .filter(Boolean);
+
+                gallery.querySelectorAll(
+                    '.ph-photo-card'
+                )
+                    .forEach(
+                        function (card) {
+                            const imagePath =
+                                card.querySelector(
+                                    'img'
+                                )
+                                    ?.getAttribute(
+                                        'src'
+                                    );
+
+                            const caption =
+                                card.querySelector(
+                                    '.ph-info-section-name'
+                                )
+                                    ?.textContent
+                                    ?.trim()
+                                ?? '';
+
+                            const date =
+                                card.querySelector(
+                                    '.ph-info-date'
+                                )
+                                    ?.textContent
+                                    ?.trim()
+                                ?? '';
+
+                            if (!imagePath) {
+                                return;
+                            }
+
+                            card.onclick =
+                                function () {
+                                    window.openLightbox(
+                                        imagePath,
+                                        paths,
+                                        `${caption} · ${date}`
+                                    );
+                                };
+                        }
+                    );
+            }
+
+            function escapeIEHtml(
+                value
+            ) {
+                const element =
+                    document.createElement(
+                        'div'
+                    );
+
+                element.textContent =
+                    value ?? '';
+
+                return element.innerHTML;
             }
     </script>
+
 
     <script>
             (function () {
                 document.addEventListener("DOMContentLoaded", function () {
 
                     const pageReadOnly =
-                        @pageReadOnly.ToString().ToLower();
+                                    @pageReadOnly.ToString().ToLower();
 
                     const root =
                         document.getElementById("intraoralReadOnlyRoot");
@@ -857,20 +1691,20 @@
                     function isViewOnlyButton(button) {
                         const text =
                             (button.textContent || "")
-                            .replace(/\s+/g, " ")
-                            .trim()
-                            .toLowerCase();
+                                .replace(/\s+/g, " ")
+                                .trim()
+                                .toLowerCase();
 
                         return button.matches(
                             ".btn-close, [data-bs-dismiss='modal'], [data-readonly-allow='true']"
                         )
-                        || text === "details"
-                        || text === "view"
-                        || text.startsWith("view ")
-                        || text.includes("preview")
-                        || text === "close"
-                        || text === "×"
-                        || text === "✕";
+                            || text === "details"
+                            || text === "view"
+                            || text.startsWith("view ")
+                            || text.includes("preview")
+                            || text === "close"
+                            || text === "×"
+                            || text === "✕";
                     }
 
                     root.querySelectorAll(

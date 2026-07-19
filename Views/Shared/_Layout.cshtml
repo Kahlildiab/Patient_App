@@ -5,7 +5,7 @@
     <title>Agents Preadmission System - Al-Ahliyya Amman University</title>
     <meta name="description" content="Al-Ahliyya Amman University (AAU) is the first private university in Jordan to be a pioneer of private education providing academic services since 1990. AAU has been accorded institutional and programmatic accreditation and is also a member of the International Association of Universities" />
     <meta name="keywords" content="Al-Ahliyya, Amman, University, Jordan, Education, Teaching, Study, Faculty, Students, eLearning, Admission, Academics, News, Events, Announcements" />
-    <meta meta name="viewport" content="width=device-width, initial-scale=1 maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <link rel="SHORTCUT ICON" type="image/png" href="https://www.ammanu.edu.jo/media/i5ipojym/icon.png" />
     <meta name="robots" content="index,follow">
@@ -27,210 +27,538 @@
 
 
     <style>
-        /* =====================================================
-        USER MANAGEMENT DROPDOWN
-        ===================================================== */
+            /* =====================================================
+                    USER MANAGEMENT DROPDOWN
+                    ===================================================== */
 
-        #Second {
-        overflow: visible !important;
-        align-items: center;
-        }
+            #Second {
+                overflow: visible !important;
+                align-items: center;
+            }
 
-        #Second .nav-item {
-        position: relative;
-        }
+                #Second .nav-item {
+                    position: relative;
+                }
 
-        #Second .nav-link,
-        #Second .admin-menu-button {
-        white-space: nowrap;
-        }
+                #Second .nav-link,
+                #Second .admin-menu-button {
+                    white-space: nowrap;
+                }
 
-        .admin-menu-dropdown {
-        position: relative;
-        }
+            .admin-menu-dropdown {
+                position: relative;
+            }
 
-        .admin-menu-button {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        width: 100%;
-        border: 0;
-        background: transparent;
-        color: #ffffff !important;
-        padding: .5rem 1rem;
-        font-family: inherit;
-        font-size: inherit;
-        font-weight: inherit;
-        line-height: inherit;
-        cursor: pointer;
-        transition: color .2s ease, background-color .2s ease;
-        }
+            .admin-menu-button {
+                display: flex;
+                align-items: center;
+                gap: 7px;
+                width: 100%;
+                border: 0;
+                background: transparent;
+                color: #ffffff !important;
+                padding: .5rem 1rem;
+                font-family: inherit;
+                font-size: inherit;
+                font-weight: inherit;
+                line-height: inherit;
+                cursor: pointer;
+                transition: color .2s ease, background-color .2s ease;
+            }
 
-        .admin-menu-button span,
-        .admin-menu-button i,
-        .admin-menu-button svg,
-        .admin-menu-button .admin-menu-chevron {
-        color: #ffffff !important;
-        fill: currentColor;
-        }
+                .admin-menu-button span,
+                .admin-menu-button i,
+                .admin-menu-button svg,
+                .admin-menu-button .admin-menu-chevron {
+                    color: #ffffff !important;
+                    fill: currentColor;
+                }
 
-        .admin-menu-button:hover,
-        .admin-menu-button:focus,
-        .admin-menu-button.active {
-        color: #ffffff !important;
-        background: rgba(37, 36, 104, .28);
-        outline: none;
-        }
+                .admin-menu-button:hover,
+                .admin-menu-button:focus,
+                .admin-menu-button.active {
+                    color: #ffffff !important;
+                    background: rgba(37, 36, 104, .28);
+                    outline: none;
+                }
 
-        .admin-menu-button:hover span,
-        .admin-menu-button:hover i,
-        .admin-menu-button:hover svg,
-        .admin-menu-button:hover .admin-menu-chevron,
-        .admin-menu-button:focus span,
-        .admin-menu-button:focus i,
-        .admin-menu-button:focus svg,
-        .admin-menu-button:focus .admin-menu-chevron,
-        .admin-menu-button.active span,
-        .admin-menu-button.active i,
-        .admin-menu-button.active svg,
-        .admin-menu-button.active .admin-menu-chevron {
-        color: #ffffff !important;
-        }
+                    .admin-menu-button:hover span,
+                    .admin-menu-button:hover i,
+                    .admin-menu-button:hover svg,
+                    .admin-menu-button:hover .admin-menu-chevron,
+                    .admin-menu-button:focus span,
+                    .admin-menu-button:focus i,
+                    .admin-menu-button:focus svg,
+                    .admin-menu-button:focus .admin-menu-chevron,
+                    .admin-menu-button.active span,
+                    .admin-menu-button.active i,
+                    .admin-menu-button.active svg,
+                    .admin-menu-button.active .admin-menu-chevron {
+                        color: #ffffff !important;
+                    }
 
-        .admin-menu-button .admin-menu-chevron {
-        font-size: .68rem;
-        transition: transform .2s ease;
-        }
+                .admin-menu-button .admin-menu-chevron {
+                    font-size: .68rem;
+                    transition: transform .2s ease;
+                }
 
-        .admin-menu-button.active .admin-menu-chevron {
-        transform: rotate(180deg);
-        }
+                .admin-menu-button.active .admin-menu-chevron {
+                    transform: rotate(180deg);
+                }
 
-        .admin-menu-list {
-        position: absolute;
-        top: calc(100% + 7px);
-        left: 0;
-        z-index: 10050;
-        display: none;
-        min-width: 235px;
-        margin: 0;
-        padding: 7px 0;
-        list-style: none;
-        background: #ffffff;
-        border-top: 4px solid #daa328;
-        box-shadow: 0 10px 28px rgba(0, 0, 0, .24);
-        }
+            .admin-menu-list {
+                position: absolute;
+                top: calc(100% + 7px);
+                left: 0;
+                z-index: 10050;
+                display: none;
+                min-width: 235px;
+                margin: 0;
+                padding: 7px 0;
+                list-style: none;
+                background: #ffffff;
+                border-top: 4px solid #daa328;
+                box-shadow: 0 10px 28px rgba(0, 0, 0, .24);
+            }
 
-        .admin-menu-list.show {
-        display: block;
-        animation: adminMenuOpen .16s ease-out;
-        }
+                .admin-menu-list.show {
+                    display: block;
+                    animation: adminMenuOpen .16s ease-out;
+                }
 
-        .admin-menu-list::before {
-        content: "";
-        position: absolute;
-        top: -10px;
-        left: 25px;
-        width: 0;
-        height: 0;
-        border-left: 7px solid transparent;
-        border-right: 7px solid transparent;
-        border-bottom: 7px solid #daa328;
-        }
+                .admin-menu-list::before {
+                    content: "";
+                    position: absolute;
+                    top: -10px;
+                    left: 25px;
+                    width: 0;
+                    height: 0;
+                    border-left: 7px solid transparent;
+                    border-right: 7px solid transparent;
+                    border-bottom: 7px solid #daa328;
+                }
 
-        .admin-menu-list li {
-        width: 100%;
-        }
+                .admin-menu-list li {
+                    width: 100%;
+                }
 
-        .admin-menu-list a {
-        display: flex;
-        align-items: center;
-        gap: 11px;
-        width: 100%;
-        padding: 11px 16px;
-        color: #252468 !important;
-        font-size: .88rem;
-        font-weight: 700;
-        text-decoration: none;
-        transition: color .16s ease, background-color .16s ease, padding-left .16s ease;
-        }
+                .admin-menu-list a {
+                    display: flex;
+                    align-items: center;
+                    gap: 11px;
+                    width: 100%;
+                    padding: 11px 16px;
+                    color: #252468 !important;
+                    font-size: .88rem;
+                    font-weight: 700;
+                    text-decoration: none;
+                    transition: color .16s ease, background-color .16s ease, padding-left .16s ease;
+                }
 
-        .admin-menu-list a:hover,
-        .admin-menu-list a:focus {
-        color: #ffffff !important;
-        background: rgb(38, 76, 159);
-        padding-left: 20px;
-        outline: none;
-        }
+                    .admin-menu-list a:hover,
+                    .admin-menu-list a:focus {
+                        color: #ffffff !important;
+                        background: rgb(38, 76, 159);
+                        padding-left: 20px;
+                        outline: none;
+                    }
 
-        .admin-menu-list a i,
-        .admin-menu-list a svg {
-        width: 18px;
-        color: #daa328;
-        text-align: center;
-        }
+                    .admin-menu-list a i,
+                    .admin-menu-list a svg {
+                        width: 18px;
+                        color: #daa328;
+                        text-align: center;
+                    }
 
-        .admin-menu-list a:hover i,
-        .admin-menu-list a:hover svg,
-        .admin-menu-list a:focus i,
-        .admin-menu-list a:focus svg {
-        color: #ffffff;
-        }
+                    .admin-menu-list a:hover i,
+                    .admin-menu-list a:hover svg,
+                    .admin-menu-list a:focus i,
+                    .admin-menu-list a:focus svg {
+                        color: #ffffff;
+                    }
 
-        .admin-menu-divider {
-        height: 1px;
-        margin: 5px 12px;
-        background: #ececec;
-        }
+            .admin-menu-divider {
+                height: 1px;
+                margin: 5px 12px;
+                background: #ececec;
+            }
 
-        @@keyframes adminMenuOpen {
-        from {
-        opacity: 0;
-        transform: translateY(-6px);
-        }
+            @@keyframes adminMenuOpen {
+                from {
+                    opacity: 0;
+                    transform: translateY(-6px);
+                }
 
-        to {
-        opacity: 1;
-        transform: translateY(0);
-        }
-        }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
 
-        /* يقلل ازدحام الهيدر قليلاً على الشاشات الكبيرة */
-        @@media (min-width: 1200px) {
-        #Second .nav-link,
-        #Second .admin-menu-button {
-        padding-left: .72rem;
-        padding-right: .72rem;
-        }
-        }
+            /* يقلل ازدحام الهيدر قليلاً على الشاشات الكبيرة */
+            @@media (min-width: 1200px) {
+                #Second .nav-link,
+                #Second .admin-menu-button {
+                    padding-left: .72rem;
+                    padding-right: .72rem;
+                }
+            }
 
-        /* داخل قائمة الموبايل تصبح القائمة المنسدلة بعرض كامل */
-        @@media (max-width: 1199.98px) {
-        .admin-menu-dropdown {
-        width: 100%;
-        }
+            /* داخل قائمة الموبايل تصبح القائمة المنسدلة بعرض كامل */
+            @@media (max-width: 1199.98px) {
+                .admin-menu-dropdown {
+                    width: 100%;
+                }
 
-        .admin-menu-button {
-        justify-content: flex-start;
-        }
+                .admin-menu-button {
+                    justify-content: flex-start;
+                }
 
-        .admin-menu-list {
-        position: static;
-        width: calc(100% - 20px);
-        min-width: 0;
-        margin: 4px 10px 9px;
-        border-top-width: 3px;
-        box-shadow: none;
-        }
+                .admin-menu-list {
+                    position: static;
+                    width: calc(100% - 20px);
+                    min-width: 0;
+                    margin: 4px 10px 9px;
+                    border-top-width: 3px;
+                    box-shadow: none;
+                }
 
-        .admin-menu-list::before {
-        display: none;
-        }
+                    .admin-menu-list::before {
+                        display: none;
+                    }
 
-        .admin-menu-list a {
-        padding-left: 20px;
-        }
-        }
+                    .admin-menu-list a {
+                        padding-left: 20px;
+                    }
+            }
+
+    
+            /* =====================================================
+                       RESPONSIVE FIXES — KEEP ORIGINAL DESIGN
+                       ===================================================== */
+
+            html,
+            body {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+            }
+
+            img,
+            svg,
+            video,
+            iframe,
+            canvas {
+                max-width: 100%;
+            }
+
+            main.container {
+                width: 100%;
+                max-width: 1320px;
+                min-width: 0;
+            }
+
+                main.container > * {
+                    max-width: 100%;
+                }
+
+            main input:not([type="checkbox"]):not([type="radio"]),
+            main select,
+            main textarea {
+                max-width: 100%;
+            }
+
+            #navbar {
+                min-width: 0;
+            }
+
+            .layout-table-scroll {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+                .layout-table-scroll > table {
+                    margin-bottom: 0;
+                }
+
+            #chartHost,
+            .table-wrapper,
+            .table-responsive-custom,
+            .ie-photo-gallery {
+                max-width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            @@media (max-width: 1199.98px) {
+
+                #opacity {
+                    width: 100%;
+                    flex-wrap: wrap;
+                }
+
+                #logo {
+                    display: flex;
+                    width: auto;
+                    max-width: calc(100% - 78px);
+                    height: 82px !important;
+                    margin-right: 0;
+                    padding: 8px 12px;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                    #logo img {
+                        width: 50px;
+                        max-width: 50px !important;
+                        margin-top: 0 !important;
+                        flex: 0 0 50px;
+                    }
+
+                    #logo h1 {
+                        min-width: 0;
+                        margin: 0;
+                    }
+
+                        #logo h1 p {
+                            margin: 0;
+                            line-height: 1.15;
+                        }
+
+                    #logo .heading15 {
+                        font-size: .78rem;
+                        white-space: nowrap;
+                    }
+
+                #langarea {
+                    display: none !important;
+                }
+
+                .mobbar {
+                    display: flex;
+                    margin-left: auto;
+                    margin-right: 12px;
+                    align-items: center;
+                }
+
+                .navbar-toggler {
+                    border-color: rgba(255, 255, 255, .75);
+                    color: #fff;
+                }
+
+                    .navbar-toggler:focus {
+                        box-shadow: 0 0 0 .2rem rgba(218, 163, 40, .35);
+                    }
+
+                #navbar {
+                    width: 100%;
+                    flex-basis: 100%;
+                    max-height: calc(100vh - 82px);
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                }
+
+                #First,
+                #Second {
+                    width: 100%;
+                    align-items: stretch !important;
+                }
+
+                    #First .nav-item,
+                    #Second .nav-item {
+                        width: 100%;
+                    }
+
+                    #First .nav-link,
+                    #Second .nav-link,
+                    #Second .admin-menu-button {
+                        display: flex;
+                        width: 100%;
+                        min-height: 44px;
+                        padding: 10px 16px !important;
+                        align-items: center;
+                        justify-content: flex-start;
+                        border-bottom: 1px solid rgba(255, 255, 255, .10);
+                    }
+
+                .profilelink {
+                    position: static !important;
+                    display: flex !important;
+                    width: 100%;
+                    min-height: 54px;
+                    margin: 0 !important;
+                    padding: 9px 16px !important;
+                    align-items: center;
+                    justify-content: flex-start;
+                    flex-wrap: wrap;
+                    background: #252468;
+                    border-top: 1px solid rgba(255, 255, 255, .14);
+                }
+
+                .admin-menu-dropdown {
+                    width: 100%;
+                }
+
+                .admin-menu-button {
+                    justify-content: flex-start;
+                }
+
+                .admin-menu-list {
+                    position: static;
+                    width: calc(100% - 20px);
+                    min-width: 0;
+                    margin: 4px 10px 9px;
+                    border-top-width: 3px;
+                    box-shadow: none;
+                }
+
+                    .admin-menu-list::before {
+                        display: none;
+                    }
+
+                    .admin-menu-list a {
+                        padding-left: 20px;
+                    }
+
+                .patient-layout {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 18px !important;
+                }
+
+                    .patient-layout > * {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        margin-left: 0 !important;
+                        margin-right: 0 !important;
+                    }
+
+                .side-panel {
+                    position: static !important;
+                    width: 100% !important;
+                }
+            }
+
+            @@media (max-width: 767.98px) {
+
+                main.container {
+                    margin-top: 14px !important;
+                    padding-right: 10px;
+                    padding-left: 10px;
+                }
+
+                .details-wrapper {
+                    width: 100% !important;
+                    padding: 10px 0 !important;
+                }
+
+                .details-card {
+                    display: flex !important;
+                    padding: 18px 14px !important;
+                    flex-direction: column-reverse !important;
+                    gap: 16px !important;
+                }
+
+                .details-icon {
+                    margin: 0 auto;
+                }
+
+                .details-footer {
+                    flex-direction: column !important;
+                }
+
+                .info-bar {
+                    width: 100% !important;
+                    padding: 12px !important;
+                }
+
+                .patient-alert-grid,
+                .summary-grid,
+                .toolbar-row {
+                    grid-template-columns: 1fr !important;
+                }
+
+                .modal-box {
+                    width: calc(100% - 20px) !important;
+                    max-width: calc(100% - 20px) !important;
+                    max-height: 88vh !important;
+                    margin: 10px;
+                }
+
+                .ie-photo-row,
+                .ie-photo-row-3,
+                .ie-photo-row-2,
+                .ie-photo-row-1 {
+                    width: 100% !important;
+                    grid-template-columns: 1fr !important;
+                    margin-right: 0 !important;
+                    margin-left: 0 !important;
+                }
+
+                .actions,
+                .btnwrap {
+                    flex-wrap: wrap !important;
+                }
+
+                #chartHost .chart-grid,
+                .chart-grid {
+                    min-width: 1050px;
+                }
+
+                .app {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                }
+            }
+
+            @@media (max-width: 575.98px) {
+
+                #logo {
+                    height: 72px !important;
+                    max-width: calc(100% - 66px);
+                    padding: 7px 8px;
+                }
+
+                    #logo img {
+                        width: 43px;
+                        max-width: 43px !important;
+                        flex-basis: 43px;
+                    }
+
+                    #logo .heading15 {
+                        font-size: .68rem;
+                    }
+
+                .mobbar {
+                    margin-right: 8px;
+                }
+
+                .navbar-toggler {
+                    padding: .28rem .52rem;
+                }
+
+                main.container {
+                    padding-right: 7px;
+                    padding-left: 7px;
+                }
+
+                main h1 {
+                    font-size: clamp(1.35rem, 7vw, 1.9rem);
+                }
+
+                main h2 {
+                    font-size: clamp(1.15rem, 6vw, 1.55rem);
+                }
+            }
+
     </style>
 
 </head>
@@ -260,8 +588,8 @@
         <!-- One of the primary actions on mobile is to call a business - This displays a phone button on mobile only -->
         <div class="navbar-toggler-right mobbar">
 
-            <button class="navbar-toggler " type="button" data-toggle="collapse" data-target="#navbar"
-                    aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler " type="button" data-bs-toggle="collapse" data-bs-target="#navbar"
+                    aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
                 <svg style="font-size: 28px !important;font-weight: 800 !important;"
                      class="svg-inline--fa fa-bars" aria-hidden="true" focusable="false" data-prefix="fas"
                      data-icon="bars" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"
@@ -429,6 +757,20 @@
                                     <span>User Types</span>
                                 </a>
                             </li>
+
+                            <li class="admin-menu-divider"
+                                aria-hidden="true">
+                            </li>
+
+                            <li>
+                                <a asp-controller="StudentTransfer"
+                                   asp-action="Index">
+
+                                    <i class="fa-solid fa-graduation-cap"></i>
+                                    <span>Student Transfer</span>
+                                </a>
+                            </li>
+
                         </ul>
                     </li>
                 }
@@ -610,86 +952,120 @@
     @RenderSection("Scripts", required: false)
 
     <script>
-        function toggleAdminUsersMenu(event) {
-        event.preventDefault();
-        event.stopPropagation();
+            function toggleAdminUsersMenu(event) {
+                event.preventDefault();
+                event.stopPropagation();
 
-        const button =
-        document.getElementById("adminUsersButton");
+                const button =
+                    document.getElementById("adminUsersButton");
 
-        const menu =
-        document.getElementById("adminUsersMenu");
+                const menu =
+                    document.getElementById("adminUsersMenu");
 
-        if (!button || !menu) {
-        return;
-        }
+                if (!button || !menu) {
+                    return;
+                }
 
-        const isOpen =
-        menu.classList.contains("show");
+                const isOpen =
+                    menu.classList.contains("show");
 
-        closeAdminUsersMenu();
+                closeAdminUsersMenu();
 
-        if (!isOpen) {
-        menu.classList.add("show");
-        button.classList.add("active");
-        button.setAttribute(
-        "aria-expanded",
-        "true"
-        );
-        }
-        }
+                if (!isOpen) {
+                    menu.classList.add("show");
+                    button.classList.add("active");
+                    button.setAttribute(
+                        "aria-expanded",
+                        "true"
+                    );
+                }
+            }
 
-        function closeAdminUsersMenu() {
-        const button =
-        document.getElementById("adminUsersButton");
+            function closeAdminUsersMenu() {
+                const button =
+                    document.getElementById("adminUsersButton");
 
-        const menu =
-        document.getElementById("adminUsersMenu");
+                const menu =
+                    document.getElementById("adminUsersMenu");
 
-        if (menu) {
-        menu.classList.remove("show");
-        }
+                if (menu) {
+                    menu.classList.remove("show");
+                }
 
-        if (button) {
-        button.classList.remove("active");
-        button.setAttribute(
-        "aria-expanded",
-        "false"
-        );
-        }
-        }
+                if (button) {
+                    button.classList.remove("active");
+                    button.setAttribute(
+                        "aria-expanded",
+                        "false"
+                    );
+                }
+            }
 
-        document.addEventListener(
-        "click",
-        function (event) {
-        const dropdown =
-        document.getElementById(
-        "adminUsersDropdown"
-        );
+            document.addEventListener(
+                "click",
+                function (event) {
+                    const dropdown =
+                        document.getElementById(
+                            "adminUsersDropdown"
+                        );
 
-        if (
-        dropdown
-        &&
-        !dropdown.contains(event.target)
-        ) {
-        closeAdminUsersMenu();
-        }
-        }
-        );
+                    if (
+                        dropdown
+                        &&
+                        !dropdown.contains(event.target)
+                    ) {
+                        closeAdminUsersMenu();
+                    }
+                }
+            );
 
-        document.addEventListener(
-        "keydown",
-        function (event) {
-        if (event.key === "Escape") {
-        closeAdminUsersMenu();
-        }
-        }
-        );
+            document.addEventListener(
+                "keydown",
+                function (event) {
+                    if (event.key === "Escape") {
+                        closeAdminUsersMenu();
+                    }
+                }
+            );
 
-        window.addEventListener(
-        "resize",
-        closeAdminUsersMenu
-        );
+            window.addEventListener(
+                "resize",
+                closeAdminUsersMenu
+            );
+    </script>
+
+
+    <script>
+            document.addEventListener(
+                "DOMContentLoaded",
+                function () {
+                    document
+                        .querySelectorAll("main table")
+                        .forEach(function (table) {
+
+                            if (
+                                table.closest(
+                                    ".layout-table-scroll, .table-responsive, .table-responsive-sm, .table-responsive-md, .table-responsive-lg, .table-responsive-xl, .table-wrapper, .table-responsive-custom"
+                                )
+                            ) {
+                                return;
+                            }
+
+                            const wrapper =
+                                document.createElement("div");
+
+                            wrapper.className =
+                                "layout-table-scroll";
+
+                            table.parentNode.insertBefore(
+                                wrapper,
+                                table
+                            );
+
+                            wrapper.appendChild(table);
+                        });
+                }
+            );
     </script>
 
 </body>
@@ -697,7 +1073,6 @@
 <script integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous" type="text/javascript" src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript" src="../../scripts/Faculty.js"></script>
 
-<script type="text/javascript" src="https://cdn.rawgit.com/JacobLett/bootstrap4-latest/504729ba/bootstrap-4-latest.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
@@ -705,18 +1080,18 @@
 <script type="text/javascript" src="../../scripts/WOW.js"></script>
 <script>
     var wow = new WOW(
-    {
-    boxClass: 'wow',      // animated element css class (default is wow)
-    animateClass: 'animated', // animation css class (default is animated)
-    offset: 0,          // distance to the element when triggering the animation (default is 0)
-    mobile: true,       // trigger animations on mobile devices (default is true)
-    live: true,       // act on asynchronously loaded content (default is true)
-    callback: function (box) {
-    // the callback is fired every time an animation is started
-    // the argument that is passed in is the DOM node being animated
-    },
-    scrollContainer: null // optional scroll container selector, otherwise use window
-    }
+        {
+            boxClass: 'wow',      // animated element css class (default is wow)
+            animateClass: 'animated', // animation css class (default is animated)
+            offset: 0,          // distance to the element when triggering the animation (default is 0)
+            mobile: true,       // trigger animations on mobile devices (default is true)
+            live: true,       // act on asynchronously loaded content (default is true)
+            callback: function (box) {
+                // the callback is fired every time an animation is started
+                // the argument that is passed in is the DOM node being animated
+            },
+            scrollContainer: null // optional scroll container selector, otherwise use window
+        }
     );
     wow.init();
 </script>
@@ -725,8 +1100,8 @@
 <script>
     // jQuery counterUp
     $('[data-toggle="counterUp"]').counterUp({
-    delay: 15,
-    time: 1500
+        delay: 15,
+        time: 1500
     });
 </script>
 <script type="text/javascript" src="../../source/jquery.fancybox.pack.js"></script>
@@ -737,23 +1112,23 @@
     */
 
     $(".fancybox").fancybox({
-    afterShow: function () {
-    $(".fancybox-title").wrapInner('<div />').show();
+        afterShow: function () {
+            $(".fancybox-title").wrapInner('<div />').show();
 
-    $(".fancybox-wrap").hover(function () {
-    $(".fancybox-title").show();
-    }, function () {
-    $(".fancybox-title").hide();
-    });
-    },
-    helpers: {
-    title: {
-    type: 'over'
-    }
+            $(".fancybox-wrap").hover(function () {
+                $(".fancybox-title").show();
+            }, function () {
+                $(".fancybox-title").hide();
+            });
+        },
+        helpers: {
+            title: {
+                type: 'over'
+            }
 
-    , buttons: {}
+            , buttons: {}
 
-    }
+        }
     });
 
 
@@ -766,12 +1141,12 @@
 
 
     function setActive() {
-    aObj = document.getElementById('sidebar').getElementsByTagName('a');
-    for (i = 0; i < aObj.length; i++) {
-    if (document.location.href.indexOf(aObj[i].href) >= 0) {
-    aObj[i].className = 'activelink';
-    }
-    }
+        aObj = document.getElementById('sidebar').getElementsByTagName('a');
+        for (i = 0; i < aObj.length; i++) {
+            if (document.location.href.indexOf(aObj[i].href) >= 0) {
+                aObj[i].className = 'activelink';
+            }
+        }
     }
 
     window.onload = setActive;
@@ -789,11 +1164,11 @@
     */
 
     window.onload = function () {
-    imgs = document.querySelectorAll('img');
-    for (i = 0; i < imgs.length; i++) {
-    if (imgs[i].getAttribute('data-src')) {
-    imgs[i].setAttribute('src', imgs[i].getAttribute('data-src'));
-    }
-    }
+        imgs = document.querySelectorAll('img');
+        for (i = 0; i < imgs.length; i++) {
+            if (imgs[i].getAttribute('data-src')) {
+                imgs[i].setAttribute('src', imgs[i].getAttribute('data-src'));
+            }
+        }
     }
 </script>

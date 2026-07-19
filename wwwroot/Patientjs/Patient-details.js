@@ -4,10 +4,315 @@
  * ===========================================================
  */
 
+window.PATIENT_DETAILS_CONDITION_AUTOCOMPLETE_VERSION = "2.0";
+
 const AUTOMATIC_RED_FLAG_CONDITIONS = [
     "Bleeding Disorders",
     "Infectious Diseases",
     "Cancer"
+];
+
+const MEDICAL_CONDITION_CATALOG = [
+    {
+        name: "Hypertension",
+        category: "Cardiovascular",
+        aliases: ["High blood pressure"]
+    },
+    {
+        name: "Hypotension",
+        category: "Cardiovascular",
+        aliases: ["Low blood pressure"]
+    },
+    {
+        name: "Coronary Artery Disease",
+        category: "Cardiovascular",
+        aliases: ["CAD", "Ischemic heart disease"]
+    },
+    {
+        name: "Angina",
+        category: "Cardiovascular",
+        aliases: ["Angina pectoris"]
+    },
+    {
+        name: "Myocardial Infarction",
+        category: "Cardiovascular",
+        aliases: ["Heart attack", "MI"]
+    },
+    {
+        name: "Heart Failure",
+        category: "Cardiovascular",
+        aliases: ["Congestive heart failure", "CHF"]
+    },
+    {
+        name: "Arrhythmia",
+        category: "Cardiovascular",
+        aliases: ["Irregular heartbeat"]
+    },
+    {
+        name: "Atrial Fibrillation",
+        category: "Cardiovascular",
+        aliases: ["AF", "AFib"]
+    },
+    {
+        name: "Heart Valve Disease",
+        category: "Cardiovascular",
+        aliases: ["Valvular heart disease"]
+    },
+    {
+        name: "Rheumatic Heart Disease",
+        category: "Cardiovascular",
+        aliases: []
+    },
+    {
+        name: "Congenital Heart Disease",
+        category: "Cardiovascular",
+        aliases: []
+    },
+    {
+        name: "Stroke",
+        category: "Neurological",
+        aliases: ["Cerebrovascular accident", "CVA"]
+    },
+    {
+        name: "Transient Ischemic Attack",
+        category: "Neurological",
+        aliases: ["TIA", "Mini stroke"]
+    },
+    {
+        name: "Epilepsy",
+        category: "Neurological",
+        aliases: ["Seizure disorder"]
+    },
+    {
+        name: "Parkinson's Disease",
+        category: "Neurological",
+        aliases: ["Parkinson disease"]
+    },
+    {
+        name: "Multiple Sclerosis",
+        category: "Neurological",
+        aliases: ["MS"]
+    },
+    {
+        name: "Migraine",
+        category: "Neurological",
+        aliases: []
+    },
+    {
+        name: "Diabetes Mellitus",
+        category: "Endocrine",
+        aliases: ["Diabetes", "DM"]
+    },
+    {
+        name: "Type 1 Diabetes Mellitus",
+        category: "Endocrine",
+        aliases: ["Type 1 diabetes", "T1DM"]
+    },
+    {
+        name: "Type 2 Diabetes Mellitus",
+        category: "Endocrine",
+        aliases: ["Type 2 diabetes", "T2DM"]
+    },
+    {
+        name: "Hypothyroidism",
+        category: "Endocrine",
+        aliases: ["Underactive thyroid"]
+    },
+    {
+        name: "Hyperthyroidism",
+        category: "Endocrine",
+        aliases: ["Overactive thyroid"]
+    },
+    {
+        name: "Thyroid Disease",
+        category: "Endocrine",
+        aliases: ["Thyroid disorder"]
+    },
+    {
+        name: "Adrenal Disease",
+        category: "Endocrine",
+        aliases: ["Adrenal disorder"]
+    },
+    {
+        name: "Asthma",
+        category: "Respiratory",
+        aliases: []
+    },
+    {
+        name: "Chronic Obstructive Pulmonary Disease",
+        category: "Respiratory",
+        aliases: ["COPD"]
+    },
+    {
+        name: "Tuberculosis",
+        category: "Infectious Diseases",
+        aliases: ["TB"]
+    },
+    {
+        name: "Sleep Apnea",
+        category: "Respiratory",
+        aliases: ["Obstructive sleep apnea", "OSA"]
+    },
+    {
+        name: "Chronic Kidney Disease",
+        category: "Renal",
+        aliases: ["CKD", "Kidney disease"]
+    },
+    {
+        name: "Kidney Failure",
+        category: "Renal",
+        aliases: ["Renal failure"]
+    },
+    {
+        name: "Dialysis",
+        category: "Renal",
+        aliases: ["Hemodialysis", "Peritoneal dialysis"]
+    },
+    {
+        name: "Liver Disease",
+        category: "Hepatic",
+        aliases: ["Hepatic disease"]
+    },
+    {
+        name: "Cirrhosis",
+        category: "Hepatic",
+        aliases: ["Liver cirrhosis"]
+    },
+    {
+        name: "Hepatitis B",
+        category: "Infectious Diseases",
+        aliases: ["HBV"]
+    },
+    {
+        name: "Hepatitis C",
+        category: "Infectious Diseases",
+        aliases: ["HCV"]
+    },
+    {
+        name: "Gastroesophageal Reflux Disease",
+        category: "Gastrointestinal",
+        aliases: ["GERD", "Acid reflux"]
+    },
+    {
+        name: "Peptic Ulcer Disease",
+        category: "Gastrointestinal",
+        aliases: ["PUD", "Stomach ulcer"]
+    },
+    {
+        name: "Crohn's Disease",
+        category: "Gastrointestinal",
+        aliases: ["Crohn disease"]
+    },
+    {
+        name: "Ulcerative Colitis",
+        category: "Gastrointestinal",
+        aliases: []
+    },
+    {
+        name: "Anemia",
+        category: "Hematological",
+        aliases: []
+    },
+    {
+        name: "Iron Deficiency Anemia",
+        category: "Hematological",
+        aliases: []
+    },
+    {
+        name: "Sickle Cell Disease",
+        category: "Hematological",
+        aliases: ["Sickle cell anemia"]
+    },
+    {
+        name: "Hemophilia",
+        category: "Bleeding Disorders",
+        aliases: ["Haemophilia"]
+    },
+    {
+        name: "Bleeding Disorders",
+        category: "Automatic Red Flag",
+        aliases: ["Bleeding disorder", "Coagulation disorder"]
+    },
+    {
+        name: "Leukemia",
+        category: "Oncology",
+        aliases: ["Leukaemia"]
+    },
+    {
+        name: "Cancer",
+        category: "Automatic Red Flag",
+        aliases: ["Malignancy", "Malignant tumor", "Tumour"]
+    },
+    {
+        name: "Infectious Diseases",
+        category: "Automatic Red Flag",
+        aliases: ["Infectious disease", "Communicable disease"]
+    },
+    {
+        name: "HIV/AIDS",
+        category: "Infectious Diseases",
+        aliases: ["HIV", "AIDS"]
+    },
+    {
+        name: "Rheumatoid Arthritis",
+        category: "Autoimmune",
+        aliases: ["RA"]
+    },
+    {
+        name: "Systemic Lupus Erythematosus",
+        category: "Autoimmune",
+        aliases: ["Lupus", "SLE"]
+    },
+    {
+        name: "Osteoarthritis",
+        category: "Musculoskeletal",
+        aliases: ["OA"]
+    },
+    {
+        name: "Osteoporosis",
+        category: "Musculoskeletal",
+        aliases: []
+    },
+    {
+        name: "Temporomandibular Joint Disorder",
+        category: "Musculoskeletal",
+        aliases: ["TMJ disorder", "TMD"]
+    },
+    {
+        name: "Depression",
+        category: "Mental Health",
+        aliases: ["Major depressive disorder"]
+    },
+    {
+        name: "Anxiety Disorder",
+        category: "Mental Health",
+        aliases: ["Anxiety"]
+    },
+    {
+        name: "Bipolar Disorder",
+        category: "Mental Health",
+        aliases: []
+    },
+    {
+        name: "Schizophrenia",
+        category: "Mental Health",
+        aliases: []
+    },
+    {
+        name: "Pregnancy",
+        category: "Other",
+        aliases: ["Pregnant"]
+    },
+    {
+        name: "Drug Allergy",
+        category: "Allergy",
+        aliases: ["Medication allergy"]
+    },
+    {
+        name: "Latex Allergy",
+        category: "Allergy",
+        aliases: []
+    }
 ];
 
 const RED_FLAG_MEDICATION_CATALOG = [
@@ -167,6 +472,331 @@ function escapeMedicalHtml(value) {
     const element = document.createElement("div");
     element.textContent = value || "";
     return element.innerHTML;
+}
+
+function findConditionCatalogItem(conditionName) {
+    const normalized =
+        normalizeMedicalLookup(conditionName);
+
+    if (!normalized) {
+        return null;
+    }
+
+    return MEDICAL_CONDITION_CATALOG.find(
+        function (condition) {
+            const searchableNames =
+                [condition.name]
+                    .concat(condition.aliases || []);
+
+            return searchableNames.some(
+                function (name) {
+                    return normalizeMedicalLookup(name)
+                        === normalized;
+                }
+            );
+        }
+    ) || null;
+}
+
+function searchConditionCatalog(query) {
+    const normalizedQuery =
+        normalizeMedicalLookup(query);
+
+    if (!normalizedQuery) {
+        return [];
+    }
+
+    return MEDICAL_CONDITION_CATALOG
+        .map(function (condition) {
+            const searchableNames =
+                [condition.name]
+                    .concat(condition.aliases || []);
+
+            const exactMatch =
+                searchableNames.some(
+                    function (name) {
+                        return normalizeMedicalLookup(name)
+                            === normalizedQuery;
+                    }
+                );
+
+            const startsWithMatch =
+                searchableNames.some(
+                    function (name) {
+                        return normalizeMedicalLookup(name)
+                            .startsWith(normalizedQuery);
+                    }
+                );
+
+            const containsMatch =
+                searchableNames.some(
+                    function (name) {
+                        return normalizeMedicalLookup(name)
+                            .includes(normalizedQuery);
+                    }
+                );
+
+            return {
+                condition: condition,
+                score:
+                    exactMatch
+                        ? 0
+                        : startsWithMatch
+                            ? 1
+                            : containsMatch
+                                ? 2
+                                : 99
+            };
+        })
+        .filter(function (entry) {
+            return entry.score < 99;
+        })
+        .sort(function (left, right) {
+            if (left.score !== right.score) {
+                return left.score - right.score;
+            }
+
+            return left.condition.name.localeCompare(
+                right.condition.name
+            );
+        })
+        .slice(0, 8)
+        .map(function (entry) {
+            return entry.condition;
+        });
+}
+
+function getConditionSuggestionsElement(conditionInput) {
+    const suggestionsId =
+        conditionInput?.dataset?.suggestionsId;
+
+    if (!suggestionsId) {
+        return null;
+    }
+
+    return document.getElementById(
+        suggestionsId
+    );
+}
+
+function closeConditionSuggestions(exceptElement) {
+    document.querySelectorAll(
+        ".condition-suggestions"
+    )
+        .forEach(function (suggestions) {
+            if (suggestions !== exceptElement) {
+                suggestions.style.display = "none";
+                suggestions.innerHTML = "";
+            }
+        });
+}
+
+function selectConditionSuggestion(
+    conditionInput,
+    condition
+) {
+    conditionInput.value =
+        condition.name;
+
+    applyConditionAutoRedFlag(
+        conditionInput
+    );
+
+    const suggestions =
+        getConditionSuggestionsElement(
+            conditionInput
+        );
+
+    if (suggestions) {
+        suggestions.style.display = "none";
+        suggestions.innerHTML = "";
+    }
+
+    conditionInput.dispatchEvent(
+        new Event(
+            "change",
+            {
+                bubbles: true
+            }
+        )
+    );
+}
+
+function renderConditionSuggestions(conditionInput) {
+    const suggestions =
+        getConditionSuggestionsElement(
+            conditionInput
+        );
+
+    if (!suggestions) {
+        return;
+    }
+
+    const results =
+        searchConditionCatalog(
+            conditionInput.value
+        );
+
+    closeConditionSuggestions(
+        suggestions
+    );
+
+    if (results.length === 0) {
+        suggestions.style.display = "none";
+        suggestions.innerHTML = "";
+        return;
+    }
+
+    suggestions.innerHTML =
+        results.map(
+            function (condition, index) {
+                return `
+                    <button type="button"
+                            class="condition-suggestion-item"
+                            data-condition-index="${index}"
+                            role="option">
+                        <div class="condition-suggestion-name">
+                            ${escapeMedicalHtml(condition.name)}
+                        </div>
+
+                        <div class="condition-suggestion-category">
+                            ${escapeMedicalHtml(condition.category)}
+                        </div>
+                    </button>
+                `;
+            }
+        )
+            .join("");
+
+    suggestions.style.display =
+        "block";
+
+    suggestions
+        .querySelectorAll(
+            ".condition-suggestion-item"
+        )
+        .forEach(function (button) {
+            button.addEventListener(
+                "mousedown",
+                function (event) {
+                    event.preventDefault();
+
+                    const resultIndex =
+                        Number(
+                            button.dataset.conditionIndex
+                        );
+
+                    const condition =
+                        results[resultIndex];
+
+                    if (condition) {
+                        selectConditionSuggestion(
+                            conditionInput,
+                            condition
+                        );
+                    }
+                }
+            );
+        });
+}
+
+function initializeConditionAutocomplete(root) {
+    const searchRoot =
+        root || document;
+
+    searchRoot
+        .querySelectorAll(
+            ".condition-name-input"
+        )
+        .forEach(function (conditionInput) {
+            if (
+                conditionInput.dataset
+                    .conditionAutocompleteReady
+                === "true"
+            ) {
+                return;
+            }
+
+            conditionInput.dataset
+                .conditionAutocompleteReady =
+                "true";
+
+            conditionInput.setAttribute(
+                "autocomplete",
+                "off"
+            );
+
+            conditionInput.addEventListener(
+                "input",
+                function () {
+                    applyConditionAutoRedFlag(
+                        conditionInput
+                    );
+
+                    renderConditionSuggestions(
+                        conditionInput
+                    );
+                }
+            );
+
+            conditionInput.addEventListener(
+                "focus",
+                function () {
+                    if (
+                        conditionInput.value.trim()
+                    ) {
+                        renderConditionSuggestions(
+                            conditionInput
+                        );
+                    }
+                }
+            );
+
+            conditionInput.addEventListener(
+                "keydown",
+                function (event) {
+                    if (event.key === "Escape") {
+                        const suggestions =
+                            getConditionSuggestionsElement(
+                                conditionInput
+                            );
+
+                        if (suggestions) {
+                            suggestions.style.display =
+                                "none";
+                        }
+                    }
+                }
+            );
+
+            conditionInput.addEventListener(
+                "blur",
+                function () {
+                    window.setTimeout(
+                        function () {
+                            applyConditionAutoRedFlag(
+                                conditionInput
+                            );
+
+                            const suggestions =
+                                getConditionSuggestionsElement(
+                                    conditionInput
+                                );
+
+                            if (suggestions) {
+                                suggestions.style.display =
+                                    "none";
+                            }
+                        },
+                        150
+                    );
+                }
+            );
+
+            applyConditionAutoRedFlag(
+                conditionInput
+            );
+        });
 }
 
 function isAutomaticConditionRedFlag(conditionName) {
@@ -654,6 +1284,52 @@ function enforceEditConditionAutoFlag() {
     }
 }
 
+/*
+ * Delegated fallback for condition fields created dynamically.
+ * This keeps autocomplete working even when a row is added after page load.
+ */
+document.addEventListener(
+    "input",
+    function (event) {
+        const conditionInput =
+            event.target.closest?.(
+                ".condition-name-input"
+            );
+
+        if (!conditionInput) {
+            return;
+        }
+
+        applyConditionAutoRedFlag(
+            conditionInput
+        );
+
+        renderConditionSuggestions(
+            conditionInput
+        );
+    }
+);
+
+document.addEventListener(
+    "focusin",
+    function (event) {
+        const conditionInput =
+            event.target.closest?.(
+                ".condition-name-input"
+            );
+
+        if (
+            conditionInput
+            &&
+            conditionInput.value.trim()
+        ) {
+            renderConditionSuggestions(
+                conditionInput
+            );
+        }
+    }
+);
+
 document.addEventListener(
     "click",
     function (event) {
@@ -663,6 +1339,14 @@ document.addEventListener(
             )
         ) {
             closeMedicationSuggestions();
+        }
+
+        if (
+            !event.target.closest(
+                ".condition-search-wrapper"
+            )
+        ) {
+            closeConditionSuggestions();
         }
     }
 );
@@ -776,6 +1460,12 @@ $(document).ready(function () {
             'editConditionNotes'
         ).value = btn.data('notes') || '';
 
+        initializeConditionAutocomplete(
+            document.getElementById(
+                'editConditionModal'
+            )
+        );
+
         applyEditConditionAutoFlag();
 
         document.getElementById(
@@ -838,17 +1528,17 @@ $(document).ready(function () {
 
         conditionRowIndex = 1;
 
-        list
-            .querySelectorAll(
-                '.condition-name-input'
-            )
-            .forEach(function (input) {
-                applyConditionAutoRedFlag(input);
-            });
+        initializeConditionAutocomplete(
+            list
+        );
 
         document.getElementById(
             'conditionModal'
         ).style.display = 'flex';
+
+        list.querySelector(
+            '.condition-name-input'
+        )?.focus();
     };
 
     openMedicationModal = function () {
@@ -872,6 +1562,10 @@ $(document).ready(function () {
     };
 
     initializeMedicationAutocomplete(
+        document
+    );
+
+    initializeConditionAutocomplete(
         document
     );
 });
@@ -944,16 +1638,6 @@ function updateSingleRedFlagBox(
             `info-bar-${prefix}-red-flags-wrapper`
         );
 
-    const dot =
-        document.getElementById(
-            `info-bar-${prefix}-red-flags-dot`
-        );
-
-    const label =
-        document.getElementById(
-            `info-bar-${prefix}-red-flags-label`
-        );
-
     const text =
         document.getElementById(
             `info-bar-${prefix}-red-flags`
@@ -966,40 +1650,22 @@ function updateSingleRedFlagBox(
     const hasFlags =
         uniqueNames.length > 0;
 
-    wrapper.style.background =
+    wrapper.classList.toggle(
+        "is-alert",
         hasFlags
-            ? '#FDECEA'
-            : '#EAF7EE';
+    );
 
-    wrapper.style.borderColor =
-        hasFlags
-            ? '#D9534F'
-            : '#27AE60';
-
-    if (dot) {
-        dot.style.background =
-            hasFlags
-                ? '#A32D2D'
-                : '#1E8449';
-    }
-
-    if (label) {
-        label.style.color =
-            hasFlags
-                ? '#791F1F'
-                : '#1A5C35';
-    }
-
-    text.style.color =
-        hasFlags
-            ? '#501313'
-            : '#145A32';
+    wrapper.classList.toggle(
+        "is-clear",
+        !hasFlags
+    );
 
     text.textContent =
         hasFlags
-            ? uniqueNames.join(', ')
+            ? uniqueNames.join(", ")
             : emptyText;
 }
+
 
 function updateRedFlagsInfoBar() {
     const conditionFlaggedNames = [];
@@ -1069,6 +1735,9 @@ function buildConditionRowHTML(
     i,
     removable = false
 ) {
+    const suggestionsId =
+        `condition-suggestions-${i}`;
+
     return `
         <div class="condition-row-modal"
              style="${removable
@@ -1093,12 +1762,26 @@ function buildConditionRowHTML(
                         Condition
                     </label>
 
-                    <input type="text"
-                           name="Conditions[${i}].ConditionName"
-                           class="condition-name-input"
-                           oninput="applyConditionAutoRedFlag(this)"
-                           style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 12px; font-size:13px; box-sizing:border-box;"
-                           placeholder="e.g. Hypertension" />
+                    <div class="condition-search-wrapper">
+                        <input type="text"
+                               name="Conditions[${i}].ConditionName"
+                               class="condition-name-input"
+                               data-suggestions-id="${suggestionsId}"
+                               autocomplete="off"
+                               style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 38px 8px 12px; font-size:13px; box-sizing:border-box;"
+                               placeholder="Start typing a condition name..." />
+
+                        <span class="condition-search-icon"
+                              aria-hidden="true">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+
+                        <div id="${suggestionsId}"
+                             class="condition-suggestions"
+                             role="listbox"
+                             aria-label="Condition suggestions">
+                        </div>
+                    </div>
 
                     <div class="automatic-condition-hint">
                         🚩 This condition is an automatic Red Flag.
@@ -1155,6 +1838,7 @@ function buildConditionRowHTML(
     `;
 }
 
+
 function addModalRow() {
     const list =
         document.getElementById(
@@ -1177,14 +1861,13 @@ function addModalRow() {
 
     list.appendChild(row);
 
-    const input =
-        row.querySelector(
-            '.condition-name-input'
-        );
-
-    applyConditionAutoRedFlag(
-        input
+    initializeConditionAutocomplete(
+        row
     );
+
+    row.querySelector(
+        '.condition-name-input'
+    )?.focus();
 }
 
 function saveConditions() {

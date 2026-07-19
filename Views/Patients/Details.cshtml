@@ -720,6 +720,373 @@
         font-weight: 700;
     }
 
+
+    /* ===== PATIENT CLINICAL SNAPSHOT ===== */
+    .patient-summary-panel {
+        max-width: 1200px;
+        margin: 0 auto 22px;
+        padding: 20px;
+        background: linear-gradient( 145deg, #ffffff 0%, #f8f9fc 100% );
+        border: 1px solid #dfe3ea;
+        border-radius: 18px;
+        box-shadow: 0 10px 28px rgba(37, 36, 104, .08);
+    }
+
+    .patient-summary-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid #eceef3;
+    }
+
+    .patient-summary-eyebrow {
+        display: block;
+        margin-bottom: 3px;
+        color: #daa328;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .9px;
+        text-transform: uppercase;
+    }
+
+    .patient-summary-title {
+        margin: 0;
+        color: #252468;
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    .patient-summary-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 11px;
+        color: #5f6470;
+        background: #ffffff;
+        border: 1px solid #e1e4eb;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+        .patient-summary-status i {
+            color: #27ae60;
+        }
+
+    .patient-summary-primary-grid,
+    .patient-alert-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .patient-summary-primary-grid {
+        margin-bottom: 14px;
+    }
+
+    .patient-summary-tile {
+        display: flex;
+        min-width: 0;
+        min-height: 100px;
+        padding: 15px;
+        align-items: center;
+        gap: 12px;
+        background: #ffffff;
+        border: 1px solid #e2e5eb;
+        border-radius: 13px;
+        box-shadow: 0 3px 12px rgba(24, 27, 45, .045);
+    }
+
+    .patient-summary-icon {
+        display: flex;
+        width: 42px;
+        height: 42px;
+        flex: 0 0 42px;
+        align-items: center;
+        justify-content: center;
+        color: #252468;
+        background: #eeeff8;
+        border-radius: 11px;
+        font-size: 16px;
+    }
+
+    .patient-summary-content {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .patient-summary-label {
+        margin-bottom: 5px;
+        color: #7a7f8a;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .patient-summary-value {
+        overflow: hidden;
+        color: #252468;
+        font-size: 13px;
+        font-weight: 800;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+        .patient-summary-value.is-empty {
+            color: #9a9da5;
+            font-weight: 600;
+        }
+
+    .case-complexity-form {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-top: 7px;
+    }
+
+    .case-complexity-select {
+        min-width: 0;
+        height: 35px;
+        flex: 1;
+        padding: 4px 8px;
+        color: #252468;
+        background: #ffffff;
+        border: 1px solid #cfd3dc;
+        border-radius: 6px;
+        outline: none;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+        .case-complexity-select:focus {
+            border-color: #252468;
+            box-shadow: 0 0 0 3px rgba(37, 36, 104, .09);
+        }
+
+    .case-complexity-save {
+        height: 35px;
+        padding: 0 13px;
+        color: #ffffff;
+        background: #252468;
+        border: 0;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: transform .18s ease, background .18s ease;
+    }
+
+        .case-complexity-save:hover {
+            background: #34338a;
+            transform: translateY(-1px);
+        }
+
+    .patient-alert-card {
+        position: relative;
+        display: flex;
+        min-width: 0;
+        min-height: 86px;
+        padding: 14px 15px;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid;
+        border-radius: 13px;
+        transition: background .2s ease, border-color .2s ease;
+    }
+
+        .patient-alert-card.is-alert {
+            background: #fff3f2;
+            border-color: #e58e89;
+        }
+
+        .patient-alert-card.is-clear {
+            background: #effaf3;
+            border-color: #79c997;
+        }
+
+    .patient-alert-icon {
+        position: relative;
+        display: flex;
+        width: 42px;
+        height: 42px;
+        flex: 0 0 42px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 11px;
+        font-size: 16px;
+    }
+
+    .patient-alert-card.is-alert
+    .patient-alert-icon {
+        color: #a32d2d;
+        background: #fde3e1;
+    }
+
+    .patient-alert-card.is-clear
+    .patient-alert-icon {
+        color: #1e8449;
+        background: #dff3e7;
+    }
+
+    .patient-alert-status-dot {
+        position: absolute;
+        right: -2px;
+        bottom: -2px;
+        width: 9px;
+        height: 9px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+    }
+
+    .patient-alert-card.is-alert
+    .patient-alert-status-dot {
+        background: #b63535;
+    }
+
+    .patient-alert-card.is-clear
+    .patient-alert-status-dot {
+        background: #239b56;
+    }
+
+    .patient-alert-content {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .patient-alert-label {
+        margin-bottom: 4px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .patient-alert-card.is-alert
+    .patient-alert-label {
+        color: #8a2727;
+    }
+
+    .patient-alert-card.is-clear
+    .patient-alert-label {
+        color: #22683d;
+    }
+
+    .patient-alert-value {
+        overflow: hidden;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.45;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .patient-alert-card.is-alert
+    .patient-alert-value {
+        color: #541919;
+    }
+
+    .patient-alert-card.is-clear
+    .patient-alert-value {
+        color: #175b34;
+    }
+
+    /* ===== CONDITION AUTOCOMPLETE ===== */
+    .condition-search-wrapper {
+        position: relative;
+    }
+
+    .condition-search-icon {
+        position: absolute;
+        top: 50%;
+        right: 12px;
+        z-index: 2;
+        color: #8d92a0;
+        font-size: 12px;
+        pointer-events: none;
+        transform: translateY(-50%);
+    }
+
+    .condition-suggestions {
+        display: none;
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        left: 0;
+        z-index: 10060;
+        max-height: 250px;
+        overflow-y: auto;
+        background: #ffffff;
+        border: 1px solid #cfd3dc;
+        border-radius: 7px;
+        box-shadow: 0 10px 28px rgba(37, 36, 104, .18);
+    }
+
+    .condition-suggestion-item {
+        width: 100%;
+        padding: 9px 11px;
+        background: #ffffff;
+        border: 0;
+        border-bottom: 1px solid #eeeeee;
+        text-align: left;
+        cursor: pointer;
+    }
+
+        .condition-suggestion-item:last-child {
+            border-bottom: 0;
+        }
+
+        .condition-suggestion-item:hover,
+        .condition-suggestion-item:focus {
+            background: #eef0f8;
+            outline: none;
+        }
+
+    .condition-suggestion-name {
+        color: #252468;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .condition-suggestion-category {
+        margin-top: 2px;
+        color: #7b7f89;
+        font-size: 11px;
+    }
+
+    @@media (max-width: 980px) {
+        .patient-summary-primary-grid,
+        .patient-alert-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .patient-summary-heading {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .patient-summary-panel {
+            padding: 14px;
+            border-radius: 13px;
+        }
+
+        .patient-summary-tile,
+        .patient-alert-card {
+            min-height: 82px;
+        }
+
+        .case-complexity-form {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .case-complexity-save {
+            width: 100%;
+        }
+    }
+
     @@media (max-width: 900px) {
         .patient-alert-grid {
             grid-template-columns: 1fr !important;
@@ -877,346 +1244,233 @@
     </div>
 }
 
-<!-- ===== INFO BAR ===== -->
-<div class="info-bar" style="background:white; border:0.5px solid #ddd; border-radius:12px; padding:1rem 1.5rem;">
+<!-- ===== CLINICAL SNAPSHOT ===== -->
+<section class="patient-summary-panel">
 
-    <!-- السطر الأول: المعلومات الأساسية -->
-    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:12px;">
+    <div class="patient-summary-heading">
 
-        <div style="
-            background:#f5f5f5;
-            border-radius:8px;
-            padding:12px 16px;
-            min-width:0;">
+        <div>
+            <span class="patient-summary-eyebrow">
+                Patient overview
+            </span>
 
-            <div style="
-                font-size:12px;
-                color:#888;">
-                Case Complexity
-            </div>
-
-            @if (canEditCaseComplexity)
-            {
-                <form asp-controller="CaseComplexity"
-                      asp-action="Update"
-                      method="post"
-                      style="
-                    display:flex;
-                    align-items:center;
-                    gap:6px;
-                    margin-top:5px;">
-
-                    @Html.AntiForgeryToken()
-
-                    <input type="hidden"
-                           name="patientId"
-                           value="@Model.PatientID" />
-
-                    <input type="hidden"
-                           name="returnTab"
-                           value="@activeTab" />
-
-                    <select name="caseComplexity"
-                            required
-                            aria-label="Case Complexity"
-                            style="
-                        flex:1;
-                        min-width:0;
-                        height:32px;
-                        border:1px solid #cfd3dc;
-                        border-radius:4px;
-                        background:#ffffff;
-                        color:#252468;
-                        padding:4px 7px;
-                        font-size:12px;
-                        font-weight:700;">
-
-                        <option value=""
-                                disabled
-                                selected="@(complexity == "---" ? "selected" : null)">
-                            -- Select --
-                        </option>
-
-                        <option value="Mild"
-                                selected="@(string.Equals(
-                                                                    complexity,
-                                                                    "Mild",
-                                                                    StringComparison.OrdinalIgnoreCase
-                                                                ) ? "selected" : null)">
-                            Mild
-                        </option>
-
-                        <option value="Moderate"
-                                selected="@(string.Equals(
-                                                                    complexity,
-                                                                    "Moderate",
-                                                                    StringComparison.OrdinalIgnoreCase
-                                                                ) ? "selected" : null)">
-                            Moderate
-                        </option>
-
-                        <option value="Advance"
-                                selected="@(string.Equals(
-                                                                    complexity,
-                                                                    "Advance",
-                                                                    StringComparison.OrdinalIgnoreCase
-                                                                ) ? "selected" : null)">
-                            Advance
-                        </option>
-                    </select>
-
-                    <button type="submit"
-                            title="Save Case Complexity"
-                            style="
-                        height:32px;
-                        border:0;
-                        border-radius:4px;
-                        background:#252468;
-                        color:#ffffff;
-                        padding:0 10px;
-                        font-size:11px;
-                        font-weight:700;
-                        cursor:pointer;">
-                        Save
-                    </button>
-                </form>
-            }
-            else
-            {
-                <div style="
-                    font-size:16px;
-                    font-weight:700;
-                    color:@(
-                     complexity == "---"
-                         ? "#999"
-                         : "#252468"
-                                     );
-                    margin-top:4px;">
-                    @complexity
-                </div>
-            }
+            <h2 class="patient-summary-title">
+                Clinical Snapshot
+            </h2>
         </div>
 
-        <!-- Treatment Progress -->
-        <div style="
-            background:#f5f5f5;
-            border-radius:8px;
-            padding:12px 16px;">
-
-            <div style="
-                font-size:12px;
-                color:#888;">
-                Treatment Progress
-            </div>
-
-            <div style="
-                font-size:16px;
-                font-weight:700;
-                color:#252468;
-                margin-top:4px;">
-                @treatmentProgressPercentage%
-            </div>
-        </div>
-
-        <!-- Next Appointment -->
-        <div style="
-            background:#f5f5f5;
-            border-radius:8px;
-            padding:12px 16px;
-            min-width:0;">
-
-            <div style="
-                font-size:12px;
-                color:#888;">
-                Next Appointment
-            </div>
-
-            <div style="
-                font-size:13px;
-                font-weight:600;
-                color:@(nextAppt != null
-                                                                                        ? "#252468"
-                                                                                        : "#999");
-                margin-top:4px;
-                white-space:nowrap;
-                overflow:hidden;
-                text-overflow:ellipsis;"
-                 title="@nextAppointmentText">
-
-                @nextAppointmentText
-            </div>
-        </div>
-
-        <!-- Assigned Student -->
-        <div style="
-            background:#f5f5f5;
-            border-radius:8px;
-            padding:12px 16px;
-            min-width:0;">
-
-            <div style="
-                font-size:12px;
-                color:#888;">
-                Assigned Student
-            </div>
-
-            <div style="
-                font-size:13px;
-                font-weight:600;
-                color:@(
-                 assignedStudentText
-                     == "No student assigned"
-                         ? "#999"
-                         : "#252468"
-                                                                    );
-                margin-top:4px;
-                white-space:nowrap;
-                overflow:hidden;
-                text-overflow:ellipsis;"
-                 title="@assignedStudentText">
-
-                @assignedStudentText
-            </div>
+        <div class="patient-summary-status">
+            Current patient information
         </div>
 
     </div>
 
-    <div class="patient-alert-grid"
-         style="
-        display:grid;
-        grid-template-columns:repeat(3, minmax(0, 1fr));
-        gap:12px;">
+    <div class="patient-summary-primary-grid">
 
-        <!-- Allergies Box -->
-        <div style="
-            background:@(hasAllergies ? "#FDECEA" : "#EAF7EE");
-            border:0.5px solid @(hasAllergies ? "#D9534F" : "#27AE60");
-            border-radius:8px;
-            padding:10px 16px;
-            display:flex;
-            align-items:center;
-            gap:10px;
-            min-width:0;">
+        <!-- Case Complexity -->
+        <article class="patient-summary-tile">
 
-            <div style="
-                width:8px;
-                height:8px;
-                border-radius:50%;
-                background:@(hasAllergies ? "#A32D2D" : "#1E8449");
-                flex-shrink:0;">
-            </div>
+           
 
-            <div style="min-width:0;">
-                <div style="
-                    font-size:11px;
-                    color:@(hasAllergies ? "#791F1F" : "#1A5C35");">
-                    Allergies
+            <div class="patient-summary-content">
+
+                <div class="patient-summary-label">
+                    Case Complexity
                 </div>
 
-                @if (hasAllergies)
+                @if (canEditCaseComplexity)
                 {
-                    <div style="
-                        font-size:13px;
-                        font-weight:500;
-                        color:#501313;
-                        overflow-wrap:anywhere;">
-                        @mh.AllergyNotes
-                    </div>
+                    <form asp-controller="CaseComplexity"
+                          asp-action="Update"
+                          method="post"
+                          class="case-complexity-form">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               name="patientId"
+                               value="@Model.PatientID" />
+
+                        <input type="hidden"
+                               name="returnTab"
+                               value="@activeTab" />
+
+                        <select name="caseComplexity"
+                                required
+                                aria-label="Case Complexity"
+                                class="case-complexity-select">
+
+                            <option value=""
+                                    disabled
+                                    selected="@(complexity == "---" ? "selected" : null)">
+                                -- Select --
+                            </option>
+
+                            <option value="Mild"
+                                    selected="@(string.Equals(
+                                                                        complexity,
+                                                                        "Mild",
+                                                                        StringComparison.OrdinalIgnoreCase
+                                                                    ) ? "selected" : null)">
+                                Mild
+                            </option>
+
+                            <option value="Moderate"
+                                    selected="@(string.Equals(
+                                                                        complexity,
+                                                                        "Moderate",
+                                                                        StringComparison.OrdinalIgnoreCase
+                                                                    ) ? "selected" : null)">
+                                Moderate
+                            </option>
+
+                            <option value="Advance"
+                                    selected="@(string.Equals(
+                                                                        complexity,
+                                                                        "Advance",
+                                                                        StringComparison.OrdinalIgnoreCase
+                                                                    ) ? "selected" : null)">
+                                Advance
+                            </option>
+
+                        </select>
+
+                        <button type="submit"
+                                class="case-complexity-save"
+                                title="Save Case Complexity">
+                            Save
+                        </button>
+
+                    </form>
                 }
                 else
                 {
-                    <div style="
-                        font-size:13px;
-                        font-weight:500;
-                        color:#145A32;">
-                        No allergies
+                    <div class="patient-summary-value @(complexity == "---" ? "is-empty" : "")"
+                         title="@complexity">
+                        @complexity
                     </div>
                 }
+
             </div>
-        </div>
+
+        </article>
+
+        <!-- Next Appointment -->
+        <article class="patient-summary-tile">
+
+            
+
+            <div class="patient-summary-content">
+
+                <div class="patient-summary-label">
+                    Next Appointment
+                </div>
+
+                <div class="patient-summary-value @(nextAppt == null ? "is-empty" : "")"
+                     title="@nextAppointmentText">
+                    @nextAppointmentText
+                </div>
+
+            </div>
+
+        </article>
+
+        <!-- Assigned Student -->
+        <article class="patient-summary-tile">
+
+            
+
+            <div class="patient-summary-content">
+
+                <div class="patient-summary-label">
+                    Assigned Student
+                </div>
+
+                <div class="patient-summary-value @(assignedStudentText == "No student assigned" ? "is-empty" : "")"
+                     title="@assignedStudentText">
+                    @assignedStudentText
+                </div>
+
+            </div>
+
+        </article>
+
+    </div>
+
+    <div class="patient-alert-grid">
+
+        <!-- Allergies -->
+        <article class="patient-alert-card @(hasAllergies ? "is-alert" : "is-clear")">
+
+            
+
+            <div class="patient-alert-content">
+
+                <div class="patient-alert-label">
+                    Allergies
+                </div>
+
+                <div class="patient-alert-value"
+                     title="@(hasAllergies ? mh?.AllergyNotes : "No allergies")">
+                    @(hasAllergies
+                        ? mh?.AllergyNotes
+                        : "No allergies")
+                </div>
+
+            </div>
+
+        </article>
 
         <!-- Condition Red Flags -->
-        <div id="info-bar-condition-red-flags-wrapper"
-             style="
-            background:@(hasConditionRedFlags ? "#FDECEA" : "#EAF7EE");
-            border:0.5px solid @(hasConditionRedFlags ? "#D9534F" : "#27AE60");
-            border-radius:8px;
-            padding:10px 16px;
-            display:flex;
-            align-items:center;
-            gap:10px;
-            min-width:0;">
+        <article id="info-bar-condition-red-flags-wrapper"
+                 class="patient-alert-card @(hasConditionRedFlags ? "is-alert" : "is-clear")">
 
-            <div id="info-bar-condition-red-flags-dot"
-                 style="
-                width:8px;
-                height:8px;
-                border-radius:50%;
-                background:@(hasConditionRedFlags ? "#A32D2D" : "#1E8449");
-                flex-shrink:0;">
-            </div>
+            
 
-            <div style="min-width:0;">
+            <div class="patient-alert-content">
+
                 <div id="info-bar-condition-red-flags-label"
-                     style="
-                    font-size:11px;
-                    color:@(hasConditionRedFlags ? "#791F1F" : "#1A5C35");">
+                     class="patient-alert-label">
                     Condition Red Flags
                 </div>
 
                 <div id="info-bar-condition-red-flags"
-                     style="
-                    font-size:13px;
-                    font-weight:500;
-                    color:@(hasConditionRedFlags ? "#501313" : "#145A32");
-                    overflow-wrap:anywhere;">
+                     class="patient-alert-value"
+                     title="@conditionRedFlagText">
                     @conditionRedFlagText
                 </div>
+
             </div>
-        </div>
+
+        </article>
 
         <!-- Medication Red Flags -->
-        <div id="info-bar-medication-red-flags-wrapper"
-             style="
-            background:@(hasMedicationRedFlags ? "#FDECEA" : "#EAF7EE");
-            border:0.5px solid @(hasMedicationRedFlags ? "#D9534F" : "#27AE60");
-            border-radius:8px;
-            padding:10px 16px;
-            display:flex;
-            align-items:center;
-            gap:10px;
-            min-width:0;">
+        <article id="info-bar-medication-red-flags-wrapper"
+                 class="patient-alert-card @(hasMedicationRedFlags ? "is-alert" : "is-clear")">
 
-            <div id="info-bar-medication-red-flags-dot"
-                 style="
-                width:8px;
-                height:8px;
-                border-radius:50%;
-                background:@(hasMedicationRedFlags ? "#A32D2D" : "#1E8449");
-                flex-shrink:0;">
-            </div>
+           
 
-            <div style="min-width:0;">
+            <div class="patient-alert-content">
+
                 <div id="info-bar-medication-red-flags-label"
-                     style="
-                    font-size:11px;
-                    color:@(hasMedicationRedFlags ? "#791F1F" : "#1A5C35");">
+                     class="patient-alert-label">
                     Medication Red Flags
                 </div>
 
                 <div id="info-bar-medication-red-flags"
-                     style="
-                    font-size:13px;
-                    font-weight:500;
-                    color:@(hasMedicationRedFlags ? "#501313" : "#145A32");
-                    overflow-wrap:anywhere;">
+                     class="patient-alert-value"
+                     title="@medicationRedFlagText">
                     @medicationRedFlagText
                 </div>
+
             </div>
-        </div>
+
+        </article>
 
     </div>
-</div>
+
+</section>
+
 <br />
 
 <!-- ===== SIDEBAR + CONTENT ===== -->
@@ -1272,18 +1526,18 @@
                 <li>
                     <a id="dentalChartLink"
                        href="@Url.Action(
-                                                                                                                                              "Index",
-                                                                                                                                              "DentalChartPage",
-                                                                                                                                              new
-                                                                                                                                              {
-                                                                                                                                                  patientId = Model.PatientID
-                                                                                                                                              })"
+                                                                                                                                                                     "Index",
+                                                                                                                                                                     "DentalChartPage",
+                                                                                                                                                                     new
+                                                                                                                                                                     {
+                                                                                                                                                                         patientId = Model.PatientID
+                                                                                                                                                                     })"
                        target="_blank"
                        rel="noopener noreferrer"
                        class="LinkFontStyle sidebar-link dental-chart-link"
                        title="@(isReadOnly
-                                                                                                                                              ? "View only — this visit is closed."
-                                                                                                                                              : "Open Dental Charting")">
+                                                                                                                                                                     ? "View only — this visit is closed."
+                                                                                                                                                                     : "Open Dental Charting")">
 
                         <span>
                             Dental Charting
@@ -1495,7 +1749,7 @@
                                    mh?.ReviewDate.HasValue == true
                                        ? mh.ReviewDate.Value.ToString("yyyy-MM-dd")
                                        : DateTime.Today.ToString("yyyy-MM-dd")
-                                                                                                                                )"
+                                                                                                                                                        )"
                                    readonly
                                    title="The date is entered automatically when Changes reported is selected."
                                    style="border:1px solid #ccc;
@@ -1618,7 +1872,8 @@
                             </button>
                         </div>
 
-                        <div style="font-size:11px; color:#777; margin-bottom:10px;">
+                        <div style="font-size:11px; color:#777; margin-bottom:10px; line-height:1.7;">
+                            Start typing a condition name to search and select it.
                             Bleeding Disorders, Infectious Diseases, and Cancer
                             are marked as 🚩 Red Flag automatically.
                         </div>
@@ -1964,17 +2219,40 @@
             @Html.AntiForgeryToken()
             <input type="hidden" id="editConditionID" name="ConditionID" />
             <div style="margin-bottom:12px;">
-                <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">Condition Name</label>
-                <input type="text"
-                       id="editConditionName"
-                       name="ConditionName"
-                       oninput="applyEditConditionAutoFlag()"
-                       style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 12px; font-size:13px; box-sizing:border-box;" />
+
+                <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">
+                    Condition Name
+                </label>
+
+                <div class="condition-search-wrapper">
+
+                    <input type="text"
+                           id="editConditionName"
+                           name="ConditionName"
+                           class="condition-name-input"
+                           data-suggestions-id="editConditionSuggestions"
+                           autocomplete="off"
+                           style="width:100%; border:1px solid #ddd; border-radius:5px; padding:8px 38px 8px 12px; font-size:13px; box-sizing:border-box;"
+                           placeholder="Start typing a condition name..." />
+
+                    <span class="condition-search-icon"
+                          aria-hidden="true">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+
+                    <div id="editConditionSuggestions"
+                         class="condition-suggestions"
+                         role="listbox"
+                         aria-label="Condition suggestions">
+                    </div>
+
+                </div>
 
                 <div id="editConditionAutomaticHint"
                      class="automatic-condition-hint">
                     🚩 This condition is an automatic Red Flag.
                 </div>
+
             </div>
             <div style="margin-bottom:12px;">
                 <label style="font-size:12px; font-weight:600; color:#555; display:block; margin-bottom:5px;">Year of Diagnosis</label>
@@ -2148,409 +2426,410 @@
 
 @section Scripts {
 
-    <script src="~/Patientjs/Patient-details.js"></script>
+    @* asp-append-version prevents the browser from using an old cached JavaScript file. *@
+    <script src="~/Patientjs/Patient-details.js" asp-append-version="true"></script>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
 
-        // =====================================================
-        // CLOSED VISIT: all tabs remain visible, but data is view only
-        // =====================================================
-
-        const isReadOnly =
-        @isReadOnly.ToString().ToLower();
-
-        // =====================================================
-        // VISIT REVIEW
-        // عند اختيار Changes reported يتم وضع تاريخ اليوم تلقائياً.
-        // حقل التاريخ readonly لذلك لا يمكن تغييره يدوياً.
-        // =====================================================
-
-        const changesReportedRadio =
-        document.getElementById(
-        "changesReportedRadio"
-        );
-
-        const reviewDateInput =
-        document.getElementById(
-        "reviewDateInput"
-        );
-
-        function getLocalTodayDate() {
-
-        const todayDate =
-        new Date();
-
-        const year =
-        todayDate.getFullYear();
-
-        const month =
-        String(
-        todayDate.getMonth() + 1
-        ).padStart(
-        2,
-        "0"
-        );
-
-        const day =
-        String(
-        todayDate.getDate()
-        ).padStart(
-        2,
-        "0"
-        );
-
-        return (
-        year
-        +
-        "-"
-        +
-        month
-        +
-        "-"
-        +
-        day
-        );
-        }
-
-        if (
-        changesReportedRadio
-        &&
-        reviewDateInput
-        ) {
-
-        changesReportedRadio.addEventListener(
-        "change",
-        function () {
-
-        if (
-        this.checked
-        &&
-        !isReadOnly
-        ) {
-        reviewDateInput.value =
-        getLocalTodayDate();
-        }
-        }
-        );
-        }
-
-        if (isReadOnly) {
-
-        const readOnlyRoots = [
-        document.getElementById("patientVisitContent"),
-        document.getElementById("conditionModal"),
-        document.getElementById("editConditionModal"),
-        document.getElementById("medicationModal"),
-        document.getElementById("editMedicationModal")
-        ].filter(Boolean);
-
-        function isViewOnlyButton(button) {
-
-        const text =
-        (button.textContent || "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .toLowerCase();
-
-        return button.matches(
-        ".btn-close, [data-bs-dismiss='modal'], [data-readonly-allow='true']"
-        )
-        || text === "details"
-        || text === "view"
-        || text.startsWith("view ")
-        || text.includes("preview")
-        || text === "close"
-        || text === "×"
-        || text === "✕";
-        }
-
-        readOnlyRoots.forEach(function (root) {
-
-        root.querySelectorAll(
-        "input:not([type='hidden']), textarea, select"
-        )
-        .forEach(function (element) {
-        element.disabled = true;
-        });
-
-        root.querySelectorAll(
-        "button, input[type='button'], input[type='submit']"
-        )
-        .forEach(function (button) {
-
-        if (isViewOnlyButton(button)) {
-        return;
-        }
-
-        button.disabled = true;
-        button.setAttribute("aria-disabled", "true");
-        button.classList.add("readonly-disabled-action");
-        });
-
-        root.querySelectorAll("form")
-        .forEach(function (form) {
-
-        form.addEventListener(
-        "submit",
-        function (event) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        },
-        true
-        );
-        });
-        });
-        }
-
-
-        // =====================================================
-        // 1. رابط Dental Charting
-        // يمنع أي JavaScript قديم من اعتباره Tab داخلي
-        // =====================================================
-
-        const dentalChartLink =
-        document.getElementById("dentalChartLink");
-
-        if (dentalChartLink) {
-
-        dentalChartLink.addEventListener(
-        "click",
-        function (event) {
-
-        event.preventDefault();
-
-        // منع أي Event قديم موجود داخل Patient-details.js
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-
-        const chartUrl =
-        dentalChartLink.getAttribute("href");
-
-        if (
-        chartUrl &&
-        chartUrl !== "#" &&
-        chartUrl !== "javascript:void(0)"
-        ) {
-        window.open(
-        chartUrl,
-        "_blank",
-        "noopener,noreferrer"
-        );
-        }
-        },
-        true
-        );
-        }
-
-        // =====================================================
-        // 2. روابط التبويبات الداخلية فقط
-        // Dental Charting لا يحتوي data-target
-        // لذلك لن يدخل هنا
-        // =====================================================
-
-        const sidebarLinks =
-        document.querySelectorAll(
-        "#sidebar .sidebar-link[data-target]"
-        );
-
-        const contentSections =
-        document.querySelectorAll(".content-section");
-
-        const sectionTitle =
-        document.getElementById(
-        "content-section-title"
-        );
-
-        const sectionTitles = {
-        "medical-history": "MEDICAL HISTORY",
-        "dental-history": "DENTAL HISTORY",
-        "social-history": "SOCIAL HISTORY",
-        "extraoral-exam": "EXTRAORAL EXAM",
-        "intraoral-exam": "INTRAORAL EXAM",
-        "treatment-plan": "TREATMENT PLAN",
-        "todays-visit": "VISITS",
-        "notes": "NOTES",
-        "radiographs": "RADIOGRAPHS",
-        "photos": "PHOTOS",
-        "competencies": "COMPETENCIES",
-        "orders": "ORDERS"
-        };
-
-        // =====================================================
-        // 3. فتح Tab داخلي
-        // =====================================================
-
-        function openPatientTab(targetName, updateUrl) {
-
-        // منع undefined أو tab غير موجود
-        if (
-        !targetName ||
-        targetName === "undefined" ||
-        targetName === "null"
-        ) {
-        targetName = "medical-history";
-        }
-
-        const targetSection =
-        document.getElementById(targetName);
-
-        if (!targetSection) {
-        console.error(
-        "The requested content section was not found:",
-        targetName
-        );
-
-        targetName = "medical-history";
-        }
-
-        const validTargetSection =
-        document.getElementById(targetName);
-
-        if (!validTargetSection) {
-        return;
-        }
-
-        // إخفاء جميع الأقسام
-        contentSections.forEach(function (section) {
-        section.classList.remove("active");
-        });
-
-        // إزالة حالة Active من جميع الروابط الداخلية
-        sidebarLinks.forEach(function (link) {
-        link.classList.remove("tab-active");
-        });
-
-        // إظهار القسم المطلوب
-        validTargetSection.classList.add("active");
-
-        // تحديد الرابط المختار
-        const selectedLink =
-        Array.from(sidebarLinks).find(
-        function (link) {
-        return link.getAttribute(
-        "data-target"
-        ) === targetName;
-        }
-        );
-
-        if (selectedLink) {
-        selectedLink.classList.add(
-        "tab-active"
-        );
-        }
-
-        // تغيير عنوان القسم
-        if (sectionTitle) {
-        sectionTitle.textContent =
-        sectionTitles[targetName] ||
-        targetName
-        .replaceAll("-", " ")
-        .toUpperCase();
-        }
-
-        // تحديث URL بدون Reload
-        if (updateUrl === true) {
-
-        const currentUrl =
-        new URL(window.location.href);
-
-        currentUrl.searchParams.set(
-        "tab",
-        targetName
-        );
-
-        window.history.replaceState(
-        {},
-        "",
-        currentUrl.toString()
-        );
-        }
-        }
-
-        // =====================================================
-        // 4. معالجة الضغط على التبويبات الداخلية
-        // =====================================================
-
-        sidebarLinks.forEach(function (link) {
-
-        link.addEventListener(
-        "click",
-        function (event) {
-
-        const targetName =
-        link.getAttribute(
-        "data-target"
-        );
-
-        // هذا الشرط يمنع tab=undefined
-        if (
-        !targetName ||
-        targetName === "undefined"
-        ) {
-        return;
-        }
-
-        // منع فتح التبويب إذا كان مقفلًا
-        if (
-        link.classList.contains(
-        "disabled-link"
-        )
-        ) {
-        event.preventDefault();
-        return;
-        }
-
-        event.preventDefault();
-
-        openPatientTab(
-        targetName,
-        true
-        );
-        }
-        );
-        });
-
-        // =====================================================
-        // 5. فتح التبويب الموجود في URL عند تحميل الصفحة
-        // =====================================================
-
-        const queryParameters =
-        new URLSearchParams(
-        window.location.search
-        );
-
-        let initialTab =
-        queryParameters.get("tab");
-
-        // تنظيف tab=undefined أو قيمة غير صحيحة
-        if (
-        !initialTab ||
-        initialTab === "undefined" ||
-        initialTab === "null" ||
-        !document.getElementById(initialTab)
-        ) {
-        initialTab = "medical-history";
-
-        const cleanUrl =
-        new URL(window.location.href);
-
-        cleanUrl.searchParams.set(
-        "tab",
-        initialTab
-        );
-
-        window.history.replaceState(
-        {},
-        "",
-        cleanUrl.toString()
-        );
-        }
-
-        openPatientTab(
-        initialTab,
-        false
-        );
+            // =====================================================
+            // CLOSED VISIT: all tabs remain visible, but data is view only
+            // =====================================================
+
+            const isReadOnly =
+                @isReadOnly.ToString().ToLower();
+
+            // =====================================================
+            // VISIT REVIEW
+            // عند اختيار Changes reported يتم وضع تاريخ اليوم تلقائياً.
+            // حقل التاريخ readonly لذلك لا يمكن تغييره يدوياً.
+            // =====================================================
+
+            const changesReportedRadio =
+                document.getElementById(
+                    "changesReportedRadio"
+                );
+
+            const reviewDateInput =
+                document.getElementById(
+                    "reviewDateInput"
+                );
+
+            function getLocalTodayDate() {
+
+                const todayDate =
+                    new Date();
+
+                const year =
+                    todayDate.getFullYear();
+
+                const month =
+                    String(
+                        todayDate.getMonth() + 1
+                    ).padStart(
+                        2,
+                        "0"
+                    );
+
+                const day =
+                    String(
+                        todayDate.getDate()
+                    ).padStart(
+                        2,
+                        "0"
+                    );
+
+                return (
+                    year
+                    +
+                    "-"
+                    +
+                    month
+                    +
+                    "-"
+                    +
+                    day
+                );
+            }
+
+            if (
+                changesReportedRadio
+                &&
+                reviewDateInput
+            ) {
+
+                changesReportedRadio.addEventListener(
+                    "change",
+                    function () {
+
+                        if (
+                            this.checked
+                            &&
+                            !isReadOnly
+                        ) {
+                            reviewDateInput.value =
+                                getLocalTodayDate();
+                        }
+                    }
+                );
+            }
+
+            if (isReadOnly) {
+
+                const readOnlyRoots = [
+                    document.getElementById("patientVisitContent"),
+                    document.getElementById("conditionModal"),
+                    document.getElementById("editConditionModal"),
+                    document.getElementById("medicationModal"),
+                    document.getElementById("editMedicationModal")
+                ].filter(Boolean);
+
+                function isViewOnlyButton(button) {
+
+                    const text =
+                        (button.textContent || "")
+                            .replace(/\s+/g, " ")
+                            .trim()
+                            .toLowerCase();
+
+                    return button.matches(
+                        ".btn-close, [data-bs-dismiss='modal'], [data-readonly-allow='true']"
+                    )
+                        || text === "details"
+                        || text === "view"
+                        || text.startsWith("view ")
+                        || text.includes("preview")
+                        || text === "close"
+                        || text === "×"
+                        || text === "✕";
+                }
+
+                readOnlyRoots.forEach(function (root) {
+
+                    root.querySelectorAll(
+                        "input:not([type='hidden']), textarea, select"
+                    )
+                        .forEach(function (element) {
+                            element.disabled = true;
+                        });
+
+                    root.querySelectorAll(
+                        "button, input[type='button'], input[type='submit']"
+                    )
+                        .forEach(function (button) {
+
+                            if (isViewOnlyButton(button)) {
+                                return;
+                            }
+
+                            button.disabled = true;
+                            button.setAttribute("aria-disabled", "true");
+                            button.classList.add("readonly-disabled-action");
+                        });
+
+                    root.querySelectorAll("form")
+                        .forEach(function (form) {
+
+                            form.addEventListener(
+                                "submit",
+                                function (event) {
+                                    event.preventDefault();
+                                    event.stopImmediatePropagation();
+                                },
+                                true
+                            );
+                        });
+                });
+            }
+
+
+            // =====================================================
+            // 1. رابط Dental Charting
+            // يمنع أي JavaScript قديم من اعتباره Tab داخلي
+            // =====================================================
+
+            const dentalChartLink =
+                document.getElementById("dentalChartLink");
+
+            if (dentalChartLink) {
+
+                dentalChartLink.addEventListener(
+                    "click",
+                    function (event) {
+
+                        event.preventDefault();
+
+                        // منع أي Event قديم موجود داخل Patient-details.js
+                        event.stopPropagation();
+                        event.stopImmediatePropagation();
+
+                        const chartUrl =
+                            dentalChartLink.getAttribute("href");
+
+                        if (
+                            chartUrl &&
+                            chartUrl !== "#" &&
+                            chartUrl !== "javascript:void(0)"
+                        ) {
+                            window.open(
+                                chartUrl,
+                                "_blank",
+                                "noopener,noreferrer"
+                            );
+                        }
+                    },
+                    true
+                );
+            }
+
+            // =====================================================
+            // 2. روابط التبويبات الداخلية فقط
+            // Dental Charting لا يحتوي data-target
+            // لذلك لن يدخل هنا
+            // =====================================================
+
+            const sidebarLinks =
+                document.querySelectorAll(
+                    "#sidebar .sidebar-link[data-target]"
+                );
+
+            const contentSections =
+                document.querySelectorAll(".content-section");
+
+            const sectionTitle =
+                document.getElementById(
+                    "content-section-title"
+                );
+
+            const sectionTitles = {
+                "medical-history": "MEDICAL HISTORY",
+                "dental-history": "DENTAL HISTORY",
+                "social-history": "SOCIAL HISTORY",
+                "extraoral-exam": "EXTRAORAL EXAM",
+                "intraoral-exam": "INTRAORAL EXAM",
+                "treatment-plan": "TREATMENT PLAN",
+                "todays-visit": "VISITS",
+                "notes": "NOTES",
+                "radiographs": "RADIOGRAPHS",
+                "photos": "PHOTOS",
+                "competencies": "COMPETENCIES",
+                "orders": "ORDERS"
+            };
+
+            // =====================================================
+            // 3. فتح Tab داخلي
+            // =====================================================
+
+            function openPatientTab(targetName, updateUrl) {
+
+                // منع undefined أو tab غير موجود
+                if (
+                    !targetName ||
+                    targetName === "undefined" ||
+                    targetName === "null"
+                ) {
+                    targetName = "medical-history";
+                }
+
+                const targetSection =
+                    document.getElementById(targetName);
+
+                if (!targetSection) {
+                    console.error(
+                        "The requested content section was not found:",
+                        targetName
+                    );
+
+                    targetName = "medical-history";
+                }
+
+                const validTargetSection =
+                    document.getElementById(targetName);
+
+                if (!validTargetSection) {
+                    return;
+                }
+
+                // إخفاء جميع الأقسام
+                contentSections.forEach(function (section) {
+                    section.classList.remove("active");
+                });
+
+                // إزالة حالة Active من جميع الروابط الداخلية
+                sidebarLinks.forEach(function (link) {
+                    link.classList.remove("tab-active");
+                });
+
+                // إظهار القسم المطلوب
+                validTargetSection.classList.add("active");
+
+                // تحديد الرابط المختار
+                const selectedLink =
+                    Array.from(sidebarLinks).find(
+                        function (link) {
+                            return link.getAttribute(
+                                "data-target"
+                            ) === targetName;
+                        }
+                    );
+
+                if (selectedLink) {
+                    selectedLink.classList.add(
+                        "tab-active"
+                    );
+                }
+
+                // تغيير عنوان القسم
+                if (sectionTitle) {
+                    sectionTitle.textContent =
+                        sectionTitles[targetName] ||
+                        targetName
+                            .replaceAll("-", " ")
+                            .toUpperCase();
+                }
+
+                // تحديث URL بدون Reload
+                if (updateUrl === true) {
+
+                    const currentUrl =
+                        new URL(window.location.href);
+
+                    currentUrl.searchParams.set(
+                        "tab",
+                        targetName
+                    );
+
+                    window.history.replaceState(
+                        {},
+                        "",
+                        currentUrl.toString()
+                    );
+                }
+            }
+
+            // =====================================================
+            // 4. معالجة الضغط على التبويبات الداخلية
+            // =====================================================
+
+            sidebarLinks.forEach(function (link) {
+
+                link.addEventListener(
+                    "click",
+                    function (event) {
+
+                        const targetName =
+                            link.getAttribute(
+                                "data-target"
+                            );
+
+                        // هذا الشرط يمنع tab=undefined
+                        if (
+                            !targetName ||
+                            targetName === "undefined"
+                        ) {
+                            return;
+                        }
+
+                        // منع فتح التبويب إذا كان مقفلًا
+                        if (
+                            link.classList.contains(
+                                "disabled-link"
+                            )
+                        ) {
+                            event.preventDefault();
+                            return;
+                        }
+
+                        event.preventDefault();
+
+                        openPatientTab(
+                            targetName,
+                            true
+                        );
+                    }
+                );
+            });
+
+            // =====================================================
+            // 5. فتح التبويب الموجود في URL عند تحميل الصفحة
+            // =====================================================
+
+            const queryParameters =
+                new URLSearchParams(
+                    window.location.search
+                );
+
+            let initialTab =
+                queryParameters.get("tab");
+
+            // تنظيف tab=undefined أو قيمة غير صحيحة
+            if (
+                !initialTab ||
+                initialTab === "undefined" ||
+                initialTab === "null" ||
+                !document.getElementById(initialTab)
+            ) {
+                initialTab = "medical-history";
+
+                const cleanUrl =
+                    new URL(window.location.href);
+
+                cleanUrl.searchParams.set(
+                    "tab",
+                    initialTab
+                );
+
+                window.history.replaceState(
+                    {},
+                    "",
+                    cleanUrl.toString()
+                );
+            }
+
+            openPatientTab(
+                initialTab,
+                false
+            );
         });
     </script>
 }
