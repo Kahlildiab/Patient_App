@@ -931,8 +931,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
                 patient.AppointmentTime =
                     scheduledAppointment.TimeFrom.Hours >= 12
-                        ? "13:00"
-                        : "09:00";
+                        ? "PM"
+                        : "AM";
             }
             else
             {
@@ -951,8 +951,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     storedTime == "13:00"
                     ||
                     storedTime == "PM|13:00"
-                        ? "13:00"
-                        : "09:00";
+                        ? "PM"
+                        : "AM";
             }
 
             return View(patient);
@@ -1047,6 +1047,15 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     ? "13:00"
                     : "09:00";
 
+            /*
+             * قيمة العرض يجب أن تطابق قيم أزرار الراديو
+             * الموجودة في Edit.cshtml: AM أو PM.
+             */
+            string appointmentPeriodForView =
+                isEveningAppointment
+                    ? "PM"
+                    : "AM";
+
             TimeSpan newTimeFrom =
                 isEveningAppointment
                     ? new TimeSpan(13, 0, 0)
@@ -1121,16 +1130,36 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             if (!ModelState.IsValid)
             {
+                patient.ProfilePhotoPath =
+                    existingPatient.ProfilePhotoPath;
+
                 patient.AppointmentTime =
-                    normalizedAppointmentTime;
+                    appointmentPeriodForView;
+
+                ViewBag.IsVisitClosed =
+                    latestVisit != null
+                    &&
+                    latestVisit.IsClosed;
+
+                ViewBag.IsAdmin =
+                    isAdmin;
+
+                ViewBag.IsReadOnly =
+                    false;
 
                 return View(patient);
             }
 
-            await using var transaction =
-                await _context.Database
-                    .BeginTransactionAsync();
-
+            /*
+             * لا نستخدم BeginTransactionAsync هنا.
+             *
+             * Program.cs يحتوي على EnableRetryOnFailure، ولذلك
+             * SqlServerRetryingExecutionStrategy لا يدعم Transaction
+             * يدوية خارج CreateExecutionStrategy.
+             *
+             * يوجد SaveChangesAsync واحد فقط في هذه العملية،
+             * وEF Core ينفذه داخل Transaction تلقائية.
+             */
             try
             {
                 /*
@@ -1254,14 +1283,23 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                             "Only JPG or PNG files are supported."
                         );
 
-                        await transaction.RollbackAsync();
-
                         patient.ProfilePhotoPath =
                             existingPatient
                                 .ProfilePhotoPath;
 
                         patient.AppointmentTime =
-                            normalizedAppointmentTime;
+                            appointmentPeriodForView;
+
+                        ViewBag.IsVisitClosed =
+                            latestVisit != null
+                            &&
+                            latestVisit.IsClosed;
+
+                        ViewBag.IsAdmin =
+                            isAdmin;
+
+                        ViewBag.IsReadOnly =
+                            false;
 
                         return View(patient);
                     }
@@ -1277,14 +1315,23 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                             "Image size must be less than 2MB."
                         );
 
-                        await transaction.RollbackAsync();
-
                         patient.ProfilePhotoPath =
                             existingPatient
                                 .ProfilePhotoPath;
 
                         patient.AppointmentTime =
-                            normalizedAppointmentTime;
+                            appointmentPeriodForView;
+
+                        ViewBag.IsVisitClosed =
+                            latestVisit != null
+                            &&
+                            latestVisit.IsClosed;
+
+                        ViewBag.IsAdmin =
+                            isAdmin;
+
+                        ViewBag.IsReadOnly =
+                            false;
 
                         return View(patient);
                     }
@@ -1420,8 +1467,6 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
                 await _context.SaveChangesAsync();
 
-                await transaction.CommitAsync();
-
                 string formattedTime =
                     DateTime.Today
                         .Add(newTimeFrom)
@@ -1448,21 +1493,111 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     "Home"
                 );
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
-                await transaction.RollbackAsync();
-
                 if (!PatientExists(id))
                 {
                     return NotFound();
                 }
 
-                throw;
+                Console.WriteLine(
+                    "Patient edit concurrency error: "
+                    + ex
+                );
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "The patient record was modified by another user. "
+                    + "Please refresh the page and try again."
+                );
+
+                patient.ProfilePhotoPath =
+                    existingPatient.ProfilePhotoPath;
+
+                patient.AppointmentTime =
+                    appointmentPeriodForView;
+
+                ViewBag.IsVisitClosed =
+                    latestVisit != null
+                    &&
+                    latestVisit.IsClosed;
+
+                ViewBag.IsAdmin =
+                    isAdmin;
+
+                ViewBag.IsReadOnly =
+                    false;
+
+                return View(patient);
             }
-            catch
+            catch (DbUpdateException ex)
             {
-                await transaction.RollbackAsync();
-                throw;
+                string databaseError =
+                    ex.InnerException?.Message
+                    ??
+                    ex.Message;
+
+                Console.WriteLine(
+                    "Patient edit database error: "
+                    + ex
+                );
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Database error while updating the patient appointment: "
+                    + databaseError
+                );
+
+                patient.ProfilePhotoPath =
+                    existingPatient.ProfilePhotoPath;
+
+                patient.AppointmentTime =
+                    appointmentPeriodForView;
+
+                ViewBag.IsVisitClosed =
+                    latestVisit != null
+                    &&
+                    latestVisit.IsClosed;
+
+                ViewBag.IsAdmin =
+                    isAdmin;
+
+                ViewBag.IsReadOnly =
+                    false;
+
+                return View(patient);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    "Patient edit error: "
+                    + ex
+                );
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "An error occurred while updating the patient: "
+                    + ex.Message
+                );
+
+                patient.ProfilePhotoPath =
+                    existingPatient.ProfilePhotoPath;
+
+                patient.AppointmentTime =
+                    appointmentPeriodForView;
+
+                ViewBag.IsVisitClosed =
+                    latestVisit != null
+                    &&
+                    latestVisit.IsClosed;
+
+                ViewBag.IsAdmin =
+                    isAdmin;
+
+                ViewBag.IsReadOnly =
+                    false;
+
+                return View(patient);
             }
         }
 

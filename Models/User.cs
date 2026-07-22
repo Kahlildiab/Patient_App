@@ -22,7 +22,7 @@ namespace DentalCollegeManagementSystem_AAU.Models
         public string Email { get; set; } = string.Empty;
 
         [StringLength(15)]
-        public string? PhoneNumber { get; set; }
+        public string PhoneNumber { get; set; }
 
         [Required]
         public string UserRole { get; set; } = "Reception";

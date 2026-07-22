@@ -1033,57 +1033,141 @@
             justify-content: center;
         }
     }
+
+    main.container > * {
+        max-width: 150%;
+    }
 </style>
 
 
 <!-- ===== GLOBAL SEARCH ===== -->
-<div class="ap-search-shell">
-    <div class="ap-search-inner">
+<div style="
+    background:#e9e8e8;
+    width:100vw;
+    position:relative;
+    left:50%;
+    right:50%;
+    margin-left:-50vw;
+    margin-right:-50vw;
+    padding:30px 40px;
+    box-sizing:border-box;">
 
-        <div class="ap-search-heading">
-            <span class="ap-search-gold-line"></span>
+    <div style="max-width:1300px; margin:0 auto;">
 
-            <h1 class="ap-search-main-title">
-                SEARCH
+        <!-- SEARCH TITLE -->
+        <section id="title-wrapper"
+                 style="justify-content:flex-start;">
+
+            <div class="lineright"
+                 style="
+                display:block;
+                background-color:#daa328;
+                max-width:650px;">
+            </div>
+
+            <h1 class="sectiontitle heading6">
+                <p style="text-align:left;">
+                    <span style="color:#252468;">
+                        SEARCH
+                    </span>
+                </p>
             </h1>
-        </div>
+        </section>
 
+        <br />
+
+        <!-- SEARCH FORM -->
         <form id="apSearchForm"
-              class="ap-search-form"
               autocomplete="off">
 
-            <div class="ap-search-white-box">
-                <div class="ap-search-field-row">
+            <div style="
+                background:#ffffff;
+                padding:16px 20px;">
 
-                    <label for="apGlobalSearch"
-                           class="ap-search-field-label">
-                        Search Pending Approvals
-                    </label>
+                <div class="row align-items-center mb-3">
 
-                    <div class="ap-search-input-wrap">
-                        <span class="ap-search-icon"
-                              aria-hidden="true">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                        </span>
+                    <!-- LABEL -->
+                    <div class="col-md-2">
+                        <label for="apGlobalSearch"
+                               style="
+                            font-weight:600;
+                            font-size:13px;
+                            color:#252468;
+                            margin:0;">
 
-                        <input type="search"
-                               id="apGlobalSearch"
-                               class="ap-search-input"
-                               placeholder="Search by patient, student, note, visit, procedure, order or date..."
-                               autocomplete="off" />
+                            Search Pending Approvals
+                        </label>
                     </div>
 
-                    <button type="button"
-                            id="apClearSearch"
-                            class="ap-search-clear">
-                        Clear
-                    </button>
+                    <!-- SEARCH INPUT -->
+                    <div class="col-md-8">
+                        <div style="position:relative;">
+
+                            <span aria-hidden="true"
+                                  style="
+                                position:absolute;
+                                left:13px;
+                                top:50%;
+                                transform:translateY(-50%);
+                                color:#7b86a6;
+                                z-index:2;
+                                pointer-events:none;">
+
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+
+                            <input type="search"
+                                   id="apGlobalSearch"
+                                   placeholder="Search by patient, student, note, visit, procedure, order or date..."
+                                   autocomplete="off"
+                                   class="form-control"
+                                   style="
+                            width:100%;
+                            height:40px;
+                            border:1px solid #dddddd;
+                            border-radius:0;
+                            padding-left:40px;
+                            box-sizing:border-box;" />
+                        </div>
+                    </div>
+
+                    <!-- CLEAR BUTTON -->
+                    <div class="col-md-2">
+                        <button type="button"
+                                id="apClearSearch"
+                                style="
+                            width:100%;
+                            height:40px;
+                            background:#f8f8f8;
+                            color:#252468;
+                            border:1px solid #dddddd;
+                            border-radius:0;
+                            font-size:13px;
+                            font-weight:600;
+                            cursor:pointer;">
+
+                            Clear
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="ap-search-submit-wrap">
+            <!-- SEARCH BUTTON -->
+            <div style="text-align:center;">
+
                 <button type="submit"
-                        class="ap-search-submit">
+                        style="
+                    width:90%;
+                    background:#c81589;
+                    color:#ffffff;
+                    border:none;
+                    padding:12px;
+                    font-size:15px;
+                    font-weight:600;
+                    cursor:pointer;
+                    margin-top:3px;
+                    letter-spacing:1px;">
+
                     Search
                     &nbsp;
                     <i class="fa-solid fa-magnifying-glass"></i>
@@ -1091,14 +1175,20 @@
             </div>
         </form>
 
+        <!-- SEARCH SUMMARY -->
         <div id="apSearchSummary"
-             class="ap-search-summary">
+             style="
+            margin-top:10px;
+            color:#6f7480;
+            font-size:12px;
+            text-align:center;">
+
             Showing all pending records. Each section displays 5 records per page.
         </div>
     </div>
 </div>
 
-
+<br />
 <!-- ===== STUDENT NOTES ===== -->
 <div class="ap-section">
     <div class="ap-section-header">

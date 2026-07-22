@@ -1,79 +1,219 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using System;
-using System.DirectoryServices;
+﻿using System;
 using System.DirectoryServices.AccountManagement;
 
-public class ActiveDirectoryValidator
+namespace DentalCollegeManagementSystem_AAU.Services
 {
-    private string _ldapPath;
-    private string _filterAttribute;
-
-    public ActiveDirectoryValidator(string ldapPath)
+    public class ActiveDirectoryValidator
     {
-        _ldapPath = ldapPath;
-    }
+        private readonly string _ldapPath;
+        private string? _filterAttribute;
 
-    public bool IsAuthenticated(string domainName, string userName, string password)
-    {
-        try
+        public ActiveDirectoryValidator(string ldapPath)
         {
-            using (PrincipalContext context = new PrincipalContext(ContextType.Domain, domainName))
+            if (string.IsNullOrWhiteSpace(ldapPath))
             {
-                bool isValid = context.ValidateCredentials(userName, password);
-                if (!isValid) return false;
+                throw new ArgumentException(
+                    "Active Directory server/path cannot be empty.",
+                    nameof(ldapPath));
+            }
 
-                // Optionally, you can get the user details
-                //using (UserPrincipal user = UserPrincipal.FindByIdentity(context, userName))
-                //{
-                //    if (user == null)
-                //        return false;
+            _ldapPath = ldapPath;
+        }
 
-                //    _filterAttribute = user.DisplayName; // or user.Name, user.GivenName, etc.
-                //    _ldapPath = user.DistinguishedName;
-                //}
-                return true;
+        // =====================================================
+        // AUTHENTICATE USER
+        // =====================================================
+
+        public bool IsAuthenticated(
+            string domainName,
+            string userName,
+            string password)
+        {
+            if (string.IsNullOrWhiteSpace(domainName))
+            {
+                throw new ArgumentException(
+                    "Active Directory domain name is empty.",
+                    nameof(domainName));
+            }
+
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                throw new ArgumentException(
+                    "Active Directory username is empty.",
+                    nameof(userName));
+            }
+
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                return false;
+            }
+
+            string normalizedUserName =
+                NormalizeUserName(userName);
+
+            try
+            {
+                /*
+                 * نفس المشروع الذي يعمل لديك:
+                 * الاتصال باستخدام اسم الدومين.
+                 */
+                using (PrincipalContext context =
+                       new PrincipalContext(
+                           ContextType.Domain,
+                           domainName))
+                {
+                    return context.ValidateCredentials(
+                        normalizedUserName,
+                        password);
+                }
+            }
+            catch (PrincipalServerDownException)
+            {
+                /*
+                 * مهم:
+                 * لا نخفي نوع الخطأ الأصلي.
+                 * Controller سيعرض الخطأ الحقيقي.
+                 */
+                throw;
+            }
+            catch (PrincipalOperationException)
+            {
+                throw;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
-        catch (Exception ex)
-        {
-            throw new Exception("Login Error: " + ex.Message);
-        }
-    }
 
-    public string GetGivenName(string domainName, string userName, string password)
-    {
-        try
+        // =====================================================
+        // GET GIVEN NAME
+        // =====================================================
+
+        public string GetGivenName(
+            string domainName,
+            string userName,
+            string password)
         {
-            using (PrincipalContext context = new PrincipalContext(ContextType.Domain, domainName, userName, password))
-            using (UserPrincipal user = UserPrincipal.FindByIdentity(context, userName))
+            string normalizedUserName =
+                NormalizeUserName(userName);
+
+            using (PrincipalContext context =
+                   new PrincipalContext(
+                       ContextType.Domain,
+                       domainName,
+                       normalizedUserName,
+                       password))
+            using (UserPrincipal? user =
+                   UserPrincipal.FindByIdentity(
+                       context,
+                       IdentityType.SamAccountName,
+                       normalizedUserName))
             {
-                return user?.GivenName ?? "No given name found";
+                if (user == null)
+                {
+                    return string.Empty;
+                }
+
+                _filterAttribute =
+                    user.DisplayName;
+
+                return user.GivenName
+                    ?? string.Empty;
             }
         }
-        catch (Exception ex)
-        {
-            return "Error: " + ex.Message;
-        }
-    }
 
-    public string GetLastName(string domainName, string userName, string password)
-    {
-        try
+        // =====================================================
+        // GET LAST NAME
+        // =====================================================
+
+        public string GetLastName(
+            string domainName,
+            string userName,
+            string password)
         {
-            using (PrincipalContext context = new PrincipalContext(ContextType.Domain, domainName, userName, password))
-            using (UserPrincipal user = UserPrincipal.FindByIdentity(context, userName))
+            string normalizedUserName =
+                NormalizeUserName(userName);
+
+            using (PrincipalContext context =
+                   new PrincipalContext(
+                       ContextType.Domain,
+                       domainName,
+                       normalizedUserName,
+                       password))
+            using (UserPrincipal? user =
+                   UserPrincipal.FindByIdentity(
+                       context,
+                       IdentityType.SamAccountName,
+                       normalizedUserName))
             {
-                return user?.Surname ?? "No surname found";
+                if (user == null)
+                {
+                    return string.Empty;
+                }
+
+                return user.Surname
+                    ?? string.Empty;
             }
         }
-        catch (Exception ex)
-        {
-            return "Error: " + ex.Message;
-        }
-    }
 
-    public string FilterAttribute => _filterAttribute;
-    public string LdapPath => _ldapPath;
+        // =====================================================
+        // NORMALIZE USERNAME
+        // =====================================================
+
+        private static string NormalizeUserName(
+            string userName)
+        {
+            string result =
+                userName?.Trim() ?? string.Empty;
+
+            /*
+             * AMMAN\2141
+             * becomes:
+             * 2141
+             */
+            int slashIndex =
+                result.LastIndexOf('\\');
+
+            if (slashIndex >= 0 &&
+                slashIndex < result.Length - 1)
+            {
+                result =
+                    result.Substring(
+                        slashIndex + 1);
+            }
+
+            /*
+             * 2141@AMMAN.LOCAL
+             * becomes:
+             * 2141
+             */
+            int atIndex =
+                result.IndexOf('@');
+
+            if (atIndex > 0)
+            {
+                result =
+                    result.Substring(
+                        0,
+                        atIndex);
+            }
+
+            return result.Trim();
+        }
+
+        // =====================================================
+        // PROPERTIES
+        // =====================================================
+
+        public string FilterAttribute =>
+            _filterAttribute ?? string.Empty;
+
+        public string LdapPath =>
+            _ldapPath;
+    }
 }
-
-

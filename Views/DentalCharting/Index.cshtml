@@ -398,9 +398,9 @@
         display: block;
         cursor: pointer;
         /*
-                                                                    Bridge and Space Maintainer connector lines extend slightly
-                                                                    outside the SVG so adjacent teeth can be visually connected.
-                                                                */
+                                                                        Bridge and Space Maintainer connector lines extend slightly
+                                                                        outside the SVG so adjacent teeth can be visually connected.
+                                                                    */
         overflow: visible;
     }
 
@@ -649,9 +649,9 @@
         }
 
     /*
-                                                        نخفي السن مع الاحتفاظ بمكانه داخل Grid،
-                                                        حتى تبقى الأسنان 1-5 في مكانها الصحيح.
-                                                    */
+                                                            نخفي السن مع الاحتفاظ بمكانه داخل Grid،
+                                                            حتى تبقى الأسنان 1-5 في مكانها الصحيح.
+                                                        */
     .dentition-hidden {
         visibility: hidden !important;
         pointer-events: none !important;
@@ -659,8 +659,8 @@
 
 
     /* ═══════════════════════════════════════════════════════════════
-                           BPE — Basic Periodontal Examination
-                           ═══════════════════════════════════════════════════════════════ */
+                               BPE — Basic Periodontal Examination
+                               ═══════════════════════════════════════════════════════════════ */
     .bpe-section {
         margin-top: 22px;
         padding-top: 4px;
@@ -1128,7 +1128,7 @@
     const API_BASE = "/DentalChart/api";
 
     const IS_READ_ONLY =
-                @isReadOnly.ToString().ToLower();
+                    @isReadOnly.ToString().ToLower();
 
     function ensureDentalChartEditable() {
         if (!IS_READ_ONLY) {
@@ -1256,19 +1256,19 @@
         ];
 
         return `
-                    <div style="margin-bottom:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden;">
-                        <div style="padding:8px 12px;background:#f1f5f9;font-weight:bold;">
-                            BPE — Basic Periodontal Examination
-                        </div>
-                        <div style="display:grid;grid-template-columns:repeat(3,1fr);">
-                            ${cells.map((item, index) => `
-                                <div style="padding:10px;text-align:center;border-right:${index % 3 !== 2 ? "1px solid var(--line)" : "0"};border-bottom:${index < 3 ? "1px solid var(--line)" : "0"};">
-                                    <div style="font-size:12px;color:var(--muted);">${item[0]} (${item[1]})</div>
-                                    <div style="font-size:24px;font-weight:bold;margin-top:4px;">${escapeHtml(item[2])}</div>
-                                </div>
-                            `).join("")}
-                        </div>
-                    </div>`;
+                        <div style="margin-bottom:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden;">
+                            <div style="padding:8px 12px;background:#f1f5f9;font-weight:bold;">
+                                BPE — Basic Periodontal Examination
+                            </div>
+                            <div style="display:grid;grid-template-columns:repeat(3,1fr);">
+                                ${cells.map((item, index) => `
+                                    <div style="padding:10px;text-align:center;border-right:${index % 3 !== 2 ? "1px solid var(--line)" : "0"};border-bottom:${index < 3 ? "1px solid var(--line)" : "0"};">
+                                        <div style="font-size:12px;color:var(--muted);">${item[0]} (${item[1]})</div>
+                                        <div style="font-size:24px;font-weight:bold;margin-top:4px;">${escapeHtml(item[2])}</div>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>`;
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -1606,7 +1606,7 @@
             - المواضع 4 و5 تعرض بصريًا صور 6 و7 لتصبح D وE.
             - عند إزالة التشييك تعود دائمة 1-8.
         */
-        allTeeth.forEach(function (toothId) {
+        allTeeth.forEach(function(toothId) {
 
             if (canBeDeciduousTooth(toothId)) {
 
@@ -2943,28 +2943,28 @@
         switch (tool.glyph) {
             case "completeDenture":
                 return `
-                            border:4px double ${color};
-                            box-shadow:none;`;
+                                border:4px double ${color};
+                                box-shadow:none;`;
 
             case "ccDenture":
                 return `
-                            border:4px dashed ${color};
-                            box-shadow:none;`;
+                                border:4px dashed ${color};
+                                box-shadow:none;`;
 
             case "denture":
                 return `
-                            border:4px dotted ${color};
-                            box-shadow:none;`;
+                                border:4px dotted ${color};
+                                box-shadow:none;`;
 
             case "splint":
                 return `
-                            border:4px solid ${color};
-                            box-shadow:0 0 0 2px ${hexToRgba(color, 0.18)};`;
+                                border:4px solid ${color};
+                                box-shadow:0 0 0 2px ${hexToRgba(color, 0.18)};`;
 
             default:
                 return `
-                            border:4px solid ${color};
-                            box-shadow:none;`;
+                                border:4px solid ${color};
+                                box-shadow:none;`;
         }
     }
 
@@ -2992,15 +2992,15 @@
             : "6";
 
         return `
-                    <div class="jaw-wide-overlay"
-                         style="
-                            grid-column: 2 / span 16;
-                            grid-row: ${gridRow};
-                            align-self: center;
-                            justify-self: stretch;
-                            ${getJawWideOverlayVisual(usage.tool, color)}
-                         ">
-                    </div>`;
+                        <div class="jaw-wide-overlay"
+                             style="
+                                grid-column: 2 / span 16;
+                                grid-row: ${gridRow};
+                                align-self: center;
+                                justify-self: stretch;
+                                ${getJawWideOverlayVisual(usage.tool, color)}
+                             ">
+                        </div>`;
     }
 
     function getRootOnlyEndodonticMark(tid) {
@@ -3156,18 +3156,18 @@
             - narrow end = root side
         */
         return `
-                    <path d="
-                        M10.4 6.4
-                        Q16 4.9 21.6 6.4
-                        L18.6 26.8
-                        Q16 29.1 13.4 26.8
-                        Z"
-                        fill="url(#${patternId})"
-                        stroke="${color}"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"/>
-                `;
+                        <path d="
+                            M10.4 6.4
+                            Q16 4.9 21.6 6.4
+                            L18.6 26.8
+                            Q16 29.1 13.4 26.8
+                            Z"
+                            fill="url(#${patternId})"
+                            stroke="${color}"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"/>
+                    `;
     }
 
     function remainingRootOverlay(tid, arch) {
@@ -3206,41 +3206,41 @@
                 : "";
 
         return `
-                    <g class="remaining-root-icon"
-                       pointer-events="none"
-                       transform="translate(1.36,${iconTop}) scale(0.27)">
+                        <g class="remaining-root-icon"
+                           pointer-events="none"
+                           transform="translate(1.36,${iconTop}) scale(0.27)">
 
-                        <defs>
-                            ${glyphPattern(
+                            <defs>
+                                ${glyphPattern(
             patternId,
             "remainingRoot",
             color
         )}
-                        </defs>
+                            </defs>
 
-                        <g ${flipTransform
+                            <g ${flipTransform
                 ? `transform="${flipTransform}"`
                 : ""}>
 
-                            <!-- White halo keeps the icon clear over the tooth image -->
-                            <path d="
-                                M10.4 6.4
-                                Q16 4.9 21.6 6.4
-                                L18.6 26.8
-                                Q16 29.1 13.4 26.8
-                                Z"
-                                fill="none"
-                                stroke="#ffffff"
-                                stroke-width="3.0"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"/>
+                                <!-- White halo keeps the icon clear over the tooth image -->
+                                <path d="
+                                    M10.4 6.4
+                                    Q16 4.9 21.6 6.4
+                                    L18.6 26.8
+                                    Q16 29.1 13.4 26.8
+                                    Z"
+                                    fill="none"
+                                    stroke="#ffffff"
+                                    stroke-width="3.0"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"/>
 
-                            ${remainingRootGlyphBody(
+                                ${remainingRootGlyphBody(
                     color,
                     patternId
                 )}
-                        </g>
-                    </g>`;
+                            </g>
+                        </g>`;
     }
 
     /*
@@ -3260,13 +3260,13 @@
         const hideY = arch === "upper" ? splitY : 0;
 
         return `
-                    <rect x="0"
-                          y="${hideY}"
-                          width="11"
-                          height="${splitY}"
-                          fill="#ffffff"
-                          opacity="1"
-                          pointer-events="none"/>`;
+                        <rect x="0"
+                              y="${hideY}"
+                              width="11"
+                              height="${splitY}"
+                              fill="#ffffff"
+                              opacity="1"
+                              pointer-events="none"/>`;
     }
 
     function rejectRemainingRootOutsideRoot() {
@@ -3282,48 +3282,48 @@
         switch (glyph) {
             case "rct":
                 return `
-                            <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>
-                            <line x1="12" y1="12" x2="20" y2="12" stroke="${color}" stroke-width="1.5"/>
-                            <line x1="13" y1="17" x2="19" y2="17" stroke="${color}" stroke-width="1.5"/>
-                            <line x1="13" y1="22" x2="19" y2="22" stroke="${color}" stroke-width="1.5"/>`;
+                                <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>
+                                <line x1="12" y1="12" x2="20" y2="12" stroke="${color}" stroke-width="1.5"/>
+                                <line x1="13" y1="17" x2="19" y2="17" stroke="${color}" stroke-width="1.5"/>
+                                <line x1="13" y1="22" x2="19" y2="22" stroke="${color}" stroke-width="1.5"/>`;
             case "vpt":
                 return `
-                            <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>
-                            <path d="M16 10 V24 M11 17 H21"
-                                  fill="none"
-                                  stroke="${color}"
-                                  stroke-width="2.4"
-                                  stroke-linecap="round"/>`;
+                                <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>
+                                <path d="M16 10 V24 M11 17 H21"
+                                      fill="none"
+                                      stroke="${color}"
+                                      stroke-width="2.4"
+                                      stroke-linecap="round"/>`;
             case "pulpotomy":
                 return `
-                            <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>
-                            <path d="M11.8 12.2 Q16 9.6 20.2 12.2"
-                                  fill="none"
-                                  stroke="${color}"
-                                  stroke-width="2.2"
-                                  stroke-linecap="round"/>
-                            <line x1="13" y1="16.5" x2="19" y2="16.5"
-                                  stroke="${color}"
-                                  stroke-width="1.7"
-                                  stroke-linecap="round"/>`;
+                                <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>
+                                <path d="M11.8 12.2 Q16 9.6 20.2 12.2"
+                                      fill="none"
+                                      stroke="${color}"
+                                      stroke-width="2.2"
+                                      stroke-linecap="round"/>
+                                <line x1="13" y1="16.5" x2="19" y2="16.5"
+                                      stroke="${color}"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"/>`;
             case "pulpectomy":
                 return `
-                            <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>
-                            <line x1="13" y1="11" x2="19" y2="23"
-                                  stroke="${color}"
-                                  stroke-width="1.9"
-                                  stroke-linecap="round"/>
-                            <line x1="19" y1="11" x2="13" y2="23"
-                                  stroke="${color}"
-                                  stroke-width="1.9"
-                                  stroke-linecap="round"/>`;
+                                <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>
+                                <line x1="13" y1="11" x2="19" y2="23"
+                                      stroke="${color}"
+                                      stroke-width="1.9"
+                                      stroke-linecap="round"/>
+                                <line x1="19" y1="11" x2="13" y2="23"
+                                      stroke="${color}"
+                                      stroke-width="1.9"
+                                      stroke-linecap="round"/>`;
             case "post":
                 return `
-                            <rect x="13" y="6" width="6" height="20" rx="2" ${H}/>
-                            <rect x="10" y="6" width="12" height="5" rx="2" ${H}/>`;
+                                <rect x="13" y="6" width="6" height="20" rx="2" ${H}/>
+                                <rect x="10" y="6" width="12" height="5" rx="2" ${H}/>`;
             default:
                 return `
-                            <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>`;
+                                <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z" ${H}/>`;
         }
     }
 
@@ -3352,31 +3352,31 @@
                 : "";
 
         return `
-                    <g class="root-only-endodontic-overlay"
-                       pointer-events="none"
-                       transform="translate(1.48,${iconTop}) scale(0.26)">
-                        <defs>
-                            ${glyphPattern(
+                        <g class="root-only-endodontic-overlay"
+                           pointer-events="none"
+                           transform="translate(1.48,${iconTop}) scale(0.26)">
+                            <defs>
+                                ${glyphPattern(
             patternId,
             mark.tool.glyph,
             color
         )}
-                        </defs>
+                            </defs>
 
-                        <g ${glyphFlipTransform ? `transform="${glyphFlipTransform}"` : ""}>
-                            <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z"
-                                  fill="none"
-                                  stroke="#ffffff"
-                                  stroke-width="2.9"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"/>
-                            ${rootOnlyEndodonticGlyphBody(
+                            <g ${glyphFlipTransform ? `transform="${glyphFlipTransform}"` : ""}>
+                                <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z"
+                                      fill="none"
+                                      stroke="#ffffff"
+                                      stroke-width="2.9"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"/>
+                                ${rootOnlyEndodonticGlyphBody(
             mark.tool.glyph,
             color,
             patternId
         )}
-                        </g>
-                    </g>`;
+                            </g>
+                        </g>`;
     }
 
     function postOverlay(tid, arch) {
@@ -3425,43 +3425,43 @@
         const tipR = 0.67;
 
         return `
-                    <g class="post-overlay crown-position" pointer-events="none" opacity="0.98">
-                        <!-- White halo keeps Post clear above the tooth/root icon -->
-                        <circle cx="${tipCx}" cy="${tipCy}" r="${tipR + 0.34}"
-                                fill="#ffffff"/>
+                        <g class="post-overlay crown-position" pointer-events="none" opacity="0.98">
+                            <!-- White halo keeps Post clear above the tooth/root icon -->
+                            <circle cx="${tipCx}" cy="${tipCy}" r="${tipR + 0.34}"
+                                    fill="#ffffff"/>
 
-                        <rect x="${shaftX - 0.27}"
-                              y="${shaftY - 0.27}"
-                              width="${shaftW + 0.54}"
-                              height="${shaftH + 0.54}"
-                              rx="1.0"
-                              fill="#ffffff"/>
+                            <rect x="${shaftX - 0.27}"
+                                  y="${shaftY - 0.27}"
+                                  width="${shaftW + 0.54}"
+                                  height="${shaftH + 0.54}"
+                                  rx="1.0"
+                                  fill="#ffffff"/>
 
-                        <rect x="${headX - 0.34}"
-                              y="${headY - 0.34}"
-                              width="${headW + 0.68}"
-                              height="${headH + 0.68}"
-                              rx="1.22"
-                              fill="#ffffff"/>
+                            <rect x="${headX - 0.34}"
+                                  y="${headY - 0.34}"
+                                  width="${headW + 0.68}"
+                                  height="${headH + 0.68}"
+                                  rx="1.22"
+                                  fill="#ffffff"/>
 
-                        <!-- Short Post: tip near the yellow position, head in crown -->
-                        <circle cx="${tipCx}" cy="${tipCy}" r="${tipR}"
-                                fill="${color}"/>
+                            <!-- Short Post: tip near the yellow position, head in crown -->
+                            <circle cx="${tipCx}" cy="${tipCy}" r="${tipR}"
+                                    fill="${color}"/>
 
-                        <rect x="${shaftX}"
-                              y="${shaftY}"
-                              width="${shaftW}"
-                              height="${shaftH}"
-                              rx="0.78"
-                              fill="${color}"/>
+                            <rect x="${shaftX}"
+                                  y="${shaftY}"
+                                  width="${shaftW}"
+                                  height="${shaftH}"
+                                  rx="0.78"
+                                  fill="${color}"/>
 
-                        <rect x="${headX}"
-                              y="${headY}"
-                              width="${headW}"
-                              height="${headH}"
-                              rx="0.98"
-                              fill="${color}"/>
-                    </g>`;
+                            <rect x="${headX}"
+                                  y="${headY}"
+                                  width="${headW}"
+                                  height="${headH}"
+                                  rx="0.98"
+                                  fill="${color}"/>
+                        </g>`;
     }
 
     function rejectRootOnlyEndodonticOutsideRoot(label) {
@@ -3515,47 +3515,47 @@
 
         if (mark.tool.id === "soft_tissue_impacted") {
             extra = `
-                        <path d="M0.9 16.55 Q5.5 13.25 10.1 16.55"
-                              fill="none"
-                              stroke="${color}"
-                              stroke-width="0.78"
-                              stroke-linecap="round"/>
-                        <path d="M2.1 17.55 Q5.5 15.55 8.9 17.55"
-                              fill="none"
-                              stroke="${color}"
-                              stroke-width="0.6"
-                              stroke-linecap="round"/>`;
+                            <path d="M0.9 16.55 Q5.5 13.25 10.1 16.55"
+                                  fill="none"
+                                  stroke="${color}"
+                                  stroke-width="0.78"
+                                  stroke-linecap="round"/>
+                            <path d="M2.1 17.55 Q5.5 15.55 8.9 17.55"
+                                  fill="none"
+                                  stroke="${color}"
+                                  stroke-width="0.6"
+                                  stroke-linecap="round"/>`;
         }
 
         if (mark.tool.id === "partially_erupted") {
             extra = `
-                        <path d="M1.15 15.85 Q5.5 14.1 9.85 15.85"
-                              fill="none"
-                              stroke="${color}"
-                              stroke-width="0.74"
-                              stroke-linecap="round"/>
-                        <path d="M3.65 13.8 L7.35 13.8"
-                              fill="none"
-                              stroke="${color}"
-                              stroke-width="0.62"
-                              stroke-linecap="round"/>`;
+                            <path d="M1.15 15.85 Q5.5 14.1 9.85 15.85"
+                                  fill="none"
+                                  stroke="${color}"
+                                  stroke-width="0.74"
+                                  stroke-linecap="round"/>
+                            <path d="M3.65 13.8 L7.35 13.8"
+                                  fill="none"
+                                  stroke="${color}"
+                                  stroke-width="0.62"
+                                  stroke-linecap="round"/>`;
         }
 
         return `
-                    <g class="impaction-front-overlay" pointer-events="none">
-                        <!--
-                            Keep the impaction outline inside this tooth only.
-                            It is slightly raised and narrowed so outlines on
-                            adjacent teeth never touch or overlap each other.
-                        -->
-                        <ellipse cx="5.5"
-                                 cy="9.9"
-                                 rx="4.15"
-                                 ry="8.85"
-                                 fill="none"
-                                 ${impactionOutlineStyle(mark, color)}/>
-                        ${extra}
-                    </g>`;
+                        <g class="impaction-front-overlay" pointer-events="none">
+                            <!--
+                                Keep the impaction outline inside this tooth only.
+                                It is slightly raised and narrowed so outlines on
+                                adjacent teeth never touch or overlap each other.
+                            -->
+                            <ellipse cx="5.5"
+                                     cy="9.9"
+                                     rx="4.15"
+                                     ry="8.85"
+                                     fill="none"
+                                     ${impactionOutlineStyle(mark, color)}/>
+                            ${extra}
+                        </g>`;
     }
 
     function miniGapBadgeOverlay(tid, arch) {
@@ -3568,23 +3568,23 @@
             : "translate(3.05,-2.95)";
 
         return `
-                    <g class="mini-gap-badge" pointer-events="all" transform="${translate}">
-                        <title>${mark.tool.label}</title>
-                        <g class="gap-badge-hover">
-                            <rect x="-0.55"
-                                  y="-0.25"
-                                  width="5.95"
-                                  height="5.95"
-                                  rx="1.5"
-                                  fill="#ffffff"
-                                  fill-opacity="0.96"
-                                  stroke="${color}"
-                                  stroke-width="0.3"/>
-                            <g transform="translate(0.25,0.25) scale(0.22)">
-                                ${iconSvg(mark.tool.glyph, color, 24, mark.group)}
+                        <g class="mini-gap-badge" pointer-events="all" transform="${translate}">
+                            <title>${mark.tool.label}</title>
+                            <g class="gap-badge-hover">
+                                <rect x="-0.55"
+                                      y="-0.25"
+                                      width="5.95"
+                                      height="5.95"
+                                      rx="1.5"
+                                      fill="#ffffff"
+                                      fill-opacity="0.96"
+                                      stroke="${color}"
+                                      stroke-width="0.3"/>
+                                <g transform="translate(0.25,0.25) scale(0.22)">
+                                    ${iconSvg(mark.tool.glyph, color, 24, mark.group)}
+                                </g>
                             </g>
-                        </g>
-                    </g>`;
+                        </g>`;
     }
 
     const WHOLE_TOOTH_DISEASE_TOOL_IDS = [
@@ -4257,19 +4257,19 @@
         const path = `M ${x1} ${y} Q ${middleX} ${controlY} ${x2} ${y}`;
 
         return `
-                    <path d="${path}"
-                          fill="none"
-                          stroke="#ffffff"
-                          stroke-width="1.55"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"/>
+                        <path d="${path}"
+                              fill="none"
+                              stroke="#ffffff"
+                              stroke-width="1.55"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"/>
 
-                    <path d="${path}"
-                          fill="none"
-                          stroke="${color}"
-                          stroke-width="0.68"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"/>`;
+                        <path d="${path}"
+                              fill="none"
+                              stroke="${color}"
+                              stroke-width="0.68"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"/>`;
     }
 
     /*
@@ -4454,10 +4454,10 @@
         }
 
         return `
-                    <g class="tooth-connector-overlay"
-                       pointer-events="none">
-                        ${svg}
-                    </g>`;
+                        <g class="tooth-connector-overlay"
+                           pointer-events="none">
+                            ${svg}
+                        </g>`;
     }
 
     /*
@@ -4476,12 +4476,12 @@
         const scale = iconSize / 24;
 
         return `
-                    <g class="tooth-appliance-icon" pointer-events="none"
-                       transform="translate(1.95,${iconTop})">
-                        <g transform="scale(${scale})">
-                            ${iconSvg(mark.tool.glyph, color, 24, mark.group)}
-                        </g>
-                    </g>`;
+                        <g class="tooth-appliance-icon" pointer-events="none"
+                           transform="translate(1.95,${iconTop})">
+                            <g transform="scale(${scale})">
+                                ${iconSvg(mark.tool.glyph, color, 24, mark.group)}
+                            </g>
+                        </g>`;
     }
 
     function crownTreatmentOverlay(
@@ -4518,30 +4518,30 @@
         const boxHeight = splitY - 3.30;
 
         return `
-                    <g class="crown-treatment-overlay"
-                       pointer-events="none">
+                        <g class="crown-treatment-overlay"
+                           pointer-events="none">
 
-                        <!-- Small outline only: no fill / no shading -->
-                        <rect x="${boxX}"
-                              y="${boxY}"
-                              width="${boxWidth}"
-                              height="${boxHeight}"
-                              rx="1.12"
-                              fill="none"
-                              stroke="${color}"
-                              stroke-width="0.66"/>
+                            <!-- Small outline only: no fill / no shading -->
+                            <rect x="${boxX}"
+                                  y="${boxY}"
+                                  width="${boxWidth}"
+                                  height="${boxHeight}"
+                                  rx="1.12"
+                                  fill="none"
+                                  stroke="${color}"
+                                  stroke-width="0.66"/>
 
-                        <!-- Fine inner white line for readability -->
-                        <rect x="${boxX + 0.28}"
-                              y="${boxY + 0.28}"
-                              width="${boxWidth - 0.56}"
-                              height="${boxHeight - 0.56}"
-                              rx="0.92"
-                              fill="none"
-                              stroke="#ffffff"
-                              stroke-opacity="0.84"
-                              stroke-width="0.18"/>
-                    </g>`;
+                            <!-- Fine inner white line for readability -->
+                            <rect x="${boxX + 0.28}"
+                                  y="${boxY + 0.28}"
+                                  width="${boxWidth - 0.56}"
+                                  height="${boxHeight - 0.56}"
+                                  rx="0.92"
+                                  fill="none"
+                                  stroke="#ffffff"
+                                  stroke-opacity="0.84"
+                                  stroke-width="0.18"/>
+                        </g>`;
     }
 
     function rejectCrownOnRoot(label) {
@@ -4723,67 +4723,67 @@
                 "translate(-2.0,2.5) scale(0.46,0.48)";
 
             return `
-                        <g class="whole-disease-front mobility"
-                           pointer-events="none"
-                           opacity="0.92">
-                            <defs>
-                                ${glyphPattern(patternId, "mobility", color)}
-                            </defs>
+                            <g class="whole-disease-front mobility"
+                               pointer-events="none"
+                               opacity="0.92">
+                                <defs>
+                                    ${glyphPattern(patternId, "mobility", color)}
+                                </defs>
 
-                            <!--
-                                Thin outline only: no white fill, so the original
-                                tooth image remains clearly visible.
-                            -->
-                            <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z"
-                                  transform="${mobilityTransform}"
-                                  fill="none"
-                                  stroke="#ffffff"
-                                  stroke-width="3"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"/>
+                                <!--
+                                    Thin outline only: no white fill, so the original
+                                    tooth image remains clearly visible.
+                                -->
+                                <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z"
+                                      transform="${mobilityTransform}"
+                                      fill="none"
+                                      stroke="#ffffff"
+                                      stroke-width="3"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"/>
 
-                            <!-- Small and tidy applied Tooth Mobility mark -->
-                            <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z"
-                                  transform="${mobilityTransform}"
-                                  fill="url(#${patternId})"
-                                  stroke="${color}"
-                                  stroke-width="1.55"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"/>
-                        </g>`;
+                                <!-- Small and tidy applied Tooth Mobility mark -->
+                                <path d="M12 7 Q16 6 20 7 L19 26 Q16 28 13 26 Z"
+                                      transform="${mobilityTransform}"
+                                      fill="url(#${patternId})"
+                                      stroke="${color}"
+                                      stroke-width="1.55"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"/>
+                            </g>`;
         }
 
         if (glyph === "crack") {
             const crackTransform = "translate(2.25,3.2) scale(0.62)";
 
             return `
-                        <g class="whole-disease-front crack" pointer-events="none" opacity="0.96">
-                            <path d="M6.25 1.25
-                                     L4.35 5.25
-                                     L6.25 8.15
-                                     L4.15 11.45
-                                     L6.35 14.55
-                                     L4.65 19.75"
-                                  transform="${crackTransform}"
-                                  fill="none"
-                                  stroke="#ffffff"
-                                  stroke-width="1.55"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"/>
+                            <g class="whole-disease-front crack" pointer-events="none" opacity="0.96">
+                                <path d="M6.25 1.25
+                                         L4.35 5.25
+                                         L6.25 8.15
+                                         L4.15 11.45
+                                         L6.35 14.55
+                                         L4.65 19.75"
+                                      transform="${crackTransform}"
+                                      fill="none"
+                                      stroke="#ffffff"
+                                      stroke-width="1.55"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"/>
 
-                            <path d="M6.25 1.25
-                                     L4.35 5.25
-                                     L6.25 8.15
-                                     L4.15 11.45
-                                     L6.35 14.55
-                                     L4.65 19.75"
-                                  transform="${crackTransform}"
-                                  fill="none"
-                                  stroke="${color}"
-                                  stroke-width="1.05"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"/>
-                        </g>`;
+                                <path d="M6.25 1.25
+                                         L4.35 5.25
+                                         L6.25 8.15
+                                         L4.15 11.45
+                                         L6.35 14.55
+                                         L4.65 19.75"
+                                      transform="${crackTransform}"
+                                      fill="none"
+                                      stroke="${color}"
+                                      stroke-width="1.05"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"/>
+                            </g>`;
         }
 
         if (glyph === "periapical") {
@@ -4792,33 +4792,33 @@
             const stemEnd = arch === "upper" ? 10.8 : 10.2;
 
             return `
-                        <g class="whole-disease-front periapical" pointer-events="none">
-                            <!-- White halo around the root canal/lesion symbol -->
-                            <path d="M5.5 ${stemStart} V${stemEnd}"
-                                  stroke="#ffffff"
-                                  stroke-width="1.75"
-                                  stroke-linecap="round"/>
-                            <ellipse cx="5.5"
-                                     cy="${lesionY}"
-                                     rx="2.35"
-                                     ry="1.55"
-                                     fill="#ffffff"
-                                     stroke="#ffffff"
-                                     stroke-width="1.15"/>
+                            <g class="whole-disease-front periapical" pointer-events="none">
+                                <!-- White halo around the root canal/lesion symbol -->
+                                <path d="M5.5 ${stemStart} V${stemEnd}"
+                                      stroke="#ffffff"
+                                      stroke-width="1.75"
+                                      stroke-linecap="round"/>
+                                <ellipse cx="5.5"
+                                         cy="${lesionY}"
+                                         rx="2.35"
+                                         ry="1.55"
+                                         fill="#ffffff"
+                                         stroke="#ffffff"
+                                         stroke-width="1.15"/>
 
-                            <!-- Periapical lesion -->
-                            <path d="M5.5 ${stemStart} V${stemEnd}"
-                                  stroke="${color}"
-                                  stroke-width="0.88"
-                                  stroke-linecap="round"/>
-                            <ellipse cx="5.5"
-                                     cy="${lesionY}"
-                                     rx="2.05"
-                                     ry="1.25"
-                                     fill="${hexToRgba(color, .24)}"
-                                     stroke="${color}"
-                                     stroke-width="0.72"/>
-                        </g>`;
+                                <!-- Periapical lesion -->
+                                <path d="M5.5 ${stemStart} V${stemEnd}"
+                                      stroke="${color}"
+                                      stroke-width="0.88"
+                                      stroke-linecap="round"/>
+                                <ellipse cx="5.5"
+                                         cy="${lesionY}"
+                                         rx="2.05"
+                                         ry="1.25"
+                                         fill="${hexToRgba(color, .24)}"
+                                         stroke="${color}"
+                                         stroke-width="0.72"/>
+                            </g>`;
         }
 
         return "";
@@ -4835,27 +4835,27 @@
         const color = GROUP_COLORS[mark.group] || GROUP_COLORS.others;
 
         return `
-                    <g class="extracted-tooth-overlay" pointer-events="none">
-                        <!-- White underlay keeps the X readable over every tooth image -->
-                        <path d="M1.55 1.45 L9.45 19.55"
-                              stroke="#ffffff"
-                              stroke-width="1.55"
-                              stroke-linecap="round"/>
-                        <path d="M9.45 1.45 L1.55 19.55"
-                              stroke="#ffffff"
-                              stroke-width="1.55"
-                              stroke-linecap="round"/>
+                        <g class="extracted-tooth-overlay" pointer-events="none">
+                            <!-- White underlay keeps the X readable over every tooth image -->
+                            <path d="M1.55 1.45 L9.45 19.55"
+                                  stroke="#ffffff"
+                                  stroke-width="1.55"
+                                  stroke-linecap="round"/>
+                            <path d="M9.45 1.45 L1.55 19.55"
+                                  stroke="#ffffff"
+                                  stroke-width="1.55"
+                                  stroke-linecap="round"/>
 
-                        <!-- Actual Extracted Tooth icon -->
-                        <path d="M1.55 1.45 L9.45 19.55"
-                              stroke="${color}"
-                              stroke-width="0.92"
-                              stroke-linecap="round"/>
-                        <path d="M9.45 1.45 L1.55 19.55"
-                              stroke="${color}"
-                              stroke-width="0.92"
-                              stroke-linecap="round"/>
-                    </g>`;
+                            <!-- Actual Extracted Tooth icon -->
+                            <path d="M1.55 1.45 L9.45 19.55"
+                                  stroke="${color}"
+                                  stroke-width="0.92"
+                                  stroke-linecap="round"/>
+                            <path d="M9.45 1.45 L1.55 19.55"
+                                  stroke="${color}"
+                                  stroke-width="0.92"
+                                  stroke-linecap="round"/>
+                        </g>`;
     }
 
     /*
@@ -5239,9 +5239,9 @@
         };
 
         return `<svg width="${size}" height="${size}" viewBox="4 4 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <defs>${patternDef}</defs>
-                            ${map[glyph] || map.note}
-                        </svg>`;
+                                <defs>${patternDef}</defs>
+                                ${map[glyph] || map.note}
+                            </svg>`;
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -5271,25 +5271,25 @@
             others: TOOLS.filter(t => t.group === "others")
         };
         document.getElementById("toolbar").innerHTML = `
-                    <div class="toolbar-row">
-                      ${order.map(group => `
-                        <div class="group-block" ${fullWidth.includes(group) ? 'style="grid-column: span 2;"' : ''}>
-                          <div class="group-title">
-                            <span class="group-dot" style="background:${GROUP_COLORS[group]}"></span>
-                            ${GROUP_LABELS[group]}
-                          </div>
-                          <div class="tool-strip">
-                            ${grouped[group].map(tool => `
-                              <button class="tool-btn ${selectedToolId === tool.id ? 'active' : ''}"
-                                      onclick="selectTool('${tool.id}')" title="${escapeHtml(tool.label)}">
-                                ${toolbarToolIconSvg(tool, GROUP_COLORS[group])}
-                                <span class="tip">${escapeHtml(tool.label)}</span>
-                              </button>
-                            `).join("")}
-                          </div>
-                        </div>
-                      `).join("")}
-                    </div>`;
+                        <div class="toolbar-row">
+                          ${order.map(group => `
+                            <div class="group-block" ${fullWidth.includes(group) ? 'style="grid-column: span 2;"' : ''}>
+                              <div class="group-title">
+                                <span class="group-dot" style="background:${GROUP_COLORS[group]}"></span>
+                                ${GROUP_LABELS[group]}
+                              </div>
+                              <div class="tool-strip">
+                                ${grouped[group].map(tool => `
+                                  <button class="tool-btn ${selectedToolId === tool.id ? 'active' : ''}"
+                                          onclick="selectTool('${tool.id}')" title="${escapeHtml(tool.label)}">
+                                    ${toolbarToolIconSvg(tool, GROUP_COLORS[group])}
+                                    <span class="tip">${escapeHtml(tool.label)}</span>
+                                  </button>
+                                `).join("")}
+                              </div>
+                            </div>
+                          `).join("")}
+                        </div>`;
     }
 
     function selectTool(toolId) {
@@ -5698,33 +5698,33 @@
             Surface clicks never draw these upper/lower rectangles.
         */
         const normalHitAreas = `
-                      <rect x="0.5"
-                            y="0"
-                            width="10"
-                            height="${splitY}"
-                            fill="transparent"
-                            pointer-events="all"
-                            stroke="${isFrontImageAreaSelected(tid, insideArea) ? '#111827' : 'none'}"
-                            stroke-width="0.35"
-                            rx="1.2"
-                            onclick="selectArea('${tid}','${insideArea}','front')"
-                            style="cursor:pointer">
-                        <title>${insideArea}</title>
-                      </rect>
+                          <rect x="0.5"
+                                y="0"
+                                width="10"
+                                height="${splitY}"
+                                fill="transparent"
+                                pointer-events="all"
+                                stroke="${isFrontImageAreaSelected(tid, insideArea) ? '#111827' : 'none'}"
+                                stroke-width="0.35"
+                                rx="1.2"
+                                onclick="selectArea('${tid}','${insideArea}','front')"
+                                style="cursor:pointer">
+                            <title>${insideArea}</title>
+                          </rect>
 
-                      <rect x="0.5"
-                            y="${splitY}"
-                            width="10"
-                            height="${splitY}"
-                            fill="transparent"
-                            pointer-events="all"
-                            stroke="${isFrontImageAreaSelected(tid, 'buccal') ? '#111827' : 'none'}"
-                            stroke-width="0.35"
-                            rx="1.2"
-                            onclick="selectArea('${tid}','buccal','front')"
-                            style="cursor:pointer">
-                        <title>buccal</title>
-                      </rect>`;
+                          <rect x="0.5"
+                                y="${splitY}"
+                                width="10"
+                                height="${splitY}"
+                                fill="transparent"
+                                pointer-events="all"
+                                stroke="${isFrontImageAreaSelected(tid, 'buccal') ? '#111827' : 'none'}"
+                                stroke-width="0.35"
+                                rx="1.2"
+                                onclick="selectArea('${tid}','buccal','front')"
+                                style="cursor:pointer">
+                            <title>buccal</title>
+                          </rect>`;
 
         const crownLabel =
             selectedToolId &&
@@ -5733,98 +5733,98 @@
                 : "Crown";
 
         const crownHitAreas = `
-                      <!-- Crown half accepts all 6 Crown types -->
-                      <rect x="0.5"
-                            y="${toothY}"
-                            width="10"
-                            height="${splitY}"
-                            fill="transparent"
-                            pointer-events="all"
-                            stroke="${isFrontImageAreaSelected(tid, 'whole') ? '#111827' : 'none'}"
-                            stroke-width="0.42"
-                            rx="1.2"
-                            onclick="selectArea('${tid}','whole','front')"
-                            style="cursor:pointer">
-                        <title>${crownLabel} — Crown only</title>
-                      </rect>
+                          <!-- Crown half accepts all 6 Crown types -->
+                          <rect x="0.5"
+                                y="${toothY}"
+                                width="10"
+                                height="${splitY}"
+                                fill="transparent"
+                                pointer-events="all"
+                                stroke="${isFrontImageAreaSelected(tid, 'whole') ? '#111827' : 'none'}"
+                                stroke-width="0.42"
+                                rx="1.2"
+                                onclick="selectArea('${tid}','whole','front')"
+                                style="cursor:pointer">
+                            <title>${crownLabel} — Crown only</title>
+                          </rect>
 
-                      <!-- Root is blocked for Crown tools -->
-                      <rect x="0.5"
-                            y="${rootY}"
-                            width="10"
-                            height="${splitY}"
-                            fill="transparent"
-                            pointer-events="all"
-                            stroke="none"
-                            rx="1.2"
-                            onclick="rejectCrownOnRoot('${crownLabel}')"
-                            style="cursor:not-allowed">
-                        <title>${crownLabel} is not allowed on Root</title>
-                      </rect>`;
+                          <!-- Root is blocked for Crown tools -->
+                          <rect x="0.5"
+                                y="${rootY}"
+                                width="10"
+                                height="${splitY}"
+                                fill="transparent"
+                                pointer-events="all"
+                                stroke="none"
+                                rx="1.2"
+                                onclick="rejectCrownOnRoot('${crownLabel}')"
+                                style="cursor:not-allowed">
+                            <title>${crownLabel} is not allowed on Root</title>
+                          </rect>`;
 
         const applianceLabel = selectedToolId && getTool(selectedToolId)
             ? getTool(selectedToolId).label
             : "Bridge / Space Maintainer";
 
         const applianceHitAreas = `
-                      <!-- Tooth/crown half accepts Bridge or Space Maintainer -->
-                      <rect x="0.5"
-                            y="${toothY}"
-                            width="10"
-                            height="${splitY}"
-                            fill="transparent"
-                            pointer-events="all"
-                            stroke="${isFrontImageAreaSelected(tid, 'whole') ? '#111827' : 'none'}"
-                            stroke-width="0.42"
-                            rx="1.2"
-                            onclick="selectArea('${tid}','whole','front')"
-                            style="cursor:pointer">
-                        <title>${applianceLabel} — Tooth only</title>
-                      </rect>
+                          <!-- Tooth/crown half accepts Bridge or Space Maintainer -->
+                          <rect x="0.5"
+                                y="${toothY}"
+                                width="10"
+                                height="${splitY}"
+                                fill="transparent"
+                                pointer-events="all"
+                                stroke="${isFrontImageAreaSelected(tid, 'whole') ? '#111827' : 'none'}"
+                                stroke-width="0.42"
+                                rx="1.2"
+                                onclick="selectArea('${tid}','whole','front')"
+                                style="cursor:pointer">
+                            <title>${applianceLabel} — Tooth only</title>
+                          </rect>
 
-                      <!-- Root is always blocked for these appliances -->
-                      <rect x="0.5"
-                            y="${rootY}"
-                            width="10"
-                            height="${splitY}"
-                            fill="transparent"
-                            pointer-events="all"
-                            stroke="none"
-                            rx="1.2"
-                            onclick="rejectToothApplianceOnRoot('${applianceLabel}')"
-                            style="cursor:not-allowed">
-                        <title>${applianceLabel} is not allowed on Root</title>
-                      </rect>`;
+                          <!-- Root is always blocked for these appliances -->
+                          <rect x="0.5"
+                                y="${rootY}"
+                                width="10"
+                                height="${splitY}"
+                                fill="transparent"
+                                pointer-events="all"
+                                stroke="none"
+                                rx="1.2"
+                                onclick="rejectToothApplianceOnRoot('${applianceLabel}')"
+                                style="cursor:not-allowed">
+                            <title>${applianceLabel} is not allowed on Root</title>
+                          </rect>`;
 
         const remainingRootHitAreas = `
-                      <!-- Anatomical root half accepts Remaining Root -->
-                      <rect x="0.5"
-                            y="${rootY}"
-                            width="10"
-                            height="${splitY}"
-                            fill="transparent"
-                            pointer-events="all"
-                            stroke="${isFrontImageAreaSelected(tid, 'root') ? '#111827' : 'none'}"
-                            stroke-width="0.42"
-                            rx="1.2"
-                            onclick="selectArea('${tid}','root','front')"
-                            style="cursor:pointer">
-                        <title>Remaining Root — Root only</title>
-                      </rect>
+                          <!-- Anatomical root half accepts Remaining Root -->
+                          <rect x="0.5"
+                                y="${rootY}"
+                                width="10"
+                                height="${splitY}"
+                                fill="transparent"
+                                pointer-events="all"
+                                stroke="${isFrontImageAreaSelected(tid, 'root') ? '#111827' : 'none'}"
+                                stroke-width="0.42"
+                                rx="1.2"
+                                onclick="selectArea('${tid}','root','front')"
+                                style="cursor:pointer">
+                            <title>Remaining Root — Root only</title>
+                          </rect>
 
-                      <!-- Tooth/crown half is blocked -->
-                      <rect x="0.5"
-                            y="${toothY}"
-                            width="10"
-                            height="${splitY}"
-                            fill="transparent"
-                            pointer-events="all"
-                            stroke="none"
-                            rx="1.2"
-                            onclick="rejectRemainingRootOutsideRoot()"
-                            style="cursor:not-allowed">
-                        <title>Remaining Root is allowed on Root only</title>
-                      </rect>`;
+                          <!-- Tooth/crown half is blocked -->
+                          <rect x="0.5"
+                                y="${toothY}"
+                                width="10"
+                                height="${splitY}"
+                                fill="transparent"
+                                pointer-events="all"
+                                stroke="none"
+                                rx="1.2"
+                                onclick="rejectRemainingRootOutsideRoot()"
+                                style="cursor:not-allowed">
+                            <title>Remaining Root is allowed on Root only</title>
+                          </rect>`;
 
         const rootEndodonticLabel =
             selectedToolId && getTool(selectedToolId)
@@ -5832,45 +5832,45 @@
                 : "Root treatment";
 
         const rootEndodonticHitAreas = `
-                      <rect x="0.5"
-                            y="${rootY}"
-                            width="10"
-                            height="${splitY}"
-                            fill="transparent"
-                            pointer-events="all"
-                            stroke="${isFrontImageAreaSelected(tid, 'root') ? '#111827' : 'none'}"
-                            stroke-width="0.42"
-                            rx="1.2"
-                            onclick="selectArea('${tid}','root','front')"
-                            style="cursor:pointer">
-                        <title>${rootEndodonticLabel} — Root only</title>
-                      </rect>
+                          <rect x="0.5"
+                                y="${rootY}"
+                                width="10"
+                                height="${splitY}"
+                                fill="transparent"
+                                pointer-events="all"
+                                stroke="${isFrontImageAreaSelected(tid, 'root') ? '#111827' : 'none'}"
+                                stroke-width="0.42"
+                                rx="1.2"
+                                onclick="selectArea('${tid}','root','front')"
+                                style="cursor:pointer">
+                            <title>${rootEndodonticLabel} — Root only</title>
+                          </rect>
 
-                      <rect x="0.5"
-                            y="${toothY}"
-                            width="10"
-                            height="${splitY}"
-                            fill="transparent"
-                            pointer-events="all"
-                            stroke="none"
-                            rx="1.2"
-                            onclick="rejectRootOnlyEndodonticOutsideRoot('${rootEndodonticLabel}')"
-                            style="cursor:not-allowed">
-                        <title>${rootEndodonticLabel} is allowed on Root only</title>
-                      </rect>`;
+                          <rect x="0.5"
+                                y="${toothY}"
+                                width="10"
+                                height="${splitY}"
+                                fill="transparent"
+                                pointer-events="all"
+                                stroke="none"
+                                rx="1.2"
+                                onclick="rejectRootOnlyEndodonticOutsideRoot('${rootEndodonticLabel}')"
+                                style="cursor:not-allowed">
+                            <title>${rootEndodonticLabel} is allowed on Root only</title>
+                          </rect>`;
 
         const extractedHitArea = `
-                      <rect x="0"
-                            y="0"
-                            width="11"
-                            height="21"
-                            fill="transparent"
-                            pointer-events="all"
-                            stroke="none"
-                            onclick="rejectExtractedToothAction('${tid}')"
-                            style="cursor:not-allowed">
-                        <title>This tooth is extracted</title>
-                      </rect>`;
+                          <rect x="0"
+                                y="0"
+                                width="11"
+                                height="21"
+                                fill="transparent"
+                                pointer-events="all"
+                                stroke="none"
+                                onclick="rejectExtractedToothAction('${tid}')"
+                                style="cursor:not-allowed">
+                            <title>This tooth is extracted</title>
+                          </rect>`;
 
         /*
             These three tools apply to the complete front tooth image.
@@ -5879,78 +5879,78 @@
             reliably clickable.
         */
         const impactionHitArea = `
-                      <rect x="0"
-                            y="0"
-                            width="11"
-                            height="21"
-                            fill="transparent"
-                            pointer-events="all"
-                            stroke="${isFrontImageAreaSelected(tid, 'whole') ? '#111827' : 'none'}"
-                            stroke-width="0.35"
-                            rx="1.4"
-                            onclick="selectArea('${tid}','whole','front')"
-                            style="cursor:pointer">
-                        <title>${selectedToolId && getTool(selectedToolId) ? getTool(selectedToolId).label : 'Impaction Tool'} — Whole Tooth</title>
-                      </rect>`;
+                          <rect x="0"
+                                y="0"
+                                width="11"
+                                height="21"
+                                fill="transparent"
+                                pointer-events="all"
+                                stroke="${isFrontImageAreaSelected(tid, 'whole') ? '#111827' : 'none'}"
+                                stroke-width="0.35"
+                                rx="1.4"
+                                onclick="selectArea('${tid}','whole','front')"
+                                style="cursor:pointer">
+                            <title>${selectedToolId && getTool(selectedToolId) ? getTool(selectedToolId).label : 'Impaction Tool'} — Whole Tooth</title>
+                          </rect>`;
 
         const postHitArea = `
-                      <rect x="0"
-                            y="0"
-                            width="11"
-                            height="21"
-                            fill="transparent"
-                            pointer-events="all"
-                            stroke="${isFrontImageAreaSelected(tid, 'root') ? '#111827' : 'none'}"
-                            stroke-width="0.35"
-                            rx="1.4"
-                            onclick="selectArea('${tid}','root','front')"
-                            style="cursor:pointer">
-                        <title>${selectedToolId && getTool(selectedToolId) ? getTool(selectedToolId).label : 'Post'} — Full Tooth Image</title>
-                      </rect>`;
+                          <rect x="0"
+                                y="0"
+                                width="11"
+                                height="21"
+                                fill="transparent"
+                                pointer-events="all"
+                                stroke="${isFrontImageAreaSelected(tid, 'root') ? '#111827' : 'none'}"
+                                stroke-width="0.35"
+                                rx="1.4"
+                                onclick="selectArea('${tid}','root','front')"
+                                style="cursor:pointer">
+                            <title>${selectedToolId && getTool(selectedToolId) ? getTool(selectedToolId).label : 'Post'} — Full Tooth Image</title>
+                          </rect>`;
 
         return `
-                    <svg class="tooth-svg"
-                         viewBox="0 0 11 21"
-                         xmlns="http://www.w3.org/2000/svg"
-                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                        <svg class="tooth-svg"
+                             viewBox="0 0 11 21"
+                             xmlns="http://www.w3.org/2000/svg"
+                             xmlns:xlink="http://www.w3.org/1999/xlink">
 
-                      <!--
-                          Bridge / Space Maintainer connectors keep their normal row
-                          alignment even when the selected tooth is deciduous.
-                      -->
-                      ${frontToothConnectorOverlay(tid, arch)}
+                          <!--
+                              Bridge / Space Maintainer connectors keep their normal row
+                              alignment even when the selected tooth is deciduous.
+                          -->
+                          ${frontToothConnectorOverlay(tid, arch)}
 
-                      <!--
-                          The tooth image and all tooth-bound overlays shrink together
-                          when Teeth Transposition marks it as deciduous.
-                      -->
-                      <g class="tooth-visual ${shouldShrinkDeciduous ? 'deciduous-tooth' : 'permanent-tooth'}"
-                         ${toothVisualTransform ? `transform="${toothVisualTransform}"` : ""}>
+                          <!--
+                              The tooth image and all tooth-bound overlays shrink together
+                              when Teeth Transposition marks it as deciduous.
+                          -->
+                          <g class="tooth-visual ${shouldShrinkDeciduous ? 'deciduous-tooth' : 'permanent-tooth'}"
+                             ${toothVisualTransform ? `transform="${toothVisualTransform}"` : ""}>
 
-                        <image href="${imgSrc}"
-                               x="0"
-                               y="0"
-                               width="11"
-                               height="21"
-                               ${imgTransform}/>
+                            <image href="${imgSrc}"
+                                   x="0"
+                                   y="0"
+                                   width="11"
+                                   height="21"
+                                   ${imgTransform}/>
 
-                        ${extractedMode
+                            ${extractedMode
                 ? extractedToothOverlay(tid)
                 : `
-                                  ${wholeToothDiseaseFrontOverlay(tid, arch)}
-                                  ${crownTreatmentOverlay(tid, arch, splitY)}
-                                  ${rootOnlyEndodonticOverlay(tid, arch)}
-                                  ${toothApplianceOverlay(tid, arch)}
-                                  ${remainingRootHideOtherHalfOverlay(tid, arch, splitY)}
-                                  ${remainingRootOverlay(tid, arch)}
-                                  ${postOverlay(tid, arch)}
-                                  ${impactionFrontOverlay(tid)}
-                                `}
-                      </g>
+                                      ${wholeToothDiseaseFrontOverlay(tid, arch)}
+                                      ${crownTreatmentOverlay(tid, arch, splitY)}
+                                      ${rootOnlyEndodonticOverlay(tid, arch)}
+                                      ${toothApplianceOverlay(tid, arch)}
+                                      ${remainingRootHideOtherHalfOverlay(tid, arch, splitY)}
+                                      ${remainingRootOverlay(tid, arch)}
+                                      ${postOverlay(tid, arch)}
+                                      ${impactionFrontOverlay(tid)}
+                                    `}
+                          </g>
 
-                      ${extractedMode ? "" : miniGapBadgeOverlay(tid, arch)}
+                          ${extractedMode ? "" : miniGapBadgeOverlay(tid, arch)}
 
-                      ${extractedMode
+                          ${extractedMode
                 ? extractedHitArea
                 : (
                     remainingRootMode
@@ -5977,7 +5977,7 @@
                                 )
                         )
                 )}
-                    </svg>`;
+                        </svg>`;
     }
 
     function frontToothSvg(tid, arch) {
@@ -6034,16 +6034,111 @@
             return `M ${x1o} ${y1o} A ${rx} ${ry} 0 ${la} 1 ${x2o} ${y2o} L ${x1i} ${y1i} A ${irx} ${iry} 0 ${la} 0 ${x2i} ${y2i} Z`;
         }
         const xAngles = [45, 135, 225, 315];
+
+        /*
+            Surface mapping requested for the patient's RIGHT side only
+            (the first eight chart positions: indices 0 through 7).
+
+            Upper Right:
+                Top    = Buccal
+                Bottom = Palatal
+                Left   = Distal
+                Right  = Mesial
+
+            Lower Right:
+                Top    = Lingual
+                Bottom = Buccal
+                Left   = Distal
+                Right  = Mesial
+
+            The LEFT side keeps the original mapping.
+        */
+        const toothIndex =
+            Number.parseInt(
+                tid.slice(1),
+                10
+            );
+
+        const isPatientRightSide =
+            !Number.isNaN(toothIndex)
+            &&
+            toothIndex >= 0
+            &&
+            toothIndex < 8;
+
+        const isUpperRight =
+            arch === "upper"
+            &&
+            isPatientRightSide;
+
+        const rightArea =
+            isPatientRightSide
+                ? "mesial"
+                : "distal";
+
+        const leftArea =
+            isPatientRightSide
+                ? "distal"
+                : "mesial";
+
+        const bottomArea =
+            isUpperRight
+                ? insideName
+                : "buccal";
+
+        const topArea =
+            isUpperRight
+                ? "buccal"
+                : insideName;
+
         const segments = [
-            { key: "distal", startAngle: -45, endAngle: 45 },
-            { key: "buccal", startAngle: 45, endAngle: 135 },
-            { key: "mesial", startAngle: 135, endAngle: 225 },
-            { key: insideName, startAngle: 225, endAngle: 315 }
+            {
+                key: rightArea,
+                startAngle: -45,
+                endAngle: 45
+            },
+            {
+                key: bottomArea,
+                startAngle: 45,
+                endAngle: 135
+            },
+            {
+                key: leftArea,
+                startAngle: 135,
+                endAngle: 225
+            },
+            {
+                key: topArea,
+                startAngle: 225,
+                endAngle: 315
+            }
         ];
+
+        /*
+            Keep treatment badges inside the same visual section whose
+            click now selects that anatomical Surface.
+        */
         const badgeSpots = {
-            buccal: [{ x: 28, y: 40 }, { x: 36, y: 40 }], palatal: [{ x: 28, y: 10 }, { x: 36, y: 10 }],
-            lingual: [{ x: 28, y: 10 }, { x: 36, y: 10 }], mesial: [{ x: 6, y: 22 }, { x: 6, y: 30 }],
-            distal: [{ x: 52, y: 22 }, { x: 52, y: 30 }], occlusal: [{ x: 28, y: 22 }, { x: 36, y: 22 }]
+            [bottomArea]: [
+                { x: 28, y: 40 },
+                { x: 36, y: 40 }
+            ],
+            [topArea]: [
+                { x: 28, y: 10 },
+                { x: 36, y: 10 }
+            ],
+            [leftArea]: [
+                { x: 6, y: 22 },
+                { x: 6, y: 30 }
+            ],
+            [rightArea]: [
+                { x: 52, y: 22 },
+                { x: 52, y: 30 }
+            ],
+            occlusal: [
+                { x: 28, y: 22 },
+                { x: 36, y: 22 }
+            ]
         };
         const allKeys = [...segments.map(s => s.key), "occlusal"];
 
@@ -6118,11 +6213,11 @@
                 );
 
             return `<path d="${segmentPath(s.startAngle, s.endAngle)}"
-                                  fill="${fill}"
-                                  stroke="${stroke}"
-                                  stroke-width="${sw}"
-                                  onclick="selectArea('${tid}','${s.key}','surface')"
-                                  style="cursor:pointer"/>`;
+                                      fill="${fill}"
+                                      stroke="${stroke}"
+                                      stroke-width="${sw}"
+                                      onclick="selectArea('${tid}','${s.key}','surface')"
+                                      style="cursor:pointer"/>`;
         }).join("");
 
         const occlusalMarks = extractedColor
@@ -6159,24 +6254,24 @@
 
         // ⬇️ جديد: X كبيرة عبر السن كامل بالـ occlusal view
         const extractedBigX = extractedColor ? `
-                    <line x1="${cx - rx * 0.85}" y1="${cy - ry * 0.85}" x2="${cx + rx * 0.85}" y2="${cy + ry * 0.85}"
-                          stroke="${extractedColor}" stroke-width="2.6" stroke-linecap="round"/>
-                    <line x1="${cx + rx * 0.85}" y1="${cy - ry * 0.85}" x2="${cx - rx * 0.85}" y2="${cy + ry * 0.85}"
-                          stroke="${extractedColor}" stroke-width="2.6" stroke-linecap="round"/>
-                ` : "";
+                        <line x1="${cx - rx * 0.85}" y1="${cy - ry * 0.85}" x2="${cx + rx * 0.85}" y2="${cy + ry * 0.85}"
+                              stroke="${extractedColor}" stroke-width="2.6" stroke-linecap="round"/>
+                        <line x1="${cx + rx * 0.85}" y1="${cy - ry * 0.85}" x2="${cx - rx * 0.85}" y2="${cy + ry * 0.85}"
+                              stroke="${extractedColor}" stroke-width="2.6" stroke-linecap="round"/>
+                    ` : "";
 
         return `
-                    <svg class="tooth-svg lingual-palatal-surface-svg"
-                         data-surface-chart="true"
-                         viewBox="0 0 64 52"
-                         xmlns="http://www.w3.org/2000/svg">
-                      <defs>${defsContent}</defs>
-                      <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#fafafa" stroke="#d0d6df" stroke-width="1.4"/>
-                      ${segmentsSvg}
-                      ${xLines}
-                      <ellipse cx="${cx}" cy="${cy}" rx="${irx}" ry="${iry}"
-                               fill="${occlusalFill}"
-                               stroke="${occlusalCrownMark
+                        <svg class="tooth-svg lingual-palatal-surface-svg"
+                             data-surface-chart="true"
+                             viewBox="0 0 64 52"
+                             xmlns="http://www.w3.org/2000/svg">
+                          <defs>${defsContent}</defs>
+                          <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#fafafa" stroke="#d0d6df" stroke-width="1.4"/>
+                          ${segmentsSvg}
+                          ${xLines}
+                          <ellipse cx="${cx}" cy="${cy}" rx="${irx}" ry="${iry}"
+                                   fill="${occlusalFill}"
+                                   stroke="${occlusalCrownMark
                 ? occlusalCrownColor
                 : (
                     isOcclusalAreaSelected(
@@ -6188,7 +6283,7 @@
                         ? '#111827'
                         : '#c4ccd7'
                 )}"
-                               stroke-width="${occlusalCrownMark
+                                   stroke-width="${occlusalCrownMark
                 ? 1.28
                 : (
                     isOcclusalAreaSelected(
@@ -6200,21 +6295,21 @@
                         ? 2.0
                         : 0.9
                 )}"
-                               onclick="selectArea('${tid}','occlusal','surface')"
-                               style="cursor:pointer"/>
-                      <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="#c4ccd7" stroke-width="1.3"/>
-                      <!--
-                          Extracted Tooth:
-                          Show exactly one large X only.
-                          Do not render the whole-tooth overlay or the small badges,
-                          because they create the duplicated X and the small extra icon.
-                      -->
-                      ${extractedColor ? "" : wholeToothOverlayOcclusal(tid)}
-                      ${extractedColor ? "" : wholeToothDiseaseOcclusalOverlay(tid)}
-                      ${extractedColor ? "" : segments.map(s => areaBadges(tid, s.key, badgeSpots[s.key] || badgeSpots.occlusal)).join("")}
-                      ${extractedColor ? "" : areaBadges(tid, 'occlusal', badgeSpots.occlusal, false)}
-                      ${extractedBigX}
-                    </svg>`;
+                                   onclick="selectArea('${tid}','occlusal','surface')"
+                                   style="cursor:pointer"/>
+                          <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="#c4ccd7" stroke-width="1.3"/>
+                          <!--
+                              Extracted Tooth:
+                              Show exactly one large X only.
+                              Do not render the whole-tooth overlay or the small badges,
+                              because they create the duplicated X and the small extra icon.
+                          -->
+                          ${extractedColor ? "" : wholeToothOverlayOcclusal(tid)}
+                          ${extractedColor ? "" : wholeToothDiseaseOcclusalOverlay(tid)}
+                          ${extractedColor ? "" : segments.map(s => areaBadges(tid, s.key, badgeSpots[s.key] || badgeSpots.occlusal)).join("")}
+                          ${extractedColor ? "" : areaBadges(tid, 'occlusal', badgeSpots.occlusal, false)}
+                          ${extractedBigX}
+                        </svg>`;
     }
     function toggleToothVariant(tid) {
         if (!ensureDentalChartEditable()) return;
@@ -7144,7 +7239,7 @@
             Clear all treatments, notes, icons, and temporary tooth data.
             Do not change the active Permanent / Deciduous chart mode.
         */
-        allTeeth.forEach(function (id) {
+        allTeeth.forEach(function(id) {
             chartData[id] = makeTooth(id);
         });
 
@@ -7158,7 +7253,7 @@
             - Teeth 6, 7, and 8 remain hidden.
         */
         if (isDeciduousChartView) {
-            allTeeth.forEach(function (toothId) {
+            allTeeth.forEach(function(toothId) {
                 setToothDeciduousState(
                     toothId,
                     canBeDeciduousTooth(toothId)
@@ -7268,7 +7363,7 @@
     // ════════════════════════════════════════════════════════════════
     //  DESELECT ON BACKGROUND CLICK
     // ════════════════════════════════════════════════════════════════
-    document.addEventListener("click", function (e) {
+    document.addEventListener("click", function(e) {
         const isOnTooth = e.target.closest("svg.tooth-svg");
         const isOnBtn = e.target.closest("button");
         const isOnTextarea = e.target.closest("textarea");
@@ -7768,9 +7863,9 @@
 
         if (!rows.length) {
             return `
-                        <div style="color:#6b7280;font-size:13px;">
-                            No actions have been applied to this tooth.
-                        </div>`;
+                            <div style="color:#6b7280;font-size:13px;">
+                                No actions have been applied to this tooth.
+                            </div>`;
         }
 
         return rows.map(row => {
@@ -7779,59 +7874,59 @@
                     getReportAreaLabel(row.area);
 
                 return `
-                            <div class="mini-item"
-                                 style="margin-bottom:7px;align-items:flex-start;
-                                        border-left:3px solid #6b7280;">
-                                <div class="mini-icon">
-                                    ${iconSvg(
+                                <div class="mini-item"
+                                     style="margin-bottom:7px;align-items:flex-start;
+                                            border-left:3px solid #6b7280;">
+                                    <div class="mini-icon">
+                                        ${iconSvg(
                     "note",
                     "#6b7280",
                     22
                 )}
-                                </div>
-
-                                <div class="mini-text">
-                                    <div class="key">
-                                        Action
-                                    </div>
-                                    <div class="value"
-                                         style="margin-bottom:6px;">
-                                        Area Note
                                     </div>
 
-                                    <div class="key">
-                                        Selected Tooth
-                                    </div>
-                                    <div class="value"
-                                         style="margin-bottom:6px;">
-                                        ${escapeHtml(getSelectedToothDisplayLabel(row.toothId))}
+                                    <div class="mini-text">
+                                        <div class="key">
+                                            Action
+                                        </div>
+                                        <div class="value"
+                                             style="margin-bottom:6px;">
+                                            Area Note
+                                        </div>
+
+                                        <div class="key">
+                                            Selected Tooth
+                                        </div>
+                                        <div class="value"
+                                             style="margin-bottom:6px;">
+                                            ${escapeHtml(getSelectedToothDisplayLabel(row.toothId))}
+                                        </div>
+
+                                        <div class="key">
+                                            Selected Area
+                                        </div>
+                                        <div class="value"
+                                             style="margin-bottom:6px;">
+                                            ${escapeHtml(areaLabel)}
+                                        </div>
+
+                                        <div class="key">
+                                            Note
+                                        </div>
+                                        <div class="value">
+                                            ${escapeHtml(row.note)}
+                                        </div>
                                     </div>
 
-                                    <div class="key">
-                                        Selected Area
-                                    </div>
-                                    <div class="value"
-                                         style="margin-bottom:6px;">
-                                        ${escapeHtml(areaLabel)}
-                                    </div>
-
-                                    <div class="key">
-                                        Note
-                                    </div>
-                                    <div class="value">
-                                        ${escapeHtml(row.note)}
-                                    </div>
-                                </div>
-
-                                <button type="button"
-                                        title="Delete note"
-                                        onclick="clearAreaNoteFor(
-                                            '${row.toothId}',
-                                            '${row.area}'
-                                        )">
-                                    ✕
-                                </button>
-                            </div>`;
+                                    <button type="button"
+                                            title="Delete note"
+                                            onclick="clearAreaNoteFor(
+                                                '${row.toothId}',
+                                                '${row.area}'
+                                            )">
+                                        ✕
+                                    </button>
+                                </div>`;
             }
 
             const tool = row.tool;
@@ -7847,16 +7942,73 @@
 
             if (row.type === "swap") {
                 return `
-                            <div class="mini-item"
-                                 style="margin-bottom:7px;align-items:flex-start;
-                                        border-left:3px solid ${color};">
-                                <div class="mini-icon">
-                                    ${iconSvg(
+                                <div class="mini-item"
+                                     style="margin-bottom:7px;align-items:flex-start;
+                                            border-left:3px solid ${color};">
+                                    <div class="mini-icon">
+                                        ${iconSvg(
                     tool.glyph,
                     color,
                     22,
                     row.group
                 )}
+                                    </div>
+
+                                    <div class="mini-text">
+                                        <div class="key">
+                                            Selected Tool
+                                        </div>
+                                        <div class="value"
+                                             style="color:${color};margin-bottom:6px;">
+                                            ${escapeHtml(tool.label)}
+                                        </div>
+
+                                        <div class="key">
+                                            Selected Tooth
+                                        </div>
+                                        <div class="value"
+                                             style="margin-bottom:6px;">
+                                            ${escapeHtml(getSelectedToothDisplayLabel(row.toothId))}
+                                        </div>
+
+                                        <div class="key">
+                                            Selected Area
+                                        </div>
+                                        <div class="value"
+                                             style="margin-bottom:6px;">
+                                            —
+                                        </div>
+
+                                        <div class="key">
+                                            Tooth Identity After Transposition
+                                        </div>
+                                        <div class="value">
+                                            ${escapeHtml(
+                    getSelectedToothDisplayLabel(
+                        row.toothId
+                    )
+                )}
+                                        </div>
+                                    </div>
+                                </div>`;
+            }
+
+            const encodedAreas =
+                encodeURIComponent(
+                    JSON.stringify(row.areas)
+                );
+
+            return `
+                            <div class="mini-item"
+                                 style="margin-bottom:7px;align-items:flex-start;
+                                        border-left:3px solid ${color};">
+                                <div class="mini-icon">
+                                    ${iconSvg(
+                tool.glyph,
+                color,
+                22,
+                row.group
+            )}
                                 </div>
 
                                 <div class="mini-text">
@@ -7869,122 +8021,65 @@
                                     </div>
 
                                     <div class="key">
-                                        Selected Tooth
+                                        Group
                                     </div>
                                     <div class="value"
                                          style="margin-bottom:6px;">
-                                        ${escapeHtml(getSelectedToothDisplayLabel(row.toothId))}
-                                    </div>
-
-                                    <div class="key">
-                                        Selected Area
-                                    </div>
-                                    <div class="value"
-                                         style="margin-bottom:6px;">
-                                        —
-                                    </div>
-
-                                    <div class="key">
-                                        Tooth Identity After Transposition
-                                    </div>
-                                    <div class="value">
                                         ${escapeHtml(
-                    getSelectedToothDisplayLabel(
-                        row.toothId
-                    )
-                )}
-                                    </div>
-                                </div>
-                            </div>`;
-            }
-
-            const encodedAreas =
-                encodeURIComponent(
-                    JSON.stringify(row.areas)
-                );
-
-            return `
-                        <div class="mini-item"
-                             style="margin-bottom:7px;align-items:flex-start;
-                                    border-left:3px solid ${color};">
-                            <div class="mini-icon">
-                                ${iconSvg(
-                tool.glyph,
-                color,
-                22,
-                row.group
-            )}
-                            </div>
-
-                            <div class="mini-text">
-                                <div class="key">
-                                    Selected Tool
-                                </div>
-                                <div class="value"
-                                     style="color:${color};margin-bottom:6px;">
-                                    ${escapeHtml(tool.label)}
-                                </div>
-
-                                <div class="key">
-                                    Group
-                                </div>
-                                <div class="value"
-                                     style="margin-bottom:6px;">
-                                    ${escapeHtml(
                 GROUP_LABELS[row.group] ||
                 row.group
             )}
-                                </div>
+                                    </div>
 
-                                <div class="key">
-                                    ${row.isJaw ? "Selected Jaw" : "Selected Tooth"}
-                                </div>
-                                <div class="value"
-                                     style="margin-bottom:6px;">
-                                    ${escapeHtml(
+                                    <div class="key">
+                                        ${row.isJaw ? "Selected Jaw" : "Selected Tooth"}
+                                    </div>
+                                    <div class="value"
+                                         style="margin-bottom:6px;">
+                                        ${escapeHtml(
                 row.isJaw
                     ? getJawDisplayName(row.jaw)
                     : getSelectedToothDisplayLabel(
                         row.toothId
                     )
             )}
-                                </div>
+                                    </div>
 
-                                <div class="key">
-                                    Selected Area
-                                </div>
-                                <div class="value"
-                                     style="${row.note ? 'margin-bottom:6px;' : ''}">
-                                    ${escapeHtml(
+                                    <div class="key">
+                                        Selected Area
+                                    </div>
+                                    <div class="value"
+                                         style="${row.note ? 'margin-bottom:6px;' : ''}">
+                                        ${escapeHtml(
                 row.isJaw
                     ? "whole jaw"
                     : areasText
             )}
+                                    </div>
+
+                                    ${row.note
+                    ? `
+                                            <div class="key">
+                                                Tooth Report Note
+                                            </div>
+                                            <div class="value">
+                                                ${escapeHtml(row.note)}
+                                            </div>
+                                          `
+                    : ""}
                                 </div>
 
-                                ${row.note
-                    ? `
-                                        <div class="key">
-                                            Tooth Report Note
-                                        </div>
-                                        <div class="value">
-                                            ${escapeHtml(row.note)}
-                                        </div>
-                                      `
-                    : ""}
-                            </div>
-
-                            <button type="button"
-                                    title="Delete this action"
-                                    onclick="removeGroupedToolUsage(
-                                        '${row.toothId}',
-                                        '${row.toolId}',
-                                        '${row.group}',
-                                        '${encodedAreas}'
-                                    )">
-                                ✕
-                            </button>
-                        </div>`;
+                                <button type="button"
+                                        title="Delete this action"
+                                        onclick="removeGroupedToolUsage(
+                                            '${row.toothId}',
+                                            '${row.toolId}',
+                                            '${row.group}',
+                                            '${encodedAreas}'
+                                        )">
+                                    ✕
+                                </button>
+                            </div>`;
         }).join("");
     }
 
@@ -8098,29 +8193,29 @@
                         reportToolId === toolId;
 
                     return `
-                            <div onclick="selectReportTool('${toolId}')"
-                                 style="display:flex;align-items:center;gap:8px;padding:8px 10px;
-                                        border-radius:10px;cursor:pointer;margin-bottom:5px;
-                                        border:2px solid ${isActive ? color : 'var(--line)'};
-                                        background:${isActive ? hexToRgba(color, .07) : '#fafafa'};
-                                        transition:.15s;">
-                                <div style="flex:0 0 auto;">${iconSvg(tool.glyph, color, 28)}</div>
-                                <div style="flex:1;min-width:0;">
-                                    <div style="font-size:12px;font-weight:bold;color:${color};
-                                                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                                        ${escapeHtml(tool.label)}
+                                <div onclick="selectReportTool('${toolId}')"
+                                     style="display:flex;align-items:center;gap:8px;padding:8px 10px;
+                                            border-radius:10px;cursor:pointer;margin-bottom:5px;
+                                            border:2px solid ${isActive ? color : 'var(--line)'};
+                                            background:${isActive ? hexToRgba(color, .07) : '#fafafa'};
+                                            transition:.15s;">
+                                    <div style="flex:0 0 auto;">${iconSvg(tool.glyph, color, 28)}</div>
+                                    <div style="flex:1;min-width:0;">
+                                        <div style="font-size:12px;font-weight:bold;color:${color};
+                                                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                            ${escapeHtml(tool.label)}
+                                        </div>
+                                        <div style="font-size:11px;color:var(--muted);">
+                                            ${GROUP_LABELS[tool.group]} ·
+                                            ${usages.length} report${usages.length !== 1 ? 's' : ''} ·
+                                            ${groupedAreaCount} area${groupedAreaCount !== 1 ? 's' : ''}
+                                        </div>
                                     </div>
-                                    <div style="font-size:11px;color:var(--muted);">
-                                        ${GROUP_LABELS[tool.group]} ·
-                                        ${usages.length} report${usages.length !== 1 ? 's' : ''} ·
-                                        ${groupedAreaCount} area${groupedAreaCount !== 1 ? 's' : ''}
+                                    <div style="font-size:16px;font-weight:bold;color:${color};flex:0 0 auto;
+                                                background:${hexToRgba(color, .12)};border-radius:8px;padding:2px 8px;">
+                                        ${usages.length}
                                     </div>
-                                </div>
-                                <div style="font-size:16px;font-weight:bold;color:${color};flex:0 0 auto;
-                                            background:${hexToRgba(color, .12)};border-radius:8px;padding:2px 8px;">
-                                    ${usages.length}
-                                </div>
-                            </div>`;
+                                </div>`;
                 }).join("");
             }
         }
@@ -8137,18 +8232,18 @@
                 return;
             }
             detailList.innerHTML = `
-                        <div style="font-size:12px;font-weight:bold;color:${color};
-                                    margin-bottom:8px;display:flex;align-items:center;gap:6px;">
-                            ${iconSvg(tool.glyph, color, 18)}
-                            ${escapeHtml(tool.label)}
+                            <div style="font-size:12px;font-weight:bold;color:${color};
+                                        margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                                ${iconSvg(tool.glyph, color, 18)}
+                                ${escapeHtml(tool.label)}
 
-                            <span style="margin-left:auto;background:${hexToRgba(color, .12)};
-                                         color:${color};border-radius:6px;padding:1px 8px;font-size:11px;">
-                                ${usages.length} report${usages.length !== 1 ? 's' : ''}
-                            </span>
-                        </div>
+                                <span style="margin-left:auto;background:${hexToRgba(color, .12)};
+                                             color:${color};border-radius:6px;padding:1px 8px;font-size:11px;">
+                                    ${usages.length} report${usages.length !== 1 ? 's' : ''}
+                                </span>
+                            </div>
 
-                        ${usages.map(usage => {
+                            ${usages.map(usage => {
                 const encodedAreas =
                     encodeURIComponent(
                         JSON.stringify(usage.areas)
@@ -8161,82 +8256,82 @@
                     );
 
                 return `
-                                <div class="mini-item"
-                                     style="margin-bottom:7px;
-                                            cursor:pointer;
-                                            align-items:flex-start;
-                                            border-left:3px solid ${GROUP_COLORS[usage.group]};"
-                                     onclick="selectGroupedReportUsage(
-                                        '${tool.id}',
-                                        '${usage.toothId}',
-                                        '${encodedAreas}'
-                                     )">
+                                    <div class="mini-item"
+                                         style="margin-bottom:7px;
+                                                cursor:pointer;
+                                                align-items:flex-start;
+                                                border-left:3px solid ${GROUP_COLORS[usage.group]};"
+                                         onclick="selectGroupedReportUsage(
+                                            '${tool.id}',
+                                            '${usage.toothId}',
+                                            '${encodedAreas}'
+                                         )">
 
-                                    <div class="mini-icon">
-                                        ${iconSvg(
+                                        <div class="mini-icon">
+                                            ${iconSvg(
                     tool.glyph,
                     GROUP_COLORS[usage.group],
                     22,
                     usage.group
                 )}
-                                    </div>
-
-                                    <div class="mini-text">
-                                        <div class="key">
-                                            Selected Tool
-                                        </div>
-                                        <div class="value"
-                                             style="color:${GROUP_COLORS[usage.group]};margin-bottom:6px;">
-                                            ${escapeHtml(tool.label)}
                                         </div>
 
-                                        <div class="key">
-                                            ${usage.isJaw ? "Selected Jaw" : "Selected Tooth"}
-                                        </div>
-                                        <div class="value"
-                                             style="margin-bottom:6px;">
-                                            ${escapeHtml(
+                                        <div class="mini-text">
+                                            <div class="key">
+                                                Selected Tool
+                                            </div>
+                                            <div class="value"
+                                                 style="color:${GROUP_COLORS[usage.group]};margin-bottom:6px;">
+                                                ${escapeHtml(tool.label)}
+                                            </div>
+
+                                            <div class="key">
+                                                ${usage.isJaw ? "Selected Jaw" : "Selected Tooth"}
+                                            </div>
+                                            <div class="value"
+                                                 style="margin-bottom:6px;">
+                                                ${escapeHtml(
                     usage.isJaw
                         ? getJawDisplayName(usage.jaw)
                         : getSelectedToothDisplayLabel(
                             usage.toothId
                         )
                 )}
-                                        </div>
+                                            </div>
 
-                                        <div class="key">
-                                            Selected Area
-                                        </div>
-                                        <div class="value"
-                                             style="${usage.note ? 'margin-bottom:6px;' : ''}">
-                                            ${escapeHtml(
+                                            <div class="key">
+                                                Selected Area
+                                            </div>
+                                            <div class="value"
+                                                 style="${usage.note ? 'margin-bottom:6px;' : ''}">
+                                                ${escapeHtml(
                     usage.isJaw
                         ? "whole jaw"
                         : areasText
                 )}
-                                        </div>
+                                            </div>
 
-                                        ${usage.note
+                                            ${usage.note
                         ? `
-                                                <div class="key">
-                                                    Tooth Report Note
-                                                </div>
-                                                <div class="value">
-                                                    ${escapeHtml(usage.note)}
-                                                </div>
-                                              `
+                                                    <div class="key">
+                                                        Tooth Report Note
+                                                    </div>
+                                                    <div class="value">
+                                                        ${escapeHtml(usage.note)}
+                                                    </div>
+                                                  `
                         : ""}
-                                    </div>
-                                </div>`;
+                                        </div>
+                                    </div>`;
             }).join("")}`;
             return;
         }
 
         if (!selectedTarget) {
             detailList.innerHTML = `
-                        <div style="color:#6b7280;font-size:13px;">
-                            Nothing selected.
-                        </div>`;
+                            <div style="color:#6b7280;font-size:13px;">
+                                Nothing selected.
+                            </div>`;
 
             document.getElementById(
                 "noteBox"
@@ -8499,121 +8594,121 @@
 
         function renderNumber(toothId, index, row) {
             return `
-                        <div class="number-cell ${getSingleToothNumberClass(toothId)}"
-                             style="grid-column:${index + 2};grid-row:${row};">
-                            ${getSingleToothDisplayedLabel(toothId)}
-                        </div>`;
+                            <div class="number-cell ${getSingleToothNumberClass(toothId)}"
+                                 style="grid-column:${index + 2};grid-row:${row};">
+                                ${getSingleToothDisplayedLabel(toothId)}
+                            </div>`;
         }
 
         function renderUpperFrontTooth(id, index) {
             return `
-                        <div class="tooth-cell ${getDentitionToothClass(id)}"
-                             style="
-                                grid-column:${index + 2};
-                                grid-row:2;
-                                ${cellStyle(id)}
-                             ">
-                            ${renderToothFront(id, "upper")}
-                        </div>`;
+                            <div class="tooth-cell ${getDentitionToothClass(id)}"
+                                 style="
+                                    grid-column:${index + 2};
+                                    grid-row:2;
+                                    ${cellStyle(id)}
+                                 ">
+                                ${renderToothFront(id, "upper")}
+                            </div>`;
         }
 
         function renderUpperInsideTooth(id, index) {
             return `
-                        <div class="tooth-cell ${getDentitionToothClass(id)}"
-                             style="
-                                grid-column:${index + 2};
-                                grid-row:3;
-                                ${cellStyle(id)}
-                             ">
-                            ${occlusalToothSvg(id, "upper")}
-                        </div>`;
+                            <div class="tooth-cell ${getDentitionToothClass(id)}"
+                                 style="
+                                    grid-column:${index + 2};
+                                    grid-row:3;
+                                    ${cellStyle(id)}
+                                 ">
+                                ${occlusalToothSvg(id, "upper")}
+                            </div>`;
         }
 
         function renderLowerInsideTooth(id, index) {
             return `
-                        <div class="tooth-cell ${getDentitionToothClass(id)}"
-                             style="
-                                grid-column:${index + 2};
-                                grid-row:5;
-                                ${cellStyle(id)}
-                             ">
-                            ${occlusalToothSvg(id, "lower")}
-                        </div>`;
+                            <div class="tooth-cell ${getDentitionToothClass(id)}"
+                                 style="
+                                    grid-column:${index + 2};
+                                    grid-row:5;
+                                    ${cellStyle(id)}
+                                 ">
+                                ${occlusalToothSvg(id, "lower")}
+                            </div>`;
         }
 
         function renderLowerFrontTooth(id, index) {
             return `
-                        <div class="tooth-cell ${getDentitionToothClass(id)}"
-                             style="
-                                grid-column:${index + 2};
-                                grid-row:6;
-                                ${cellStyle(id)}
-                             ">
-                            ${renderToothFront(id, "lower")}
-                        </div>`;
+                            <div class="tooth-cell ${getDentitionToothClass(id)}"
+                                 style="
+                                    grid-column:${index + 2};
+                                    grid-row:6;
+                                    ${cellStyle(id)}
+                                 ">
+                                ${renderToothFront(id, "lower")}
+                            </div>`;
         }
 
         document.getElementById("chartHost").innerHTML = `
-                    <div class="chart-grid">
+                        <div class="chart-grid">
 
-                        <!-- Upper numbers -->
-                        <div style="grid-column:1;grid-row:1;"></div>
-                        ${UPPER_IDS.map((id, i) => renderNumber(id, i, 1)).join("")}
+                            <!-- Upper numbers -->
+                            <div style="grid-column:1;grid-row:1;"></div>
+                            ${UPPER_IDS.map((id, i) => renderNumber(id, i, 1)).join("")}
 
-                        <!--
-                            The outline and the upper tooth images now occupy the
-                            same grid row. Teeth appear inside the outline.
-                        -->
-                        ${renderJawWideOverlay("upper")}
+                            <!--
+                                The outline and the upper tooth images now occupy the
+                                same grid row. Teeth appear inside the outline.
+                            -->
+                            ${renderJawWideOverlay("upper")}
 
-                        <!-- Upper Buccal -->
-                        <div class="side-label"
-                             style="grid-column:1;grid-row:2;">
-                            Buccal
-                        </div>
-                        ${UPPER_IDS.map(renderUpperFrontTooth).join("")}
+                            <!-- Upper Buccal -->
+                            <div class="side-label"
+                                 style="grid-column:1;grid-row:2;">
+                                Buccal
+                            </div>
+                            ${UPPER_IDS.map(renderUpperFrontTooth).join("")}
 
-                        <!-- Upper Lingual / Palatal -->
-                        <div class="side-label"
-                             style="grid-column:1;grid-row:3;">
-                             Palatal
-                        </div>
-                        ${UPPER_IDS.map(renderUpperInsideTooth).join("")}
+                            <!-- Upper Lingual / Palatal -->
+                            <div class="side-label"
+                                 style="grid-column:1;grid-row:3;">
+                                 Palatal
+                            </div>
+                            ${UPPER_IDS.map(renderUpperInsideTooth).join("")}
 
-                        <!-- Middle right / left -->
-                        <div style="grid-column:1;grid-row:4;"></div>
+                            <!-- Middle right / left -->
+                            <div style="grid-column:1;grid-row:4;"></div>
 
-                        <div class="mid-rl"
-                             style="grid-row:4;">
-                            <span>R</span>
-                            <span>L</span>
-                        </div>
+                            <div class="mid-rl"
+                                 style="grid-row:4;">
+                                <span>R</span>
+                                <span>L</span>
+                            </div>
 
-                        <!-- Lower Lingual / Palatal -->
-                        <div class="side-label"
-                             style="grid-column:1;grid-row:5;">
-                            Lingual
-                        </div>
-                        ${LOWER_IDS.map(renderLowerInsideTooth).join("")}
+                            <!-- Lower Lingual / Palatal -->
+                            <div class="side-label"
+                                 style="grid-column:1;grid-row:5;">
+                                Lingual
+                            </div>
+                            ${LOWER_IDS.map(renderLowerInsideTooth).join("")}
 
-                        <!--
-                            The lower outline shares row 6 with the lower tooth
-                            images, so the teeth stay inside the outline.
-                        -->
-                        ${renderJawWideOverlay("lower")}
+                            <!--
+                                The lower outline shares row 6 with the lower tooth
+                                images, so the teeth stay inside the outline.
+                            -->
+                            ${renderJawWideOverlay("lower")}
 
-                        <!-- Lower Buccal -->
-                        <div class="side-label"
-                             style="grid-column:1;grid-row:6;">
-                            Buccal
-                        </div>
-                        ${LOWER_IDS.map(renderLowerFrontTooth).join("")}
+                            <!-- Lower Buccal -->
+                            <div class="side-label"
+                                 style="grid-column:1;grid-row:6;">
+                                Buccal
+                            </div>
+                            ${LOWER_IDS.map(renderLowerFrontTooth).join("")}
 
-                        <!-- Lower numbers -->
-                        <div style="grid-column:1;grid-row:7;"></div>
-                        ${LOWER_IDS.map((id, i) => renderNumber(id, i, 7)).join("")}
+                            <!-- Lower numbers -->
+                            <div style="grid-column:1;grid-row:7;"></div>
+                            ${LOWER_IDS.map((id, i) => renderNumber(id, i, 7)).join("")}
 
-                    </div>`;
+                        </div>`;
     }
 
     function renderAll() {
@@ -8873,7 +8968,7 @@
             const c = GROUP_BADGE_COLORS[group] || GROUP_BADGE_COLORS.note;
             const label = GROUP_LABELS[group] || group;
             return `<span style="background:${c.bg};color:${c.color};font-size:11px;font-weight:bold;
-                                         padding:2px 8px;border-radius:20px;white-space:nowrap;">${label}</span>`;
+                                             padding:2px 8px;border-radius:20px;white-space:nowrap;">${label}</span>`;
         };
         // group by FDI tooth number
         const byTooth = {};
@@ -8896,57 +8991,57 @@
         });
         const toothBlocks = Object.values(byTooth).map(tooth => {
             const itemRows = tooth.items.map(r => `
-                        <tr>
-                            <td style="padding:5px 8px;font-size:13px;color:#374151;white-space:nowrap;">
-                                ${iconSvg(r.glyph, GROUP_COLORS[r.group] || "#6b7280", 18)}
-                            </td>
-                            <td style="padding:5px 8px;font-size:13px;color:#374151;
-                                       text-transform:capitalize;">${escapeHtml(
+                            <tr>
+                                <td style="padding:5px 8px;font-size:13px;color:#374151;white-space:nowrap;">
+                                    ${iconSvg(r.glyph, GROUP_COLORS[r.group] || "#6b7280", 18)}
+                                </td>
+                                <td style="padding:5px 8px;font-size:13px;color:#374151;
+                                           text-transform:capitalize;">${escapeHtml(
                 r.isJaw
                     ? "whole jaw"
                     : getReportAreasText(r.areas || [], r.toolId)
             )}</td>
-                            <td style="padding:5px 8px;">${badge(r.group)}</td>
-                            <td style="padding:5px 8px;font-size:13px;color:#111827;">
-                                <div>${escapeHtml(r.label)}</div>
-                                ${r.note
+                                <td style="padding:5px 8px;">${badge(r.group)}</td>
+                                <td style="padding:5px 8px;font-size:13px;color:#111827;">
+                                    <div>${escapeHtml(r.label)}</div>
+                                    ${r.note
                     ? `
-                                        <div style="margin-top:4px;color:#4b5563;
-                                                    font-size:12px;white-space:pre-wrap;">
-                                            ${escapeHtml(r.note)}
-                                        </div>
-                                      `
+                                            <div style="margin-top:4px;color:#4b5563;
+                                                        font-size:12px;white-space:pre-wrap;">
+                                                ${escapeHtml(r.note)}
+                                            </div>
+                                          `
                     : ""}
-                            </td>
-                        </tr>`).join("");
+                                </td>
+                            </tr>`).join("");
             return `
-                        <div style="margin-bottom:10px;border:1px solid var(--line);
-                                    border-radius:12px;overflow:hidden;">
-                            <div style="background:#f1f5f9;padding:7px 12px;font-weight:bold;
-                                        font-size:14px;border-bottom:1px solid var(--line);">
-                                ${tooth.isJaw
+                            <div style="margin-bottom:10px;border:1px solid var(--line);
+                                        border-radius:12px;overflow:hidden;">
+                                <div style="background:#f1f5f9;padding:7px 12px;font-weight:bold;
+                                            font-size:14px;border-bottom:1px solid var(--line);">
+                                    ${tooth.isJaw
                     ? `🦷 Jaw <span style="color:#2563eb">${escapeHtml(getJawDisplayName(tooth.jaw))}</span>`
                     : `🦷 Tooth <span style="color:#2563eb">${tooth.fdi}</span>
-                                       <span style="font-weight:normal;color:var(--muted);
-                                                    font-size:12px;margin-left:6px;">(${tooth.tid})</span>`
+                                           <span style="font-weight:normal;color:var(--muted);
+                                                        font-size:12px;margin-left:6px;">(${tooth.tid})</span>`
                 }
-                            </div>
-                            <table style="width:100%;border-collapse:collapse;">
-                                <thead>
-                                    <tr style="background:#fafafa;">
-                                        <th style="padding:4px 8px;font-size:11px;color:var(--muted);
-                                                   text-align:left;font-weight:normal;width:28px;"></th>
-                                        <th style="padding:4px 8px;font-size:11px;color:var(--muted);
-                                                   text-align:left;font-weight:normal;">Area</th>
-                                        <th style="padding:4px 8px;font-size:11px;color:var(--muted);
-                                                   text-align:left;font-weight:normal;">Group</th>
-                                        <th style="padding:4px 8px;font-size:11px;color:var(--muted);
-                                                   text-align:left;font-weight:normal;">Treatment</th>
-                                    </tr>
-                                </thead>
-                                <tbody>${itemRows}</tbody>
-                            </table>
-                        </div>`;
+                                </div>
+                                <table style="width:100%;border-collapse:collapse;">
+                                    <thead>
+                                        <tr style="background:#fafafa;">
+                                            <th style="padding:4px 8px;font-size:11px;color:var(--muted);
+                                                       text-align:left;font-weight:normal;width:28px;"></th>
+                                            <th style="padding:4px 8px;font-size:11px;color:var(--muted);
+                                                       text-align:left;font-weight:normal;">Area</th>
+                                            <th style="padding:4px 8px;font-size:11px;color:var(--muted);
+                                                       text-align:left;font-weight:normal;">Group</th>
+                                            <th style="padding:4px 8px;font-size:11px;color:var(--muted);
+                                                       text-align:left;font-weight:normal;">Treatment</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${itemRows}</tbody>
+                                </table>
+                            </div>`;
         });
         return toothBlocks.join("");
     }
@@ -8981,8 +9076,8 @@
 
             document.getElementById("summaryMeta").innerHTML =
                 `<b>Session #${id}</b> &nbsp;|&nbsp; ${new Date(upd).toLocaleString("en-GB")}
-                         &nbsp;|&nbsp; Note: <i>${escapeHtml(note)}</i>
-                         &nbsp;|&nbsp; <b>${rows.length}</b> recorded item(s)`;
+                             &nbsp;|&nbsp; Note: <i>${escapeHtml(note)}</i>
+                             &nbsp;|&nbsp; <b>${rows.length}</b> recorded item(s)`;
 
             document.getElementById("summaryTable").innerHTML =
                 buildBpeSummaryHtml(bpeJson) +
@@ -9213,13 +9308,13 @@
                 const updatedAt = pick(c, "updatedAt", "UpdatedAt");
                 const noteText = pick(c, "sessionNote", "SessionNote") || "—";
                 return `
-                          <div class="history-item">
-                            <div>
-                              <div class="hi-meta">${new Date(updatedAt).toLocaleString("en-GB")} &bull; ID: ${id}</div>
-                              <div class="hi-note">${escapeHtml(noteText)}</div>
-                            </div>
-            <button class="btn btn-primary" onclick="previewSessionById(${id})">📊 Preview</button>
-            </div>`;
+                              <div class="history-item">
+                                <div>
+                                  <div class="hi-meta">${new Date(updatedAt).toLocaleString("en-GB")} &bull; ID: ${id}</div>
+                                  <div class="hi-note">${escapeHtml(noteText)}</div>
+                                </div>
+                <button class="btn btn-primary" onclick="previewSessionById(${id})">📊 Preview</button>
+                </div>`;
             }).join("");
         } catch (err) {
             document.getElementById("historyList").innerHTML = "<p style='color:red'>Failed to load history.</p>";
@@ -9276,7 +9371,7 @@
     // ════════════════════════════════════════════════════════════════
     //  SURFACE OUTSIDE-CLICK BEHAVIOR
     // ════════════════════════════════════════════════════════════════
-    document.addEventListener("click", function (event) {
+    document.addEventListener("click", function(event) {
         /*
             Apply this behavior only when the most recent tooth click came
             from the Lingual / Palatal Surface diagram.
@@ -9329,7 +9424,7 @@
             + "#sessionNoteGlobal, "
             + ".bpe-select, "
             + "#deciduousModeCheckbox"
-        ).forEach(function (element) {
+        ).forEach(function(element) {
             element.disabled = true;
         });
     }

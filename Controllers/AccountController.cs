@@ -4,6 +4,8 @@ using DentalCollegeManagementSystem_AAU.Models.ViewModels;
 using DentalCollegeManagementSystem_AAU.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.DirectoryServices.AccountManagement;
+using System.Text;
 
 namespace DentalCollegeManagementSystem_AAU.Controllers
 {
@@ -139,32 +141,253 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
              * التحقق من اسم المستخدم وكلمة المرور
              * باستخدام Active Directory.
              */
+            //bool isAuthenticated;
+
+            //try
+            //{
+            //    isAuthenticated =
+            //        _activeDirectoryValidator.IsAuthenticated(
+            //            _domain,
+            //            enteredUsername,
+            //            model.Password);
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogError(
+            //        ex,
+            //        "Active Directory authentication error for user {UserName}. Domain: {Domain}. Error: {Error}",
+            //        enteredUsername,
+            //        _domain,
+            //        ex.Message);
+
+            //    ModelState.AddModelError(
+            //        string.Empty,
+            //        "❌ The university login service is currently unavailable. Please contact IT support.");
+
+            //    return View(model);
+            //}
+            // =====================================================
+            // ACTIVE DIRECTORY AUTHENTICATION
+            // =====================================================
+
             bool isAuthenticated;
 
             try
             {
+                _logger.LogInformation(
+                    @"Starting Active Directory authentication.
+
+UserName: {UserName}
+Domain: {Domain}
+ConfiguredPath: {ConfiguredPath}
+ApplicationServer: {ApplicationServer}
+ProcessUser: {ProcessUser}",
+                    enteredUsername,
+                    _domain,
+                    _activeDirectoryValidator.LdapPath,
+                    Environment.MachineName,
+                    Environment.UserDomainName
+                        + "\\"
+                        + Environment.UserName);
+
                 isAuthenticated =
                     _activeDirectoryValidator.IsAuthenticated(
                         _domain,
                         enteredUsername,
                         model.Password);
             }
-            catch (Exception ex)
+            catch (PrincipalServerDownException ex)
             {
+                string completeError =
+                    BuildActiveDirectoryErrorMessage(
+                        title:
+                            "The Active Directory server could not be contacted.",
+                        exception: ex,
+                        enteredUsername: enteredUsername);
+
                 _logger.LogError(
                     ex,
-                    "Active Directory authentication error for user {UserName}. Domain: {Domain}. Error: {Error}",
-                    enteredUsername,
-                    _domain,
-                    ex.Message);
+                    "Active Directory server is unavailable for user {UserName}.",
+                    enteredUsername);
+
+                /*
+                 * تظهر مباشرة في صفحة Login.
+                 */
+                ViewBag.ActiveDirectoryError =
+                    completeError;
 
                 ModelState.AddModelError(
                     string.Empty,
-                    "❌ The university login service is currently unavailable. Please contact IT support.");
+                    completeError);
+
+                return View(model);
+            }
+            catch (PrincipalOperationException ex)
+            {
+                string completeError =
+                    BuildActiveDirectoryErrorMessage(
+                        title:
+                            "Active Directory returned an operation error.",
+                        exception: ex,
+                        enteredUsername: enteredUsername);
+
+                _logger.LogError(
+                    ex,
+                    "Active Directory operation error for user {UserName}.",
+                    enteredUsername);
+
+                ViewBag.ActiveDirectoryError =
+                    completeError;
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    completeError);
+
+                return View(model);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                string completeError =
+                    BuildActiveDirectoryErrorMessage(
+                        title:
+                            "The IIS application account was denied access to Active Directory.",
+                        exception: ex,
+                        enteredUsername: enteredUsername);
+
+                _logger.LogError(
+                    ex,
+                    "Active Directory access denied for user {UserName}.",
+                    enteredUsername);
+
+                ViewBag.ActiveDirectoryError =
+                    completeError;
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    completeError);
+
+                return View(model);
+            }
+            catch (ArgumentException ex)
+            {
+                string completeError =
+                    BuildActiveDirectoryErrorMessage(
+                        title:
+                            "The Active Directory configuration is invalid.",
+                        exception: ex,
+                        enteredUsername: enteredUsername);
+
+                _logger.LogError(
+                    ex,
+                    "Invalid Active Directory configuration.");
+
+                ViewBag.ActiveDirectoryError =
+                    completeError;
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    completeError);
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                string completeError =
+                    BuildActiveDirectoryErrorMessage(
+                        title:
+                            "An unexpected Active Directory error occurred.",
+                        exception: ex,
+                        enteredUsername: enteredUsername);
+
+                _logger.LogError(
+                    ex,
+                    "Unexpected Active Directory error for user {UserName}.",
+                    enteredUsername);
+
+                ViewBag.ActiveDirectoryError =
+                    completeError;
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    completeError);
 
                 return View(model);
             }
 
+            /*
+             * مهم:
+             *
+             * ValidateCredentials قد لا يرمي Exception.
+             * قد يرجع false فقط.
+             *
+             * لذلك يجب عرض رسالة تشخيصية هنا أيضًا.
+             */
+            if (!isAuthenticated)
+            {
+                string processAccount =
+                    Environment.UserDomainName
+                    + "\\"
+                    + Environment.UserName;
+
+                string rejectedMessage =
+                    "ACTIVE DIRECTORY LOGIN FAILED"
+                    + Environment.NewLine
+                    + "----------------------------------------"
+                    + Environment.NewLine
+                    + "Active Directory returned FALSE."
+                    + Environment.NewLine
+                    + Environment.NewLine
+                    + "This means one of the following:"
+                    + Environment.NewLine
+                    + "1. The username or password is incorrect."
+                    + Environment.NewLine
+                    + "2. The account is locked or disabled."
+                    + Environment.NewLine
+                    + "3. The account has logon restrictions."
+                    + Environment.NewLine
+                    + "4. The server contacted a different domain controller."
+                    + Environment.NewLine
+                    + Environment.NewLine
+                    + "Username: "
+                    + enteredUsername
+                    + Environment.NewLine
+                    + "Domain: "
+                    + _domain
+                    + Environment.NewLine
+                    + "Configured path/server: "
+                    + _activeDirectoryValidator.LdapPath
+                    + Environment.NewLine
+                    + "Application server: "
+                    + Environment.MachineName
+                    + Environment.NewLine
+                    + "IIS process account: "
+                    + processAccount
+                    + Environment.NewLine
+                    + "Exception: No exception was thrown.";
+
+                _logger.LogWarning(
+                    @"Active Directory returned false.
+
+UserName: {UserName}
+Domain: {Domain}
+ConfiguredPath: {ConfiguredPath}
+ApplicationServer: {ApplicationServer}
+ProcessAccount: {ProcessAccount}",
+                    enteredUsername,
+                    _domain,
+                    _activeDirectoryValidator.LdapPath,
+                    Environment.MachineName,
+                    processAccount);
+
+                ViewBag.ActiveDirectoryError =
+                    rejectedMessage;
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    rejectedMessage);
+
+                return View(model);
+            }
             if (!isAuthenticated)
             {
                 _logger.LogWarning(
@@ -281,6 +504,172 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             return RedirectToAction(
                 "Index",
                 "Home");
+        }
+        // =====================================================
+        // ACTIVE DIRECTORY ERROR DESCRIPTION
+        // =====================================================
+
+        private static string GetActiveDirectoryProblemDescription(
+            Exception exception)
+        {
+            if (ContainsException<PrincipalServerDownException>(
+                    exception))
+            {
+                return
+                    "The application server cannot contact the "
+                    + "Active Directory domain controller. "
+                    + "Check DNS, network, firewall, domain name "
+                    + "and LDAP/Kerberos ports.";
+            }
+
+            if (ContainsException<UnauthorizedAccessException>(
+                    exception))
+            {
+                return
+                    "The IIS application process does not have "
+                    + "permission to access Active Directory.";
+            }
+
+            if (ContainsException<ArgumentException>(
+                    exception))
+            {
+                return
+                    "The Active Directory domain or server "
+                    + "configuration is invalid or empty.";
+            }
+
+            if (ContainsException<PrincipalOperationException>(
+                    exception))
+            {
+                return
+                    "Active Directory returned an operation error. "
+                    + "Check the domain controller, account status "
+                    + "and directory service availability.";
+            }
+
+            string allMessages =
+                GetExceptionDetails(exception);
+
+            if (allMessages.Contains(
+                    "The server is not operational",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return
+                    "The Active Directory server is not operational "
+                    + "or cannot be reached from the application server.";
+            }
+
+            if (allMessages.Contains(
+                    "The specified domain either does not exist",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return
+                    "The domain could not be found. Check the server "
+                    + "DNS settings and Active Directory domain name.";
+            }
+
+            if (allMessages.Contains(
+                    "could not be contacted",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return
+                    "The Active Directory domain controller could not "
+                    + "be contacted from the application server.";
+            }
+
+            if (allMessages.Contains(
+                    "Logon failure",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return
+                    "Active Directory rejected the account used "
+                    + "to establish the directory connection.";
+            }
+
+            if (allMessages.Contains(
+                    "Access is denied",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return
+                    "Access to Active Directory was denied for the "
+                    + "IIS application process.";
+            }
+
+            return
+                "An unexpected Active Directory communication "
+                + "error occurred.";
+        }
+
+        // =====================================================
+        // GET FULL EXCEPTION CHAIN
+        // =====================================================
+
+        private static string GetExceptionDetails(
+            Exception exception)
+        {
+            StringBuilder result =
+                new StringBuilder();
+
+            Exception? currentException =
+                exception;
+
+            int level = 0;
+
+            while (currentException != null)
+            {
+                if (level > 0)
+                {
+                    result.Append(" --> Inner Exception: ");
+                }
+
+                result.Append(
+                    currentException.GetType().FullName);
+
+                result.Append(": ");
+
+                result.Append(
+                    currentException.Message);
+
+                result.Append(
+                    " [HResult: 0x");
+
+                result.Append(
+                    currentException.HResult.ToString("X8"));
+
+                result.Append(']');
+
+                currentException =
+                    currentException.InnerException;
+
+                level++;
+            }
+
+            return result.ToString();
+        }
+
+        // =====================================================
+        // SEARCH EXCEPTION CHAIN
+        // =====================================================
+
+        private static bool ContainsException<TException>(
+            Exception exception)
+            where TException : Exception
+        {
+            Exception? currentException =
+                exception;
+
+            while (currentException != null)
+            {
+                if (currentException is TException)
+                {
+                    return true;
+                }
+
+                currentException =
+                    currentException.InnerException;
+            }
+
+            return false;
         }
 
         // =====================================================
@@ -676,5 +1065,184 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             return result;
         }
+        // =====================================================
+        // BUILD ACTIVE DIRECTORY ERROR MESSAGE
+        // =====================================================
+
+        private string BuildActiveDirectoryErrorMessage(
+            string title,
+            Exception exception,
+            string enteredUsername)
+        {
+            StringBuilder exceptionMessages =
+                new StringBuilder();
+
+            Exception? currentException =
+                exception;
+
+            int exceptionLevel = 1;
+
+            while (currentException != null)
+            {
+                exceptionMessages.AppendLine(
+                    "Exception Level "
+                    + exceptionLevel
+                    + ":");
+
+                exceptionMessages.AppendLine(
+                    "Type: "
+                    + currentException.GetType().FullName);
+
+                exceptionMessages.AppendLine(
+                    "Message: "
+                    + currentException.Message);
+
+                exceptionMessages.AppendLine(
+                    "HResult: 0x"
+                    + currentException.HResult.ToString("X8"));
+
+                if (currentException.InnerException != null)
+                {
+                    exceptionMessages.AppendLine(
+                        "----------------------------------------");
+                }
+
+                currentException =
+                    currentException.InnerException;
+
+                exceptionLevel++;
+            }
+
+            string processAccount =
+                Environment.UserDomainName
+                + "\\"
+                + Environment.UserName;
+
+            string suggestedSolution =
+                GetActiveDirectorySuggestedSolution(
+                    exception);
+
+            return
+                "ACTIVE DIRECTORY ERROR"
+                + Environment.NewLine
+                + "========================================"
+                + Environment.NewLine
+                + title
+                + Environment.NewLine
+                + Environment.NewLine
+                + "User: "
+                + enteredUsername
+                + Environment.NewLine
+                + "Domain: "
+                + _domain
+                + Environment.NewLine
+                + "Configured path/server: "
+                + _activeDirectoryValidator.LdapPath
+                + Environment.NewLine
+                + "Application server: "
+                + Environment.MachineName
+                + Environment.NewLine
+                + "IIS process account: "
+                + processAccount
+                + Environment.NewLine
+                + Environment.NewLine
+                + "EXCEPTION DETAILS"
+                + Environment.NewLine
+                + "----------------------------------------"
+                + Environment.NewLine
+                + exceptionMessages
+                + Environment.NewLine
+                + "SUGGESTED SOLUTION"
+                + Environment.NewLine
+                + "----------------------------------------"
+                + Environment.NewLine
+                + suggestedSolution;
+        }
+
+        // =====================================================
+        // ACTIVE DIRECTORY SUGGESTED SOLUTION
+        // =====================================================
+
+        private static string GetActiveDirectorySuggestedSolution(
+            Exception exception)
+        {
+            string fullError =
+                exception.ToString();
+
+            if (exception is PrincipalServerDownException ||
+                fullError.Contains(
+                    "server is not operational",
+                    StringComparison.OrdinalIgnoreCase) ||
+                fullError.Contains(
+                    "could not be contacted",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return
+                    "The IIS server cannot reach Active Directory."
+                    + Environment.NewLine
+                    + "Check the following:"
+                    + Environment.NewLine
+                    + "1. The IIS server DNS must point to the university Active Directory DNS."
+                    + Environment.NewLine
+                    + "2. Run: nslookup AMMAN.LOCAL"
+                    + Environment.NewLine
+                    + "3. Run: nltest /dsgetdc:AMMAN.LOCAL /force"
+                    + Environment.NewLine
+                    + "4. Test ports 53, 88, 389, 445 and 135."
+                    + Environment.NewLine
+                    + "5. Confirm the server is connected to the university network or VPN.";
+            }
+
+            if (exception is UnauthorizedAccessException ||
+                fullError.Contains(
+                    "access is denied",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return
+                    "The IIS Application Pool account does not have permission."
+                    + Environment.NewLine
+                    + "Test the Application Pool using an approved domain service account."
+                    + Environment.NewLine
+                    + "Do not use a personal or Domain Administrator account.";
+            }
+
+            if (exception is ArgumentException)
+            {
+                return
+                    "Check the Active Directory settings in appsettings.json "
+                    + "and appsettings.Production.json."
+                    + Environment.NewLine
+                    + "The domain must be similar to: AMMAN.LOCAL"
+                    + Environment.NewLine
+                    + "Do not pass LDAP://AMMAN.LOCAL as the domain name.";
+            }
+
+            if (fullError.Contains(
+                "specified domain either does not exist",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                return
+                    "The server cannot discover the domain."
+                    + Environment.NewLine
+                    + "Correct the DNS configuration on the IIS server "
+                    + "and verify the domain name.";
+            }
+
+            if (fullError.Contains(
+                "logon failure",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                return
+                    "Active Directory rejected the account."
+                    + Environment.NewLine
+                    + "Check the username, password, lock status, disabled status "
+                    + "and logon restrictions.";
+            }
+
+            return
+                "Review the exception details and the application logs. "
+                + "Also verify DNS, firewall, domain configuration and IIS identity.";
+        }
     }
+
 }

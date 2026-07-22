@@ -1,7 +1,5 @@
 using DentalCollegeManagementSystem_AAU.Data;
-using DentalCollegeManagementSystem_AAU.Options;
 using DentalCollegeManagementSystem_AAU.Services;
-using DentalCollegeManagementSystem_AAU.Services.StudentTransfer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -16,10 +14,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // =====================================================
-// DATABASE
+// SQL SERVER DATABASE
 // =====================================================
 
-string connectionString =
+string patientConnectionString =
     builder.Configuration.GetConnectionString("Patient")
     ?? throw new InvalidOperationException(
         "ConnectionStrings:Patient is missing.");
@@ -28,14 +26,14 @@ builder.Services.AddDbContext<AppDbContext>(
     options =>
     {
         options.UseSqlServer(
-            connectionString,
+            patientConnectionString,
             sqlOptions =>
             {
                 sqlOptions.CommandTimeout(90);
+
                 sqlOptions.EnableRetryOnFailure(
                     maxRetryCount: 3,
-                    maxRetryDelay:
-                        TimeSpan.FromSeconds(10),
+                    maxRetryDelay: TimeSpan.FromSeconds(10),
                     errorNumbersToAdd: null);
             });
     });
@@ -44,13 +42,19 @@ builder.Services.AddDbContext<AppDbContext>(
 // SESSION
 // =====================================================
 
+builder.Services.AddDistributedMemoryCache();
+
 builder.Services.AddSession(
     options =>
     {
         options.IdleTimeout =
             TimeSpan.FromMinutes(30);
 
+        options.Cookie.Name =
+            ".DentalCollege.Session";
+
         options.Cookie.HttpOnly = true;
+
         options.Cookie.IsEssential = true;
 
         options.Cookie.SameSite =
@@ -61,43 +65,33 @@ builder.Services.AddSession(
     });
 
 // =====================================================
-// APPLICATION SERVICES
+// ACTIVE DIRECTORY
 // =====================================================
 
 builder.Services.AddScoped<ActiveDirectoryValidator>(
     serviceProvider =>
     {
         IConfiguration configuration =
-            serviceProvider
-                .GetRequiredService<IConfiguration>();
+            serviceProvider.GetRequiredService<IConfiguration>();
 
-        string ldapPath =
+        string activeDirectoryServer =
             configuration["ActiveDirectory:Server"]
             ?? configuration["ActiveDirectory:Domain"]
             ?? throw new InvalidOperationException(
-                "ActiveDirectory:Server or "
-                + "ActiveDirectory:Domain is missing "
-                + "from appsettings.json.");
+                "ActiveDirectory:Server or ActiveDirectory:Domain "
+                + "is missing from appsettings.json.");
 
         return new ActiveDirectoryValidator(
-            ldapPath);
+            activeDirectoryServer);
     });
+
+// =====================================================
+// APPLICATION SERVICES
+// =====================================================
 
 builder.Services.AddScoped<JwtTokenService>();
 
 builder.Services.AddSignalR();
-
-// =====================================================
-// STUDENT TRANSFER SERVICE
-// =====================================================
-
-builder.Services.Configure<StudentTransferOptions>(
-    builder.Configuration.GetSection(
-        StudentTransferOptions.SectionName));
-
-builder.Services.AddScoped<
-    IStudentTransferService,
-    StudentTransferService>();
 
 // =====================================================
 // JWT SETTINGS
@@ -133,16 +127,18 @@ builder.Services
         options =>
         {
             options.DefaultAuthenticateScheme =
-                JwtBearerDefaults
-                    .AuthenticationScheme;
+                JwtBearerDefaults.AuthenticationScheme;
 
             options.DefaultChallengeScheme =
-                JwtBearerDefaults
-                    .AuthenticationScheme;
+                JwtBearerDefaults.AuthenticationScheme;
         })
     .AddJwtBearer(
         options =>
         {
+            options.RequireHttpsMetadata = false;
+
+            options.SaveToken = true;
+
             options.TokenValidationParameters =
                 new TokenValidationParameters
                 {
@@ -156,8 +152,7 @@ builder.Services
 
                     IssuerSigningKey =
                         new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(
-                                jwtKey)),
+                            Encoding.UTF8.GetBytes(jwtKey)),
 
                     ClockSkew =
                         TimeSpan.FromMinutes(1)
@@ -172,11 +167,9 @@ builder.Services
                             string? token =
                                 context.HttpContext
                                     .Session
-                                    .GetString(
-                                        "AccessToken");
+                                    .GetString("AccessToken");
 
-                            if (!string.IsNullOrWhiteSpace(
-                                    token))
+                            if (!string.IsNullOrWhiteSpace(token))
                             {
                                 context.Token = token;
                             }
@@ -188,10 +181,17 @@ builder.Services
                         context =>
                         {
                             Console.WriteLine(
-                                "JWT authentication "
-                                + "failed: "
-                                + context.Exception
-                                    .Message);
+                                "JWT authentication failed: "
+                                + context.Exception.Message);
+
+                            return Task.CompletedTask;
+                        },
+
+                    OnChallenge =
+                        context =>
+                        {
+                            Console.WriteLine(
+                                "JWT challenge occurred.");
 
                             return Task.CompletedTask;
                         }
@@ -199,6 +199,33 @@ builder.Services
         });
 
 builder.Services.AddAuthorization();
+
+// =====================================================
+// STARTUP INFORMATION
+// =====================================================
+
+string activeDirectoryDomain =
+    builder.Configuration["ActiveDirectory:Domain"]
+    ?? "(missing)";
+
+string activeDirectoryServer =
+    builder.Configuration["ActiveDirectory:Server"]
+    ?? "(missing)";
+
+Console.WriteLine(
+    "==========================================");
+
+Console.WriteLine(
+    $"ENVIRONMENT: {builder.Environment.EnvironmentName}");
+
+Console.WriteLine(
+    $"ACTIVE DIRECTORY DOMAIN: {activeDirectoryDomain}");
+
+Console.WriteLine(
+    $"ACTIVE DIRECTORY SERVER: {activeDirectoryServer}");
+
+Console.WriteLine(
+    "==========================================");
 
 // =====================================================
 // BUILD APPLICATION
@@ -213,7 +240,12 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
+
     app.UseHsts();
+}
+else
+{
+    app.UseDeveloperExceptionPage();
 }
 
 // =====================================================
@@ -227,12 +259,13 @@ app.UseStaticFiles();
 app.UseRouting();
 
 /*
- * Session يجب أن تكون قبل Authentication
- * لأن التوكن تتم قراءته من Session.
+ * Session must run before Authentication because
+ * the JWT token is read from Session.
  */
 app.UseSession();
 
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 // =====================================================
