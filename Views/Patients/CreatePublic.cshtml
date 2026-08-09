@@ -38,21 +38,21 @@
         border: 1px solid #d9d9d9 !important;
     }
     /*
-                                    ملفات الخط يجب أن تكون داخل:
+                                            ملفات الخط يجب أن تكون داخل:
 
-                                    wwwroot
-                                    └── Fonts
-                                        └── NeoSansArabic
-                                            ├── NEOSANSARABIC.TTF
-                                            ├── NEOSANSARABIC-LIGHT.TTF
-                                            ├── NEOSANSARABIC-MEDIUM.TTF
-                                            ├── NEOSANSARABIC-BOLD.TTF
-                                            ├── NEOSANSARABIC-BLACK.TTF
-                                            └── NEOSANSARABIC-ULTRA.TTF
+                                            wwwroot
+                                            └── Fonts
+                                                └── NeoSansArabic
+                                                    ├── NEOSANSARABIC.TTF
+                                                    ├── NEOSANSARABIC-LIGHT.TTF
+                                                    ├── NEOSANSARABIC-MEDIUM.TTF
+                                                    ├── NEOSANSARABIC-BOLD.TTF
+                                                    ├── NEOSANSARABIC-BLACK.TTF
+                                                    └── NEOSANSARABIC-ULTRA.TTF
 
-                                    نكتب @@font-face داخل ملف cshtml حتى يقوم Razor
-                                    بطباعة font -face بشكل صحيح داخل CSS.
-                            */
+                                            نكتب @@font-face داخل ملف cshtml حتى يقوم Razor
+                                            بطباعة font -face بشكل صحيح داخل CSS.
+                                    */
 
     @@font-face {
         font-family: 'NeoSansArabic';
@@ -141,8 +141,8 @@
     }
 
     /*
-                                    نحافظ على خط Font Awesome حتى لا تختفي الأيقونات.
-                                */
+                                            نحافظ على خط Font Awesome حتى لا تختفي الأيقونات.
+                                        */
     .fa,
     .fas,
     .far,
@@ -194,8 +194,8 @@
         }
 
     /* =============================================
-                               CAPTCHA محلية — بدون Session أو إعدادات إضافية
-                               =============================================== */
+                                       CAPTCHA محلية — بدون Session أو إعدادات إضافية
+                                       =============================================== */
     .local-captcha-box {
         border: 1px solid #d9d9d9;
         background: #f8f8fb;
@@ -813,6 +813,45 @@
     </div>
 </div>
 
+<!-- Modal: الموعد ممتلئ -->
+<div class="modal fade" id="slotFullModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:450px;">
+        <div class="modal-content rounded-0 border-0 shadow-lg">
+            <div style="height:6px; background:linear-gradient(90deg,#b02a37,#dc3545);"></div>
+
+            <div class="modal-body text-center px-4 pt-4 pb-2">
+                <div class="mb-3">
+                    <div style="width:72px; height:72px; border-radius:50%;
+                        background:#fff5f5; border:2px solid #dc3545;
+                        display:flex; align-items:center; justify-content:center; margin:0 auto;">
+                        <i class="fa-solid fa-calendar-xmark" style="font-size:32px; color:#dc3545;"></i>
+                    </div>
+                </div>
+
+                <h5 class="fw-bold mb-2" style="color:#252468; font-size:18px;">
+                    لا يمكن التسجيل بهذا الموعد
+                </h5>
+
+                <p id="slotFullModalMessage"
+                   class="text-muted mb-0"
+                   style="font-size:14px; line-height:1.9;">
+                    حالياً لا يمكن التسجيل، يرجى اختيار موعد آخر لأنه لا يوجد مجال للتسجيل في هذا التاريخ.
+                </p>
+            </div>
+
+            <div class="modal-footer border-0 justify-content-center pb-4 pt-2">
+                <button type="button"
+                        class="btn rounded-0 fw-bold px-5 py-2"
+                        style="background:#252468; color:#fff; font-size:14px;"
+                        data-bs-dismiss="modal">
+                    <i class="fa-solid fa-check me-1"></i> حسناً
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
@@ -832,19 +871,19 @@
     =============================================== */
 
     const BOOKING_START_DATE =
-    "2026-07-26";
+        "2026-07-26";
 
     const DEFAULT_APPOINTMENTS = {
 
-    AM: {
-    value: "09:00",
-    label: "09:00 صباحاً"
-    },
+        AM: {
+            value: "09:00",
+            label: "09:00 صباحاً"
+        },
 
-    PM: {
-    value: "13:00",
-    label: "01:00 مساءً"
-    }
+        PM: {
+            value: "13:00",
+            label: "01:00 مساءً"
+        }
 
     };
 
@@ -855,89 +894,111 @@
     let slotAvailability = {};
 
     let isWholeDayFull =
-    false;
+        false;
 
     let isSelectedSlotFull =
-    false;
+        false;
 
     function getAllDefaultAppointments() {
 
-    return [
-    DEFAULT_APPOINTMENTS.AM,
-    DEFAULT_APPOINTMENTS.PM
-    ];
+        return [
+            DEFAULT_APPOINTMENTS.AM,
+            DEFAULT_APPOINTMENTS.PM
+        ];
     }
 
     function setSubmitDisabled(
-    disabled
+        disabled
     ) {
 
-    const button =
-    document.getElementById(
-    "submitBtn"
-    );
+        const button =
+            document.getElementById(
+                "submitBtn"
+            );
 
-    button.disabled =
-    disabled;
+        button.disabled =
+            disabled;
 
-    button.style.opacity =
-    disabled
-    ? "0.6"
-    : "1";
+        button.style.opacity =
+            disabled
+                ? "0.6"
+                : "1";
     }
 
     function updateSubmitButtonState() {
 
-    setSubmitDisabled(
-    isWholeDayFull
-    ||
-    isSelectedSlotFull
-    );
+        // نُبقي زر تقديم الطلب متاحاً دائماً.
+        // التحقق من امتلاء الموعد يتم عند الضغط على تقديم الطلب.
+        setSubmitDisabled(false);
     }
 
     function hideCapacityMessages() {
 
-    document.getElementById(
-    "capacityWarning"
-    ).classList.add(
-    "d-none"
-    );
+        document.getElementById(
+            "capacityWarning"
+        ).classList.add(
+            "d-none"
+        );
 
-    document.getElementById(
-    "dayCapacityWarning"
-    ).classList.add(
-    "d-none"
-    );
+        document.getElementById(
+            "dayCapacityWarning"
+        ).classList.add(
+            "d-none"
+        );
+    }
+
+    function showSlotFullModal(message) {
+
+        const messageElement =
+            document.getElementById(
+                "slotFullModalMessage"
+            );
+
+        messageElement.textContent =
+            message ||
+            "حالياً لا يمكن التسجيل، يرجى اختيار موعد آخر لأنه لا يوجد مجال للتسجيل في هذا التاريخ.";
+
+        const modalElement =
+            document.getElementById(
+                "slotFullModal"
+            );
+
+        const modal =
+            bootstrap.Modal.getOrCreateInstance(
+                modalElement
+            );
+
+        modal.show();
     }
 
     function clearSelectedAppointment() {
 
-    document.getElementById(
-    "AppointmentTimeHidden"
-    ).value = "";
+        document.getElementById(
+            "AppointmentTimeHidden"
+        ).value = "";
 
-    document.getElementById(
-    "selectedTimeText"
-    ).textContent = "—";
+        document.getElementById(
+            "selectedTimeText"
+        ).textContent = "—";
 
-    document.getElementById(
-    "selectedTimeRow"
-    ).style.display = "none";
+        document.getElementById(
+            "selectedTimeRow"
+        ).style.display = "none";
 
-    document.querySelectorAll(
-    'input[name="TimePeriod"]'
-    ).forEach(
-    function (radio) {
+        document.querySelectorAll(
+            'input[name="TimePeriod"]'
+        ).forEach(
+            function(radio) {
 
-    radio.checked = false;
-    radio.disabled = false;
-    }
-    );
+                radio.checked = false;
+                radio.disabled = false;
+            }
+        );
 
-    isSelectedSlotFull =
-    false;
+        isSelectedSlotFull =
+            false;
 
-    updateSubmitButtonState();
+        updateSubmitButtonState();
     }
 
     /*
@@ -947,111 +1008,87 @@
     * PM يضع 13:00 تلقائياً.
     */
     async function selectDefaultAppointment(
-    period
+        period
     ) {
 
-    const date =
-    document.getElementById(
-    "appointmentDatePicker"
-    ).value;
+        const date =
+            document.getElementById(
+                "appointmentDatePicker"
+            ).value;
 
-    const selectedAppointment =
-    DEFAULT_APPOINTMENTS[
-    period
-    ];
+        const selectedAppointment =
+            DEFAULT_APPOINTMENTS[
+            period
+            ];
 
-    const hiddenInput =
-    document.getElementById(
-    "AppointmentTimeHidden"
-    );
+        const hiddenInput =
+            document.getElementById(
+                "AppointmentTimeHidden"
+            );
 
-    const selectedTimeText =
-    document.getElementById(
-    "selectedTimeText"
-    );
+        const selectedTimeText =
+            document.getElementById(
+                "selectedTimeText"
+            );
 
-    const selectedTimeRow =
-    document.getElementById(
-    "selectedTimeRow"
-    );
+        const selectedTimeRow =
+            document.getElementById(
+                "selectedTimeRow"
+            );
 
-    const warning =
-    document.getElementById(
-    "capacityWarning"
-    );
+        const warning =
+            document.getElementById(
+                "capacityWarning"
+            );
 
-    warning.classList.add(
-    "d-none"
-    );
+        warning.classList.add(
+            "d-none"
+        );
 
-    isSelectedSlotFull =
-    false;
+        isSelectedSlotFull =
+            false;
 
-    if (!date) {
+        if (!date) {
 
-    hiddenInput.value = "";
+            hiddenInput.value = "";
 
-    selectedTimeRow.style.display =
-    "none";
+            selectedTimeRow.style.display =
+                "none";
 
-    alert(
-    "يرجى اختيار تاريخ الموعد أولاً."
-    );
+            alert(
+                "يرجى اختيار تاريخ الموعد أولاً."
+            );
 
-    const selectedRadio =
-    document.querySelector(
-    'input[name="TimePeriod"]:checked'
-    );
+            const selectedRadio =
+                document.querySelector(
+                    'input[name="TimePeriod"]:checked'
+                );
 
-    if (selectedRadio) {
-    selectedRadio.checked = false;
-    }
+            if (selectedRadio) {
+                selectedRadio.checked = false;
+            }
 
-    return;
-    }
+            return;
+        }
 
-    hiddenInput.value =
-    selectedAppointment.value;
+        hiddenInput.value =
+            selectedAppointment.value;
 
-    selectedTimeText.textContent =
-    selectedAppointment.label;
+        selectedTimeText.textContent =
+            selectedAppointment.label;
 
-    selectedTimeRow.style.removeProperty(
-    "display"
-    );
+        selectedTimeRow.style.removeProperty(
+            "display"
+        );
 
-    /*
-    * إذا كانت نتيجة فحص اليوم تؤكد أن الموعد ممتلئ،
-    * نظهر الرسالة مباشرة.
-    */
-    if (
-    slotAvailability[
-    selectedAppointment.value
-    ] === false
-    ) {
+        /*
+        * حتى لو كانت الفترة ممتلئة، نسمح للمستخدم باختيارها.
+        * رسالة الامتلاء تظهر فقط عند الضغط على زر تقديم الطلب.
+        */
+        warning.classList.add("d-none");
+        isSelectedSlotFull = false;
 
-    warning.textContent =
-    "⚠️ هذا الموعد ممتلئ (10/10). "
-    +
-    "يرجى اختيار الفترة الأخرى أو يوماً آخر.";
-
-    warning.classList.remove(
-    "d-none"
-    );
-
-    hiddenInput.value = "";
-
-    isSelectedSlotFull =
-    true;
-
-    updateSubmitButtonState();
-
-    return;
-    }
-
-    updateSubmitButtonState();
-
-    await checkCapacity();
+        updateSubmitButtonState();
     }
 
     /* =============================================
@@ -1062,166 +1099,163 @@
 
     async function checkDayAvailability() {
 
-    const date =
-    document.getElementById(
-    "appointmentDatePicker"
-    ).value;
+        const date =
+            document.getElementById(
+                "appointmentDatePicker"
+            ).value;
 
-    const dayWarning =
-    document.getElementById(
-    "dayCapacityWarning"
-    );
+        const dayWarning =
+            document.getElementById(
+                "dayCapacityWarning"
+            );
 
-    slotAvailability = {};
+        slotAvailability = {};
 
-    isWholeDayFull =
-    false;
+        isWholeDayFull =
+            false;
 
-    isSelectedSlotFull =
-    false;
+        isSelectedSlotFull =
+            false;
 
-    hideCapacityMessages();
+        hideCapacityMessages();
 
-    updateSubmitButtonState();
+        updateSubmitButtonState();
 
-    if (!date) {
-    return;
-    }
+        if (!date) {
+            return;
+        }
 
-    try {
+        try {
 
-    const results =
-    await Promise.all(
+            const results =
+                await Promise.all(
 
-    getAllDefaultAppointments()
-    .map(
-    async function (
-    appointment
-    ) {
+                    getAllDefaultAppointments()
+                        .map(
+                            async function(
+                                appointment
+                            ) {
 
-    const response =
-    await fetch(
-    `/Patients/CheckSlot?date=${encodeURIComponent(date)}&time=${encodeURIComponent(appointment.value)}`,
-    {
-    cache: "no-store"
-    }
-    );
+                                const response =
+                                    await fetch(
+                                        `/Patients/CheckSlot?date=${encodeURIComponent(date)}&time=${encodeURIComponent(appointment.value)}`,
+                                        {
+                                            cache: "no-store"
+                                        }
+                                    );
 
-    if (!response.ok) {
+                                if (!response.ok) {
 
-    throw new Error(
-    "تعذر فحص الموعد"
-    );
-    }
+                                    throw new Error(
+                                        "تعذر فحص الموعد"
+                                    );
+                                }
 
-    const data =
-    await response.json();
+                                const data =
+                                    await response.json();
 
-    return {
-    value:
-    appointment.value,
+                                return {
+                                    value:
+                                        appointment.value,
 
-    available:
-    data.available === true
-    };
-    }
-    )
-    );
+                                    available:
+                                        data.available === true
+                                };
+                            }
+                        )
+                );
 
-    results.forEach(
-    function (
-    result
-    ) {
+            results.forEach(
+                function(
+                    result
+                ) {
 
-    slotAvailability[
-    result.value
-    ] =
-    result.available;
-    }
-    );
+                    slotAvailability[
+                        result.value
+                    ] =
+                        result.available;
+                }
+            );
 
-    isWholeDayFull =
-    results.every(
-    function (
-    result
-    ) {
+            isWholeDayFull =
+                results.every(
+                    function(
+                        result
+                    ) {
 
-    return (
-    result.available
-    === false
-    );
-    }
-    );
+                        return (
+                            result.available
+                            === false
+                        );
+                    }
+                );
 
-    const morningRadio =
-    document.querySelector(
-    'input[name="TimePeriod"][value="AM"]'
-    );
+            const morningRadio =
+                document.querySelector(
+                    'input[name="TimePeriod"][value="AM"]'
+                );
 
-    const eveningRadio =
-    document.querySelector(
-    'input[name="TimePeriod"][value="PM"]'
-    );
+            const eveningRadio =
+                document.querySelector(
+                    'input[name="TimePeriod"][value="PM"]'
+                );
 
-    morningRadio.disabled =
-    slotAvailability["09:00"]
-    === false;
+            // نسمح باختيار صباحاً أو مساءً حتى لو كانت الفترة ممتلئة.
+            // التنبيه يظهر فقط عند الضغط على تقديم الطلب.
+            morningRadio.disabled = false;
+            eveningRadio.disabled = false;
 
-    eveningRadio.disabled =
-    slotAvailability["13:00"]
-    === false;
+            if (isWholeDayFull) {
 
-    if (isWholeDayFull) {
+                // نحفظ حالة امتلاء اليوم، لكن لا نظهر التنبيه الآن.
+                // سيظهر عند الضغط على زر تقديم الطلب.
+                dayWarning.classList.add("d-none");
+            }
+            else {
 
-    dayWarning.classList.remove(
-    "d-none"
-    );
-    }
-    else {
+                dayWarning.classList.add(
+                    "d-none"
+                );
+            }
 
-    dayWarning.classList.add(
-    "d-none"
-    );
-    }
+            updateSubmitButtonState();
+        }
+        catch (
+        error
+        ) {
 
-    updateSubmitButtonState();
-    }
-    catch (
-    error
-    ) {
+            console.warn(
+                "فشل فحص مواعيد اليوم:",
+                error
+            );
 
-    console.warn(
-    "فشل فحص مواعيد اليوم:",
-    error
-    );
+            /*
+            * عند تعذر الاتصال لا نعتبر الموعد ممتلئاً
+            * من الواجهة. يبقى فحص الخادم هو المرجع النهائي.
+            */
+            slotAvailability = {};
 
-    /*
-    * عند تعذر الاتصال لا نعتبر الموعد ممتلئاً
-    * من الواجهة. يبقى فحص الخادم هو المرجع النهائي.
-    */
-    slotAvailability = {};
+            isWholeDayFull =
+                false;
 
-    isWholeDayFull =
-    false;
+            dayWarning.classList.add(
+                "d-none"
+            );
 
-    dayWarning.classList.add(
-    "d-none"
-    );
+            document.querySelectorAll(
+                'input[name="TimePeriod"]'
+            ).forEach(
+                function(
+                    radio
+                ) {
 
-    document.querySelectorAll(
-    'input[name="TimePeriod"]'
-    ).forEach(
-    function (
-    radio
-    ) {
+                    radio.disabled =
+                        false;
+                }
+            );
 
-    radio.disabled =
-    false;
-    }
-    );
-
-    updateSubmitButtonState();
-    }
+            updateSubmitButtonState();
+        }
     }
 
     /* =============================================
@@ -1230,110 +1264,117 @@
 
     async function checkCapacity() {
 
-    const date =
-    document.getElementById(
-    "appointmentDatePicker"
-    ).value;
+        const date =
+            document.getElementById(
+                "appointmentDatePicker"
+            ).value;
 
-    const timeValue =
-    document.getElementById(
-    "AppointmentTimeHidden"
-    ).value;
+        const timeValue =
+            document.getElementById(
+                "AppointmentTimeHidden"
+            ).value;
 
-    const warning =
-    document.getElementById(
-    "capacityWarning"
-    );
+        const warning =
+            document.getElementById(
+                "capacityWarning"
+            );
 
-    if (
-    !date
-    ||
-    !timeValue
-    ) {
+        if (
+            !date
+            ||
+            !timeValue
+        ) {
 
-    return false;
-    }
+            return false;
+        }
 
-    try {
+        try {
 
-    const response =
-    await fetch(
-    `/Patients/CheckSlot?date=${encodeURIComponent(date)}&time=${encodeURIComponent(timeValue)}`,
-    {
-    cache: "no-store"
-    }
-    );
+            const response =
+                await fetch(
+                    `/Patients/CheckSlot?date=${encodeURIComponent(date)}&time=${encodeURIComponent(timeValue)}`,
+                    {
+                        cache: "no-store"
+                    }
+                );
 
-    if (!response.ok) {
+            if (!response.ok) {
 
-    throw new Error(
-    "تعذر فحص الموعد"
-    );
-    }
+                throw new Error(
+                    "تعذر فحص الموعد"
+                );
+            }
 
-    const data =
-    await response.json();
+            const data =
+                await response.json();
 
-    const available =
-    data.available === true;
+            const available =
+                data.available === true;
 
-    slotAvailability[
-    timeValue
-    ] =
-    available;
+            slotAvailability[
+                timeValue
+            ] =
+                available;
 
-    if (!available) {
+            if (!available) {
 
-    warning.textContent =
-    "⚠️ هذا الموعد ممتلئ (10/10). "
-    +
-    "يرجى اختيار الفترة الأخرى أو يوماً آخر.";
+                warning.textContent =
+                    "⚠️ هذا الموعد ممتلئ (10/10). "
+                    +
+                    "يرجى اختيار الفترة الأخرى أو يوماً آخر.";
 
-    warning.classList.remove(
-    "d-none"
-    );
+                warning.classList.remove(
+                    "d-none"
+                );
 
-    isSelectedSlotFull =
-    true;
-    }
-    else {
+                isSelectedSlotFull =
+                    true;
 
-    warning.classList.add(
-    "d-none"
-    );
+                showSlotFullModal(
+                    "يرجى اختيار تاريخ للزيارة في يوم مختلف بسبب امتلاء الحجوزات لهذا اليوم."
+                );
+            }
+            else {
 
-    isSelectedSlotFull =
-    false;
-    }
+                warning.classList.add(
+                    "d-none"
+                );
 
-    updateSubmitButtonState();
+                isSelectedSlotFull =
+                    false;
+            }
 
-    return available;
-    }
-    catch (
-    error
-    ) {
+            updateSubmitButtonState();
 
-    console.warn(
-    "فشل فحص الموعد المختار:",
-    error
-    );
+            return available;
+        }
+        catch (
+        error
+        ) {
 
-    warning.classList.add(
-    "d-none"
-    );
+            console.error(
+                "فشل فحص الموعد المختار:",
+                error
+            );
 
-    isSelectedSlotFull =
-    false;
+            warning.textContent =
+                "⚠️ تعذر التحقق من توفر الموعد حالياً. يرجى المحاولة مرة أخرى.";
 
-    updateSubmitButtonState();
+            warning.classList.remove(
+                "d-none"
+            );
 
-    /*
-    * عند تعذر الاتصال لا نوقف المستخدم من الواجهة،
-    * والخادم يعيد التحقق عند الحفظ.
-    */
-    return true;
-    }
+            isSelectedSlotFull =
+                true;
+
+            updateSubmitButtonState();
+
+            showSlotFullModal(
+                "تعذر التحقق من توفر الموعد حالياً. يرجى تحديث الصفحة والمحاولة مرة أخرى."
+            );
+
+            return false;
+        }
     }
 
     /* =============================================
@@ -1341,39 +1382,39 @@
     =============================================== */
 
     flatpickr(
-    "#appointmentDatePicker",
-    {
+        "#appointmentDatePicker",
+        {
 
-    dateFormat:
-    "Y-m-d",
+            dateFormat:
+                "Y-m-d",
 
-    minDate:
-    BOOKING_START_DATE,
+            minDate:
+                BOOKING_START_DATE,
 
-    disable: [
-    function (
-    date
-    ) {
+            disable: [
+                function(
+                    date
+                ) {
 
-    /*
-    * منع الجمعة والسبت.
-    */
-    return (
-    date.getDay() === 5
-    ||
-    date.getDay() === 6
-    );
-    }
-    ],
+                    /*
+                    * منع الجمعة والسبت.
+                    */
+                    return (
+                        date.getDay() === 5
+                        ||
+                        date.getDay() === 6
+                    );
+                }
+            ],
 
-    onChange:
-    async function () {
+            onChange:
+                async function() {
 
-    clearSelectedAppointment();
+                    clearSelectedAppointment();
 
-    await checkDayAvailability();
-    }
-    }
+                    await checkDayAvailability();
+                }
+        }
     );
 
     /* =============================================
@@ -1381,263 +1422,263 @@
     =============================================== */
 
     document.querySelectorAll(
-    'input[name="TimePeriod"]'
+        'input[name="TimePeriod"]'
     ).forEach(
-    function (
-    radio
-    ) {
+        function(
+            radio
+        ) {
 
-    radio.addEventListener(
-    "change",
-    async function () {
+            radio.addEventListener(
+                "change",
+                async function() {
 
-    await selectDefaultAppointment(
-    this.value
-    );
-    }
-    );
-    });
+                    await selectDefaultAppointment(
+                        this.value
+                    );
+                }
+            );
+        });
 
     /* =============================================
     تاريخ الميلاد — يظهر يوم/شهر/سنة
     والقيمة المرسلة للـ Controller تبقى سنة-شهر-يوم
     =============================================== */
     function updateParentBlockByBirthDate(selectedDate) {
-    const block = document.getElementById("ParentBlock");
+        const block = document.getElementById("ParentBlock");
 
-    if (!selectedDate || isNaN(selectedDate.getTime())) {
-    block.classList.add("d-none");
-    block.querySelectorAll("input").forEach(function (i) { i.value = ""; });
-    return;
-    }
+        if (!selectedDate || isNaN(selectedDate.getTime())) {
+            block.classList.add("d-none");
+            block.querySelectorAll("input").forEach(function(i) { i.value = ""; });
+            return;
+        }
 
-    const today = new Date();
-    let age = today.getFullYear() - selectedDate.getFullYear();
-    const monthDifference = today.getMonth() - selectedDate.getMonth();
+        const today = new Date();
+        let age = today.getFullYear() - selectedDate.getFullYear();
+        const monthDifference = today.getMonth() - selectedDate.getMonth();
 
-    if (
-    monthDifference < 0 ||
-    (monthDifference === 0 && today.getDate() < selectedDate.getDate())
-    ) {
-    age--;
-    }
+        if (
+            monthDifference < 0 ||
+            (monthDifference === 0 && today.getDate() < selectedDate.getDate())
+        ) {
+            age--;
+        }
 
-    if (age < 18) {
-    block.classList.remove("d-none");
-    } else {
-    block.classList.add("d-none");
-    block.querySelectorAll("input").forEach(function (i) { i.value = ""; });
-    }
+        if (age < 18) {
+            block.classList.remove("d-none");
+        } else {
+            block.classList.add("d-none");
+            block.querySelectorAll("input").forEach(function(i) { i.value = ""; });
+        }
     }
 
     flatpickr("#DateOfBirth", {
-    dateFormat: "Y-m-d",       // القيمة التي تُرسل إلى ASP.NET
-    altInput: true,
-    altFormat: "d/m/Y",        // الشكل الظاهر: يوم/شهر/سنة
-    maxDate: "today",
-    allowInput: true,
-    disableMobile: true,
-    onChange: function (selectedDates) {
-    updateParentBlockByBirthDate(
-    selectedDates.length > 0 ? selectedDates[0] : null
-    );
-    }
+        dateFormat: "Y-m-d",       // القيمة التي تُرسل إلى ASP.NET
+        altInput: true,
+        altFormat: "d/m/Y",        // الشكل الظاهر: يوم/شهر/سنة
+        maxDate: "today",
+        allowInput: true,
+        disableMobile: true,
+        onChange: function(selectedDates) {
+            updateParentBlockByBirthDate(
+                selectedDates.length > 0 ? selectedDates[0] : null
+            );
+        }
     });
 
     /* =============================================
     نوع الهوية: أردني / جواز سفر
     =============================================== */
     const nationalityRadios =
-    document.querySelectorAll('input[name="Nationality"]');
+        document.querySelectorAll('input[name="Nationality"]');
 
     const identityInput =
-    document.getElementById("idInput");
+        document.getElementById("idInput");
 
     const identityLabel =
-    document.getElementById("idLabel");
+        document.getElementById("idLabel");
 
     const identityError =
-    document.getElementById("identityClientError");
+        document.getElementById("identityClientError");
 
     const nationalityError =
-    document.getElementById("nationalityClientError");
+        document.getElementById("nationalityClientError");
 
     function normalizeArabicDigits(value) {
-    if (!value) return "";
+        if (!value) return "";
 
-    const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
-    const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
+        const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+        const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
 
-    return value
-    .replace(/[٠-٩]/g, function (digit) {
-    return arabicDigits.indexOf(digit).toString();
-    })
-    .replace(/[۰-۹]/g, function (digit) {
-    return persianDigits.indexOf(digit).toString();
-    });
+        return value
+            .replace(/[٠-٩]/g, function(digit) {
+                return arabicDigits.indexOf(digit).toString();
+            })
+            .replace(/[۰-۹]/g, function(digit) {
+                return persianDigits.indexOf(digit).toString();
+            });
     }
 
     function getSelectedNationality() {
-    return document.querySelector('input[name="Nationality"]:checked');
+        return document.querySelector('input[name="Nationality"]:checked');
     }
 
     function showNationalityError(message) {
-    nationalityError.textContent = message || "";
-    nationalityError.classList.toggle("d-none", !message);
+        nationalityError.textContent = message || "";
+        nationalityError.classList.toggle("d-none", !message);
     }
 
     function showIdentityError(message) {
-    identityError.textContent = message || "";
-    identityError.classList.toggle("d-none", !message);
-    identityInput.classList.toggle("is-invalid", !!message);
+        identityError.textContent = message || "";
+        identityError.classList.toggle("d-none", !message);
+        identityInput.classList.toggle("is-invalid", !!message);
     }
 
     function configureIdentityField(clearValue) {
-    const selectedNationality = getSelectedNationality();
+        const selectedNationality = getSelectedNationality();
 
-    showNationalityError("");
-    showIdentityError("");
+        showNationalityError("");
+        showIdentityError("");
 
-    if (!selectedNationality) {
-    identityInput.disabled = true;
-    identityInput.value = "";
-    identityInput.placeholder = "اختر نوع الهوية أولاً";
-    identityLabel.textContent = "* الرقم الوطني / رقم الجواز";
-    identityInput.removeAttribute("pattern");
-    identityInput.removeAttribute("maxlength");
-    return;
+        if (!selectedNationality) {
+            identityInput.disabled = true;
+            identityInput.value = "";
+            identityInput.placeholder = "اختر نوع الهوية أولاً";
+            identityLabel.textContent = "* الرقم الوطني / رقم الجواز";
+            identityInput.removeAttribute("pattern");
+            identityInput.removeAttribute("maxlength");
+            return;
+        }
+
+        identityInput.disabled = false;
+        identityInput.required = true;
+
+        if (clearValue === true) {
+            identityInput.value = "";
+        }
+
+        if (selectedNationality.value === "1") {
+            identityLabel.textContent = "* الرقم الوطني";
+            identityInput.placeholder = "أدخل الرقم الوطني المكون من 10 أرقام";
+            identityInput.maxLength = 10;
+            identityInput.inputMode = "numeric";
+            identityInput.setAttribute("pattern", "[0-9]{10}");
+            identityInput.setAttribute(
+                "title",
+                "الرقم الوطني يجب أن يتكون من 10 أرقام بالضبط"
+            );
+        } else {
+            identityLabel.textContent = "* رقم جواز السفر";
+            identityInput.placeholder = "أدخل رقم جواز السفر";
+            identityInput.maxLength = 20;
+            identityInput.inputMode = "text";
+            identityInput.setAttribute("pattern", "[A-Za-z0-9-]{5,20}");
+            identityInput.setAttribute(
+                "title",
+                "رقم الجواز يجب أن يكون من 5 إلى 20 خانة من الأحرف الإنجليزية أو الأرقام"
+            );
+        }
     }
 
-    identityInput.disabled = false;
-    identityInput.required = true;
-
-    if (clearValue === true) {
-    identityInput.value = "";
-    }
-
-    if (selectedNationality.value === "1") {
-    identityLabel.textContent = "* الرقم الوطني";
-    identityInput.placeholder = "أدخل الرقم الوطني المكون من 10 أرقام";
-    identityInput.maxLength = 10;
-    identityInput.inputMode = "numeric";
-    identityInput.setAttribute("pattern", "[0-9]{10}");
-    identityInput.setAttribute(
-    "title",
-    "الرقم الوطني يجب أن يتكون من 10 أرقام بالضبط"
-    );
-    } else {
-    identityLabel.textContent = "* رقم جواز السفر";
-    identityInput.placeholder = "أدخل رقم جواز السفر";
-    identityInput.maxLength = 20;
-    identityInput.inputMode = "text";
-    identityInput.setAttribute("pattern", "[A-Za-z0-9-]{5,20}");
-    identityInput.setAttribute(
-    "title",
-    "رقم الجواز يجب أن يكون من 5 إلى 20 خانة من الأحرف الإنجليزية أو الأرقام"
-    );
-    }
-    }
-
-    nationalityRadios.forEach(function (radio) {
-    radio.addEventListener("change", function () {
-    configureIdentityField(true);
-    identityInput.focus();
+    nationalityRadios.forEach(function(radio) {
+        radio.addEventListener("change", function() {
+            configureIdentityField(true);
+            identityInput.focus();
+        });
     });
-    });
 
-    identityInput.addEventListener("input", function () {
-    const selectedNationality = getSelectedNationality();
+    identityInput.addEventListener("input", function() {
+        const selectedNationality = getSelectedNationality();
 
-    showIdentityError("");
+        showIdentityError("");
 
-    if (!selectedNationality) {
-    this.value = "";
-    return;
-    }
+        if (!selectedNationality) {
+            this.value = "";
+            return;
+        }
 
-    let value = normalizeArabicDigits(this.value);
+        let value = normalizeArabicDigits(this.value);
 
-    if (selectedNationality.value === "1") {
-    value = value
-    .replace(/[^0-9]/g, "")
-    .substring(0, 10);
-    } else {
-    value = value
-    .toUpperCase()
-    .replace(/\s+/g, "")
-    .replace(/[^A-Z0-9-]/g, "")
-    .substring(0, 20);
-    }
+        if (selectedNationality.value === "1") {
+            value = value
+                .replace(/[^0-9]/g, "")
+                .substring(0, 10);
+        } else {
+            value = value
+                .toUpperCase()
+                .replace(/\s+/g, "")
+                .replace(/[^A-Z0-9-]/g, "")
+                .substring(0, 20);
+        }
 
-    this.value = value;
+        this.value = value;
     });
 
     function validateNationalityAndIdentity() {
-    const selectedNationality = getSelectedNationality();
-    const identityValue = normalizeArabicDigits(
-    identityInput.value.trim()
-    );
+        const selectedNationality = getSelectedNationality();
+        const identityValue = normalizeArabicDigits(
+            identityInput.value.trim()
+        );
 
-    showNationalityError("");
-    showIdentityError("");
+        showNationalityError("");
+        showIdentityError("");
 
-    if (!selectedNationality) {
-    showNationalityError(
-    "⚠️ يرجى اختيار أردني أو جواز سفر."
-    );
+        if (!selectedNationality) {
+            showNationalityError(
+                "⚠️ يرجى اختيار أردني أو جواز سفر."
+            );
 
-    const firstRadio =
-    document.getElementById("nationalityJordanian");
+            const firstRadio =
+                document.getElementById("nationalityJordanian");
 
-    firstRadio.focus();
-    firstRadio.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-    });
+            firstRadio.focus();
+            firstRadio.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
 
-    return false;
-    }
+            return false;
+        }
 
-    if (identityValue === "") {
-    showIdentityError(
-    selectedNationality.value === "1"
-    ? "⚠️ يرجى إدخال الرقم الوطني."
-    : "⚠️ يرجى إدخال رقم جواز السفر."
-    );
+        if (identityValue === "") {
+            showIdentityError(
+                selectedNationality.value === "1"
+                    ? "⚠️ يرجى إدخال الرقم الوطني."
+                    : "⚠️ يرجى إدخال رقم جواز السفر."
+            );
 
-    identityInput.focus();
-    identityInput.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-    });
+            identityInput.focus();
+            identityInput.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
 
-    return false;
-    }
+            return false;
+        }
 
-    if (selectedNationality.value === "1") {
-    if (!/^[0-9]{10}$/.test(identityValue)) {
-    showIdentityError(
-    "⚠️ الرقم الوطني يجب أن يتكون من 10 أرقام بالضبط."
-    );
-    identityInput.focus();
-    return false;
-    }
-    } else {
-    if (!/^[A-Za-z0-9-]{5,20}$/.test(identityValue)) {
-    showIdentityError(
-    "⚠️ رقم الجواز يجب أن يكون من 5 إلى 20 خانة، ويحتوي على أحرف إنجليزية أو أرقام فقط."
-    );
-    identityInput.focus();
-    return false;
-    }
-    }
+        if (selectedNationality.value === "1") {
+            if (!/^[0-9]{10}$/.test(identityValue)) {
+                showIdentityError(
+                    "⚠️ الرقم الوطني يجب أن يتكون من 10 أرقام بالضبط."
+                );
+                identityInput.focus();
+                return false;
+            }
+        } else {
+            if (!/^[A-Za-z0-9-]{5,20}$/.test(identityValue)) {
+                showIdentityError(
+                    "⚠️ رقم الجواز يجب أن يكون من 5 إلى 20 خانة، ويحتوي على أحرف إنجليزية أو أرقام فقط."
+                );
+                identityInput.focus();
+                return false;
+            }
+        }
 
-    identityInput.value =
-    selectedNationality.value === "1"
-    ? identityValue
-    : identityValue.toUpperCase();
+        identityInput.value =
+            selectedNationality.value === "1"
+                ? identityValue
+                : identityValue.toUpperCase();
 
-    return true;
+        return true;
     }
 
     // في حال رجعت الصفحة من السيرفر وبداخلها قيم سابقة،
@@ -1647,27 +1688,27 @@
     /* =============================================
     معاينة الصورة
     =============================================== */
-    document.getElementById("ProfilePhotoFile").addEventListener("change", function () {
-    const file       = this.files[0];
-    const preview    = document.getElementById("photoPreview");
-    const photoError = document.getElementById("photoError");
+    document.getElementById("ProfilePhotoFile").addEventListener("change", function() {
+        const file = this.files[0];
+        const preview = document.getElementById("photoPreview");
+        const photoError = document.getElementById("photoError");
 
-    photoError.classList.add("d-none");
-    if (!file) return;
+        photoError.classList.add("d-none");
+        if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-    photoError.innerText = "⚠️ حجم الصورة يجب أن يكون أقل من 2MB";
-    photoError.classList.remove("d-none");
-    this.value = "";
-    return;
-    }
+        if (file.size > 2 * 1024 * 1024) {
+            photoError.innerText = "⚠️ حجم الصورة يجب أن يكون أقل من 2MB";
+            photoError.classList.remove("d-none");
+            this.value = "";
+            return;
+        }
 
-    const reader  = new FileReader();
-    reader.onload = function (e) {
-    preview.innerHTML = `<img src="${e.target.result}"
-    style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`;
-    };
-    reader.readAsDataURL(file);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = `<img src="${e.target.result}"
+            style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`;
+        };
+        reader.readAsDataURL(file);
     });
 
 
@@ -1678,88 +1719,88 @@
     let captchaCreatedAt = Date.now();
 
     function setCaptchaError(message) {
-    const error = document.getElementById("captchaError");
-    error.textContent = message || "";
-    error.classList.toggle("d-none", !message);
+        const error = document.getElementById("captchaError");
+        error.textContent = message || "";
+        error.classList.toggle("d-none", !message);
     }
 
     function generateCaptcha() {
-    const firstNumber  = Math.floor(Math.random() * 9) + 1;
-    const secondNumber = Math.floor(Math.random() * 9) + 1;
-    const useAddition  = Math.random() >= 0.5;
+        const firstNumber = Math.floor(Math.random() * 9) + 1;
+        const secondNumber = Math.floor(Math.random() * 9) + 1;
+        const useAddition = Math.random() >= 0.5;
 
-    let numberOne;
-    let numberTwo;
-    let operator;
+        let numberOne;
+        let numberTwo;
+        let operator;
 
-    if (useAddition) {
-    numberOne = firstNumber;
-    numberTwo = secondNumber;
-    operator = "+";
-    captchaCorrectAnswer = numberOne + numberTwo;
-    } else {
-    // إبقاء نتيجة الطرح موجبة أو صفراً لتكون سهلة وواضحة.
-    numberOne = Math.max(firstNumber, secondNumber);
-    numberTwo = Math.min(firstNumber, secondNumber);
-    operator = "−";
-    captchaCorrectAnswer = numberOne - numberTwo;
-    }
+        if (useAddition) {
+            numberOne = firstNumber;
+            numberTwo = secondNumber;
+            operator = "+";
+            captchaCorrectAnswer = numberOne + numberTwo;
+        } else {
+            // إبقاء نتيجة الطرح موجبة أو صفراً لتكون سهلة وواضحة.
+            numberOne = Math.max(firstNumber, secondNumber);
+            numberTwo = Math.min(firstNumber, secondNumber);
+            operator = "−";
+            captchaCorrectAnswer = numberOne - numberTwo;
+        }
 
-    document.getElementById("captchaQuestion").textContent =
-    `${numberOne} ${operator} ${numberTwo} = ؟`;
+        document.getElementById("captchaQuestion").textContent =
+            `${numberOne} ${operator} ${numberTwo} = ؟`;
 
-    document.getElementById("captchaAnswer").value = "";
-    captchaCreatedAt = Date.now();
-    setCaptchaError("");
+        document.getElementById("captchaAnswer").value = "";
+        captchaCreatedAt = Date.now();
+        setCaptchaError("");
     }
 
     function validateCaptcha() {
-    const answerInput = document.getElementById("captchaAnswer");
-    const honeypot    = document.getElementById("websiteUrl");
-    const answerText  = answerInput.value.trim();
-    const elapsedTime = Date.now() - captchaCreatedAt;
+        const answerInput = document.getElementById("captchaAnswer");
+        const honeypot = document.getElementById("websiteUrl");
+        const answerText = answerInput.value.trim();
+        const elapsedTime = Date.now() - captchaCreatedAt;
 
-    // إذا تم تعبئة الحقل المخفي فغالباً الإرسال آلي.
-    if (honeypot && honeypot.value.trim() !== "") {
-    setCaptchaError("تعذر قبول الطلب. يرجى تحديث الصفحة والمحاولة مرة أخرى.");
-    return false;
+        // إذا تم تعبئة الحقل المخفي فغالباً الإرسال آلي.
+        if (honeypot && honeypot.value.trim() !== "") {
+            setCaptchaError("تعذر قبول الطلب. يرجى تحديث الصفحة والمحاولة مرة أخرى.");
+            return false;
+        }
+
+        if (answerText === "") {
+            setCaptchaError("⚠️ يرجى إدخال إجابة سؤال التحقق.");
+            answerInput.focus();
+            return false;
+        }
+
+        if (!/^-?\d+$/.test(answerText)) {
+            setCaptchaError("⚠️ يرجى إدخال أرقام فقط.");
+            answerInput.focus();
+            return false;
+        }
+
+        if (elapsedTime < 1500) {
+            setCaptchaError("⚠️ يرجى الانتظار للحظة ثم إعادة المحاولة.");
+            return false;
+        }
+
+        if (Number(answerText) !== captchaCorrectAnswer) {
+            generateCaptcha();
+            setCaptchaError("⚠️ الإجابة غير صحيحة. تم إنشاء سؤال جديد.");
+            answerInput.focus();
+            return false;
+        }
+
+        setCaptchaError("");
+        return true;
     }
 
-    if (answerText === "") {
-    setCaptchaError("⚠️ يرجى إدخال إجابة سؤال التحقق.");
-    answerInput.focus();
-    return false;
-    }
-
-    if (!/^-?\d+$/.test(answerText)) {
-    setCaptchaError("⚠️ يرجى إدخال أرقام فقط.");
-    answerInput.focus();
-    return false;
-    }
-
-    if (elapsedTime < 1500) {
-    setCaptchaError("⚠️ يرجى الانتظار للحظة ثم إعادة المحاولة.");
-    return false;
-    }
-
-    if (Number(answerText) !== captchaCorrectAnswer) {
-    generateCaptcha();
-    setCaptchaError("⚠️ الإجابة غير صحيحة. تم إنشاء سؤال جديد.");
-    answerInput.focus();
-    return false;
-    }
-
-    setCaptchaError("");
-    return true;
-    }
-
-    document.getElementById("refreshCaptcha").addEventListener("click", function () {
-    generateCaptcha();
-    document.getElementById("captchaAnswer").focus();
+    document.getElementById("refreshCaptcha").addEventListener("click", function() {
+        generateCaptcha();
+        document.getElementById("captchaAnswer").focus();
     });
 
-    document.getElementById("captchaAnswer").addEventListener("input", function () {
-    setCaptchaError("");
+    document.getElementById("captchaAnswer").addEventListener("input", function() {
+        setCaptchaError("");
     });
 
     generateCaptcha();
@@ -1767,135 +1808,155 @@
     /* =============================================
     إرسال النموذج
     =============================================== */
-    document.getElementById("mainForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
+    document.getElementById("mainForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
 
-    // التحقق من اختيار نوع الهوية ومن الرقم الوطني أو رقم الجواز.
-    if (!validateNationalityAndIdentity()) {
-    return;
-    }
+        // التحقق من اختيار نوع الهوية ومن الرقم الوطني أو رقم الجواز.
+        if (!validateNationalityAndIdentity()) {
+            return;
+        }
 
-    // تشغيل تحقق ASP.NET Core / jQuery Validation لجميع حقول الموديل.
-    if (window.jQuery &&
-    $.validator &&
-    !$(this).valid()) {
-    const firstInvalid = this.querySelector(".input-validation-error, .is-invalid");
-    if (firstInvalid) {
-    firstInvalid.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
+        // تشغيل تحقق ASP.NET Core / jQuery Validation لجميع حقول الموديل.
+        if (window.jQuery &&
+            $.validator &&
+            !$(this).valid()) {
+            const firstInvalid = this.querySelector(".input-validation-error, .is-invalid");
+            if (firstInvalid) {
+                firstInvalid.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+            }
+            return;
+        }
+
+        // تحقق HTML5 للحقول التي تحمل required أو pattern.
+        if (!this.checkValidity()) {
+            this.reportValidity();
+            return;
+        }
+
+        const pledge = document.getElementById("pledge");
+        const pledgeError = document.getElementById("pledgeError");
+        const capacityWarning = document.getElementById("capacityWarning");
+        const dayCapacityWarning = document.getElementById("dayCapacityWarning");
+        const timeValue = document.getElementById("AppointmentTimeHidden").value;
+
+        // 1) التحقق من التعهد
+        if (!pledge.checked) {
+            pledge.style.outline = "2px solid red";
+            pledgeError.classList.remove("d-none");
+            pledge.scrollIntoView({ behavior: "smooth", block: "center" });
+            return;
+        }
+
+        // 2) التحقق من CAPTCHA
+        if (!validateCaptcha()) {
+            document.getElementById("captchaAnswer")
+                .scrollIntoView({ behavior: "smooth", block: "center" });
+            return;
+        }
+
+        // 3) التحقق من اختيار الفترة والوقت الافتراضي
+        if (!timeValue) {
+
+            const appointmentDate =
+                document.getElementById(
+                    "appointmentDatePicker"
+                ).value;
+
+            if (!appointmentDate) {
+
+                document.getElementById(
+                    "appointmentDatePicker"
+                ).scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+
+                alert(
+                    "يرجى اختيار تاريخ الموعد."
+                );
+            }
+            else {
+
+                document.querySelector(
+                    'input[name="TimePeriod"]'
+                ).scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+
+                alert(
+                    "يرجى اختيار الفترة: صباحاً أو مساءً."
+                );
+            }
+
+            return;
+        }
+
+        // 4) عند الضغط على تقديم الطلب نتحقق من امتلاء اليوم أو الفترة المختارة.
+        if (isWholeDayFull || slotAvailability[timeValue] === false) {
+
+            showSlotFullModal(
+                "يرجى اختيار تاريخ للزيارة في يوم مختلف بسبب امتلاء الحجوزات لهذا اليوم."
+            );
+
+            return;
+        }
+
+        // نعيد الفحص قبل الإرسال مباشرة لتقليل احتمال حجز المقعد الأخير بالتزامن.
+        const selectedSlotStillAvailable = await checkCapacity();
+        if (!selectedSlotStillAvailable) {
+            document.getElementById("selectedTimeRow")
+                .scrollIntoView({ behavior: "smooth", block: "center" });
+            return;
+        }
+
+        // 5) التحقق من التكرار
+        const idNumber = document.getElementById("idInput").value.trim();
+        const firstName = document.querySelector('[name="FirstName"]').value.trim();
+        const lastName = document.querySelector('[name="FourthName"]').value.trim();
+        const dob = document.getElementById("DateOfBirth").value.trim();
+
+        if (idNumber || (firstName && lastName)) {
+            try {
+                const params = new URLSearchParams({ idNumber, firstName, lastName, dob });
+                const res = await fetch(`/Patients/CheckDuplicate?${params.toString()}`);
+                const data = await res.json();
+
+                if (data.isDuplicate) {
+                    const modal = new bootstrap.Modal(document.getElementById("duplicateModal"));
+                    modal.show();
+                    return;
+                }
+            } catch (err) {
+                console.warn("Duplicate check failed, proceeding.", err);
+            }
+        }
+
+        this.submit();
     });
-    }
-    return;
-    }
 
-    // تحقق HTML5 للحقول التي تحمل required أو pattern.
-    if (!this.checkValidity()) {
-    this.reportValidity();
-    return;
-    }
-
-    const pledge          = document.getElementById("pledge");
-    const pledgeError     = document.getElementById("pledgeError");
-    const capacityWarning    = document.getElementById("capacityWarning");
-    const dayCapacityWarning = document.getElementById("dayCapacityWarning");
-    const timeValue          = document.getElementById("AppointmentTimeHidden").value;
-
-    // 1) التحقق من التعهد
-    if (!pledge.checked) {
-    pledge.style.outline = "2px solid red";
-    pledgeError.classList.remove("d-none");
-    pledge.scrollIntoView({ behavior: "smooth", block: "center" });
-    return;
-    }
-
-    // 2) التحقق من CAPTCHA
-    if (!validateCaptcha()) {
-    document.getElementById("captchaAnswer")
-    .scrollIntoView({ behavior: "smooth", block: "center" });
-    return;
-    }
-
-    // 3) التحقق من اختيار الفترة والوقت الافتراضي
-    if (!timeValue) {
-
-    const appointmentDate =
-    document.getElementById(
-    "appointmentDatePicker"
-    ).value;
-
-    if (!appointmentDate) {
-
-    document.getElementById(
-    "appointmentDatePicker"
-    ).scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-    });
-
-    alert(
-    "يرجى اختيار تاريخ الموعد."
-    );
-    }
-    else {
-
-    document.querySelector(
-    'input[name="TimePeriod"]'
-    ).scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-    });
-
-    alert(
-    "يرجى اختيار الفترة: صباحاً أو مساءً."
-    );
-    }
-
-    return;
-    }
-
-    // 4) التحقق من امتلاء اليوم أو الموعد
-    if (!dayCapacityWarning.classList.contains("d-none") ||
-    !capacityWarning.classList.contains("d-none")) {
-    return;
-    }
-
-    // نعيد الفحص قبل الإرسال مباشرة لتقليل احتمال حجز المقعد الأخير بالتزامن.
-    const selectedSlotStillAvailable = await checkCapacity();
-    if (!selectedSlotStillAvailable) {
-    document.getElementById("selectedTimeRow")
-    .scrollIntoView({ behavior: "smooth", block: "center" });
-    return;
-    }
-
-    // 5) التحقق من التكرار
-    const idNumber  = document.getElementById("idInput").value.trim();
-    const firstName = document.querySelector('[name="FirstName"]').value.trim();
-    const lastName  = document.querySelector('[name="FourthName"]').value.trim();
-    const dob       = document.getElementById("DateOfBirth").value.trim();
-
-    if (idNumber || (firstName && lastName)) {
-    try {
-    const params = new URLSearchParams({ idNumber, firstName, lastName, dob });
-    const res    = await fetch(`/Patients/CheckDuplicate?${params.toString()}`);
-    const data   = await res.json();
-
-    if (data.isDuplicate) {
-    const modal = new bootstrap.Modal(document.getElementById("duplicateModal"));
-    modal.show();
-    return;
-    }
-    } catch (err) {
-    console.warn("Duplicate check failed, proceeding.", err);
-    }
-    }
-
-    this.submit();
-    });
-
-    document.getElementById("pledge").addEventListener("change", function () {
-    this.style.outline = "";
-    document.getElementById("pledgeError").classList.add("d-none");
+    document.getElementById("pledge").addEventListener("change", function() {
+        this.style.outline = "";
+        document.getElementById("pledgeError").classList.add("d-none");
     });
 
 </script>
+
+@if (TempData["SlotFullMessage"] != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const message =
+                @Html.Raw(
+                System.Text.Json.JsonSerializer.Serialize(
+                TempData["SlotFullMessage"]?.ToString()
+                )
+                );
+
+            showSlotFullModal(message);
+        });
+    </script>
+}

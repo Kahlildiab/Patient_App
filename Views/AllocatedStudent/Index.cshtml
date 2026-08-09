@@ -183,6 +183,15 @@
         pageNumber = totalPages;
     }
 
+    int visiblePages = 4;
+    int startPage = Math.Max(1, pageNumber - 1);
+    int endPage = Math.Min(totalPages, startPage + visiblePages - 1);
+
+    if (endPage - startPage + 1 < visiblePages)
+    {
+        startPage = Math.Max(1, endPage - visiblePages + 1);
+    }
+
     var pagedModel =
         filtered
             .OrderByDescending(
@@ -488,6 +497,67 @@
         color: #5f6368;
         border: 1px solid #d6d8db;
     }
+
+
+    /* ── Compact Pagination ── */
+    .compact-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+        padding-left: 0;
+    }
+
+        .compact-pagination .page-link {
+            min-width: 36px;
+            height: 36px;
+            padding: 0 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #cdd4e8 !important;
+            border-radius: 7px !important;
+            background: #fff;
+            color: #1a237e;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: none !important;
+        }
+
+            .compact-pagination .page-link:hover {
+                background: #e8eaf6;
+                border-color: #9fa8da !important;
+                color: #1a237e;
+            }
+
+        .compact-pagination .page-item.active .page-link {
+            background: #1a237e;
+            border-color: #1a237e !important;
+            color: #fff;
+        }
+
+        .compact-pagination .page-item.disabled .page-link {
+            opacity: .45;
+            pointer-events: none;
+        }
+
+        .compact-pagination .pagination-dots {
+            min-width: 24px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #8b94a8;
+            font-weight: 800;
+        }
+
+        .compact-pagination .pagination-navigation .page-link {
+            padding: 0 14px;
+            white-space: nowrap;
+        }
 </style>
 
 <!-- ════ SEARCH ════ -->
@@ -835,25 +905,48 @@
                 </table>
             </div>
 
+            @* ===== Compact Pagination ===== *@
             @if (totalPages > 1)
             {
-                <nav class="mt-3">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item @(pageNumber == 1 ? "disabled" : "")">
-                            <a class="page-link" href="?page=@(pageNumber - 1)&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&caseComplexity=@Uri.EscapeDataString(caseComplexityFilter)">←</a>
+                <nav class="mt-3" aria-label="Allocated students pagination">
+                    <ul class="pagination compact-pagination">
+                        <li class="page-item pagination-navigation @(pageNumber == 1 ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(pageNumber - 1)&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&caseComplexity=@Uri.EscapeDataString(caseComplexityFilter)">‹ Previous</a>
                         </li>
-                        @for (int pg = 1; pg <= totalPages; pg++)
+
+                        @if (startPage > 1)
                         {
-                            <li class="page-item @(pg == pageNumber ? "active" : "")">
-                                <a class="page-link"
-                                   href="?page=@pg&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&caseComplexity=@Uri.EscapeDataString(caseComplexityFilter)"
-                                   style="border-radius:0 !important; border:none !important; font-weight:600;">
-                                    @pg
-                                </a>
+                            <li class="page-item @(pageNumber == 1 ? "active" : "")">
+                                <a class="page-link" href="?page=1&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&caseComplexity=@Uri.EscapeDataString(caseComplexityFilter)">1</a>
+                            </li>
+
+                            @if (startPage > 2)
+                            {
+                                <li class="pagination-dots">…</li>
+                            }
+                        }
+
+                        @for (int p = startPage; p <= endPage; p++)
+                        {
+                            <li class="page-item @(p == pageNumber ? "active" : "")">
+                                <a class="page-link" href="?page=@p&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&caseComplexity=@Uri.EscapeDataString(caseComplexityFilter)">@p</a>
                             </li>
                         }
-                        <li class="page-item @(pageNumber == totalPages ? "disabled" : "")">
-                            <a class="page-link" href="?page=@(pageNumber + 1)&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&caseComplexity=@Uri.EscapeDataString(caseComplexityFilter)">→</a>
+
+                        @if (endPage < totalPages)
+                        {
+                            @if (endPage < totalPages - 1)
+                            {
+                                <li class="pagination-dots">…</li>
+                            }
+
+                            <li class="page-item @(pageNumber == totalPages ? "active" : "")">
+                                <a class="page-link" href="?page=@totalPages&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&caseComplexity=@Uri.EscapeDataString(caseComplexityFilter)">@totalPages</a>
+                            </li>
+                        }
+
+                        <li class="page-item pagination-navigation @(pageNumber == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(pageNumber + 1)&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&caseComplexity=@Uri.EscapeDataString(caseComplexityFilter)">Next ›</a>
                         </li>
                     </ul>
                 </nav>
@@ -927,7 +1020,7 @@
 
 <!-- ════ HISTORY MODAL ════ -->
 <div class="modal fade" id="historyModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header" style="background:#1a237e;">
                 <h5 class="modal-title fw-bold text-white">
@@ -953,73 +1046,143 @@
     // ══════════════════════════════════════════════════════
     //  HISTORY MODAL
     // ══════════════════════════════════════════════════════
-    async function openHistory(patientId, patientName) {
-        document.getElementById('histPatientName').textContent = patientName;
-        document.getElementById('histModalBody').innerHTML =
-            '<div class="text-center py-5"><i class="fa-solid fa-spinner fa-spin fa-2x text-muted"></i></div>';
+    function escapeHistoryHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
 
-        const modal = bootstrap.Modal.getInstance(document.getElementById('historyModal'))
-                      || new bootstrap.Modal(document.getElementById('historyModal'));
+    async function openHistory(patientId, patientName) {
+        const modalBody = document.getElementById('histModalBody');
+        document.getElementById('histPatientName').textContent = patientName;
+        modalBody.innerHTML =
+            '<div class="text-center py-5"><i class="fa-solid fa-spinner fa-spin fa-2x text-muted"></i><div class="mt-2 text-muted">Loading history...</div></div>';
+
+        const modalElement = document.getElementById('historyModal');
+        const modal = bootstrap.Modal.getInstance(modalElement)
+            || new bootstrap.Modal(modalElement);
         modal.show();
 
-        const res  = await fetch(`/AllocatedStudent/GetStatusHistory?patientId=${patientId}`);
-        const data = await res.json();
+        try {
+            const response = await fetch(
+                `/AllocatedStudent/GetStatusHistory?patientId=${encodeURIComponent(patientId)}`,
+                { cache: 'no-store' }
+            );
 
-        if (!data.length) {
-            document.getElementById('histModalBody').innerHTML =
-                '<div class="text-center text-muted py-5"><i class="fa-solid fa-circle-info me-2"></i>No status changes recorded yet.</div>';
-            return;
+            if (!response.ok) {
+                throw new Error('Could not load status history.');
+            }
+
+            const result = await response.json();
+            const history = Array.isArray(result.history) ? result.history : [];
+            const currentStudents = Array.isArray(result.currentlyAssignedStudents)
+                ? result.currentlyAssignedStudents
+                : [];
+
+            const currentStudentsHtml = currentStudents.length
+                ? currentStudents.map(name => `
+                            <span style="display:inline-flex;align-items:center;gap:5px;background:#d1e7dd;color:#0f5132;border:1px solid #a3cfbb;border-radius:18px;padding:4px 11px;margin:3px;font-size:12px;font-weight:700;">
+                                <i class="fa-solid fa-user-graduate"></i>
+                                ${escapeHistoryHtml(name)}
+                            </span>`).join('')
+                : '<span class="text-muted">No student is currently assigned.</span>';
+
+            const assignedBox = `
+                        <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:12px;margin-bottom:15px;">
+                            <div style="color:#166534;font-size:13px;font-weight:700;margin-bottom:7px;">
+                                <i class="fa-solid fa-user-check me-1"></i> Currently Assigned Student(s)
+                            </div>
+                            <div>${currentStudentsHtml}</div>
+                        </div>`;
+
+            if (!history.length) {
+                modalBody.innerHTML = assignedBox +
+                    '<div class="text-center text-muted py-5"><i class="fa-solid fa-circle-info me-2"></i>No status changes recorded yet.</div>';
+                return;
+            }
+
+            const badgeClass = status =>
+                status === 'Allocated' ? 'hist-badge-allocated' :
+                    status === 'Discharged' ? 'hist-badge-discharged' :
+                        'hist-badge-screening';
+
+            const rows = history.map((item, index) => `
+                        <tr>
+                            <td style="color:#9ca3af;">${index + 1}</td>
+                            <td style="white-space:nowrap;">${escapeHistoryHtml(item.changedAt || '—')}</td>
+                            <td>
+                                <span class="hist-badge ${badgeClass(item.oldStatus)}">
+                                    ${escapeHistoryHtml(item.oldStatus || '—')}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="hist-badge ${badgeClass(item.newStatus)}">
+                                    ${escapeHistoryHtml(item.newStatus || '—')}
+                                </span>
+                            </td>
+                            <td style="font-weight:600;color:#b45309;">
+                                ${escapeHistoryHtml(item.lastAssignedStudent || '—')}
+                            </td>
+                            <td style="font-weight:600;color:#15803d;">
+                                ${escapeHistoryHtml(item.newAssignedStudent || '—')}
+                            </td>
+                        </tr>`).join('');
+
+            modalBody.innerHTML = `
+                        ${assignedBox}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped align-middle mb-0" style="font-size:13px;">
+                                <thead style="background:#252468;color:#fff;">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Changed At</th>
+                                        <th>Old Status</th>
+                                        <th>New Status</th>
+                                        <th>Last Assigned Student</th>
+                                        <th>New Assigned Student</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>
+                        <div style="font-size:11px;color:#9ca3af;margin-top:10px;line-height:1.6;">
+                            * Last Assigned Student is read from inactive allocation records. New Assigned Student is read from the new active allocation record.
+                        </div>`;
         }
-
-        const badgeClass = s =>
-            s === 'Allocated'  ? 'hist-badge-allocated'  :
-            s === 'Discharged' ? 'hist-badge-discharged' :
-                                 'hist-badge-screening';
-
-        const icon = s =>
-            s === 'Allocated'  ? 'fa-user-check'  :
-            s === 'Discharged' ? 'fa-door-open'   :
-                                 'fa-microscope';
-
-        const rows = data.map(h => `
-            <div class="hist-row">
-                <div class="hist-date"><i class="fa-solid fa-calendar-clock me-1"></i>${h.changedAt}</div>
-                <div class="hist-badges">
-                    <span class="hist-badge ${badgeClass(h.oldStatus)}">
-                        <i class="fa-solid ${icon(h.oldStatus)} me-1"></i>${h.oldStatus}
-                    </span>
-                    <i class="fa-solid fa-arrow-right" style="color:#252468;font-size:.8rem;"></i>
-                    <span class="hist-badge ${badgeClass(h.newStatus)}">
-                        <i class="fa-solid ${icon(h.newStatus)} me-1"></i>${h.newStatus}
-                    </span>
-                </div>
-            </div>`).join('');
-
-        document.getElementById('histModalBody').innerHTML =
-            `<div class="hist-timeline">${rows}</div>`;
+        catch (error) {
+            console.error('Status history error:', error);
+            modalBody.innerHTML = `
+                        <div class="alert alert-danger rounded-0 mb-0">
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                            Status history could not be loaded. Please try again.
+                        </div>`;
+        }
     }
 
     // ══════════════════════════════════════════════════════
     //  STUDENT ALLOCATION MODAL (unchanged logic)
     // ══════════════════════════════════════════════════════
     let _currentPatientId = null;
-    let _assignedData     = [];
-    let _availableData    = [];
+    let _assignedData = [];
+    let _availableData = [];
 
     const MODAL_PAGE_SIZE = 10;
-    let _assignedPage  = 1;
+    let _assignedPage = 1;
     let _availablePage = 1;
 
     function openModal(patientId, patientName, tab) {
         _currentPatientId = patientId;
-        _assignedPage  = 1;
+        _assignedPage = 1;
         _availablePage = 1;
 
         document.getElementById('modalPatientName').textContent = patientName;
-        document.getElementById('modalLoading').style.display   = 'block';
-        document.getElementById('panel-assigned').style.display  = 'none';
+        document.getElementById('modalLoading').style.display = 'block';
+        document.getElementById('panel-assigned').style.display = 'none';
         document.getElementById('panel-available').style.display = 'none';
-        document.getElementById('searchAssigned').value  = '';
+        document.getElementById('searchAssigned').value = '';
         document.getElementById('searchAvailable').value = '';
 
         const modal = new bootstrap.Modal(document.getElementById('studentModal'));
@@ -1028,7 +1191,7 @@
         fetch('/AllocatedStudent/GetPatientDetailsJson?patientId=' + patientId)
             .then(r => r.json())
             .then(data => {
-                _assignedData  = data.assigned;
+                _assignedData = data.assigned;
                 _availableData = data.available;
                 renderList('assigned');
                 renderList('available');
@@ -1039,27 +1202,27 @@
     }
 
     function switchTab(tab) {
-        document.getElementById('panel-assigned').style.display  = tab === 'assigned'  ? 'block' : 'none';
+        document.getElementById('panel-assigned').style.display = tab === 'assigned' ? 'block' : 'none';
         document.getElementById('panel-available').style.display = tab === 'available' ? 'block' : 'none';
-        document.getElementById('tab-assigned').classList.toggle('active',  tab === 'assigned');
+        document.getElementById('tab-assigned').classList.toggle('active', tab === 'assigned');
         document.getElementById('tab-available').classList.toggle('active', tab === 'available');
     }
 
     function renderList(type) {
-        const q    = document.getElementById('search' + (type === 'assigned' ? 'Assigned' : 'Available')).value.toLowerCase();
+        const q = document.getElementById('search' + (type === 'assigned' ? 'Assigned' : 'Available')).value.toLowerCase();
         const data = type === 'assigned' ? _assignedData : _availableData;
-        const el   = document.getElementById('list-' + type);
+        const el = document.getElementById('list-' + type);
 
         const filtered = data.filter(s =>
             s.nameEn.toLowerCase().includes(q) ||
             (s.userTypeEn || '').toLowerCase().includes(q));
 
         const totalPages = Math.max(1, Math.ceil(filtered.length / MODAL_PAGE_SIZE));
-        let   page = type === 'assigned' ? _assignedPage : _availablePage;
+        let page = type === 'assigned' ? _assignedPage : _availablePage;
         if (page > totalPages) {
             page = 1;
             if (type === 'assigned') _assignedPage = 1;
-            else                     _availablePage = 1;
+            else _availablePage = 1;
         }
 
         if (!filtered.length) {
@@ -1070,16 +1233,16 @@
         const paged = filtered.slice((page - 1) * MODAL_PAGE_SIZE, page * MODAL_PAGE_SIZE);
 
         let html = paged.map(s => `
-            <div class="stu-row">
-                <div>
-                    <div class="stu-name">${s.nameEn}</div>
-                    <div class="stu-type">${s.userTypeEn || '—'}</div>
-                </div>
-                ${type === 'assigned'
-                    ? `<button class="btn-remove" onclick="doRemove(${s.id})" title="Remove">−</button>`
-                    : `<button class="btn-assign" onclick="doAssign(${s.id})" title="Assign">+</button>`
-                }
-            </div>`).join('');
+                    <div class="stu-row">
+                        <div>
+                            <div class="stu-name">${s.nameEn}</div>
+                            <div class="stu-type">${s.userTypeEn || '—'}</div>
+                        </div>
+                        ${type === 'assigned'
+                ? `<button class="btn-remove" onclick="doRemove(${s.id})" title="Remove">−</button>`
+                : `<button class="btn-assign" onclick="doAssign(${s.id})" title="Assign">+</button>`
+            }
+                    </div>`).join('');
 
         if (totalPages > 1) {
             html += `<div class="modal-pg">`;
@@ -1096,19 +1259,19 @@
     }
 
     function changePage(type, page) {
-        if (type === 'assigned') _assignedPage  = page;
-        else                     _availablePage = page;
+        if (type === 'assigned') _assignedPage = page;
+        else _availablePage = page;
         renderList(type);
     }
 
     function filterList(type) {
-        if (type === 'assigned') _assignedPage  = 1;
-        else                     _availablePage = 1;
+        if (type === 'assigned') _assignedPage = 1;
+        else _availablePage = 1;
         renderList(type);
     }
 
     function updateCounts() {
-        document.getElementById('assignedCount').textContent  = _assignedData.length;
+        document.getElementById('assignedCount').textContent = _assignedData.length;
         document.getElementById('availableCount').textContent = _availableData.length;
     }
 
@@ -1118,9 +1281,9 @@
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'patientId=' + _currentPatientId + '&appUserId=' + appUserId
         }).then(r => r.json()).then(data => {
-            _assignedData  = data.assigned;
+            _assignedData = data.assigned;
             _availableData = data.available;
-            _assignedPage  = 1;
+            _assignedPage = 1;
             _availablePage = 1;
             renderList('assigned');
             renderList('available');
@@ -1134,9 +1297,9 @@
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'patientId=' + _currentPatientId + '&appUserId=' + appUserId
         }).then(r => r.json()).then(data => {
-            _assignedData  = data.assigned;
+            _assignedData = data.assigned;
             _availableData = data.available;
-            _assignedPage  = 1;
+            _assignedPage = 1;
             _availablePage = 1;
             renderList('assigned');
             renderList('available');

@@ -70,6 +70,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                         .Where(
                             allocation =>
                                 allocation.AppUserId == appUserId
+                                && allocation.IsActive
                         )
                         .Select(
                             allocation =>
@@ -266,6 +267,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     .Where(
                         allocation =>
                             allocation.PatientID == patientId
+                            && allocation.IsActive
                     )
                     .Select(
                         allocation =>
@@ -358,48 +360,288 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         }
 
         // =====================================================
-        // Status history
+        // Status and student-allocation history
         // =====================================================
         [HttpGet]
         [AuthFilter(
             "Admin",
             "Fulltime Supervisor",
-            "Parttime Supervisor"
+            "Parttime Supervisor",
+            "Student"
         )]
         public async Task<IActionResult> GetStatusHistory(
             int patientId
         )
         {
-            var history =
+            bool patientExists =
+                await _db.Patients
+                    .AsNoTracking()
+                    .AnyAsync(
+                        patient =>
+                            patient.PatientID == patientId
+                    );
+
+            if (!patientExists)
+            {
+                return NotFound(
+                    new
+                    {
+                        success = false,
+                        message = "Patient not found."
+                    }
+                );
+            }
+
+            var statusHistory =
                 await _db.PatientStatusHistories
                     .AsNoTracking()
                     .Where(
                         historyItem =>
                             historyItem.PatientID == patientId
                     )
-                    .OrderByDescending(
+                    .OrderBy(
                         historyItem =>
                             historyItem.ChangedAt
                     )
                     .Select(
                         historyItem => new
                         {
-                            oldStatus =
-                                historyItem.OldStatus,
-
-                            newStatus =
-                                historyItem.NewStatus,
-
-                            changedAt =
-                                historyItem.ChangedAt
-                                    .ToString(
-                                        "yyyy-MM-dd  HH:mm"
-                                    )
+                            historyItem.OldStatus,
+                            historyItem.NewStatus,
+                            historyItem.ChangedAt
                         }
                     )
                     .ToListAsync();
 
-            return Json(history);
+            var allocationHistory =
+                await (
+                    from allocation in
+                        _db.AllocatedStudents.AsNoTracking()
+
+                    join appUser in
+                        _db.AppUsers.AsNoTracking()
+                        on allocation.AppUserId equals appUser.Id
+
+                    where allocation.PatientID == patientId
+
+                    orderby allocation.AssignedDate
+
+                    select new
+                    {
+                        allocation.AssignedDate,
+                        allocation.RemovedDate,
+                        allocation.IsActive,
+                        StudentName =
+                            string.IsNullOrWhiteSpace(appUser.NameEn)
+                                ? appUser.UserLog
+                                : appUser.NameEn
+                    }
+                )
+                .ToListAsync();
+
+            var result = new List<object>();
+
+            for (int index = 0; index < statusHistory.Count; index++)
+            {
+                var current = statusHistory[index];
+
+                DateTime intervalStart =
+                    index == 0
+                        ? DateTime.MinValue
+                        : statusHistory[index - 1].ChangedAt;
+
+                DateTime intervalEnd = current.ChangedAt;
+
+                string lastAssignedStudent = "—";
+                string newAssignedStudent = "—";
+
+                if (
+                    string.Equals(
+                        current.NewStatus,
+                        "Allocated",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    var newlyAssignedNames =
+                        allocationHistory
+                            .Where(
+                                allocation =>
+                                    allocation.AssignedDate > intervalStart
+                                    &&
+                                    allocation.AssignedDate
+                                        <= intervalEnd.AddMinutes(5)
+                            )
+                            .Select(
+                                allocation =>
+                                    allocation.StudentName
+                            )
+                            .Where(
+                                name =>
+                                    !string.IsNullOrWhiteSpace(name)
+                            )
+                            .Distinct()
+                            .ToList();
+
+                    if (!newlyAssignedNames.Any())
+                    {
+                        newlyAssignedNames =
+                            allocationHistory
+                                .Where(
+                                    allocation =>
+                                        allocation.AssignedDate
+                                            <= intervalEnd.AddMinutes(5)
+                                        &&
+                                        (
+                                            allocation.IsActive
+                                            ||
+                                            !allocation.RemovedDate.HasValue
+                                            ||
+                                            allocation.RemovedDate.Value
+                                                > intervalEnd
+                                        )
+                                )
+                                .OrderByDescending(
+                                    allocation =>
+                                        allocation.AssignedDate
+                                )
+                                .Select(
+                                    allocation =>
+                                        allocation.StudentName
+                                )
+                                .Where(
+                                    name =>
+                                        !string.IsNullOrWhiteSpace(name)
+                                )
+                                .Distinct()
+                                .ToList();
+                    }
+
+                    if (newlyAssignedNames.Any())
+                    {
+                        newAssignedStudent =
+                            string.Join(", ", newlyAssignedNames);
+                    }
+                }
+
+                if (
+                    string.Equals(
+                        current.NewStatus,
+                        "Screening",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                    &&
+                    string.Equals(
+                        current.OldStatus,
+                        "Allocated",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    var removedNames =
+                        allocationHistory
+                            .Where(
+                                allocation =>
+                                    allocation.RemovedDate.HasValue
+                                    &&
+                                    allocation.RemovedDate.Value
+                                        > intervalStart
+                                    &&
+                                    allocation.RemovedDate.Value
+                                        <= intervalEnd.AddMinutes(5)
+                            )
+                            .OrderByDescending(
+                                allocation =>
+                                    allocation.RemovedDate
+                            )
+                            .Select(
+                                allocation =>
+                                    allocation.StudentName
+                            )
+                            .Where(
+                                name =>
+                                    !string.IsNullOrWhiteSpace(name)
+                            )
+                            .Distinct()
+                            .ToList();
+
+                    if (!removedNames.Any())
+                    {
+                        removedNames =
+                            allocationHistory
+                                .Where(
+                                    allocation =>
+                                        allocation.RemovedDate.HasValue
+                                        &&
+                                        allocation.RemovedDate.Value
+                                            <= intervalEnd.AddMinutes(5)
+                                )
+                                .OrderByDescending(
+                                    allocation =>
+                                        allocation.RemovedDate
+                                )
+                                .Take(1)
+                                .Select(
+                                    allocation =>
+                                        allocation.StudentName
+                                )
+                                .Where(
+                                    name =>
+                                        !string.IsNullOrWhiteSpace(name)
+                                )
+                                .ToList();
+                    }
+
+                    if (removedNames.Any())
+                    {
+                        lastAssignedStudent =
+                            string.Join(", ", removedNames);
+                    }
+                }
+
+                result.Add(
+                    new
+                    {
+                        oldStatus = current.OldStatus,
+                        newStatus = current.NewStatus,
+                        lastAssignedStudent,
+                        newAssignedStudent,
+                        changedAt =
+                            current.ChangedAt.ToString(
+                                "yyyy-MM-dd HH:mm"
+                            )
+                    }
+                );
+            }
+
+            var currentlyAssignedStudents =
+                allocationHistory
+                    .Where(
+                        allocation =>
+                            allocation.IsActive
+                    )
+                    .Select(
+                        allocation =>
+                            allocation.StudentName
+                    )
+                    .Where(
+                        name =>
+                            !string.IsNullOrWhiteSpace(name)
+                    )
+                    .Distinct()
+                    .ToList();
+
+            return Json(
+                new
+                {
+                    success = true,
+                    history = result
+                        .AsEnumerable()
+                        .Reverse()
+                        .ToList(),
+                    currentlyAssignedStudents
+                }
+            );
         }
 
         // =====================================================
@@ -468,6 +710,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                             &&
                             allocation.AppUserId
                                 == appUserId
+                            &&
+                            allocation.IsActive
                     );
 
             if (!allocationExists)
@@ -477,7 +721,9 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     {
                         PatientID = patientId,
                         AppUserId = appUserId,
-                        AssignedDate = DateTime.Now
+                        AssignedDate = DateTime.Now,
+                        IsActive = true,
+                        RemovedDate = null
                     }
                 );
 
@@ -523,7 +769,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         }
 
         // =====================================================
-        // Remove student
+        // Remove student (soft delete)
         // =====================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -541,71 +787,26 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 await _db.AllocatedStudents
                     .FirstOrDefaultAsync(
                         currentAllocation =>
-                            currentAllocation.PatientID
-                                == patientId
+                            currentAllocation.PatientID == patientId
                             &&
-                            currentAllocation.AppUserId
-                                == appUserId
+                            currentAllocation.AppUserId == appUserId
+                            &&
+                            currentAllocation.IsActive
                     );
 
             if (allocation != null)
             {
-                _db.AllocatedStudents.Remove(
-                    allocation
-                );
+                allocation.IsActive = false;
+                allocation.RemovedDate = DateTime.Now;
 
                 await _db.SaveChangesAsync();
-
-                int remainingStudents =
-                    await _db.AllocatedStudents
-                        .CountAsync(
-                            remainingAllocation =>
-                                remainingAllocation.PatientID
-                                    == patientId
-                        );
-
-                /*
-                 * إذا أزيل آخر طالب من المريض،
-                 * تعود حالته إلى Screening.
-                 */
-                if (remainingStudents == 0)
-                {
-                    var patient =
-                        await _db.Patients
-                            .FirstOrDefaultAsync(
-                                currentPatient =>
-                                    currentPatient.PatientID
-                                        == patientId
-                            );
-
-                    if (
-                        patient != null
-                        &&
-                        string.Equals(
-                            patient.PatientStatus,
-                            "Allocated",
-                            StringComparison.OrdinalIgnoreCase
-                        )
-                    )
-                    {
-                        patient.PatientStatus =
-                            "Screening";
-
-                        _db.PatientStatusHistories.Add(
-                            new PatientStatusHistory
-                            {
-                                PatientID = patientId,
-                                OldStatus = "Allocated",
-                                NewStatus = "Screening",
-                                ChangedAt = DateTime.Now
-                            }
-                        );
-
-                        await _db.SaveChangesAsync();
-                    }
-                }
             }
 
+            /*
+             * لا نغيّر حالة المريض تلقائياً هنا.
+             * عند الضغط على Screening يجب إزالة جميع الطلاب،
+             * ثم الضغط على Confirm Screening من نافذة الحالة.
+             */
             return await GetPatientDetailsJson(
                 patientId
             );

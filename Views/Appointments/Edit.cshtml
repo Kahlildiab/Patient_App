@@ -2,7 +2,16 @@
 
 @{
     ViewData["Title"] = "Edit Appointment";
+
+    string selectedPeriod =
+        ViewBag.AppointmentPeriod as string
+        ?? (Model.TimeFrom.Hours >= 12 ? "PM" : "AM");
+
+    string minimumDate =
+        DateTime.Today.ToString("yyyy-MM-dd");
+
 }
+
 <link rel="stylesheet" href="~/css/RTE.css" />
 
 <style>
@@ -34,8 +43,8 @@
         }
 
             .field-group label.required::before {
-                content: '* ';
-                color: #252468;
+                content: "* ";
+                color: #c0392b;
             }
 
         .field-group input,
@@ -46,36 +55,60 @@
             height: 36px;
             border-radius: 0;
             width: 100%;
+            background: #fff;
         }
 
             .field-group input:focus,
             .field-group select:focus {
                 outline: none;
                 border-color: #252468;
-                box-shadow: 0 0 0 2px rgba(37,36,104,0.08);
+                box-shadow: 0 0 0 2px rgba(37, 36, 104, 0.08);
             }
 
     .radio-group {
         display: flex;
-        gap: 24px;
+        flex-wrap: wrap;
+        gap: 15px;
         margin-top: 4px;
     }
 
     .radio-option {
+        min-height: 44px;
+        padding: 10px 16px;
+        border: 1px solid #d5d5df;
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 600;
         color: #252468;
         cursor: pointer;
+        background: #fff;
+        transition: 0.2s ease;
     }
+
+        .radio-option:hover {
+            border-color: #252468;
+            background: #f8f8fc;
+        }
+
+        .radio-option.selected {
+            border-color: #252468;
+            background: rgba(37, 36, 104, 0.07);
+            box-shadow: 0 0 0 1px #252468;
+        }
+
+        .radio-option.unavailable {
+            display: none;
+        }
 
     input[type="radio"] {
         accent-color: #252468;
         cursor: pointer;
         width: 16px;
         height: 16px;
+        margin: 0;
+        padding: 0;
     }
 
     .btn-save {
@@ -83,17 +116,24 @@
         width: 55%;
         margin: 28px auto 0;
         background: #daa328;
-        color: white;
+        color: #fff;
         border: none;
         padding: 12px;
         font-size: 15px;
         font-weight: 700;
         cursor: pointer;
         letter-spacing: 0.5px;
+        transition: 0.2s ease;
     }
 
-        .btn-save:hover {
+        .btn-save:hover:not(:disabled) {
             background: #c49020;
+        }
+
+        .btn-save:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+            opacity: 0.65;
         }
 
     .validation-msg {
@@ -107,133 +147,685 @@
         border-top: 1px solid #e0e0e0;
         margin: 20px 0;
     }
+
+    .appointment-message {
+        display: none;
+        margin-top: 8px;
+        padding: 10px 12px;
+        border: 1px solid transparent;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+        .appointment-message.info {
+            display: block;
+            color: #252468;
+            background: #f1f1f8;
+            border-color: #ccccdf;
+        }
+
+        .appointment-message.success {
+            display: block;
+            color: #176b3a;
+            background: #edf8f1;
+            border-color: #b9dfc7;
+        }
+
+        .appointment-message.error {
+            display: block;
+            color: #a32626;
+            background: #fff1f1;
+            border-color: #edbcbc;
+        }
+
+        .appointment-message.loading {
+            display: block;
+            color: #725710;
+            background: #fff8e5;
+            border-color: #e8d28f;
+        }
+
+    @@media (max-width: 700px) {
+        .form-section {
+            padding: 24px 18px;
+        }
+
+        .field-row {
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .radio-group {
+            flex-direction: column;
+        }
+
+        .radio-option {
+            width: 100%;
+        }
+
+        .btn-save {
+            width: 100%;
+        }
+    }
 </style>
 
 <div style="padding: 30px 20px;">
 
-    <div style="max-width:860px; margin: 0 auto;">
-        <section id="title-wrapper" style="justify-content:End;">
+    <div style="max-width: 860px; margin: 0 auto;">
+        <section id="title-wrapper"
+                 style="justify-content: end;">
+
             <div class="lineleft"></div>
+
             <h1 class="sectiontitle heading6">
-                <p style="text-align:center;"><span style="color:#252468;">EDIT APPOINTMENT</span></p>
+                <p style="text-align: center;">
+                    <span style="color: #252468;">
+                        EDIT APPOINTMENT
+                    </span>
+                </p>
             </h1>
-            <div class="lineright" style="display:block; background-color:#daa328;"></div>
+
+            <div class="lineright"
+                 style="display: block; background-color: #daa328;">
+            </div>
+
         </section>
     </div>
+
     <br />
 
     <div class="form-section">
-        <form asp-action="Edit">
 
-            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+        <form asp-controller="Appointments"
+              asp-action="Edit"
+              asp-route-id="@Model.AppointmentID"
+              method="post"
+              id="appointmentEditForm">
 
-            <input type="hidden" asp-for="AppointmentID" />
-            <input type="hidden" asp-for="PatientID" />
-            <input type="hidden" asp-for="CreatedDate" />
+            @Html.AntiForgeryToken()
 
-            @* ── Names ── *@
+            <div asp-validation-summary="All"
+                 class="text-danger mb-3">
+            </div>
+
+            <input type="hidden"
+                   asp-for="AppointmentID" />
+
+            <input type="hidden"
+                   asp-for="PatientID" />
+
+            <input type="hidden"
+                   asp-for="CreatedDate" />
+
+            @* Patient names *@
             <div class="field-row">
+
                 <div class="field-group">
                     <label>First Name</label>
-                    <input type="text" name="Patient.FirstName" value="@Model.Patient?.FirstName" />
+
+                    <input type="text"
+                           name="FirstName"
+                           value="@Model.Patient?.FirstName" />
                 </div>
+
                 <div class="field-group">
                     <label>Second Name</label>
-                    <input type="text" name="Patient.SecondName" value="@Model.Patient?.SecondName" />
+
+                    <input type="text"
+                           name="SecondName"
+                           value="@Model.Patient?.SecondName" />
                 </div>
+
             </div>
 
             <div class="field-row">
+
                 <div class="field-group">
                     <label>Third Name</label>
-                    <input type="text" name="Patient.ThirdName" value="@Model.Patient?.ThirdName" />
+
+                    <input type="text"
+                           name="ThirdName"
+                           value="@Model.Patient?.ThirdName" />
                 </div>
+
                 <div class="field-group">
                     <label>Family Name</label>
-                    <input type="text" name="Patient.FourthName" value="@Model.Patient?.FourthName" />
+
+                    <input type="text"
+                           name="FourthName"
+                           value="@Model.Patient?.FourthName" />
                 </div>
+
             </div>
 
             <hr class="section-divider" />
 
-            @* ── Clinic ── *@
+            @* Appointment date and period *@
             <div class="field-row">
+
                 <div class="field-group">
-                    <label class="required">Clinic Name</label>
-                    <input asp-for="ClinicName" />
-                    <span asp-validation-for="ClinicName" class="validation-msg"></span>
+
+                    <label class="required">
+                        Appointment Date
+                    </label>
+
+                    <input asp-for="AppointmentDate"
+                           type="date"
+                           id="appointmentDate"
+                           min="@minimumDate" />
+
+                    <span asp-validation-for="AppointmentDate"
+                          class="validation-msg">
+                    </span>
+
                 </div>
-                <div class="field-group"></div>
-            </div>
 
-            <hr class="section-divider" />
-
-            @* ── Date & Day ── *@
-            <div class="field-row">
                 <div class="field-group">
-                    <label class="required">Appointment Date</label>
-                    <input asp-for="AppointmentDate" type="date" id="appointmentDate" />
-                    <span asp-validation-for="AppointmentDate" class="validation-msg"></span>
-                </div>
-                <div class="field-group">
-                    <label class="required">Day</label>
-                    <select asp-for="AppointmentDay" id="appointmentDay">
-                        <option value="">-- Select Day --</option>
-                        <option>Sunday</option>
-                        <option>Monday</option>
-                        <option>Tuesday</option>
-                        <option>Wednesday</option>
-                        <option>Thursday</option>
-                        <option>Friday</option>
-                        <option>Saturday</option>
-                    </select>
-                    <span asp-validation-for="AppointmentDay" class="validation-msg"></span>
-                </div>
-            </div>
 
-            <hr class="section-divider" />
+                    <label class="required">
+                        Appointment Period
+                    </label>
 
-            @* ── Status ── *@
-            <div class="field-row">
-                <div class="field-group">
-                    <label class="required">Appointment Status</label>
-                    <div class="radio-group">
-                        <label class="radio-option">
-                            <input type="radio" asp-for="AppointmentStatus" value="Scheduled" />
-                            Active
+                    <div class="radio-group"
+                         id="appointmentPeriodContainer">
+
+                        <label class="radio-option"
+                               id="morningOption">
+
+                            @if (selectedPeriod == "AM")
+                            {
+                                <input type="radio"
+                                       name="AppointmentPeriod"
+                                       id="morningRadio"
+                                       value="AM"
+                                       checked />
+                            }
+                            else
+                            {
+                                <input type="radio"
+                                       name="AppointmentPeriod"
+                                       id="morningRadio"
+                                       value="AM" />
+                            }
+
+                            <span>
+                                Morning
+                                <strong>(09:00 AM)</strong>
+                            </span>
+
                         </label>
-                        <label class="radio-option">
-                            <input type="radio" asp-for="AppointmentStatus" value="Cancelled" />
-                            Cancelled
+
+                        <label class="radio-option"
+                               id="eveningOption">
+
+                            @if (selectedPeriod == "PM")
+                            {
+                                <input type="radio"
+                                       name="AppointmentPeriod"
+                                       id="eveningRadio"
+                                       value="PM"
+                                       checked />
+                            }
+                            else
+                            {
+                                <input type="radio"
+                                       name="AppointmentPeriod"
+                                       id="eveningRadio"
+                                       value="PM" />
+                            }
+
+                            <span>
+                                Evening
+                                <strong>(01:00 PM)</strong>
+                            </span>
+
                         </label>
+
                     </div>
-                    <span asp-validation-for="AppointmentStatus" class="validation-msg"></span>
+
+                    <span class="validation-msg"
+                          data-valmsg-for="AppointmentPeriod"
+                          data-valmsg-replace="true">
+                    </span>
+
+                    <div id="appointmentMessage"
+                         class="appointment-message">
+                    </div>
+
                 </div>
-                <div class="field-group"></div>
+
             </div>
 
-            <button type="submit" class="btn-save">Save</button>
+            <hr class="section-divider" />
+
+            @* Appointment status *@
+            <div class="field-row">
+
+                <div class="field-group">
+
+                    <label class="required">
+                        Appointment Status
+                    </label>
+
+                    <div class="radio-group">
+
+                        <label class="radio-option"
+                               id="activeStatusOption">
+
+                            <input type="radio"
+                                   asp-for="AppointmentStatus"
+                                   value="Scheduled"
+                                   id="scheduledStatus" />
+
+                            Active
+
+                        </label>
+
+                        <label class="radio-option"
+                               id="cancelledStatusOption">
+
+                            <input type="radio"
+                                   asp-for="AppointmentStatus"
+                                   value="Cancelled"
+                                   id="cancelledStatus" />
+
+                            Cancelled
+
+                        </label>
+
+                    </div>
+
+                    <span asp-validation-for="AppointmentStatus"
+                          class="validation-msg">
+                    </span>
+
+                </div>
+
+                <div class="field-group"></div>
+
+            </div>
+
+            <button type="submit"
+                    class="btn-save"
+                    id="saveButton">
+                Save
+            </button>
 
         </form>
+
     </div>
 </div>
 
 @section Scripts {
+
     @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        await Html.RenderPartialAsync(
+            "_ValidationScriptsPartial"
+        );
     }
+
     <script>
-        document.getElementById('appointmentDate').addEventListener('change', function () {
-            const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-            const date = new Date(this.value);
-            const dayName = days[date.getDay()];
-            const daySelect = document.getElementById('appointmentDay');
-            for (let i = 0; i < daySelect.options.length; i++) {
-                if (daySelect.options[i].value === dayName) {
-                    daySelect.selectedIndex = i;
-                    break;
+        document.addEventListener(
+            "DOMContentLoaded",
+            function() {
+
+                const form =
+                    document.getElementById(
+                        "appointmentEditForm"
+                    );
+
+                const dateInput =
+                    document.getElementById(
+                        "appointmentDate"
+                    );
+
+                const morningOption =
+                    document.getElementById(
+                        "morningOption"
+                    );
+
+                const eveningOption =
+                    document.getElementById(
+                        "eveningOption"
+                    );
+
+                const morningRadio =
+                    document.getElementById(
+                        "morningRadio"
+                    );
+
+                const eveningRadio =
+                    document.getElementById(
+                        "eveningRadio"
+                    );
+
+                const scheduledStatus =
+                    document.getElementById(
+                        "scheduledStatus"
+                    );
+
+                const cancelledStatus =
+                    document.getElementById(
+                        "cancelledStatus"
+                    );
+
+                const activeStatusOption =
+                    document.getElementById(
+                        "activeStatusOption"
+                    );
+
+                const cancelledStatusOption =
+                    document.getElementById(
+                        "cancelledStatusOption"
+                    );
+
+                const saveButton =
+                    document.getElementById(
+                        "saveButton"
+                    );
+
+                const appointmentMessage =
+                    document.getElementById(
+                        "appointmentMessage"
+                    );
+
+                let selectionIsValid =
+                    true;
+
+                function getSelectedPeriod() {
+                    const selected =
+                        document.querySelector(
+                            'input[name="AppointmentPeriod"]:checked'
+                        );
+
+                    return selected
+                        ? selected.value
+                        : "";
                 }
+
+                function appointmentIsCancelled() {
+                    return cancelledStatus
+                        &&
+                        cancelledStatus.checked;
+                }
+
+                function showMessage(
+                    message,
+                    type
+                ) {
+                    appointmentMessage.textContent =
+                        message;
+
+                    appointmentMessage.className =
+                        "appointment-message "
+                        +
+                        type;
+                }
+
+                function showBothPeriods() {
+                    morningOption.classList.remove(
+                        "unavailable"
+                    );
+
+                    eveningOption.classList.remove(
+                        "unavailable"
+                    );
+
+                    morningRadio.disabled =
+                        false;
+
+                    eveningRadio.disabled =
+                        false;
+                }
+
+                function hideBothPeriods() {
+                    morningOption.classList.add(
+                        "unavailable"
+                    );
+
+                    eveningOption.classList.add(
+                        "unavailable"
+                    );
+
+                    morningRadio.disabled =
+                        true;
+
+                    eveningRadio.disabled =
+                        true;
+                }
+
+                function refreshSelectedStyles() {
+                    morningOption.classList.toggle(
+                        "selected",
+                        morningRadio.checked
+                    );
+
+                    eveningOption.classList.toggle(
+                        "selected",
+                        eveningRadio.checked
+                    );
+
+                    activeStatusOption.classList.toggle(
+                        "selected",
+                        scheduledStatus.checked
+                    );
+
+                    cancelledStatusOption.classList.toggle(
+                        "selected",
+                        cancelledStatus.checked
+                    );
+                }
+
+                function getTodayValue() {
+                    const today =
+                        new Date();
+
+                    const year =
+                        today.getFullYear();
+
+                    const month =
+                        String(
+                            today.getMonth() + 1
+                        ).padStart(2, "0");
+
+                    const day =
+                        String(
+                            today.getDate()
+                        ).padStart(2, "0");
+
+                    return `${year}-${month}-${day}`;
+                }
+
+                function updateSaveButton() {
+                    /*
+                     * الإلغاء مسموح دائماً.
+                     */
+                    if (appointmentIsCancelled()) {
+                        saveButton.disabled =
+                            false;
+
+                        return;
+                    }
+
+                    const dateSelected =
+                        dateInput.value !== "";
+
+                    const periodSelected =
+                        getSelectedPeriod() !== "";
+
+                    saveButton.disabled =
+                        !(
+                            dateSelected
+                            &&
+                            periodSelected
+                            &&
+                            selectionIsValid
+                        );
+                }
+
+                function validateEditSelection() {
+
+                    refreshSelectedStyles();
+                    showBothPeriods();
+
+                    /*
+                     * عند الإلغاء لا نمنع الحفظ.
+                     */
+                    if (appointmentIsCancelled()) {
+                        selectionIsValid =
+                            true;
+
+                        showMessage(
+                            "This appointment will be cancelled.",
+                            "info"
+                        );
+
+                        updateSaveButton();
+                        return;
+                    }
+
+                    const selectedDate =
+                        dateInput.value;
+
+                    if (!selectedDate) {
+                        selectionIsValid =
+                            false;
+
+                        showMessage(
+                            "Please select an appointment date.",
+                            "info"
+                        );
+
+                        updateSaveButton();
+                        return;
+                    }
+
+                    /*
+                     * لا نسمح بتاريخ سابق.
+                     * لكن في تاريخ اليوم يسمح باختيار Morning
+                     * أو Evening حتى لو مر وقت الفترة.
+                     */
+                    if (
+                        selectedDate
+                        <
+                        getTodayValue()
+                    ) {
+                        selectionIsValid =
+                            false;
+
+                        hideBothPeriods();
+
+                        showMessage(
+                            "You cannot select a past appointment date.",
+                            "error"
+                        );
+
+                        refreshSelectedStyles();
+                        updateSaveButton();
+                        return;
+                    }
+
+                    const selectedPeriod =
+                        getSelectedPeriod();
+
+                    if (!selectedPeriod) {
+                        selectionIsValid =
+                            false;
+
+                        showMessage(
+                            "Please select Morning or Evening.",
+                            "info"
+                        );
+
+                        updateSaveButton();
+                        return;
+                    }
+
+                    selectionIsValid =
+                        true;
+
+                    const periodLabel =
+                        selectedPeriod === "PM"
+                            ? "Evening"
+                            : "Morning";
+
+                    showMessage(
+                        `The ${periodLabel} period is selected. `
+                        +
+                        "During Edit, you can choose Morning or Evening "
+                        +
+                        "even if its time has already passed today. "
+                        +
+                        "There is no 10-patient limit while editing.",
+                        "success"
+                    );
+
+                    refreshSelectedStyles();
+                    updateSaveButton();
+                }
+
+                dateInput.addEventListener(
+                    "change",
+                    validateEditSelection
+                );
+
+                morningRadio.addEventListener(
+                    "change",
+                    validateEditSelection
+                );
+
+                eveningRadio.addEventListener(
+                    "change",
+                    validateEditSelection
+                );
+
+                scheduledStatus.addEventListener(
+                    "change",
+                    validateEditSelection
+                );
+
+                cancelledStatus.addEventListener(
+                    "change",
+                    validateEditSelection
+                );
+
+                form.addEventListener(
+                    "submit",
+                    function(event) {
+
+                        if (appointmentIsCancelled()) {
+                            return;
+                        }
+
+                        const selectedDate =
+                            dateInput.value;
+
+                        const selectedPeriod =
+                            getSelectedPeriod();
+
+                        if (
+                            !selectedDate
+                            ||
+                            !selectedPeriod
+                            ||
+                            !selectionIsValid
+                        ) {
+                            event.preventDefault();
+
+                            showMessage(
+                                "Please select a valid date and "
+                                +
+                                "Morning or Evening before saving.",
+                                "error"
+                            );
+
+                            updateSaveButton();
+                        }
+                    }
+                );
+
+                validateEditSelection();
             }
-        });
+        );
     </script>
 }

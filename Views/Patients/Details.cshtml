@@ -316,10 +316,18 @@
             a =>
                 a.AppointmentDate.Date <= DateTime.Today
                 &&
-                string.Equals(
-                    a.AppointmentStatus,
-                    "Attended",
-                    StringComparison.OrdinalIgnoreCase
+                (
+                    string.Equals(
+                        a.AppointmentStatus,
+                        "Attended",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                    ||
+                    string.Equals(
+                        a.AppointmentStatus,
+                        "Completed",
+                        StringComparison.OrdinalIgnoreCase
+                    )
                 )
         );
 
@@ -1308,28 +1316,28 @@
 
                             <option value="Mild"
                                     selected="@(string.Equals(
-                                                                        complexity,
-                                                                        "Mild",
-                                                                        StringComparison.OrdinalIgnoreCase
-                                                                    ) ? "selected" : null)">
+                                                                                                        complexity,
+                                                                                                        "Mild",
+                                                                                                        StringComparison.OrdinalIgnoreCase
+                                                                                                    ) ? "selected" : null)">
                                 Mild
                             </option>
 
                             <option value="Moderate"
                                     selected="@(string.Equals(
-                                                                        complexity,
-                                                                        "Moderate",
-                                                                        StringComparison.OrdinalIgnoreCase
-                                                                    ) ? "selected" : null)">
+                                                                                                        complexity,
+                                                                                                        "Moderate",
+                                                                                                        StringComparison.OrdinalIgnoreCase
+                                                                                                    ) ? "selected" : null)">
                                 Moderate
                             </option>
 
                             <option value="Advance"
                                     selected="@(string.Equals(
-                                                                        complexity,
-                                                                        "Advance",
-                                                                        StringComparison.OrdinalIgnoreCase
-                                                                    ) ? "selected" : null)">
+                                                                                                        complexity,
+                                                                                                        "Advance",
+                                                                                                        StringComparison.OrdinalIgnoreCase
+                                                                                                    ) ? "selected" : null)">
                                 Advance
                             </option>
 
@@ -1526,18 +1534,18 @@
                 <li>
                     <a id="dentalChartLink"
                        href="@Url.Action(
-                                                                                                                                                                     "Index",
-                                                                                                                                                                     "DentalChartPage",
-                                                                                                                                                                     new
-                                                                                                                                                                     {
-                                                                                                                                                                         patientId = Model.PatientID
-                                                                                                                                                                     })"
+                                                                                                                                                                                            "Index",
+                                                                                                                                                                                            "DentalChartPage",
+                                                                                                                                                                                            new
+                                                                                                                                                                                            {
+                                                                                                                                                                                                patientId = Model.PatientID
+                                                                                                                                                                                            })"
                        target="_blank"
                        rel="noopener noreferrer"
                        class="LinkFontStyle sidebar-link dental-chart-link"
                        title="@(isReadOnly
-                                                                                                                                                                     ? "View only — this visit is closed."
-                                                                                                                                                                     : "Open Dental Charting")">
+                                                                                                                                                                                            ? "View only — this visit is closed."
+                                                                                                                                                                                            : "Open Dental Charting")">
 
                         <span>
                             Dental Charting
@@ -1749,7 +1757,7 @@
                                    mh?.ReviewDate.HasValue == true
                                        ? mh.ReviewDate.Value.ToString("yyyy-MM-dd")
                                        : DateTime.Today.ToString("yyyy-MM-dd")
-                                                                                                                                                        )"
+                                                                                                                                                                                )"
                                    readonly
                                    title="The date is entered automatically when Changes reported is selected."
                                    style="border:1px solid #ccc;
@@ -2430,14 +2438,14 @@
     <script src="~/Patientjs/Patient-details.js" asp-append-version="true"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
 
             // =====================================================
             // CLOSED VISIT: all tabs remain visible, but data is view only
             // =====================================================
 
             const isReadOnly =
-                @isReadOnly.ToString().ToLower();
+                        @isReadOnly.ToString().ToLower();
 
             // =====================================================
             // VISIT REVIEW
@@ -2500,7 +2508,7 @@
 
                 changesReportedRadio.addEventListener(
                     "change",
-                    function () {
+                    function() {
 
                         if (
                             this.checked
@@ -2544,19 +2552,19 @@
                         || text === "✕";
                 }
 
-                readOnlyRoots.forEach(function (root) {
+                readOnlyRoots.forEach(function(root) {
 
                     root.querySelectorAll(
                         "input:not([type='hidden']), textarea, select"
                     )
-                        .forEach(function (element) {
+                        .forEach(function(element) {
                             element.disabled = true;
                         });
 
                     root.querySelectorAll(
                         "button, input[type='button'], input[type='submit']"
                     )
-                        .forEach(function (button) {
+                        .forEach(function(button) {
 
                             if (isViewOnlyButton(button)) {
                                 return;
@@ -2568,11 +2576,11 @@
                         });
 
                     root.querySelectorAll("form")
-                        .forEach(function (form) {
+                        .forEach(function(form) {
 
                             form.addEventListener(
                                 "submit",
-                                function (event) {
+                                function(event) {
                                     event.preventDefault();
                                     event.stopImmediatePropagation();
                                 },
@@ -2595,7 +2603,7 @@
 
                 dentalChartLink.addEventListener(
                     "click",
-                    function (event) {
+                    function(event) {
 
                         event.preventDefault();
 
@@ -2691,12 +2699,12 @@
                 }
 
                 // إخفاء جميع الأقسام
-                contentSections.forEach(function (section) {
+                contentSections.forEach(function(section) {
                     section.classList.remove("active");
                 });
 
                 // إزالة حالة Active من جميع الروابط الداخلية
-                sidebarLinks.forEach(function (link) {
+                sidebarLinks.forEach(function(link) {
                     link.classList.remove("tab-active");
                 });
 
@@ -2706,7 +2714,7 @@
                 // تحديد الرابط المختار
                 const selectedLink =
                     Array.from(sidebarLinks).find(
-                        function (link) {
+                        function(link) {
                             return link.getAttribute(
                                 "data-target"
                             ) === targetName;
@@ -2751,11 +2759,11 @@
             // 4. معالجة الضغط على التبويبات الداخلية
             // =====================================================
 
-            sidebarLinks.forEach(function (link) {
+            sidebarLinks.forEach(function(link) {
 
                 link.addEventListener(
                     "click",
-                    function (event) {
+                    function(event) {
 
                         const targetName =
                             link.getAttribute(

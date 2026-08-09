@@ -5,6 +5,13 @@
 
     var userRole = Context.Session.GetString("UserRole") ?? "";
 
+    bool isStudent =
+        string.Equals(
+            userRole,
+            "Student",
+            StringComparison.OrdinalIgnoreCase
+        );
+
     int pageSize = 10;
     int pageNumber = Context.Request.Query.ContainsKey("page")
         ? int.Parse(Context.Request.Query["page"]) : 1;
@@ -93,6 +100,20 @@
 
     int totalItems = filtered.Count();
     int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+    if (totalPages > 0 && pageNumber > totalPages)
+    {
+        pageNumber = totalPages;
+    }
+
+    int visiblePages = 4;
+    int startPage = Math.Max(1, pageNumber - 1);
+    int endPage = Math.Min(totalPages, startPage + visiblePages - 1);
+
+    if (endPage - startPage + 1 < visiblePages)
+    {
+        startPage = Math.Max(1, endPage - visiblePages + 1);
+    }
     var pagedModel = filtered.OrderByDescending(p => p.PatientID)
                               .Skip((pageNumber - 1) * pageSize)
                               .Take(pageSize)
@@ -188,6 +209,67 @@
         font-size: .72rem;
         font-weight: 700;
     }
+
+
+    /* ── Compact Pagination ── */
+    .compact-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+        padding-left: 0;
+    }
+
+        .compact-pagination .page-link {
+            min-width: 36px;
+            height: 36px;
+            padding: 0 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #cdd4e8 !important;
+            border-radius: 7px !important;
+            background: #fff;
+            color: #1a237e;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: none !important;
+        }
+
+            .compact-pagination .page-link:hover {
+                background: #e8eaf6;
+                border-color: #9fa8da !important;
+                color: #1a237e;
+            }
+
+        .compact-pagination .page-item.active .page-link {
+            background: #1a237e;
+            border-color: #1a237e !important;
+            color: #fff;
+        }
+
+        .compact-pagination .page-item.disabled .page-link {
+            opacity: .45;
+            pointer-events: none;
+        }
+
+        .compact-pagination .pagination-dots {
+            min-width: 24px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #8b94a8;
+            font-weight: 800;
+        }
+
+        .compact-pagination .pagination-navigation .page-link {
+            padding: 0 14px;
+            white-space: nowrap;
+        }
 </style>
 
 @* ===== Toast ===== *@
@@ -203,10 +285,10 @@
         @TempData["Success"]
     </div>
     <script>
-        setTimeout(function () {
+        setTimeout(function() {
             var t = document.getElementById('successToast');
             t.style.opacity = '0';
-            setTimeout(function () { t.style.display = 'none'; }, 1000);
+            setTimeout(function() { t.style.display = 'none'; }, 1000);
         }, 3000);
     </script>
 }
@@ -372,7 +454,7 @@
                     Total Registered Patients
                     <span style="background-color:#daa328; color:white; padding:4px 12px; font-weight:600;">@totalItems</span>
                 </h5>
-                @if (userRole != "Student")
+                @if (!isStudent)
                 {
                     <div class="d-flex" style="gap:10px;">
                         <a asp-controller="Patients" asp-action="CreatePublic"
@@ -567,10 +649,7 @@
 
                                     <td>@item.PhoneNumber</td>
                                     <td style="white-space:nowrap;">
-                                        @if (!string.Equals(
-         userRole,
-         "Student",
-         StringComparison.OrdinalIgnoreCase))
+                                        @if (!isStudent)
                                         {
                                             <a asp-controller="Patients"
                                                asp-action="Edit"
@@ -618,28 +697,48 @@
                 </table>
             </div>
 
-            @* ===== Pagination ===== *@
+            @* ===== Compact Pagination ===== *@
             @if (totalPages > 1)
             {
-                <nav class="mt-3">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item @(pageNumber == 1 ? "disabled" : "")">
-                            <a class="page-link"
-                               href="?page=@(pageNumber - 1)&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime&filterStatus=@filterStatus">←</a>
+                <nav class="mt-3" aria-label="Patients pagination">
+                    <ul class="pagination compact-pagination">
+                        <li class="page-item pagination-navigation @(pageNumber == 1 ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(pageNumber - 1)&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterDate=@Uri.EscapeDataString(filterDate)&filterTime=@Uri.EscapeDataString(filterTime)&filterStatus=@Uri.EscapeDataString(filterStatus)">‹ Previous</a>
                         </li>
-                        @for (int p = 1; p <= totalPages; p++)
+
+                        @if (startPage > 1)
+                        {
+                            <li class="page-item @(pageNumber == 1 ? "active" : "")">
+                                <a class="page-link" href="?page=1&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterDate=@Uri.EscapeDataString(filterDate)&filterTime=@Uri.EscapeDataString(filterTime)&filterStatus=@Uri.EscapeDataString(filterStatus)">1</a>
+                            </li>
+
+                            @if (startPage > 2)
+                            {
+                                <li class="pagination-dots">…</li>
+                            }
+                        }
+
+                        @for (int p = startPage; p <= endPage; p++)
                         {
                             <li class="page-item @(p == pageNumber ? "active" : "")">
-                                <a class="page-link"
-                                   href="?page=@p&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime&filterStatus=@filterStatus"
-                                   style="border-radius:0 !important;border:none !important;box-shadow:none !important;font-weight:600;">
-                                    @p
-                                </a>
+                                <a class="page-link" href="?page=@p&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterDate=@Uri.EscapeDataString(filterDate)&filterTime=@Uri.EscapeDataString(filterTime)&filterStatus=@Uri.EscapeDataString(filterStatus)">@p</a>
                             </li>
                         }
-                        <li class="page-item @(pageNumber == totalPages ? "disabled" : "")">
-                            <a class="page-link"
-                               href="?page=@(pageNumber + 1)&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime&filterStatus=@filterStatus">→</a>
+
+                        @if (endPage < totalPages)
+                        {
+                            @if (endPage < totalPages - 1)
+                            {
+                                <li class="pagination-dots">…</li>
+                            }
+
+                            <li class="page-item @(pageNumber == totalPages ? "active" : "")">
+                                <a class="page-link" href="?page=@totalPages&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterDate=@Uri.EscapeDataString(filterDate)&filterTime=@Uri.EscapeDataString(filterTime)&filterStatus=@Uri.EscapeDataString(filterStatus)">@totalPages</a>
+                            </li>
+                        }
+
+                        <li class="page-item pagination-navigation @(pageNumber == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(pageNumber + 1)&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterDate=@Uri.EscapeDataString(filterDate)&filterTime=@Uri.EscapeDataString(filterTime)&filterStatus=@Uri.EscapeDataString(filterStatus)">Next ›</a>
                         </li>
                     </ul>
                 </nav>
@@ -742,7 +841,12 @@
         attendanceStatus,
         userRole
     ) {
-        if (userRole === 'Receptionist') {
+        const normalizedUserRole =
+            (userRole || '')
+                .trim()
+                .toLowerCase();
+
+        if (normalizedUserRole === 'receptionist') {
             alert(
                 "⛔ You don't have permission to view patient details."
             );
@@ -751,11 +855,10 @@
         }
 
         /*
-         * حتى إذا كانت الحالة Attended،
-         * لا نفتح البروفايل مباشرة.
+         * لا نعتمد على Patient.AttendanceStatus وحدها؛
+         * لأنها قد تكون من زيارة سابقة.
          *
-         * نرسل الطلب إلى Home/AttendAndOpen
-         * حتى يعيد السيرفر فحص تاريخ الموعد.
+         * القرار النهائي يكون دائماً داخل HomeController.
          */
         const normalizedAttendanceStatus =
             (attendanceStatus || '')
@@ -763,17 +866,24 @@
                 .toLowerCase();
 
         /*
-         * إذا تم تسجيل الحضور سابقاً، نفتح البروفايل مباشرة
-         * ولا نعيد فحص تاريخ الموعد من Home/AttendAndOpen.
+         * Attended قد تكون مرتبطة بزيارة قديمة انتهت.
+         *
+         * لذلك لا نفتح Patients/Details مباشرة.
+         * نمر دائماً عبر Home/AttendAndOpen حتى يفحص السيرفر:
+         *
+         * 1- إذا توجد Visit مفتوحة:
+         *    يفتح نفس ملف المريض ونفس الزيارة.
+         *
+         * 2- إذا الزيارة السابقة مغلقة ويوجد موعد جديد اليوم:
+         *    يسجل حضور الموعد الجديد وينشئ Visit جديدة.
+         *
+         * 3- إذا لم يأتِ تاريخ أو وقت الموعد:
+         *    يمنع الدخول ويعرض رسالة واضحة.
          */
         if (normalizedAttendanceStatus === 'attended') {
-            const detailsUrl =
-                '@Url.Action("Details", "Patients")';
-
-            window.location.href =
-                detailsUrl
-                + '?id='
-                + encodeURIComponent(patientId);
+            submitAttendAndOpen(
+                patientId
+            );
 
             return;
         }
@@ -827,7 +937,7 @@
         'btnYesAttended'
     ).addEventListener(
         'click',
-        function () {
+        function() {
             if (
                 !_attendancePatientId
                 ||
@@ -857,7 +967,7 @@
         'btnNoAttended'
     ).addEventListener(
         'click',
-        function () {
+        function() {
             if (
                 !_attendancePatientId
                 ||

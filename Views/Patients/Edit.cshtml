@@ -394,42 +394,6 @@
                     </div>
                 }
 
-                @if (!string.IsNullOrEmpty(Model.FatherName) || !string.IsNullOrEmpty(Model.FatherPhone) ||
-                     !string.IsNullOrEmpty(Model.MotherName) || !string.IsNullOrEmpty(Model.MotherPhone))
-                {
-                    <hr class="form-divider" />
-                    <br />
-                }
-
-                @* ===== Appointment ===== *@
-                <div class="form-row">
-                    <div class="form-col">
-                        <label class="required">Date of Appointment</label>
-                        <input asp-for="AppointmentDate"
-                               type="date"
-                               id="appointmentDateInput"
-                               min="@DateTime.Today.ToString("yyyy-MM-dd")" />
-                        <span asp-validation-for="AppointmentDate"
-                              class="validation-msg"></span>
-                        <span id="appointmentDateClientError"
-                              class="validation-msg"
-                              style="display:none;">
-                            You cannot select a past date. Please choose today or a future date.
-                        </span>
-                    </div>
-                    <div class="form-col">
-                        <label class="required">Time</label>
-                        <div class="radio-group">
-                            <label><input type="radio" asp-for="AppointmentTime" value="AM" /> AM</label>
-                            <label><input type="radio" asp-for="AppointmentTime" value="PM" /> PM</label>
-                        </div>
-                        <span asp-validation-for="AppointmentTime" class="validation-msg"></span>
-                    </div>
-                </div>
-
-                <hr class="form-divider" />
-                <br />
-
                 @* ===== Profile Photo — دايماً موجود ===== *@
                 <div class="photo-section">
                     <div class="photo-section-title">

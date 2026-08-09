@@ -8,9 +8,22 @@
     string searchName = ViewBag.SearchName ?? "";
     string searchID = ViewBag.SearchID ?? "";
     string filterStatus = ViewBag.FilterStatus ?? "";
+    string visitDate = ViewBag.VisitDate ?? "";
+
+    var visitDates = ViewBag.VisitDates as System.Collections.Generic.Dictionary<int, DateTime?>
+                     ?? new System.Collections.Generic.Dictionary<int, DateTime?>();
 
     int pageSize = 10;
     int rowStart = ((currentPage - 1) * pageSize) + 1;
+
+    int visiblePages = 4;
+    int startPage = Math.Max(1, currentPage - 1);
+    int endPage = Math.Min(totalPages, startPage + visiblePages - 1);
+
+    if (endPage - startPage + 1 < visiblePages)
+    {
+        startPage = Math.Max(1, endPage - visiblePages + 1);
+    }
 }
 
 <link rel="stylesheet" href="~/css/Site.css" />
@@ -109,6 +122,67 @@
         align-items: center;
         gap: 6px;
     }
+
+
+    /* ── Compact Pagination ── */
+    .compact-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+        padding-left: 0;
+    }
+
+        .compact-pagination .page-link {
+            min-width: 36px;
+            height: 36px;
+            padding: 0 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #cdd4e8 !important;
+            border-radius: 7px !important;
+            background: #fff;
+            color: #1a237e;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: none !important;
+        }
+
+            .compact-pagination .page-link:hover {
+                background: #e8eaf6;
+                border-color: #9fa8da !important;
+                color: #1a237e;
+            }
+
+        .compact-pagination .page-item.active .page-link {
+            background: #1a237e;
+            border-color: #1a237e !important;
+            color: #fff;
+        }
+
+        .compact-pagination .page-item.disabled .page-link {
+            opacity: .45;
+            pointer-events: none;
+        }
+
+        .compact-pagination .pagination-dots {
+            min-width: 24px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #8b94a8;
+            font-weight: 800;
+        }
+
+        .compact-pagination .pagination-navigation .page-link {
+            padding: 0 14px;
+            white-space: nowrap;
+        }
 </style>
 
 @* ── Toast ── *@
@@ -124,10 +198,10 @@
         @TempData["Success"]
     </div>
     <script>
-        setTimeout(function () {
+        setTimeout(function() {
             var t = document.getElementById('successToast');
             t.style.opacity = '0';
-            setTimeout(function () { t.style.display = 'none'; }, 1000);
+            setTimeout(function() { t.style.display = 'none'; }, 1000);
         }, 3000);
     </script>
 }
@@ -228,25 +302,51 @@
                                        class="form-control" style="border:1px solid #ddd;border-radius:0;" />
                             </div>
                         </div>
-                        <div class="row align-items-center g-2">
-                            <div class="col-md-2">
-                                <label style="font-weight:600;font-size:13px;color:#252468;margin:0;">National ID / Passport</label>
-                            </div>
+                        <div class="row g-3 align-items-end">
                             <div class="col-md-4">
-                                <input type="text" name="searchID" value="@searchID"
+                                <label style="display:block;font-weight:600;font-size:13px;color:#252468;margin-bottom:7px;">
+                                    National ID / Passport
+                                </label>
+                                <input type="text"
+                                       name="searchID"
+                                       value="@searchID"
                                        placeholder="e.g. 9876543210"
-                                       class="form-control" style="border:1px solid #ddd;border-radius:0;" />
+                                       class="form-control"
+                                       style="border:1px solid #ddd;border-radius:0;" />
                             </div>
-                            <div class="col-md-2 text-center">
-                                <label style="font-weight:600;font-size:13px;color:#252468;margin:0;">Status</label>
-                            </div>
+
                             <div class="col-md-4">
-                                <select name="filterStatus" class="form-control" style="border:1px solid #ddd;border-radius:0;">
+                                <label style="display:block;font-weight:600;font-size:13px;color:#252468;margin-bottom:7px;">
+                                    Status
+                                </label>
+                                <select name="filterStatus"
+                                        class="form-control"
+                                        style="border:1px solid #ddd;border-radius:0;">
                                     <option value="">-- All --</option>
-                                    <option value="Screening" selected="@(filterStatus == "Screening" ? "selected" : null)">🔬 Screening</option>
-                                    <option value="Allocated" selected="@(filterStatus == "Allocated" ? "selected" : null)">✅ Allocated</option>
-                                    <option value="Discharged" selected="@(filterStatus == "Discharged" ? "selected" : null)">🚪 Discharged</option>
+                                    <option value="Screening"
+                                            selected="@(filterStatus == "Screening" ? "selected" : null)">
+                                        🔬 Screening
+                                    </option>
+                                    <option value="Allocated"
+                                            selected="@(filterStatus == "Allocated" ? "selected" : null)">
+                                        ✅ Allocated
+                                    </option>
+                                    <option value="Discharged"
+                                            selected="@(filterStatus == "Discharged" ? "selected" : null)">
+                                        🚪 Discharged
+                                    </option>
                                 </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label style="display:block;font-weight:600;font-size:13px;color:#252468;margin-bottom:7px;">
+                                    Visit Date
+                                </label>
+                                <input type="date"
+                                       name="visitDate"
+                                       value="@visitDate"
+                                       class="form-control"
+                                       style="border:1px solid #ddd;border-radius:0;" />
                             </div>
                         </div>
                     </div>
@@ -272,7 +372,8 @@
         <br />
 
         @* ── Active Filters ── *@
-        @if (!string.IsNullOrEmpty(searchName) || !string.IsNullOrEmpty(searchID) || !string.IsNullOrEmpty(filterStatus))
+        @if (!string.IsNullOrEmpty(searchName) || !string.IsNullOrEmpty(searchID) ||
+             !string.IsNullOrEmpty(filterStatus) || !string.IsNullOrEmpty(visitDate))
         {
             <div class="active-filters">
                 <span style="font-size:12px;font-weight:600;color:#C81587;align-self:center;">Active filters:</span>
@@ -290,6 +391,16 @@
                                       : filterStatus == "Discharged" ? "fa-door-open"
                                       : "fa-microscope";
                     <span class="filter-tag"><i class="fa-solid @statusIcon me-1"></i> @filterStatus</span>
+                }
+                @if (!string.IsNullOrEmpty(visitDate))
+                {
+                    DateTime parsedVisitDate;
+                    string visitDateText = DateTime.TryParse(visitDate, out parsedVisitDate)
+                        ? parsedVisitDate.ToString("dd/MM/yyyy")
+                        : visitDate;
+                    <span class="filter-tag">
+                        <i class="fa-solid fa-calendar-day me-1"></i> @visitDateText
+                    </span>
                 }
             </div>
         }
@@ -315,6 +426,7 @@
                         <th>Gender</th>
                         <th>Age</th>
                         <th>Phone</th>
+                        <th>Visit Date</th>
                         <th>Current Status</th>
                         <th style="min-width:280px;">Change Status</th>
                     </tr>
@@ -323,7 +435,7 @@
                     @if (!Model.Any())
                     {
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
+                            <td colspan="9" class="text-center text-muted py-4">
                                 <i class="fa-solid fa-circle-exclamation me-2"></i>
                                 No patients found.
                             </td>
@@ -344,6 +456,10 @@
                             string badgeIcon = currentStatus == "Allocated" ? "fa-user-check"
                                              : currentStatus == "Discharged" ? "fa-door-open"
                                              : "fa-microscope";
+
+                            DateTime? patientVisitDate = visitDates.ContainsKey(item.PatientID)
+                                ? visitDates[item.PatientID]
+                                : null;
 
                             string jsName = System.Text.Json.JsonSerializer.Serialize(
                                 $"{item.FirstName} {item.FourthName}");
@@ -369,6 +485,19 @@
                                     }
                                 </td>
                                 <td>@item.PhoneNumber</td>
+                                <td style="white-space:nowrap;">
+                                    @if (patientVisitDate.HasValue)
+                                    {
+                                        <span style="font-weight:600;color:#252468;">
+                                            <i class="fa-solid fa-calendar-day me-1" style="color:#c81589;"></i>
+                                            @patientVisitDate.Value.ToString("dd/MM/yyyy")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#aaa;">No appointment</span>
+                                    }
+                                </td>
                                 <td>
                                     <span class="status-badge @badgeClass">
                                         <i class="fa-solid @badgeIcon me-1"></i>@currentStatus
@@ -423,28 +552,48 @@
             </table>
         </div>
 
-        @* ── Pagination ── *@
+        @* ── Compact Pagination ── *@
         @if (totalPages > 1)
         {
-            <nav class="mt-3">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                        <a class="page-link"
-                           href="?page=@(currentPage - 1)&searchName=@searchName&searchID=@searchID&filterStatus=@filterStatus">←</a>
+            <nav class="mt-3" aria-label="Patient status pagination">
+                <ul class="pagination compact-pagination">
+                    <li class="page-item pagination-navigation @(currentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" href="?page=@(currentPage - 1)&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterStatus=@Uri.EscapeDataString(filterStatus)&visitDate=@Uri.EscapeDataString(visitDate)">‹ Previous</a>
                     </li>
-                    @for (int p = 1; p <= totalPages; p++)
+
+                    @if (startPage > 1)
+                    {
+                        <li class="page-item @(currentPage == 1 ? "active" : "")">
+                            <a class="page-link" href="?page=1&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterStatus=@Uri.EscapeDataString(filterStatus)&visitDate=@Uri.EscapeDataString(visitDate)">1</a>
+                        </li>
+
+                        @if (startPage > 2)
+                        {
+                            <li class="pagination-dots">…</li>
+                        }
+                    }
+
+                    @for (int p = startPage; p <= endPage; p++)
                     {
                         <li class="page-item @(p == currentPage ? "active" : "")">
-                            <a class="page-link"
-                               href="?page=@p&searchName=@searchName&searchID=@searchID&filterStatus=@filterStatus"
-                               style="border-radius:0 !important;border:none !important;box-shadow:none !important;font-weight:600;">
-                                @p
-                            </a>
+                            <a class="page-link" href="?page=@p&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterStatus=@Uri.EscapeDataString(filterStatus)&visitDate=@Uri.EscapeDataString(visitDate)">@p</a>
                         </li>
                     }
-                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                        <a class="page-link"
-                           href="?page=@(currentPage + 1)&searchName=@searchName&searchID=@searchID&filterStatus=@filterStatus">→</a>
+
+                    @if (endPage < totalPages)
+                    {
+                        @if (endPage < totalPages - 1)
+                        {
+                            <li class="pagination-dots">…</li>
+                        }
+
+                        <li class="page-item @(currentPage == totalPages ? "active" : "")">
+                            <a class="page-link" href="?page=@totalPages&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterStatus=@Uri.EscapeDataString(filterStatus)&visitDate=@Uri.EscapeDataString(visitDate)">@totalPages</a>
+                        </li>
+                    }
+
+                    <li class="page-item pagination-navigation @(currentPage == totalPages ? "disabled" : "")">
+                        <a class="page-link" href="?page=@(currentPage + 1)&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterStatus=@Uri.EscapeDataString(filterStatus)&visitDate=@Uri.EscapeDataString(visitDate)">Next ›</a>
                     </li>
                 </ul>
             </nav>
@@ -452,7 +601,6 @@
 
     </div>
 </div>
-
 @* ── Hidden Form ── *@
 <form id="scForm" method="post" asp-controller="AdminStatus" asp-action="ChangeStatus" style="display:none;">
     @Html.AntiForgeryToken()
@@ -461,6 +609,7 @@
     <input type="hidden" name="searchName" value="@searchName" />
     <input type="hidden" name="searchID" value="@searchID" />
     <input type="hidden" name="filterStatus" value="@filterStatus" />
+    <input type="hidden" name="visitDate" value="@visitDate" />
     <input type="hidden" name="page" value="@currentPage" />
 </form>
 
@@ -548,44 +697,39 @@
 
 <script>
     let _patientId = null;
-    let _current   = null;
-    let _new       = null;
-    let _name      = null;
-    let _assigned  = [];
+    let _current = null;
+    let _new = null;
+    let _name = null;
+    let _assigned = [];
     let _available = [];
+    let _assignMode = 'allocated';
 
     async function handleStatusChange(btn) {
-        const patientId     = btn.dataset.pid;
+        const patientId = btn.dataset.pid;
         const currentStatus = btn.dataset.current;
-        const newStatus     = btn.dataset.new;
-        const patientName   = JSON.parse(btn.dataset.name);
+        const newStatus = btn.dataset.new;
+        const patientName = JSON.parse(btn.dataset.name);
 
         _patientId = patientId;
-        _current   = currentStatus || 'Screening';
-        _new       = newStatus;
-        _name      = patientName;
+        _current = currentStatus || 'Screening';
+        _new = newStatus;
+        _name = patientName;
 
         if (_current === 'Discharged' && newStatus === 'Allocated') {
             showInfoModal('❌ Not Allowed',
                 `Cannot re-allocate a discharged patient.<br>
-                 <strong>${patientName}</strong> has already been discharged.`);
+                             <strong>${patientName}</strong> has already been discharged.`);
             return;
         }
 
         if (newStatus === 'Allocated') {
-            await openAssignModal();
+            await openAssignModal('allocated');
             return;
         }
 
         if (_current === 'Allocated' && newStatus === 'Screening') {
-            const res  = await fetch(`/AdminStatus/GetStudentCount?patientId=${patientId}`);
-            const data = await res.json();
-            if (data.count > 0) {
-                showInfoModal('❌ Cannot Revert to Screening',
-                    `<strong>${patientName}</strong> has <strong>${data.count}</strong> assigned student(s).<br>
-                     All students must be removed first.`);
-                return;
-            }
+            await openAssignModal('screening');
+            return;
         }
 
         if (_current === 'Allocated' && newStatus === 'Discharged') {
@@ -604,9 +748,9 @@
 
     function showInfoModal(title, msg) {
         document.getElementById('infoModalTitle').innerHTML = title;
-        document.getElementById('infoModalBody').innerHTML  = msg;
+        document.getElementById('infoModalBody').innerHTML = msg;
         const modal = bootstrap.Modal.getInstance(document.getElementById('infoModal'))
-                      || new bootstrap.Modal(document.getElementById('infoModal'));
+            || new bootstrap.Modal(document.getElementById('infoModal'));
         modal.show();
     }
 
@@ -618,25 +762,25 @@
             onOk();
         };
         const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'))
-                      || new bootstrap.Modal(document.getElementById('confirmModal'));
+            || new bootstrap.Modal(document.getElementById('confirmModal'));
         modal.show();
     }
 
     function submitChange() {
         document.getElementById('scf_patientId').value = _patientId;
-        document.getElementById('scf_newStatus').value  = _new;
+        document.getElementById('scf_newStatus').value = _new;
         document.getElementById('scForm').submit();
     }
 
     function calcDuration(fromDateStr, toDateStr) {
-        const from         = new Date(fromDateStr.trim());
-        const to           = toDateStr ? new Date(toDateStr.trim()) : new Date();
-        const diffMs       = to - from;
+        const from = new Date(fromDateStr.trim());
+        const to = toDateStr ? new Date(toDateStr.trim()) : new Date();
+        const diffMs = to - from;
         const totalMinutes = Math.floor(diffMs / 60000);
-        const days         = Math.floor(totalMinutes / 1440);
-        const hours        = Math.floor((totalMinutes % 1440) / 60);
-        const minutes      = totalMinutes % 60;
-        if (days > 0)  return `${days}d ${hours}h`;
+        const days = Math.floor(totalMinutes / 1440);
+        const hours = Math.floor((totalMinutes % 1440) / 60);
+        const minutes = totalMinutes % 60;
+        if (days > 0) return `${days}d ${hours}h`;
         if (hours > 0) return `${hours}h ${minutes}m`;
         return `${minutes}m`;
     }
@@ -647,10 +791,10 @@
             '<div class="text-center py-4"><i class="fa-solid fa-spinner fa-spin fa-2x text-muted"></i></div>';
 
         const modal = bootstrap.Modal.getInstance(document.getElementById('historyModal'))
-                      || new bootstrap.Modal(document.getElementById('historyModal'));
+            || new bootstrap.Modal(document.getElementById('historyModal'));
         modal.show();
 
-        const res  = await fetch(`/AllocatedStudent/GetStatusHistory?patientId=${patientId}`);
+        const res = await fetch(`/AllocatedStudent/GetStatusHistory?patientId=${patientId}`);
         const data = await res.json();
 
         if (!data.length) {
@@ -660,105 +804,160 @@
         }
 
         const statusColor = s =>
-            s === 'Allocated'  ? '#0f5132' :
-            s === 'Discharged' ? '#383d41' : '#856404';
+            s === 'Allocated' ? '#0f5132' :
+                s === 'Discharged' ? '#383d41' : '#856404';
 
         const statusBg = s =>
-            s === 'Allocated'  ? '#d1e7dd' :
-            s === 'Discharged' ? '#e2e3e5' : '#fff3cd';
+            s === 'Allocated' ? '#d1e7dd' :
+                s === 'Discharged' ? '#e2e3e5' : '#fff3cd';
 
-        const asc  = [...data].reverse();
+        const asc = [...data].reverse();
         const rows = asc.map((h, i) => {
-            const next     = asc[i + 1];
-            const toDate   = next ? next.changedAt : null;
+            const next = asc[i + 1];
+            const toDate = next ? next.changedAt : null;
             const duration = calcDuration(h.changedAt, toDate);
             return { ...h, duration, isOngoing: !next };
         });
         const rowsDesc = [...rows].reverse();
 
         document.getElementById('historyModalBody').innerHTML = `
-            <table class="table table-bordered table-striped" style="font-size:13px;">
-                <thead style="background:#f0f4ff;">
-                    <tr>
-                        <th>#</th><th>Old Status</th><th>New Status</th>
-                        <th>Changed At</th><th>Duration in Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${rowsDesc.map((h, i) => `
-                        <tr>
-                            <td style="color:#aaa;">${i + 1}</td>
-                            <td><span style="background:${statusBg(h.oldStatus)};color:${statusColor(h.oldStatus)};
-                                padding:2px 10px;border-radius:4px;font-weight:700;font-size:.75rem;">${h.oldStatus}</span></td>
-                            <td><span style="background:${statusBg(h.newStatus)};color:${statusColor(h.newStatus)};
-                                padding:2px 10px;border-radius:4px;font-weight:700;font-size:.75rem;">${h.newStatus}</span></td>
-                            <td style="color:#555;">${h.changedAt}</td>
-                            <td style="font-weight:600;color:#252468;">
-                                ${h.isOngoing
-                                    ? `⏱ ${h.duration} <span style="font-size:.7rem;color:#888;font-weight:400;">(ongoing)</span>`
-                                    : h.duration}
-                            </td>
-                        </tr>`).join('')}
-                </tbody>
-            </table>
-            <div style="font-size:11px;color:#9ca3af;margin-top:4px;">
-                * Duration = time spent in the new status until the next change (or now if ongoing).
-            </div>`;
+                        <table class="table table-bordered table-striped" style="font-size:13px;">
+                            <thead style="background:#f0f4ff;">
+                                <tr>
+                                    <th>#</th><th>Old Status</th><th>New Status</th>
+                                    <th>Changed At</th><th>Duration in Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsDesc.map((h, i) => `
+                                    <tr>
+                                        <td style="color:#aaa;">${i + 1}</td>
+                                        <td><span style="background:${statusBg(h.oldStatus)};color:${statusColor(h.oldStatus)};
+                                            padding:2px 10px;border-radius:4px;font-weight:700;font-size:.75rem;">${h.oldStatus}</span></td>
+                                        <td><span style="background:${statusBg(h.newStatus)};color:${statusColor(h.newStatus)};
+                                            padding:2px 10px;border-radius:4px;font-weight:700;font-size:.75rem;">${h.newStatus}</span></td>
+                                        <td style="color:#555;">${h.changedAt}</td>
+                                        <td style="font-weight:600;color:#252468;">
+                                            ${h.isOngoing
+                ? `⏱ ${h.duration} <span style="font-size:.7rem;color:#888;font-weight:400;">(ongoing)</span>`
+                : h.duration}
+                                        </td>
+                                    </tr>`).join('')}
+                            </tbody>
+                        </table>
+                        <div style="font-size:11px;color:#9ca3af;margin-top:4px;">
+                            * Duration = time spent in the new status until the next change (or now if ongoing).
+                        </div>`;
     }
 
-    async function openAssignModal() {
+    async function openAssignModal(mode) {
+        _assignMode = mode || 'allocated';
+
+        const modalTitle = document.querySelector('#assignModal .modal-title');
+        const confirmBtn = document.getElementById('assignConfirmBtn');
+
+        if (_assignMode === 'screening') {
+            modalTitle.innerHTML = `
+                        <i class="fa-solid fa-user-minus me-2"></i>
+                        Remove Assigned Student(s) — <span id="assignModalName"></span>`;
+            confirmBtn.innerHTML = '✅ Confirm Screening';
+        }
+        else {
+            modalTitle.innerHTML = `
+                        <i class="fa-solid fa-user-check me-2"></i>
+                        Assign Student(s) — <span id="assignModalName"></span>`;
+            confirmBtn.innerHTML = '✅ Confirm Allocation';
+        }
+
         document.getElementById('assignModalName').textContent = _name;
         document.getElementById('assignModalBody').innerHTML =
             '<div class="text-center py-5"><i class="fa-solid fa-spinner fa-spin fa-2x text-muted"></i></div>';
-        document.getElementById('assignConfirmBtn').disabled = true;
-        document.getElementById('assignConfirmBtn').style.opacity = '0.5';
 
-        const modal = bootstrap.Modal.getInstance(document.getElementById('assignModal'))
-                      || new bootstrap.Modal(document.getElementById('assignModal'), { backdrop: 'static' });
+        confirmBtn.disabled = true;
+        confirmBtn.style.opacity = '0.5';
+
+        const modalElement = document.getElementById('assignModal');
+        const modal = bootstrap.Modal.getInstance(modalElement)
+            || new bootstrap.Modal(modalElement, { backdrop: 'static' });
         modal.show();
 
-        const res  = await fetch(`/AllocatedStudent/GetPatientDetailsJson?patientId=${_patientId}`);
-        const data = await res.json();
-        _assigned  = data.assigned;
-        _available = data.available;
-        renderAssignPanel();
+        try {
+            const res = await fetch(
+                `/AllocatedStudent/GetPatientDetailsJson?patientId=${encodeURIComponent(_patientId)}`,
+                { cache: 'no-store' }
+            );
+
+            if (!res.ok) {
+                throw new Error('Unable to load assigned students.');
+            }
+
+            const data = await res.json();
+            _assigned = Array.isArray(data.assigned) ? data.assigned : [];
+            _available = Array.isArray(data.available) ? data.available : [];
+            renderAssignPanel();
+        }
+        catch (error) {
+            console.error(error);
+            document.getElementById('assignModalBody').innerHTML = `
+                        <div class="alert alert-danger rounded-0 mb-0">
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                            Unable to load student allocation data. Please try again.
+                        </div>`;
+        }
     }
 
     function renderAssignPanel() {
+        const isScreeningMode = _assignMode === 'screening';
+
+        const instruction = isScreeningMode
+            ? `
+                        <div style="background:#fff8e1;border:1px solid #ffd54f;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+                            <div style="font-weight:700;color:#8a5a00;">
+                                <i class="fa-solid fa-circle-info me-1"></i>
+                                Remove all assigned students to confirm Screening status.
+                            </div>
+                            <div style="font-size:13px;color:#8a5a00;margin-top:4px;">
+                                Currently assigned: <strong id="assignedCount">${_assigned.length}</strong> student(s)
+                            </div>
+                        </div>`
+            : `
+                        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+                            <div style="font-weight:700;color:#15803d;">
+                                <i class="fa-solid fa-circle-info me-1"></i>
+                                Assign at least <strong>1 student</strong> to confirm Allocated status.
+                            </div>
+                            <div style="font-size:13px;color:#166534;margin-top:4px;">
+                                Currently assigned: <strong id="assignedCount">${_assigned.length}</strong> student(s)
+                            </div>
+                        </div>`;
+
         document.getElementById('assignModalBody').innerHTML = `
-            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
-                <div style="font-weight:700;color:#15803d;">
-                    <i class="fa-solid fa-circle-info me-1"></i>
-                    Assign at least <strong>1 student</strong> to confirm Allocated status.
-                </div>
-                <div style="font-size:13px;color:#166534;margin-top:4px;">
-                    Currently assigned: <strong id="assignedCount">${_assigned.length}</strong> student(s)
-                </div>
-            </div>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div style="border:1px solid #bbf7d0;border-radius:8px;padding:12px;background:#f0fdf4;">
-                        <div style="font-weight:700;color:#15803d;margin-bottom:8px;">
-                            ✅ Assigned (<span id="assignedListCount">${_assigned.length}</span>)
+                    ${instruction}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div style="border:1px solid #bbf7d0;border-radius:8px;padding:12px;background:#f0fdf4;min-height:145px;">
+                                <div style="font-weight:700;color:#15803d;margin-bottom:8px;">
+                                    ✅ Assigned (<span id="assignedListCount">${_assigned.length}</span>)
+                                </div>
+                                <input type="text" id="searchAssigned" placeholder="Search..."
+                                       oninput="renderList('assigned')"
+                                       style="width:100%;border:1px solid #ddd;border-radius:6px;padding:6px 10px;font-size:13px;margin-bottom:8px;" />
+                                <div id="listAssigned"></div>
+                            </div>
                         </div>
-                        <input type="text" id="searchAssigned" placeholder="Search..."
-                               oninput="renderList('assigned')"
-                               style="width:100%;border:1px solid #ddd;border-radius:6px;padding:6px 10px;font-size:13px;margin-bottom:8px;" />
-                        <div id="listAssigned"></div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div style="border:1px solid #bfdbfe;border-radius:8px;padding:12px;background:#eff6ff;">
-                        <div style="font-weight:700;color:#1d4ed8;margin-bottom:8px;">
-                            👤 Available (<span id="availableListCount">${_available.length}</span>)
+                        <div class="col-md-6">
+                            <div style="border:1px solid #bfdbfe;border-radius:8px;padding:12px;background:#eff6ff;min-height:145px;">
+                                <div style="font-weight:700;color:#1d4ed8;margin-bottom:8px;">
+                                    👤 Available (<span id="availableListCount">${_available.length}</span>)
+                                </div>
+                                <input type="text" id="searchAvailable" placeholder="Search..."
+                                       oninput="renderList('available')"
+                                       style="width:100%;border:1px solid #ddd;border-radius:6px;padding:6px 10px;font-size:13px;margin-bottom:8px;" />
+                                <div id="listAvailable"></div>
+                            </div>
                         </div>
-                        <input type="text" id="searchAvailable" placeholder="Search..."
-                               oninput="renderList('available')"
-                               style="width:100%;border:1px solid #ddd;border-radius:6px;padding:6px 10px;font-size:13px;margin-bottom:8px;" />
-                        <div id="listAvailable"></div>
-                    </div>
-                </div>
-            </div>`;
+                    </div>`;
+
         renderList('assigned');
         renderList('available');
         updateAssignBtn();
@@ -766,80 +965,142 @@
 
     function renderList(type) {
         const isAssigned = type === 'assigned';
-        const q    = (document.getElementById(isAssigned ? 'searchAssigned' : 'searchAvailable')?.value || '').toLowerCase();
+        const inputId = isAssigned ? 'searchAssigned' : 'searchAvailable';
+        const listId = isAssigned ? 'listAssigned' : 'listAvailable';
+        const q = (document.getElementById(inputId)?.value || '').toLowerCase();
         const data = isAssigned ? _assigned : _available;
-        const el   = document.getElementById(isAssigned ? 'listAssigned' : 'listAvailable');
+        const el = document.getElementById(listId);
+
         const filtered = data.filter(s =>
-            s.nameEn.toLowerCase().includes(q) || (s.userTypeEn || '').toLowerCase().includes(q));
+            (s.nameEn || '').toLowerCase().includes(q)
+            || (s.userTypeEn || '').toLowerCase().includes(q));
 
         if (!filtered.length) {
             el.innerHTML = `<div style="text-align:center;color:#9ca3af;padding:14px;font-size:13px;">
-                ${isAssigned ? 'No students assigned yet.' : 'No students available.'}</div>`;
+                        ${isAssigned ? 'No students assigned yet.' : 'No students available.'}
+                    </div>`;
             return;
         }
 
-        el.innerHTML = filtered.map(s => `
-            <div style="display:flex;justify-content:space-between;align-items:center;
-                        background:white;border:1px solid #e5e7eb;border-radius:6px;
-                        padding:8px 10px;margin-bottom:4px;">
-                <div>
-                    <div style="font-size:13px;font-weight:600;">${s.nameEn}</div>
-                    <div style="font-size:11px;color:#6b7280;">${s.userTypeEn || '—'}</div>
-                </div>
-                ${isAssigned
-                    ? `<button onclick="doRemove(${s.id})"
-                               style="background:#dc2626;color:#fff;border:none;border-radius:5px;
-                                      width:28px;height:28px;font-size:16px;cursor:pointer;">−</button>`
-                    : `<button onclick="doAssign(${s.id})"
-                               style="background:#16a34a;color:#fff;border:none;border-radius:5px;
-                                      width:28px;height:28px;font-size:16px;cursor:pointer;">+</button>`
-                }
-            </div>`).join('');
+        el.innerHTML = filtered.map(s => {
+            let actionButton = '';
+
+            if (isAssigned) {
+                actionButton = `
+                            <button type="button" onclick="doRemove(${s.id})"
+                                    title="Remove student"
+                                    style="background:#dc2626;color:#fff;border:none;border-radius:5px;
+                                           width:28px;height:28px;font-size:16px;cursor:pointer;">−</button>`;
+            }
+            else if (_assignMode === 'allocated') {
+                actionButton = `
+                            <button type="button" onclick="doAssign(${s.id})"
+                                    title="Assign student"
+                                    style="background:#16a34a;color:#fff;border:none;border-radius:5px;
+                                           width:28px;height:28px;font-size:16px;cursor:pointer;">+</button>`;
+            }
+            else {
+                actionButton = `
+                            <span style="font-size:11px;color:#6b7280;background:#fff;border:1px solid #dbe3ef;
+                                         border-radius:12px;padding:3px 8px;">Available</span>`;
+            }
+
+            return `
+                        <div style="display:flex;justify-content:space-between;align-items:center;
+                                    background:white;border:1px solid #e5e7eb;border-radius:6px;
+                                    padding:8px 10px;margin-bottom:4px;">
+                            <div>
+                                <div style="font-size:13px;font-weight:600;">${escapeStudentHtml(s.nameEn || 'Unknown Student')}</div>
+                                <div style="font-size:11px;color:#6b7280;">${escapeStudentHtml(s.userTypeEn || '—')}</div>
+                            </div>
+                            ${actionButton}
+                        </div>`;
+        }).join('');
+    }
+
+    function escapeStudentHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
     }
 
     function updateAssignBtn() {
         const btn = document.getElementById('assignConfirmBtn');
-        btn.disabled      = _assigned.length === 0;
-        btn.style.opacity = _assigned.length === 0 ? '0.5' : '1';
+        const canConfirm = _assignMode === 'screening'
+            ? _assigned.length === 0
+            : _assigned.length > 0;
+
+        btn.disabled = !canConfirm;
+        btn.style.opacity = canConfirm ? '1' : '0.5';
+
         const cnt = document.getElementById('assignedCount');
         if (cnt) cnt.textContent = _assigned.length;
-        const lc1 = document.getElementById('assignedListCount');
-        if (lc1) lc1.textContent = _assigned.length;
-        const lc2 = document.getElementById('availableListCount');
-        if (lc2) lc2.textContent = _available.length;
+
+        const assignedCount = document.getElementById('assignedListCount');
+        if (assignedCount) assignedCount.textContent = _assigned.length;
+
+        const availableCount = document.getElementById('availableListCount');
+        if (availableCount) availableCount.textContent = _available.length;
+    }
+
+    function getAntiForgeryToken() {
+        return document.querySelector('#scForm input[name="__RequestVerificationToken"]')?.value || '';
     }
 
     async function doAssign(appUserId) {
-        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
-        const res   = await fetch('/AllocatedStudent/Assign', {
+        if (_assignMode !== 'allocated') {
+            return;
+        }
+
+        const res = await fetch('/AdminStatus/AssignStudent', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
-            body: `patientId=${_patientId}&appUserId=${appUserId}`
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: `patientId=${encodeURIComponent(_patientId)}&appUserId=${encodeURIComponent(appUserId)}`
         });
+
         const data = await res.json();
-        _assigned  = data.assigned;
-        _available = data.available;
+        if (!res.ok || data.success === false) {
+            showInfoModal('❌ Assignment Failed', data.message || 'Unable to assign the student.');
+            return;
+        }
+
+        _assigned = data.assigned || [];
+        _available = data.available || [];
         renderList('assigned');
         renderList('available');
         updateAssignBtn();
     }
 
     async function doRemove(appUserId) {
-        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
-        const res   = await fetch('/AllocatedStudent/Remove', {
+        const res = await fetch('/AdminStatus/RemoveStudent', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'RequestVerificationToken': token },
-            body: `patientId=${_patientId}&appUserId=${appUserId}`
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: `patientId=${encodeURIComponent(_patientId)}&appUserId=${encodeURIComponent(appUserId)}`
         });
+
         const data = await res.json();
-        _assigned  = data.assigned;
-        _available = data.available;
+        if (!res.ok || data.success === false) {
+            showInfoModal('❌ Removal Failed', data.message || 'Unable to remove the student.');
+            return;
+        }
+
+        _assigned = data.assigned || [];
+        _available = data.available || [];
         renderList('assigned');
         renderList('available');
         updateAssignBtn();
     }
 
-    document.getElementById('assignConfirmBtn').addEventListener('click', function () {
+    document.getElementById('assignConfirmBtn').addEventListener('click', function() {
         bootstrap.Modal.getInstance(document.getElementById('assignModal'))?.hide();
         submitChange();
     });

@@ -10,6 +10,117 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
     [AuthFilter("Admin", "Fulltime Supervisor", "Parttime Supervisor", "Receptionist", "Student")]
     public class HomeController : Controller
     {
+        /*
+         * فترات السماح الرسمية لفتح زيارة جديدة:
+         *
+         * Morning:
+         * من 09:00 صباح تاريخ الموعد
+         * إلى قبل 13:00 من نفس اليوم.
+         *
+         * Evening:
+         * من 13:00 تاريخ الموعد
+         * إلى قبل 09:00 صباح اليوم التالي.
+         */
+        private static readonly TimeSpan MorningShiftStart =
+            new TimeSpan(9, 0, 0);
+
+        private static readonly TimeSpan EveningShiftStart =
+            new TimeSpan(13, 0, 0);
+
+        /*
+         * جميع عمليات التحقق من وقت الموعد تستخدم توقيت الأردن،
+         * حتى لو كان السيرفر مستضافاً في منطقة زمنية مختلفة.
+         */
+        private static DateTime GetJordanNow()
+        {
+            string timeZoneId = OperatingSystem.IsWindows()
+                ? "Jordan Standard Time"
+                : "Asia/Amman";
+
+            try
+            {
+                TimeZoneInfo jordanTimeZone =
+                    TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+
+                return TimeZoneInfo.ConvertTimeFromUtc(
+                    DateTime.UtcNow,
+                    jordanTimeZone
+                );
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                /*
+                 * احتياطياً في حال لم تتوفر بيانات المنطقة الزمنية
+                 * على السيرفر، نستخدم فرق الأردن الحالي UTC+03:00.
+                 */
+                return DateTime.UtcNow.AddHours(3);
+            }
+            catch (InvalidTimeZoneException)
+            {
+                return DateTime.UtcNow.AddHours(3);
+            }
+        }
+
+        private static bool IsEveningAppointment(
+            Appointment appointment)
+        {
+            return appointment.TimeFrom.Hours >= 12;
+        }
+
+        private static DateTime GetVisitOpeningTime(
+            Appointment appointment)
+        {
+            return appointment
+                .AppointmentDate
+                .Date
+                .Add(
+                    IsEveningAppointment(appointment)
+                        ? EveningShiftStart
+                        : MorningShiftStart
+                );
+        }
+
+        private static DateTime GetVisitClosingTime(
+            Appointment appointment)
+        {
+            if (IsEveningAppointment(appointment))
+            {
+                /*
+                 * موعد المساء يبقى صالحاً حتى قبل الساعة
+                 * 09:00 صباح اليوم التالي.
+                 */
+                return appointment
+                    .AppointmentDate
+                    .Date
+                    .AddDays(1)
+                    .Add(MorningShiftStart);
+            }
+
+            /*
+             * موعد الصباح ينتهي عند الساعة 13:00
+             * من نفس تاريخ الموعد.
+             */
+            return appointment
+                .AppointmentDate
+                .Date
+                .Add(EveningShiftStart);
+        }
+
+        private static bool AppointmentCanOpenNow(
+            Appointment appointment,
+            DateTime now)
+        {
+            DateTime opensAt =
+                GetVisitOpeningTime(appointment);
+
+            DateTime closesAt =
+                GetVisitClosingTime(appointment);
+
+            return now >= opensAt
+                   &&
+                   now < closesAt;
+        }
+
         private readonly ILogger<HomeController> _logger;
         private readonly AppDbContext _context;
 
@@ -85,43 +196,85 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     .Select(p => p.PatientID)
                     .ToList();
 
+            DateTime now =
+                GetJordanNow();
+
             DateTime today =
-                DateTime.Today;
+                now.Date;
 
             /*
-             * Next Appointment يعرض الموعد الفعلي المجدول فقط.
-             * بعد تعديل الموعد من Patients/Edit سيتم قراءة
-             * التاريخ والوقت الجديدين مباشرة من Appointments.
+             * قبل الساعة 09:00 يجب أن نضم موعد المساء
+             * الخاص باليوم السابق، لأنه يبقى صالحاً حتى
+             * الساعة 09:00 صباح اليوم الحالي.
              */
-            var nextAppts =
+            DateTime earliestRelevantDate =
+                now.TimeOfDay < MorningShiftStart
+                    ? today.AddDays(-1)
+                    : today;
+
+            /*
+             * نجلب المواعيد النشطة أولاً، ثم نطبق نافذة
+             * الشفت في الذاكرة لأن موعد Evening يمتد
+             * إلى صباح اليوم التالي.
+             */
+            var activeAppointmentCandidates =
                 await _context.Appointments
                     .AsNoTracking()
                     .Where(
-                        a =>
+                        appointment =>
                             patientIds.Contains(
-                                a.PatientID
+                                appointment.PatientID
                             )
                             &&
-                            a.AppointmentDate.Date
-                                >= today
+                            appointment.AppointmentDate.Date
+                                >=
+                                earliestRelevantDate
                             &&
-                            a.AppointmentStatus
-                                == "Scheduled"
-                    )
-                    .OrderBy(
-                        a => a.AppointmentDate
-                    )
-                    .ThenBy(
-                        a => a.TimeFrom
+                            (
+                                appointment.AppointmentStatus == null
+                                ||
+                                appointment.AppointmentStatus == "Scheduled"
+                                ||
+                                appointment.AppointmentStatus == "Approved"
+                                ||
+                                appointment.AppointmentStatus == "Attended"
+                            )
                     )
                     .ToListAsync();
 
+            var nextAppts =
+                activeAppointmentCandidates
+                    .Where(
+                        appointment =>
+                            GetVisitClosingTime(
+                                appointment
+                            )
+                            >
+                            now
+                    )
+                    .OrderBy(
+                        appointment =>
+                            GetVisitOpeningTime(
+                                appointment
+                            )
+                    )
+                    .ThenBy(
+                        appointment =>
+                            appointment.AppointmentID
+                    )
+                    .ToList();
+
             var nextApptMap =
                 nextAppts
-                    .GroupBy(a => a.PatientID)
+                    .GroupBy(
+                        appointment =>
+                            appointment.PatientID
+                    )
                     .ToDictionary(
-                        g => g.Key,
-                        g => g.First()
+                        group =>
+                            group.Key,
+                        group =>
+                            group.First()
                     );
 
             ViewBag.NextAppointments =
@@ -136,13 +289,14 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
 
             ViewBag.ScheduledAppointments =
-                await _context.Appointments
-                    .CountAsync(
-                        a =>
-                            a.AppointmentStatus == "Scheduled"
-                            &&
-                            patientIds.Contains(a.PatientID)
-                    );
+                nextAppts.Count(
+                    appointment =>
+                        appointment.AppointmentStatus == null
+                        ||
+                        appointment.AppointmentStatus == "Scheduled"
+                        ||
+                        appointment.AppointmentStatus == "Approved"
+                );
 
             ViewBag.DischargedPatients =
                 patients.Count(
@@ -153,9 +307,23 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         }
 
         /*
-         * يتم استدعاء هذه الدالة عند الضغط على Yes.
-         * لا يتم تسجيل Attended ولا فتح البروفايل إلا إذا كان
-         * للمريض موعد فعلي في جدول Appointments بتاريخ اليوم.
+         * نقطة الدخول الوحيدة لفتح ملف المريض من Home/Index.
+         *
+         * يجب ألا تفتح صفحة Home/Index رابط Patients/Details مباشرة
+         * اعتماداً على Patient.AttendanceStatus، لأن الحالة قد تكون
+         * مرتبطة بزيارة قديمة. جميع حالات Attended تمر من هنا.
+         *
+         * يتم استدعاء هذه الدالة عند الضغط على Yes، أو عند الضغط
+         * على Details لمريض كانت حالته القديمة Attended.
+         *
+         * الفلو:
+         * - Patient يبقى نفس الملف دائماً.
+         * - إذا توجد Visit مفتوحة: نفتح نفس الملف ونفس الزيارة.
+         * - إذا لا توجد Visit مفتوحة: يجب أن يكون هناك موعد
+         *   Scheduled داخل نافذة الشفت الرسمية.
+         * - Morning يفتح من 09:00 حتى قبل 13:00.
+         * - Evening يفتح من 13:00 حتى قبل 09:00 صباح اليوم التالي.
+         * - بعدها يتحول الموعد إلى Attended وتنشأ Visit جديدة واحدة.
          */
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -163,35 +331,56 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             int id,
             string? returnUrl)
         {
-            if (HttpContext.Session.GetString("UserRole") == null)
+            if (
+                HttpContext.Session.GetString(
+                    "UserRole"
+                )
+                ==
+                null
+            )
             {
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction(
+                    "Login",
+                    "Account"
+                );
             }
 
             IActionResult ReturnToPatientsList()
             {
                 if (
-                    !string.IsNullOrWhiteSpace(returnUrl)
+                    !string.IsNullOrWhiteSpace(
+                        returnUrl
+                    )
                     &&
-                    Url.IsLocalUrl(returnUrl)
+                    Url.IsLocalUrl(
+                        returnUrl
+                    )
                 )
                 {
-                    return LocalRedirect(returnUrl);
+                    return LocalRedirect(
+                        returnUrl
+                    );
                 }
 
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(
+                    nameof(Index)
+                );
             }
 
-            var userRole =
-                HttpContext.Session.GetString("UserRole") ?? "";
+            string userRole =
+                HttpContext.Session.GetString(
+                    "UserRole"
+                )
+                ??
+                string.Empty;
 
-            var userEmail =
-                HttpContext.Session.GetString("UserEmail") ?? "";
+            string userEmail =
+                HttpContext.Session.GetString(
+                    "UserEmail"
+                )
+                ??
+                string.Empty;
 
-            /*
-             * موظف الاستقبال لا يملك صلاحية فتح تفاصيل المريض.
-             * التحقق موجود في السيرفر ولا نعتمد فقط على JavaScript.
-             */
             if (
                 string.Equals(
                     userRole,
@@ -209,7 +398,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             var patient =
                 await _context.Patients
                     .FirstOrDefaultAsync(
-                        p => p.PatientID == id
+                        item =>
+                            item.PatientID == id
                     );
 
             if (patient == null)
@@ -234,7 +424,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 var appUser =
                     await _context.AppUsers
                         .FirstOrDefaultAsync(
-                            a => a.Email == userEmail
+                            user =>
+                                user.Email == userEmail
                         );
 
                 if (appUser == null)
@@ -248,10 +439,14 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 bool patientIsAllocatedToStudent =
                     await _context.AllocatedStudents
                         .AnyAsync(
-                            a =>
-                                a.AppUserId == appUser.Id
+                            allocation =>
+                                allocation.AppUserId
+                                    ==
+                                    appUser.Id
                                 &&
-                                a.PatientID == id
+                                allocation.PatientID
+                                    ==
+                                    id
                         );
 
                 if (!patientIsAllocatedToStudent)
@@ -264,47 +459,36 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             }
 
             /*
-             * إذا تم تسجيل حضور المريض سابقاً، يبقى ملفه مفتوحاً دائماً.
-             *
-             * نتحقق من مكانين:
-             * 1) Patient.AttendanceStatus
-             * 2) أي موعد سابق حالته Attended
-             *
-             * هذا مهم لأن بعض البيانات القديمة قد تكون حالة الموعد
-             * محفوظة كـ Attended بينما حقل AttendanceStatus في Patient
-             * فارغ أو لم تتم مزامنته.
+             * إذا كانت الزيارة ما زالت مفتوحة:
+             * نفتح نفس ملف المريض ولا ننشئ زيارة أخرى.
              */
-            bool patientAlreadyAttended =
-                string.Equals(
-                    patient.AttendanceStatus?.Trim(),
-                    "Attended",
-                    StringComparison.OrdinalIgnoreCase
-                );
-
-            bool hasAttendedAppointment =
-                await _context.Appointments
-                    .AsNoTracking()
-                    .AnyAsync(
-                        a =>
-                            a.PatientID == id
+            var openVisit =
+                await _context.Visits
+                    .Where(
+                        visit =>
+                            visit.PatientID == id
                             &&
-                            a.AppointmentStatus != null
-                            &&
-                            a.AppointmentStatus.Trim().ToLower()
-                                == "attended"
-                    );
+                            !visit.IsClosed
+                    )
+                    .OrderByDescending(
+                        visit =>
+                            visit.VisitDate
+                    )
+                    .ThenByDescending(
+                        visit =>
+                            visit.VisitID
+                    )
+                    .FirstOrDefaultAsync();
 
-            if (
-                patientAlreadyAttended
-                ||
-                hasAttendedAppointment
-            )
+            if (openVisit != null)
             {
-                /*
-                 * مزامنة حالة المريض إذا كان الموعد Attended
-                 * لكن Patient.AttendanceStatus غير محدث.
-                 */
-                if (!patientAlreadyAttended)
+                if (
+                    !string.Equals(
+                        patient.AttendanceStatus,
+                        "Attended",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
                 {
                     patient.AttendanceStatus =
                         "Attended";
@@ -322,119 +506,347 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
             }
 
-            /*
-             * إذا كانت الحالة NoShow فلا نسمح بفتح الملف
-             * من خلال AttendAndOpen.
-             */
-            if (
-                string.Equals(
-                    patient.AttendanceStatus?.Trim(),
-                    "NoShow",
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                TempData["Error"] =
-                    "This patient was marked as No Show. Patient details cannot be opened.";
-
-                return ReturnToPatientsList();
-            }
+            DateTime now =
+                GetJordanNow();
 
             DateTime today =
-                DateTime.Today;
+                now.Date;
 
-            DateTime tomorrow =
-                today.AddDays(1);
+            DateTime earliestRelevantDate =
+                now.TimeOfDay < MorningShiftStart
+                    ? today.AddDays(-1)
+                    : today;
 
             /*
-             * البحث عن موعد فعلي بتاريخ اليوم فقط.
+             * نقرأ جميع المواعيد النشطة التي قد تكون:
              *
-             * لا نعتمد على Patient.AttendanceStatus،
-             * ولا نعتمد على Patient.AppointmentDate.
-             *
-             * لذلك حتى لو كانت حالة المريض Attended بالخطأ،
-             * لن يفتح البروفايل إذا كان موعده الحقيقي في يوم آخر.
+             * - موعد صباح اليوم.
+             * - موعد مساء اليوم.
+             * - موعد مساء الأمس قبل الساعة 09:00 اليوم.
+             * - موعد قادم لعرض رسالة موعد واضحة.
              */
-            var todayAppointment =
+            var activeAppointments =
                 await _context.Appointments
                     .Where(
-                        a =>
-                            a.PatientID == id
+                        appointment =>
+                            appointment.PatientID == id
                             &&
-                            a.AppointmentDate >= today
-                            &&
-                            a.AppointmentDate < tomorrow
+                            appointment.AppointmentDate.Date
+                                >=
+                                earliestRelevantDate
                             &&
                             (
-                                a.AppointmentStatus == null
+                                appointment.AppointmentStatus == null
                                 ||
-                                a.AppointmentStatus != "Cancelled"
+                                appointment.AppointmentStatus == "Scheduled"
+                                ||
+                                appointment.AppointmentStatus == "Approved"
+                                ||
+                                appointment.AppointmentStatus == "Attended"
                             )
                     )
-                    .OrderBy(a => a.AppointmentDate)
-                    .FirstOrDefaultAsync();
+                    .OrderBy(
+                        appointment =>
+                            appointment.AppointmentDate
+                    )
+                    .ThenBy(
+                        appointment =>
+                            appointment.TimeFrom
+                    )
+                    .ThenBy(
+                        appointment =>
+                            appointment.AppointmentID
+                    )
+                    .ToListAsync();
 
             /*
-             * لا يوجد موعد اليوم:
-             * نبحث عن أقرب موعد قادم لعرض تاريخه في الرسالة.
+             * نختار الموعد الذي تقع الساعة الحالية داخل
+             * نافذة الشفت الخاصة به.
              */
-            if (todayAppointment == null)
+            var closestActiveAppointment =
+                activeAppointments
+                    .Where(
+                        appointment =>
+                            AppointmentCanOpenNow(
+                                appointment,
+                                now
+                            )
+                    )
+                    .OrderBy(
+                        appointment =>
+                            GetVisitOpeningTime(
+                                appointment
+                            )
+                    )
+                    .ThenBy(
+                        appointment =>
+                            appointment.AppointmentID
+                    )
+                    .FirstOrDefault();
+
+            if (closestActiveAppointment == null)
             {
                 var nextAppointment =
-                    await _context.Appointments
+                    activeAppointments
                         .Where(
-                            a =>
-                                a.PatientID == id
-                                &&
-                                a.AppointmentDate >= tomorrow
-                                &&
-                                (
-                                    a.AppointmentStatus == null
-                                    ||
-                                    a.AppointmentStatus != "Cancelled"
+                            appointment =>
+                                GetVisitOpeningTime(
+                                    appointment
+                                )
+                                >
+                                now
+                        )
+                        .OrderBy(
+                            appointment =>
+                                GetVisitOpeningTime(
+                                    appointment
                                 )
                         )
-                        .OrderBy(a => a.AppointmentDate)
-                        .FirstOrDefaultAsync();
+                        .ThenBy(
+                            appointment =>
+                                appointment.AppointmentID
+                        )
+                        .FirstOrDefault();
 
                 if (nextAppointment != null)
                 {
+                    DateTime opensAt =
+                        GetVisitOpeningTime(
+                            nextAppointment
+                        );
+
+                    string nextPeriod =
+                        IsEveningAppointment(
+                            nextAppointment
+                        )
+                            ? "Evening"
+                            : "Morning";
+
                     TempData["Error"] =
-                        "Today is not the patient's appointment date. "
+                        $"The {nextPeriod} visit window has not started yet. "
                         +
-                        "Please wait until "
+                        $"It opens on {opensAt:yyyy-MM-dd} at "
                         +
-                        nextAppointment.AppointmentDate
-                            .ToString("yyyy-MM-dd")
-                        +
-                        ".";
+                        $"{opensAt:HH:mm}.";
                 }
                 else
                 {
-                    TempData["Error"] =
-                        "Today is not the patient's appointment date, "
-                        +
-                        "and no upcoming appointment was found.";
+                    var latestExpiredAppointment =
+                        activeAppointments
+                            .Where(
+                                appointment =>
+                                    GetVisitClosingTime(
+                                        appointment
+                                    )
+                                    <=
+                                    now
+                            )
+                            .OrderByDescending(
+                                appointment =>
+                                    GetVisitClosingTime(
+                                        appointment
+                                    )
+                            )
+                            .ThenByDescending(
+                                appointment =>
+                                    appointment.AppointmentID
+                            )
+                            .FirstOrDefault();
+
+                    if (latestExpiredAppointment != null)
+                    {
+                        DateTime closedAt =
+                            GetVisitClosingTime(
+                                latestExpiredAppointment
+                            );
+
+                        string expiredPeriod =
+                            IsEveningAppointment(
+                                latestExpiredAppointment
+                            )
+                                ? "Evening"
+                                : "Morning";
+
+                        TempData["Error"] =
+                            $"The {expiredPeriod} visit window ended on "
+                            +
+                            $"{closedAt:yyyy-MM-dd} at {closedAt:HH:mm}. "
+                            +
+                            "Please edit the appointment date or period "
+                            +
+                            "and keep it Scheduled.";
+                    }
+                    else
+                    {
+                        TempData["Error"] =
+                            "No active Scheduled appointment was found "
+                            +
+                            "for this patient.";
+                    }
                 }
 
                 return ReturnToPatientsList();
             }
 
+            string appointmentPeriod =
+                IsEveningAppointment(
+                    closestActiveAppointment
+                )
+                    ? "PM"
+                    : "AM";
+
             /*
-             * الموعد فعلاً اليوم:
-             * الآن فقط نسجل الحضور في الموعد وفي بيانات المريض.
+             * لا يوجد AppointmentID داخل Visit حسب طلب عدم تعديل DB.
+             *
+             * لذلك نربط منطقياً باستخدام:
+             * PatientID + VisitDate + AM/PM + CreatedDate.
+             *
+             * CreatedDate يميّز الزيارة الجديدة عن زيارة قديمة
+             * للمريض في نفس التاريخ والفترة.
              */
-            todayAppointment.AppointmentStatus =
+            DateTime appointmentCreationBoundary =
+                closestActiveAppointment
+                    .CreatedDate
+                    .AddSeconds(-5);
+
+            var visitForThisAppointment =
+                await _context.Visits
+                    .Where(
+                        visit =>
+                            visit.PatientID == id
+                            &&
+                            visit.VisitDate.Date
+                                ==
+                                closestActiveAppointment
+                                    .AppointmentDate
+                                    .Date
+                            &&
+                            visit.AppointmentPeriod
+                                ==
+                                appointmentPeriod
+                            &&
+                            visit.CreatedDate
+                                >=
+                                appointmentCreationBoundary
+                    )
+                    .OrderByDescending(
+                        visit =>
+                            visit.VisitID
+                    )
+                    .FirstOrDefaultAsync();
+
+            /*
+             * إذا وجدنا زيارة مغلقة لنفس الموعد،
+             * نصلح حالة الموعد ولا ننشئ زيارة مكررة.
+             */
+            if (
+                visitForThisAppointment != null
+                &&
+                visitForThisAppointment.IsClosed
+            )
+            {
+                closestActiveAppointment.AppointmentStatus =
+                    "Completed";
+
+                await _context.SaveChangesAsync();
+
+                TempData["Error"] =
+                    "The visit for this appointment is already closed. "
+                    +
+                    "A new appointment can now be booked.";
+
+                return ReturnToPatientsList();
+            }
+
+            if (visitForThisAppointment == null)
+            {
+                visitForThisAppointment =
+                    new Visit
+                    {
+                        PatientID =
+                            id,
+
+                        VisitDate =
+                            closestActiveAppointment
+                                .AppointmentDate
+                                .Date,
+
+                        AppointmentPeriod =
+                            appointmentPeriod,
+
+                        Attended =
+                            true,
+
+                        IsApproved =
+                            false,
+
+                        ApprovedBy =
+                            null,
+
+                        ApprovedDate =
+                            null,
+
+                        SupervisorComments =
+                            null,
+
+                        AdminApprovalStatus =
+                            "Pending",
+
+                        AdminApprovedBy =
+                            null,
+
+                        AdminApprovedDate =
+                            null,
+
+                        CaseComplexity =
+                            null,
+
+                        CreatedDate =
+                            GetJordanNow(),
+
+                        IsClosed =
+                            false,
+
+                        ClosedDate =
+                            null,
+
+                        ClosedBy =
+                            null
+                    };
+
+                _context.Visits.Add(
+                    visitForThisAppointment
+                );
+            }
+
+            closestActiveAppointment.AppointmentStatus =
                 "Attended";
 
             patient.AttendanceStatus =
                 "Attended";
 
+            /*
+             * نبقي نسخة الموعد الحالي في Patient متزامنة
+             * لدعم الصفحات القديمة.
+             */
+            patient.AppointmentDate =
+                closestActiveAppointment
+                    .AppointmentDate
+                    .Date;
+
+            patient.AppointmentTime =
+                appointmentPeriod
+                +
+                "|"
+                +
+                closestActiveAppointment
+                    .TimeFrom
+                    .ToString(
+                        @"hh\:mm"
+                    );
+
             await _context.SaveChangesAsync();
 
-            /*
-             * فتح بروفايل المريض بعد نجاح فحص التاريخ فقط.
-             */
             return RedirectToAction(
                 "Details",
                 "Patients",
@@ -447,7 +859,11 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
         /*
          * يتم استدعاء هذه الدالة عند الضغط على No.
-         * كذلك لا يتم تسجيل NoShow قبل يوم الموعد.
+         *
+         * لا يمكن تسجيل NoShow:
+         * - أثناء وجود Visit مفتوحة.
+         * - قبل يوم الموعد.
+         * - قبل وقت بداية الموعد في نفس اليوم.
          */
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -455,30 +871,55 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             int id,
             string? returnUrl)
         {
-            if (HttpContext.Session.GetString("UserRole") == null)
+            if (
+                HttpContext.Session.GetString(
+                    "UserRole"
+                )
+                ==
+                null
+            )
             {
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction(
+                    "Login",
+                    "Account"
+                );
             }
 
             IActionResult ReturnToPatientsList()
             {
                 if (
-                    !string.IsNullOrWhiteSpace(returnUrl)
+                    !string.IsNullOrWhiteSpace(
+                        returnUrl
+                    )
                     &&
-                    Url.IsLocalUrl(returnUrl)
+                    Url.IsLocalUrl(
+                        returnUrl
+                    )
                 )
                 {
-                    return LocalRedirect(returnUrl);
+                    return LocalRedirect(
+                        returnUrl
+                    );
                 }
 
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(
+                    nameof(Index)
+                );
             }
 
-            var userRole =
-                HttpContext.Session.GetString("UserRole") ?? "";
+            string userRole =
+                HttpContext.Session.GetString(
+                    "UserRole"
+                )
+                ??
+                string.Empty;
 
-            var userEmail =
-                HttpContext.Session.GetString("UserEmail") ?? "";
+            string userEmail =
+                HttpContext.Session.GetString(
+                    "UserEmail"
+                )
+                ??
+                string.Empty;
 
             if (
                 string.Equals(
@@ -497,7 +938,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             var patient =
                 await _context.Patients
                     .FirstOrDefaultAsync(
-                        p => p.PatientID == id
+                        item =>
+                            item.PatientID == id
                     );
 
             if (patient == null)
@@ -519,7 +961,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 var appUser =
                     await _context.AppUsers
                         .FirstOrDefaultAsync(
-                            a => a.Email == userEmail
+                            user =>
+                                user.Email == userEmail
                         );
 
                 if (appUser == null)
@@ -533,10 +976,14 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 bool patientIsAllocatedToStudent =
                     await _context.AllocatedStudents
                         .AnyAsync(
-                            a =>
-                                a.AppUserId == appUser.Id
+                            allocation =>
+                                allocation.AppUserId
+                                    ==
+                                    appUser.Id
                                 &&
-                                a.PatientID == id
+                                allocation.PatientID
+                                    ==
+                                    id
                         );
 
                 if (!patientIsAllocatedToStudent)
@@ -548,74 +995,127 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 }
             }
 
+            bool hasOpenVisit =
+                await _context.Visits.AnyAsync(
+                    visit =>
+                        visit.PatientID == id
+                        &&
+                        !visit.IsClosed
+                );
+
+            if (hasOpenVisit)
+            {
+                TempData["Error"] =
+                    "This patient has an open visit and cannot "
+                    +
+                    "be marked as No Show. End the current visit first.";
+
+                return ReturnToPatientsList();
+            }
+
+            DateTime now =
+                GetJordanNow();
+
             DateTime today =
-                DateTime.Today;
+                now.Date;
 
-            DateTime tomorrow =
-                today.AddDays(1);
+            DateTime earliestRelevantDate =
+                now.TimeOfDay < MorningShiftStart
+                    ? today.AddDays(-1)
+                    : today;
 
-            var todayAppointment =
+            var activeAppointments =
                 await _context.Appointments
                     .Where(
-                        a =>
-                            a.PatientID == id
+                        appointment =>
+                            appointment.PatientID == id
                             &&
-                            a.AppointmentDate >= today
-                            &&
-                            a.AppointmentDate < tomorrow
+                            appointment.AppointmentDate.Date
+                                >=
+                                earliestRelevantDate
                             &&
                             (
-                                a.AppointmentStatus == null
+                                appointment.AppointmentStatus == null
                                 ||
-                                a.AppointmentStatus != "Cancelled"
+                                appointment.AppointmentStatus == "Scheduled"
+                                ||
+                                appointment.AppointmentStatus == "Approved"
                             )
                     )
-                    .OrderBy(a => a.AppointmentDate)
-                    .FirstOrDefaultAsync();
+                    .OrderBy(
+                        appointment =>
+                            appointment.AppointmentDate
+                    )
+                    .ThenBy(
+                        appointment =>
+                            appointment.TimeFrom
+                    )
+                    .ThenBy(
+                        appointment =>
+                            appointment.AppointmentID
+                    )
+                    .ToListAsync();
 
-            if (todayAppointment == null)
+            var closestActiveAppointment =
+                activeAppointments
+                    .Where(
+                        appointment =>
+                            GetVisitOpeningTime(
+                                appointment
+                            )
+                            <=
+                            now
+                    )
+                    .OrderByDescending(
+                        appointment =>
+                            GetVisitOpeningTime(
+                                appointment
+                            )
+                    )
+                    .ThenByDescending(
+                        appointment =>
+                            appointment.AppointmentID
+                    )
+                    .FirstOrDefault();
+
+            if (closestActiveAppointment == null)
             {
                 var nextAppointment =
-                    await _context.Appointments
-                        .Where(
-                            a =>
-                                a.PatientID == id
-                                &&
-                                a.AppointmentDate >= tomorrow
-                                &&
-                                (
-                                    a.AppointmentStatus == null
-                                    ||
-                                    a.AppointmentStatus != "Cancelled"
+                    activeAppointments
+                        .OrderBy(
+                            appointment =>
+                                GetVisitOpeningTime(
+                                    appointment
                                 )
                         )
-                        .OrderBy(a => a.AppointmentDate)
-                        .FirstOrDefaultAsync();
+                        .FirstOrDefault();
 
                 if (nextAppointment != null)
                 {
+                    DateTime opensAt =
+                        GetVisitOpeningTime(
+                            nextAppointment
+                        );
+
                     TempData["Error"] =
-                        "Today is not the patient's appointment date. "
+                        "The patient cannot be marked as No Show "
                         +
-                        "Please wait until "
+                        $"before {opensAt:yyyy-MM-dd} at "
                         +
-                        nextAppointment.AppointmentDate
-                            .ToString("yyyy-MM-dd")
-                        +
-                        ".";
+                        $"{opensAt:HH:mm}.";
                 }
                 else
                 {
                     TempData["Error"] =
-                        "Today is not the patient's appointment date, "
+                        "No active Scheduled appointment was found "
                         +
-                        "and no upcoming appointment was found.";
+                        "for this patient.";
                 }
 
                 return ReturnToPatientsList();
             }
 
-            todayAppointment.AppointmentStatus =
+            closestActiveAppointment.AppointmentStatus =
                 "NoShow";
 
             patient.AttendanceStatus =

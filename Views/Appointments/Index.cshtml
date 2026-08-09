@@ -4,6 +4,13 @@
     ViewData["Title"] = "Appointments";
     var userRole = Context.Session.GetString("UserRole") ?? "";
 
+    bool isStudent =
+        string.Equals(
+            userRole,
+            "Student",
+            StringComparison.OrdinalIgnoreCase
+        );
+
     int pageSize = 10;
     int pageNumber = Context.Request.Query.ContainsKey("page") ? int.Parse(Context.Request.Query["page"]) : 1;
 
@@ -31,13 +38,29 @@
         filtered = filtered.Where(a => a.AppointmentDate.Date == parsedDate.Date);
 
     if (!string.IsNullOrEmpty(filterTime))
-        filtered = filtered.Where(a =>
-            a.Patient != null &&
-            a.Patient.AppointmentTime != null &&
-            a.Patient.AppointmentTime.StartsWith(filterTime, StringComparison.OrdinalIgnoreCase));
+    {
+        if (string.Equals(filterTime, "AM", StringComparison.OrdinalIgnoreCase))
+            filtered = filtered.Where(a => a.TimeFrom.Hours < 12);
+        else if (string.Equals(filterTime, "PM", StringComparison.OrdinalIgnoreCase))
+            filtered = filtered.Where(a => a.TimeFrom.Hours >= 12);
+    }
 
     int totalItems = filtered.Count();
     int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+    if (totalPages > 0 && pageNumber > totalPages)
+    {
+        pageNumber = totalPages;
+    }
+
+    int visiblePages = 4;
+    int startPage = Math.Max(1, pageNumber - 1);
+    int endPage = Math.Min(totalPages, startPage + visiblePages - 1);
+
+    if (endPage - startPage + 1 < visiblePages)
+    {
+        startPage = Math.Max(1, endPage - visiblePages + 1);
+    }
     var pagedModel = filtered.OrderByDescending(a => a.AppointmentDate)
                              .Skip((pageNumber - 1) * pageSize)
                              .Take(pageSize)
@@ -289,6 +312,67 @@
         margin-top: 8px;
         display: none;
     }
+
+
+    /* ── Compact Pagination ── */
+    .compact-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+        padding-left: 0;
+    }
+
+        .compact-pagination .page-link {
+            min-width: 36px;
+            height: 36px;
+            padding: 0 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #cdd4e8 !important;
+            border-radius: 7px !important;
+            background: #fff;
+            color: #1a237e;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: none !important;
+        }
+
+            .compact-pagination .page-link:hover {
+                background: #e8eaf6;
+                border-color: #9fa8da !important;
+                color: #1a237e;
+            }
+
+        .compact-pagination .page-item.active .page-link {
+            background: #1a237e;
+            border-color: #1a237e !important;
+            color: #fff;
+        }
+
+        .compact-pagination .page-item.disabled .page-link {
+            opacity: .45;
+            pointer-events: none;
+        }
+
+        .compact-pagination .pagination-dots {
+            min-width: 24px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #8b94a8;
+            font-weight: 800;
+        }
+
+        .compact-pagination .pagination-navigation .page-link {
+            padding: 0 14px;
+            white-space: nowrap;
+        }
 </style>
 
 <div class="container mt-4">
@@ -366,7 +450,7 @@
                 Appointments
                 <span style="background-color:#daa328; color:white; padding:4px 12px; font-weight:600;">@totalItems</span>
             </h5>
-            @if (userRole != "Student")
+            @if (!isStudent)
             {
                 <button type="button" data-bs-toggle="modal" data-bs-target="#searchPatientModal"
                         style="background-color:#1a237e;color:white;border:2px solid white !important;outline:2px solid #1a237e !important;padding:5px 10px;border-radius:0 !important;font-size:13px;font-weight:600;cursor:pointer;">
@@ -432,26 +516,19 @@
                             int vNum = visitNumbers.ContainsKey(item.AppointmentID) ? visitNumbers[item.AppointmentID] : 1;
                             string badgeClass = vNum == 1 ? "visit-num-first" : (vNum == 2 ? "visit-num-second" : "");
 
-                            string rawTime = item.Patient?.AppointmentTime ?? "";
-                            string period = "";
-                            string apptTime = "";
+                            /*
+                             * كل صف يستخدم وقت الموعد نفسه، وليس آخر وقت
+                             * محفوظ داخل Patient، حتى يبقى تاريخ الزيارات صحيحاً.
+                             */
+                            string period =
+                                item.TimeFrom.Hours < 12
+                                    ? "AM"
+                                    : "PM";
 
-                            if (rawTime.Contains("|"))
-                            {
-                                var parts = rawTime.Split('|');
-                                period = parts[0];
-                                apptTime = parts[1];
-                            }
-                            else if (rawTime == "AM" || rawTime == "PM")
-                            {
-                                period = rawTime;
-                                apptTime = rawTime == "AM" ? "09:00" : "13:00";
-                            }
-                            else
-                            {
-                                period = item.TimeFrom.Hours < 12 ? "AM" : "PM";
-                                apptTime = item.TimeFrom.Hours < 12 ? "09:00" : "13:00";
-                            }
+                            string apptTime =
+                                DateTime.Today
+                                    .Add(item.TimeFrom)
+                                    .ToString("HH:mm");
 
                             <tr>
                                 <td><span class="visit-num-badge @badgeClass">@Ordinal(vNum)</span></td>
@@ -470,24 +547,46 @@
                                     }
                                 </td>
                                 <td>
-                                    @if (item.AppointmentStatus == "Cancelled")
+                                    @if (string.Equals(item.AppointmentStatus, "Cancelled", StringComparison.OrdinalIgnoreCase))
                                     {
                                         <span style="background:#f8d7da; color:#842029; border:1px solid #f5c2c7; border-radius:4px; padding:2px 10px; font-size:.75rem; font-weight:700;">
                                             <i class="fa-solid fa-xmark me-1"></i> Cancelled
                                         </span>
                                     }
+                                    else if (string.Equals(item.AppointmentStatus, "NoShow", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span style="background:#fff3cd; color:#856404; border:1px solid #ffc107; border-radius:4px; padding:2px 10px; font-size:.75rem; font-weight:700;">
+                                            <i class="fa-solid fa-user-slash me-1"></i> No Show
+                                        </span>
+                                    }
+                                    else if (string.Equals(item.AppointmentStatus, "Attended", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span style="background:#cfe2ff; color:#084298; border:1px solid #9ec5fe; border-radius:4px; padding:2px 10px; font-size:.75rem; font-weight:700;">
+                                            <i class="fa-solid fa-door-open me-1"></i> Visit Open
+                                        </span>
+                                    }
+                                    else if (string.Equals(item.AppointmentStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span style="background:#e2e3e5; color:#41464b; border:1px solid #c4c8cb; border-radius:4px; padding:2px 10px; font-size:.75rem; font-weight:700;">
+                                            <i class="fa-solid fa-circle-check me-1"></i> Visit Completed
+                                        </span>
+                                    }
                                     else
                                     {
                                         <span style="background:#d1e7dd; color:#0f5132; border:1px solid #a3cfbb; border-radius:4px; padding:2px 10px; font-size:.75rem; font-weight:700;">
-                                            <i class="fa-solid fa-check me-1"></i> Active
+                                            <i class="fa-solid fa-calendar-check me-1"></i> Scheduled
                                         </span>
                                     }
                                 </td>
                                 <td style="white-space:nowrap;">
-                                    <a asp-action="Edit" asp-route-id="@item.AppointmentID"
-                                       style="background:none; color:#3F8CCA; border:none; padding:5px 6px; font-size:13px; font-weight:600; margin:2px; cursor:pointer; text-decoration:none; display:inline-block;">
-                                        <i class="fa-solid fa-pen"></i> Edit
-                                    </a>
+                                    @if (!isStudent)
+                                    {
+                                        <a asp-action="Edit"
+                                           asp-route-id="@item.AppointmentID"
+                                           style="background:none; color:#3F8CCA; border:none; padding:5px 6px; font-size:13px; font-weight:600; margin:2px; cursor:pointer; text-decoration:none; display:inline-block;">
+                                            <i class="fa-solid fa-pen"></i> Edit
+                                        </a>
+                                    }
                                 </td>
                             </tr>
                         }
@@ -496,23 +595,48 @@
             </table>
         </div>
 
-        <!-- Pagination -->
+        <!-- Compact Pagination -->
         @if (totalPages > 1)
         {
-            <nav class="mt-3">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item @(pageNumber == 1 ? "disabled" : "")">
-                        <a class="page-link" href="?page=@(pageNumber - 1)&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime">←</a>
+            <nav class="mt-3" aria-label="Appointments pagination">
+                <ul class="pagination compact-pagination">
+                    <li class="page-item pagination-navigation @(pageNumber == 1 ? "disabled" : "")">
+                        <a class="page-link" href="?page=@(pageNumber - 1)&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterDate=@Uri.EscapeDataString(filterDate)&filterTime=@Uri.EscapeDataString(filterTime)">‹ Previous</a>
                     </li>
-                    @for (int p = 1; p <= totalPages; p++)
+
+                    @if (startPage > 1)
+                    {
+                        <li class="page-item @(pageNumber == 1 ? "active" : "")">
+                            <a class="page-link" href="?page=1&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterDate=@Uri.EscapeDataString(filterDate)&filterTime=@Uri.EscapeDataString(filterTime)">1</a>
+                        </li>
+
+                        @if (startPage > 2)
+                        {
+                            <li class="pagination-dots">…</li>
+                        }
+                    }
+
+                    @for (int p = startPage; p <= endPage; p++)
                     {
                         <li class="page-item @(p == pageNumber ? "active" : "")">
-                            <a class="page-link" href="?page=@p&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime"
-                               style="border-radius:0 !important; border:none !important; box-shadow:none !important; font-weight:600;">@p</a>
+                            <a class="page-link" href="?page=@p&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterDate=@Uri.EscapeDataString(filterDate)&filterTime=@Uri.EscapeDataString(filterTime)">@p</a>
                         </li>
                     }
-                    <li class="page-item @(pageNumber == totalPages ? "disabled" : "")">
-                        <a class="page-link" href="?page=@(pageNumber + 1)&searchName=@searchName&searchID=@searchID&filterDate=@filterDate&filterTime=@filterTime">→</a>
+
+                    @if (endPage < totalPages)
+                    {
+                        @if (endPage < totalPages - 1)
+                        {
+                            <li class="pagination-dots">…</li>
+                        }
+
+                        <li class="page-item @(pageNumber == totalPages ? "active" : "")">
+                            <a class="page-link" href="?page=@totalPages&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterDate=@Uri.EscapeDataString(filterDate)&filterTime=@Uri.EscapeDataString(filterTime)">@totalPages</a>
+                        </li>
+                    }
+
+                    <li class="page-item pagination-navigation @(pageNumber == totalPages ? "disabled" : "")">
+                        <a class="page-link" href="?page=@(pageNumber + 1)&searchName=@Uri.EscapeDataString(searchName)&searchID=@Uri.EscapeDataString(searchID)&filterDate=@Uri.EscapeDataString(filterDate)&filterTime=@Uri.EscapeDataString(filterTime)">Next ›</a>
                     </li>
                 </ul>
             </nav>
@@ -634,42 +758,42 @@
 <script>
     const MODAL_SLOTS = {
         AM: [
-            { value: "09:00", label: "9:00 AM"  },
+            { value: "09:00", label: "9:00 AM" },
             { value: "11:00", label: "11:00 AM" }
         ],
         PM: [
-            { value: "13:00", label: "1:00 PM"  },
-            { value: "15:00", label: "3:00 PM"  }
+            { value: "13:00", label: "1:00 PM" },
+            { value: "15:00", label: "3:00 PM" }
         ]
     };
 
-    let selectedSlot  = "";
+    let selectedSlot = "";
     let searchTimeout = null;
 
     function renderSlots(period) {
-        const container  = document.getElementById("slotsContainer");
-        const section    = document.getElementById("timeSlotsSection");
-        const warning    = document.getElementById("capacityWarning");
-        const saveBtn    = document.getElementById("saveAppointmentBtn");
+        const container = document.getElementById("slotsContainer");
+        const section = document.getElementById("timeSlotsSection");
+        const warning = document.getElementById("capacityWarning");
+        const saveBtn = document.getElementById("saveAppointmentBtn");
         const hiddenSlot = document.getElementById("selectedTimeSlot");
 
-        selectedSlot          = "";
-        hiddenSlot.value      = "";
-        saveBtn.disabled      = true;
+        selectedSlot = "";
+        hiddenSlot.value = "";
+        saveBtn.disabled = true;
         warning.style.display = "none";
-        container.innerHTML   = "";
+        container.innerHTML = "";
 
-        MODAL_SLOTS[period].forEach(function (slot) {
-            const btn       = document.createElement("button");
-            btn.type        = "button";
-            btn.className   = "slot-option-btn";
+        MODAL_SLOTS[period].forEach(function(slot) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "slot-option-btn";
             btn.textContent = slot.label;
             btn.dataset.val = slot.value;
 
-            btn.addEventListener("click", function () {
+            btn.addEventListener("click", function() {
                 document.querySelectorAll(".slot-option-btn").forEach(b => b.classList.remove("selected"));
                 this.classList.add("selected");
-                selectedSlot     = this.dataset.val;
+                selectedSlot = this.dataset.val;
                 hiddenSlot.value = selectedSlot;
                 checkCapacity();
             });
@@ -681,54 +805,54 @@
     }
 
     async function checkCapacity() {
-        const date    = document.getElementById("modalAppointmentDate").value;
+        const date = document.getElementById("modalAppointmentDate").value;
         const warning = document.getElementById("capacityWarning");
         const saveBtn = document.getElementById("saveAppointmentBtn");
 
         if (!date || !selectedSlot) return;
 
         try {
-            const res  = await fetch(`/Patients/CheckSlot?date=${date}&time=${selectedSlot}`);
+            const res = await fetch(`/Patients/CheckSlot?date=${date}&time=${selectedSlot}`);
             const data = await res.json();
 
             if (!data.available) {
                 warning.style.display = "block";
-                saveBtn.disabled      = true;
+                saveBtn.disabled = true;
             } else {
                 warning.style.display = "none";
-                saveBtn.disabled      = false;
+                saveBtn.disabled = false;
             }
         } catch {
             warning.style.display = "none";
-            saveBtn.disabled      = false;
+            saveBtn.disabled = false;
         }
     }
 
-    document.querySelectorAll('input[name="AppointmentPeriod"]').forEach(function (radio) {
-        radio.addEventListener("change", function () {
+    document.querySelectorAll('input[name="AppointmentPeriod"]').forEach(function(radio) {
+        radio.addEventListener("change", function() {
             renderSlots(this.value);
         });
     });
 
-    document.getElementById("modalAppointmentDate").addEventListener("change", function () {
+    document.getElementById("modalAppointmentDate").addEventListener("change", function() {
         if (selectedSlot) checkCapacity();
     });
 
-    document.getElementById("addAppointmentModal").addEventListener("show.bs.modal", function () {
+    document.getElementById("addAppointmentModal").addEventListener("show.bs.modal", function() {
         document.querySelectorAll('input[name="AppointmentPeriod"]').forEach(r => r.checked = false);
         document.getElementById("timeSlotsSection").style.display = "none";
-        document.getElementById("slotsContainer").innerHTML       = "";
-        document.getElementById("capacityWarning").style.display  = "none";
-        document.getElementById("saveAppointmentBtn").disabled    = true;
-        document.getElementById("selectedTimeSlot").value         = "";
+        document.getElementById("slotsContainer").innerHTML = "";
+        document.getElementById("capacityWarning").style.display = "none";
+        document.getElementById("saveAppointmentBtn").disabled = true;
+        document.getElementById("selectedTimeSlot").value = "";
         selectedSlot = "";
     });
 
-    document.getElementById('patientSearchBox').addEventListener('input', function () {
-        const q          = this.value.trim();
+    document.getElementById('patientSearchBox').addEventListener('input', function() {
+        const q = this.value.trim();
         const resultsBox = document.getElementById('patientResultsBox');
-        const loading    = document.getElementById('patientSearchLoading');
-        const noMsg      = document.getElementById('noPatientMsg');
+        const loading = document.getElementById('patientSearchLoading');
+        const noMsg = document.getElementById('noPatientMsg');
         const blockAlert = document.getElementById('attendanceBlockAlert');
 
         clearTimeout(searchTimeout);
@@ -738,12 +862,12 @@
             return;
         }
 
-        loading.style.display    = 'block';
+        loading.style.display = 'block';
         resultsBox.style.display = noMsg.style.display = blockAlert.style.display = 'none';
 
         searchTimeout = setTimeout(async () => {
             try {
-                const res  = await fetch(`/Appointments/SearchPatient?q=${encodeURIComponent(q)}`);
+                const res = await fetch(`/Appointments/SearchPatient?q=${encodeURIComponent(q)}`);
                 const data = await res.json();
                 loading.style.display = 'none';
 
@@ -754,14 +878,14 @@
                     const item = document.createElement('div');
                     item.className = 'apt-patient-item';
                     item.innerHTML = `
-                        <div>
-                            <div class="apt-patient-name">${p.fullName || p.FullName}</div>
-                            <div class="apt-patient-id">ID: ${p.nationalID_PassportNumber || p.NationalID_PassportNumber || '—'}</div>
-                        </div>
-                        <i class="fa-solid fa-arrow-right" style="color:#1a237e;"></i>`;
+                                    <div>
+                                        <div class="apt-patient-name">${p.fullName || p.FullName}</div>
+                                        <div class="apt-patient-id">ID: ${p.nationalID_PassportNumber || p.NationalID_PassportNumber || '—'}</div>
+                                    </div>
+                                    <i class="fa-solid fa-arrow-right" style="color:#1a237e;"></i>`;
                     item.addEventListener('click', () => selectPatient(
                         p.patientID || p.PatientID,
-                        p.fullName  || p.FullName,
+                        p.fullName || p.FullName,
                         p.nationalID_PassportNumber || p.NationalID_PassportNumber || '—'
                     ));
                     resultsBox.appendChild(item);
@@ -774,22 +898,22 @@
     });
 
     async function selectPatient(id, name, nid) {
-        document.getElementById('patientResultsBox').style.display    = 'none';
+        document.getElementById('patientResultsBox').style.display = 'none';
         document.getElementById('attendanceBlockAlert').style.display = 'none';
 
         try {
-            const res  = await fetch(`/Appointments/GetPatientAttendance?patientId=${id}`);
+            const res = await fetch(`/Appointments/GetPatientAttendance?patientId=${id}`);
             const data = await res.json();
             if (!data.canBook) {
-                document.getElementById('attendanceBlockMsg').textContent     = data.message;
+                document.getElementById('attendanceBlockMsg').textContent = data.message;
                 document.getElementById('attendanceBlockAlert').style.display = 'block';
                 return;
             }
         } catch (e) { /* proceed */ }
 
-        document.getElementById('selectedPatientID').value         = id;
+        document.getElementById('selectedPatientID').value = id;
         document.getElementById('selectedPatientName').textContent = name;
-        document.getElementById('selectedPatientNID').textContent  = 'ID: ' + nid;
+        document.getElementById('selectedPatientNID').textContent = 'ID: ' + nid;
 
         const searchModal = bootstrap.Modal.getInstance(document.getElementById('searchPatientModal'));
         searchModal.hide();
@@ -800,11 +924,11 @@
         });
     }
 
-    document.getElementById('searchPatientModal').addEventListener('shown.bs.modal', function () {
-        document.getElementById('patientSearchBox').value             = '';
-        document.getElementById('patientResultsBox').style.display    = 'none';
-        document.getElementById('patientResultsBox').innerHTML        = '';
-        document.getElementById('noPatientMsg').style.display         = 'none';
+    document.getElementById('searchPatientModal').addEventListener('shown.bs.modal', function() {
+        document.getElementById('patientSearchBox').value = '';
+        document.getElementById('patientResultsBox').style.display = 'none';
+        document.getElementById('patientResultsBox').innerHTML = '';
+        document.getElementById('noPatientMsg').style.display = 'none';
         document.getElementById('attendanceBlockAlert').style.display = 'none';
         document.getElementById('patientSearchBox').focus();
     });

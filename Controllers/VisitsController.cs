@@ -424,6 +424,24 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
             }
 
+            bool hasOpenVisit =
+                await _context.Visits.AnyAsync(
+                    currentVisit =>
+                        currentVisit.PatientID == visit.PatientID
+                        && !currentVisit.IsClosed
+                );
+
+            if (hasOpenVisit)
+            {
+                TempData["VisitError"] =
+                    "This patient already has an open visit. "
+                    + "End the current visit before creating another one.";
+
+                return RedirectToPatientVisits(
+                    visit.PatientID
+                );
+            }
+
             /*
              * نظام موافقة واحد:
              * كل زيارة جديدة تبدأ Pending.
@@ -461,6 +479,14 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         // =====================================================
         // End current visit
         // =====================================================
+        /*
+         * يغلق Visit الحالية ويحوّل الموعد المرتبط بها إلى Completed.
+         *
+         * بعد الحفظ:
+         * - لا تبقى Visit مفتوحة.
+         * - يصبح بإمكان المريض أخذ موعد جديد.
+         * - Patient نفسه لا يتكرر ولا ينشأ ملف جديد.
+         */
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EndCurrentVisit(
@@ -472,7 +498,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                         visit =>
                             visit.PatientID == patientId
                             &&
-                            visit.IsClosed == false
+                            !visit.IsClosed
                     )
                     .OrderByDescending(
                         visit =>
@@ -501,8 +527,11 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             }
 
             string currentRole =
-                HttpContext.Session.GetString("UserRole")
-                ?? string.Empty;
+                HttpContext.Session.GetString(
+                    "UserRole"
+                )
+                ??
+                string.Empty;
 
             bool isStudent =
                 string.Equals(
@@ -512,11 +541,10 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
 
             /*
-             * The student may end the visit before the note is approved,
-             * but the student must first add at least one note that belongs
-             * to this exact visit.
+             * الطالب يجب أن يضيف ملاحظة واحدة على الأقل
+             * لنفس الزيارة قبل End Visit.
              *
-             * "No Comment" is accepted because it is still a non-empty note.
+             * No Comment تعتبر ملاحظة صحيحة.
              */
             if (isStudent)
             {
@@ -526,19 +554,27 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 bool hasStudentNote =
                     await _context.Notes.AnyAsync(
                         note =>
-                            note.VisitId == currentVisit.VisitID
+                            note.VisitId
+                                ==
+                                currentVisit.VisitID
                             &&
-                            note.CreatedByRole == "Student"
+                            note.CreatedByRole
+                                ==
+                                "Student"
                             &&
-                            note.CreatedBy == currentUserName
+                            note.CreatedBy
+                                ==
+                                currentUserName
                     );
 
                 if (!hasStudentNote)
                 {
                     TempData["VisitError"] =
                         "You must add at least one note before ending "
-                        + "the visit. If there is nothing to add, "
-                        + "enter \"No Comment\" as the note.";
+                        +
+                        "the visit. If there is nothing to add, "
+                        +
+                        "enter \"No Comment\" as the note.";
 
                     return RedirectToAction(
                         "Details",
@@ -552,23 +588,111 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 }
             }
 
-            /*
-             * Pending approval does not prevent End Visit.
-             * The note remains visible in Pending Approvals so an
-             * Admin or Supervisor can edit and approve it afterward.
-             */
-            currentVisit.IsClosed = true;
-            currentVisit.ClosedDate = DateTime.Now;
+            currentVisit.IsClosed =
+                true;
+
+            currentVisit.ClosedDate =
+                DateTime.Now;
 
             currentVisit.ClosedBy =
                 GetCurrentUserName();
+
+            /*
+             * لا يوجد AppointmentID داخل Visit لأننا لا نريد
+             * تغيير قاعدة البيانات.
+             *
+             * نحدد الموعد من:
+             * PatientID + VisitDate + AM/PM + الحالة Attended.
+             */
+            bool visitIsEvening =
+                string.Equals(
+                    currentVisit.AppointmentPeriod,
+                    "PM",
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+            DateTime latestAllowedAppointmentCreation =
+                currentVisit.CreatedDate.AddMinutes(1);
+
+            var appointmentToComplete =
+                await _context.Appointments
+                    .Where(
+                        appointment =>
+                            appointment.PatientID == patientId
+                            &&
+                            appointment.AppointmentDate.Date
+                                ==
+                                currentVisit.VisitDate.Date
+                            &&
+                            appointment.AppointmentStatus
+                                ==
+                                "Attended"
+                            &&
+                            appointment.CreatedDate
+                                <=
+                                latestAllowedAppointmentCreation
+                            &&
+                            (
+                                visitIsEvening
+                                    ? appointment.TimeFrom.Hours >= 12
+                                    : appointment.TimeFrom.Hours < 12
+                            )
+                    )
+                    .OrderByDescending(
+                        appointment =>
+                            appointment.CreatedDate
+                    )
+                    .ThenByDescending(
+                        appointment =>
+                            appointment.AppointmentID
+                    )
+                    .FirstOrDefaultAsync();
+
+            /*
+             * Fallback للبيانات القديمة التي قد لا تحتوي
+             * AppointmentPeriod أو CreatedDate بشكل متناسق.
+             */
+            if (appointmentToComplete == null)
+            {
+                appointmentToComplete =
+                    await _context.Appointments
+                        .Where(
+                            appointment =>
+                                appointment.PatientID == patientId
+                                &&
+                                appointment.AppointmentDate.Date
+                                    ==
+                                    currentVisit.VisitDate.Date
+                                &&
+                                appointment.AppointmentStatus
+                                    ==
+                                    "Attended"
+                        )
+                        .OrderByDescending(
+                            appointment =>
+                                appointment.CreatedDate
+                        )
+                        .ThenByDescending(
+                            appointment =>
+                                appointment.AppointmentID
+                        )
+                        .FirstOrDefaultAsync();
+            }
+
+            if (appointmentToComplete != null)
+            {
+                appointmentToComplete.AppointmentStatus =
+                    "Completed";
+            }
 
             await _context.SaveChangesAsync();
 
             TempData["VisitSuccess"] =
                 "Visit ended successfully. "
-                + "The visit is now read only for the student, "
-                + "and the note remains available for approval.";
+                +
+                "The appointment is completed and the patient "
+                +
+                "can now book a new appointment.";
 
             return RedirectToAction(
                 "Details",
