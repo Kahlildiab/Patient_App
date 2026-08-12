@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace DentalCollegeManagementSystem_AAU.Controllers
 {
     /*
-     * Student يستطيع دخول Index لمشاهدة المرضى المسندين إليه فقط.
-     * أما الإسناد والحذف وجلب قائمة الطلاب فهي محمية على مستوى كل Action.
+     * Index أصبح صفحة إدارية لعرض الطلاب ومعلومات الإسناد.
+     * بقية Actions بقيت كما هي للحفاظ على منطق الإسناد والتاريخ الحالي.
      */
     [AuthFilter(
         "Admin",
@@ -26,196 +26,359 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         }
 
         // =====================================================
-        // Index
+        // Index - Students table
         // =====================================================
-        public async Task<IActionResult> Index()
+        [AuthFilter(
+            "Admin",
+            "Fulltime Supervisor"
+        )]
+        public async Task<IActionResult> Index(
+            string? searchName,
+            string? studentNo,
+            string? email,
+            string? allocationStatus,
+            int page = 1
+        )
         {
-            string userRole =
-                HttpContext.Session.GetString("UserRole")
-                ?? string.Empty;
+            const int pageSize = 10;
 
-            List<Patient> patients;
+            // Keep system Student users synchronized with AppUsers.
+            List<int> activeStudentAppUserIds =
+                await EnsureAndGetActiveStudentAppUserIdsAsync();
+
+            var query =
+                _db.AppUsers
+                    .AsNoTracking()
+                    .Where(
+                        appUser =>
+                            activeStudentAppUserIds.Contains(appUser.Id)
+                    );
+
+            string normalizedName = NormalizeValue(searchName);
+            string normalizedStudentNo = NormalizeValue(studentNo);
+            string normalizedEmail = NormalizeValue(email);
+
+            if (!string.IsNullOrWhiteSpace(normalizedName))
+            {
+                query = query.Where(
+                    appUser =>
+                        (
+                            appUser.NameEn != null
+                            && appUser.NameEn.ToLower().Contains(normalizedName)
+                        )
+                        ||
+                        (
+                            appUser.NameAr != null
+                            && appUser.NameAr.ToLower().Contains(normalizedName)
+                        )
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(normalizedStudentNo))
+            {
+                query = query.Where(
+                    appUser =>
+                        appUser.UserLog != null
+                        && appUser.UserLog
+                            .ToLower()
+                            .Contains(normalizedStudentNo)
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(normalizedEmail))
+            {
+                query = query.Where(
+                    appUser =>
+                        appUser.Email != null
+                        && appUser.Email
+                            .ToLower()
+                            .Contains(normalizedEmail)
+                );
+            }
 
             if (
                 string.Equals(
-                    userRole,
-                    "Student",
+                    allocationStatus,
+                    "Assigned",
                     StringComparison.OrdinalIgnoreCase
                 )
             )
             {
-                /*
-                 * نحاول حل AppUserID حتى لو لم يكن موجوداً في Session.
-                 * يتم الربط باستخدام Username أو Email.
-                 */
-                int appUserId =
-                    await ResolveCurrentStudentAppUserIdAsync();
-
-                if (appUserId == 0)
-                {
-                    TempData["Error"] =
-                        "Your student account could not be linked to AppUsers.";
-
-                    ViewBag.CaseComplexityByPatient =
-                        new Dictionary<int, string>();
-
-                    return View(
-                        new List<Patient>()
-                    );
-                }
-
-                var assignedPatientIds =
-                    await _db.AllocatedStudents
-                        .AsNoTracking()
-                        .Where(
+                query = query.Where(
+                    appUser =>
+                        _db.AllocatedStudents.Any(
                             allocation =>
-                                allocation.AppUserId == appUserId
+                                allocation.AppUserId == appUser.Id
                                 && allocation.IsActive
                         )
-                        .Select(
-                            allocation =>
-                                allocation.PatientID
-                        )
-                        .Distinct()
-                        .ToListAsync();
-
-                /*
-                 * الطالب يشاهد فقط المرضى المسندين إليه
-                 * والذين حالتهم Allocated.
-                 */
-                patients =
-                    await _db.Patients
-                        .AsNoTracking()
-                        .Include(
-                            patient =>
-                                patient.Status
-                        )
-                        .Where(
-                            patient =>
-                                assignedPatientIds.Contains(
-                                    patient.PatientID
-                                )
-                                &&
-                                patient.PatientStatus == "Allocated"
-                                &&
-                                patient.StatusID != 6
-                        )
-                        .OrderBy(
-                            patient =>
-                                patient.FirstName
-                        )
-                        .ThenBy(
-                            patient =>
-                                patient.FourthName
-                        )
-                        .ToListAsync();
+                );
             }
-            else
+            else if (
+                string.Equals(
+                    allocationStatus,
+                    "Unassigned",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
             {
-                /*
-                 * Admin وSupervisors يشاهدون جميع المرضى
-                 * باستثناء المرضى المرفوضين.
-                 */
-                patients =
-                    await _db.Patients
-                        .AsNoTracking()
-                        .Include(
-                            patient =>
-                                patient.Status
+                query = query.Where(
+                    appUser =>
+                        !_db.AllocatedStudents.Any(
+                            allocation =>
+                                allocation.AppUserId == appUser.Id
+                                && allocation.IsActive
                         )
-                        .Where(
-                            patient =>
-                                patient.StatusID != 6
-                        )
-                        .OrderBy(
-                            patient =>
-                                patient.FirstName
-                        )
-                        .ThenBy(
-                            patient =>
-                                patient.FourthName
-                        )
-                        .ToListAsync();
+                );
             }
 
-            /*
-             * Case Complexity محفوظة داخل جدول Visits.
-             *
-             * نعتمد أول قيمة غير فارغة للمريض، وهو نفس
-             * المنطق المستخدم داخل صفحة Patient Details.
-             */
-            var patientIds =
-                patients
-                    .Select(
-                        patient =>
-                            patient.PatientID
+            int totalItems = await query.CountAsync();
+
+            int totalPages =
+                (int)Math.Ceiling(
+                    (double)totalItems / pageSize
+                );
+
+            if (page < 1)
+            {
+                page = 1;
+            }
+
+            if (totalPages > 0 && page > totalPages)
+            {
+                page = totalPages;
+            }
+
+            var students =
+                await query
+                    .OrderBy(
+                        appUser =>
+                            appUser.NameEn
                     )
-                    .Distinct()
+                    .ThenBy(
+                        appUser =>
+                            appUser.UserLog
+                    )
+                    .Skip(
+                        (page - 1) * pageSize
+                    )
+                    .Take(pageSize)
+                    .Select(
+                        appUser =>
+                            new AllocatedStudentRowViewModel
+                            {
+                                AppUserId = appUser.Id,
+
+                                StudentNumber =
+                                    appUser.UserLog ?? string.Empty,
+
+                                FullName =
+                                    appUser.NameEn == null
+                                    || appUser.NameEn == ""
+                                        ? appUser.UserLog ?? string.Empty
+                                        : appUser.NameEn,
+
+                                Email =
+                                    appUser.Email ?? string.Empty,
+
+                                PhoneNumber =
+                                    appUser.Mobile ?? string.Empty,
+
+                                AccountStatus =
+                                    appUser.Status == null
+                                    || appUser.Status == ""
+                                        ? "Active"
+                                        : appUser.Status
+                            }
+                    )
+                    .ToListAsync();
+
+            var pageStudentIds =
+                students
+                    .Select(student => student.AppUserId)
                     .ToList();
 
-            var caseComplexityByPatient =
-                new Dictionary<int, string>();
+            var patientCounts =
+                await _db.AllocatedStudents
+                    .AsNoTracking()
+                    .Where(
+                        allocation =>
+                            pageStudentIds.Contains(allocation.AppUserId)
+                            && allocation.IsActive
+                    )
+                    .GroupBy(
+                        allocation =>
+                            allocation.AppUserId
+                    )
+                    .Select(
+                        group => new
+                        {
+                            AppUserId = group.Key,
+                            Count = group
+                                .Select(allocation => allocation.PatientID)
+                                .Distinct()
+                                .Count()
+                        }
+                    )
+                    .ToDictionaryAsync(
+                        item => item.AppUserId,
+                        item => item.Count
+                    );
 
-            if (patientIds.Any())
+            foreach (var student in students)
             {
-                var complexityRows =
-                    await _db.Visits
-                        .AsNoTracking()
-                        .Where(
-                            visit =>
-                                patientIds.Contains(
-                                    visit.PatientID
-                                )
-                                &&
-                                visit.CaseComplexity != null
-                                &&
-                                visit.CaseComplexity != ""
-                        )
-                        .OrderBy(
-                            visit =>
-                                visit.VisitDate
-                        )
-                        .ThenBy(
-                            visit =>
-                                visit.VisitID
-                        )
-                        .Select(
-                            visit => new
-                            {
-                                visit.PatientID,
-                                visit.CaseComplexity
-                            }
-                        )
-                        .ToListAsync();
-
-                caseComplexityByPatient =
-                    complexityRows
-                        .Where(
-                            row =>
-                                !string.IsNullOrWhiteSpace(
-                                    row.CaseComplexity
-                                )
-                        )
-                        .GroupBy(
-                            row =>
-                                row.PatientID
-                        )
-                        .ToDictionary(
-                            group =>
-                                group.Key,
-
-                            group =>
-                                group
-                                    .First()
-                                    .CaseComplexity!
-                                    .Trim()
-                        );
+                student.AssignedPatientsCount =
+                    patientCounts.TryGetValue(
+                        student.AppUserId,
+                        out int count
+                    )
+                        ? count
+                        : 0;
             }
 
-            ViewBag.CaseComplexityByPatient =
-                caseComplexityByPatient;
+            int totalActiveStudents = activeStudentAppUserIds.Count;
 
-            return View(patients);
+            int totalAssignedStudents =
+                await _db.AllocatedStudents
+                    .AsNoTracking()
+                    .Where(
+                        allocation =>
+                            activeStudentAppUserIds.Contains(allocation.AppUserId)
+                            && allocation.IsActive
+                    )
+                    .Select(
+                        allocation =>
+                            allocation.AppUserId
+                    )
+                    .Distinct()
+                    .CountAsync();
+
+            var model =
+                new AllocatedStudentIndexViewModel
+                {
+                    Students = students,
+                    SearchName = searchName?.Trim() ?? string.Empty,
+                    StudentNo = studentNo?.Trim() ?? string.Empty,
+                    Email = email?.Trim() ?? string.Empty,
+                    AllocationStatus = allocationStatus?.Trim() ?? string.Empty,
+                    CurrentPage = page,
+                    TotalPages = totalPages,
+                    TotalItems = totalItems,
+                    PageSize = pageSize,
+                    TotalActiveStudents = totalActiveStudents,
+                    TotalAssignedStudents = totalAssignedStudents,
+                    TotalUnassignedStudents =
+                        Math.Max(
+                            0,
+                            totalActiveStudents - totalAssignedStudents
+                        )
+                };
+
+            return View(model);
+        }
+
+        // =====================================================
+        // Get active patients assigned to one student - Admin only
+        // =====================================================
+        [HttpGet]
+        [AuthFilter(
+            "Admin",
+            "Fulltime Supervisor"
+        )]
+        public async Task<IActionResult> GetStudentPatients(
+            int appUserId
+        )
+        {
+            List<int> activeStudentAppUserIds =
+                await EnsureAndGetActiveStudentAppUserIdsAsync();
+
+            if (!activeStudentAppUserIds.Contains(appUserId))
+            {
+                return NotFound(
+                    new
+                    {
+                        success = false,
+                        message = "Student not found."
+                    }
+                );
+            }
+
+            var student =
+                await _db.AppUsers
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        appUser => appUser.Id == appUserId
+                    );
+
+            if (student == null)
+            {
+                return NotFound(
+                    new
+                    {
+                        success = false,
+                        message = "Student not found."
+                    }
+                );
+            }
+
+            var patientRows =
+                await (
+                    from allocation in _db.AllocatedStudents.AsNoTracking()
+                    join patient in _db.Patients.AsNoTracking()
+                        on allocation.PatientID equals patient.PatientID
+                    where
+                        allocation.AppUserId == appUserId
+                        && allocation.IsActive
+                    orderby allocation.AssignedDate descending
+                    select new
+                    {
+                        patientId = patient.PatientID,
+                        name =
+                            ((patient.FirstName ?? "") + " " +
+                             (patient.SecondName ?? "") + " " +
+                             (patient.ThirdName ?? "") + " " +
+                             (patient.FourthName ?? "")).Trim(),
+                        nationalId =
+                            patient.NationalID_PassportNumber ?? "",
+                        gender = patient.Gender ?? "",
+                        status =
+                            string.IsNullOrWhiteSpace(patient.PatientStatus)
+                                ? "Screening"
+                                : patient.PatientStatus,
+                        assignedDate = allocation.AssignedDate
+                    }
+                )
+                .ToListAsync();
+
+            var patients =
+                patientRows
+                    .GroupBy(patient => patient.patientId)
+                    .Select(group => group.First())
+                    .Select(
+                        patient => new
+                        {
+                            patient.patientId,
+                            patient.name,
+                            patient.nationalId,
+                            patient.gender,
+                            patient.status,
+                            assignedDate =
+                                patient.assignedDate.ToString("dd/MM/yyyy HH:mm")
+                        }
+                    )
+                    .ToList();
+
+            return Json(
+                new
+                {
+                    success = true,
+                    studentName =
+                        string.IsNullOrWhiteSpace(student.NameEn)
+                            ? student.UserLog
+                            : student.NameEn,
+                    count = patients.Count,
+                    patients
+                }
+            );
         }
 
         // =====================================================

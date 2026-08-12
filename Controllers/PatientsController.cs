@@ -999,7 +999,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
             int id,
-            [Bind("PatientID,FirstName,SecondName,ThirdName,FourthName,NationalID_PassportNumber,Nationality,Gender,DateOfBirth,PhoneNumber,Address,FatherName,FatherPhone,MotherName,MotherPhone,AppointmentDate,AppointmentTime,ProfilePhotoPath")]
+            [Bind("PatientID,FirstName,SecondName,ThirdName,FourthName,NationalID_PassportNumber,Nationality,Gender,DateOfBirth,PhoneNumber,Address,FatherName,FatherPhone,MotherName,MotherPhone")]
             Patient patient,
             IFormFile? ProfilePhotoFile,
             string? RemovePhoto)
@@ -1009,34 +1009,29 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 return NotFound();
             }
 
+            /*
+             * نحافظ على نفس حماية الزيارة المغلقة الموجودة في النظام.
+             * الطالب/المستخدم العادي لا يستطيع تعديل بيانات المريض
+             * بعد إغلاق الزيارة، بينما الـ Admin يستطيع ذلك.
+             */
             var latestVisit =
                 await _context.Visits
-                    .Where(
-                        v => v.PatientID == id
-                    )
-                    .OrderByDescending(
-                        v => v.VisitDate
-                    )
-                    .ThenByDescending(
-                        v => v.VisitID
-                    )
+                    .Where(v => v.PatientID == id)
+                    .OrderByDescending(v => v.VisitDate)
+                    .ThenByDescending(v => v.VisitID)
                     .FirstOrDefaultAsync();
 
             bool isAdmin =
                 string.Equals(
-                    HttpContext.Session.GetString(
-                        "UserRole"
-                    ),
+                    HttpContext.Session.GetString("UserRole"),
                     "Admin",
                     StringComparison.OrdinalIgnoreCase
                 );
 
             if (
                 latestVisit != null
-                &&
-                latestVisit.IsClosed
-                &&
-                !isAdmin
+                && latestVisit.IsClosed
+                && !isAdmin
             )
             {
                 TempData["Error"] =
@@ -1052,6 +1047,15 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
             }
 
+            /*
+             * مهم جداً:
+             * نقرأ السجل الحقيقي من قاعدة البيانات ثم نعدل فقط
+             * الحقول الموجودة فعلياً في شاشة Edit.
+             *
+             * لا نستخدم _context.Update(patient)
+             * حتى لا تتأثر StatusID / PatientStatus / AttendanceStatus
+             * أو بيانات الموعد أو أي أعمدة أخرى غير موجودة في الصفحة.
+             */
             var existingPatient =
                 await _context.Patients
                     .FirstOrDefaultAsync(
@@ -1063,120 +1067,117 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 return NotFound();
             }
 
-            string submittedTime =
-                (
-                    patient.AppointmentTime
-                    ??
-                    string.Empty
-                )
-                .Trim()
-                .ToUpperInvariant();
-
-            bool isEveningAppointment =
-                submittedTime == "PM"
-                ||
-                submittedTime == "13:00"
-                ||
-                submittedTime == "PM|13:00";
-
-            string normalizedAppointmentTime =
-                isEveningAppointment
-                    ? "13:00"
-                    : "09:00";
-
             /*
-             * قيمة العرض يجب أن تطابق قيم أزرار الراديو
-             * الموجودة في Edit.cshtml: AM أو PM.
+             * شاشة Edit الحالية لا تعدل الموعد.
+             * لذلك لا نسمح لأي Validation خاص بالموعد أن يمنع
+             * تعديل معلومات المريض الأساسية.
              */
-            string appointmentPeriodForView =
-                isEveningAppointment
-                    ? "PM"
-                    : "AM";
-
-            TimeSpan newTimeFrom =
-                isEveningAppointment
-                    ? new TimeSpan(13, 0, 0)
-                    : new TimeSpan(9, 0, 0);
-
-            TimeSpan newTimeTo =
-                newTimeFrom.Add(
-                    TimeSpan.FromHours(2)
-                );
-
-            bool appointmentDateIsValid =
-                patient.AppointmentDate != default
-                &&
-                patient.AppointmentDate.Year >= 2000;
-
-            if (!appointmentDateIsValid)
-            {
-                ModelState.AddModelError(
-                    "AppointmentDate",
-                    "Please select a valid appointment date."
-                );
-            }
-            else if (
-                patient.AppointmentDate.Date
-                <
-                DateTime.Today
-            )
-            {
-                ModelState.AddModelError(
-                    "AppointmentDate",
-                    "You cannot select a past appointment date. Please choose today or a future date."
-                );
-            }
+            ModelState.Remove(nameof(Patient.AppointmentDate));
+            ModelState.Remove(nameof(Patient.AppointmentTime));
+            ModelState.Remove(nameof(Patient.ProfilePhotoPath));
 
             /*
-             * نمنع تجاوز سعة 10 مرضى في نفس الموعد.
-             * لا يتم تنفيذ فحص السعة إذا كان التاريخ غير صالح
-             * أو كان أقدم من تاريخ اليوم.
-             *
-             * نستثني المريض الحالي حتى لا يُحسب على نفسه
-             * عند حفظ نفس الموعد من جديد.
+             * منع استخدام نفس National ID / Passport
+             * لمريض آخر.
              */
             if (
-                appointmentDateIsValid
-                &&
-                patient.AppointmentDate.Date
-                    >= DateTime.Today
+                !string.IsNullOrWhiteSpace(
+                    patient.NationalID_PassportNumber
+                )
             )
             {
-                int slotCount =
-                    await _context.Appointments
-                        .CountAsync(
-                            a =>
-                                a.PatientID != id
-                                &&
-                                a.AppointmentStatus == "Scheduled"
-                                &&
-                                a.AppointmentDate.Date
-                                    == patient.AppointmentDate.Date
-                                &&
-                                a.TimeFrom == newTimeFrom
-                        );
+                string enteredId =
+                    patient.NationalID_PassportNumber.Trim();
 
-                if (slotCount >= 10)
+                bool duplicateId =
+                    await _context.Patients.AnyAsync(
+                        p =>
+                            p.PatientID != id
+                            && p.NationalID_PassportNumber == enteredId
+                    );
+
+                if (duplicateId)
                 {
                     ModelState.AddModelError(
-                        "AppointmentTime",
-                        $"The selected appointment on {patient.AppointmentDate:yyyy-MM-dd} at {normalizedAppointmentTime} is full (10/10)."
+                        nameof(Patient.NationalID_PassportNumber),
+                        "This National ID / Passport Number is already used by another patient."
+                    );
+                }
+            }
+
+            bool removePhotoRequested =
+                string.Equals(
+                    RemovePhoto,
+                    "true",
+                    StringComparison.OrdinalIgnoreCase
+                );
+
+            /*
+             * التحقق من الصورة قبل تعديل أي شيء في قاعدة البيانات.
+             */
+            if (
+                !removePhotoRequested
+                && ProfilePhotoFile != null
+                && ProfilePhotoFile.Length > 0
+            )
+            {
+                string extension =
+                    Path.GetExtension(
+                        ProfilePhotoFile.FileName
+                    )
+                    .ToLowerInvariant();
+
+                string[] allowedExtensions =
+                {
+                    ".jpg",
+                    ".jpeg",
+                    ".png"
+                };
+
+                string[] allowedContentTypes =
+                {
+                    "image/jpeg",
+                    "image/png",
+                    "image/jpg"
+                };
+
+                if (
+                    !allowedExtensions.Contains(extension)
+                    || !allowedContentTypes.Contains(
+                        ProfilePhotoFile.ContentType
+                    )
+                )
+                {
+                    ModelState.AddModelError(
+                        "ProfilePhotoFile",
+                        "Only JPG or PNG files are supported."
+                    );
+                }
+
+                if (
+                    ProfilePhotoFile.Length
+                    > 2 * 1024 * 1024
+                )
+                {
+                    ModelState.AddModelError(
+                        "ProfilePhotoFile",
+                        "Image size must be less than 2MB."
                     );
                 }
             }
 
             if (!ModelState.IsValid)
             {
+                /*
+                 * نرجع الصورة الأصلية للـ View فقط.
+                 * لا يتم حفظ أي تعديل في قاعدة البيانات.
+                 */
                 patient.ProfilePhotoPath =
                     existingPatient.ProfilePhotoPath;
 
-                patient.AppointmentTime =
-                    appointmentPeriodForView;
-
                 ViewBag.IsVisitClosed =
                     latestVisit != null
-                    &&
-                    latestVisit.IsClosed;
+                    && latestVisit.IsClosed;
 
                 ViewBag.IsAdmin =
                     isAdmin;
@@ -1187,22 +1188,72 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 return View(patient);
             }
 
-            /*
-             * لا نستخدم BeginTransactionAsync هنا.
-             *
-             * Program.cs يحتوي على EnableRetryOnFailure، ولذلك
-             * SqlServerRetryingExecutionStrategy لا يدعم Transaction
-             * يدوية خارج CreateExecutionStrategy.
-             *
-             * يوجد SaveChangesAsync واحد فقط في هذه العملية،
-             * وEF Core ينفذه داخل Transaction تلقائية.
-             */
+            string? oldPhotoPath =
+                existingPatient.ProfilePhotoPath;
+
+            string? newPhotoRelativePath = null;
+            string? newPhotoFullPath = null;
+
             try
             {
                 /*
-                 * تحديث بيانات المريض يدوياً حتى لا يتم مسح
-                 * StatusID أو PatientStatus أو AttendanceStatus
-                 * أو أي أعمدة غير موجودة في نموذج Edit.
+                 * إذا تم رفع صورة جديدة:
+                 * نحفظ الصورة الجديدة أولاً.
+                 * الصورة القديمة لا نحذفها إلا بعد نجاح SaveChangesAsync.
+                 */
+                if (
+                    !removePhotoRequested
+                    && ProfilePhotoFile != null
+                    && ProfilePhotoFile.Length > 0
+                )
+                {
+                    string extension =
+                        Path.GetExtension(
+                            ProfilePhotoFile.FileName
+                        )
+                        .ToLowerInvariant();
+
+                    string uploadsFolder =
+                        Path.Combine(
+                            Directory.GetCurrentDirectory(),
+                            "wwwroot",
+                            "uploads",
+                            "patients"
+                        );
+
+                    Directory.CreateDirectory(
+                        uploadsFolder
+                    );
+
+                    string fileName =
+                        $"{Guid.NewGuid()}{extension}";
+
+                    newPhotoFullPath =
+                        Path.Combine(
+                            uploadsFolder,
+                            fileName
+                        );
+
+                    await using (
+                        var stream =
+                            new FileStream(
+                                newPhotoFullPath,
+                                FileMode.Create
+                            )
+                    )
+                    {
+                        await ProfilePhotoFile
+                            .CopyToAsync(stream);
+                    }
+
+                    newPhotoRelativePath =
+                        $"/uploads/patients/{fileName}";
+                }
+
+                /*
+                 * ================================
+                 * تحديث الحقول الموجودة في الصفحة فقط
+                 * ================================
                  */
                 existingPatient.FirstName =
                     patient.FirstName;
@@ -1217,7 +1268,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     patient.FourthName;
 
                 existingPatient.NationalID_PassportNumber =
-                    patient.NationalID_PassportNumber;
+                    patient.NationalID_PassportNumber?
+                        .Trim();
 
                 existingPatient.Nationality =
                     patient.Nationality;
@@ -1247,144 +1299,80 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     patient.MotherPhone;
 
                 /*
-                 * تحديث نسخة الموعد الموجودة في Patient
-                 * حتى تبقى الفلاتر والشاشات القديمة متوافقة.
+                 * ================================
+                 * Profile Photo
+                 * ================================
+                 *
+                 * 1- RemovePhoto = true:
+                 *    امسح مسار الصورة من السجل.
+                 *
+                 * 2- تم رفع صورة جديدة:
+                 *    استبدل المسار بالصورة الجديدة.
+                 *
+                 * 3- لا حذف ولا رفع:
+                 *    اترك الصورة القديمة كما هي.
                  */
-                existingPatient.AppointmentDate =
-                    patient.AppointmentDate.Date;
-
-                existingPatient.AppointmentTime =
-                    normalizedAppointmentTime;
-
-                /*
-                 * تحديث الصورة من دون فقدان الصورة القديمة
-                 * إذا لم يرفع المستخدم ملفاً جديداً.
-                 */
-                if (RemovePhoto == "true")
+                if (removePhotoRequested)
                 {
-                    if (
-                        !string.IsNullOrWhiteSpace(
-                            existingPatient.ProfilePhotoPath
-                        )
-                    )
-                    {
-                        string oldFilePath =
-                            Path.Combine(
-                                Directory.GetCurrentDirectory(),
-                                "wwwroot",
-                                existingPatient
-                                    .ProfilePhotoPath
-                                    .TrimStart('/')
-                                    .Replace(
-                                        '/',
-                                        Path.DirectorySeparatorChar
-                                    )
-                            );
-
-                        if (
-                            System.IO.File.Exists(
-                                oldFilePath
-                            )
-                        )
-                        {
-                            System.IO.File.Delete(
-                                oldFilePath
-                            );
-                        }
-                    }
-
                     existingPatient.ProfilePhotoPath =
                         null;
                 }
                 else if (
-                    ProfilePhotoFile != null
-                    &&
-                    ProfilePhotoFile.Length > 0
+                    !string.IsNullOrWhiteSpace(
+                        newPhotoRelativePath
+                    )
                 )
                 {
-                    string[] allowedTypes =
-                    {
-                        "image/jpeg",
-                        "image/png",
-                        "image/jpg"
-                    };
+                    existingPatient.ProfilePhotoPath =
+                        newPhotoRelativePath;
+                }
 
-                    if (
-                        !allowedTypes.Contains(
-                            ProfilePhotoFile.ContentType
-                        )
+                /*
+                 * SaveChanges واحد فقط.
+                 *
+                 * لا يتم هنا تعديل:
+                 * - AppointmentDate
+                 * - AppointmentTime
+                 * - Appointments table
+                 * - StatusID
+                 * - PatientStatus
+                 * - AttendanceStatus
+                 * - أي بيانات أخرى للمريض
+                 */
+                await _context.SaveChangesAsync();
+
+                /*
+                 * بعد نجاح الحفظ فقط نحذف الصورة القديمة
+                 * إذا طلب المستخدم حذفها أو استبدالها.
+                 */
+                bool oldPhotoShouldBeDeleted =
+                    !string.IsNullOrWhiteSpace(
+                        oldPhotoPath
                     )
-                    {
-                        ModelState.AddModelError(
-                            "ProfilePhotoFile",
-                            "Only JPG or PNG files are supported."
-                        );
-
-                        patient.ProfilePhotoPath =
-                            existingPatient
-                                .ProfilePhotoPath;
-
-                        patient.AppointmentTime =
-                            appointmentPeriodForView;
-
-                        ViewBag.IsVisitClosed =
-                            latestVisit != null
-                            &&
-                            latestVisit.IsClosed;
-
-                        ViewBag.IsAdmin =
-                            isAdmin;
-
-                        ViewBag.IsReadOnly =
-                            false;
-
-                        return View(patient);
-                    }
-
-                    if (
-                        ProfilePhotoFile.Length
-                        >
-                        2 * 1024 * 1024
-                    )
-                    {
-                        ModelState.AddModelError(
-                            "ProfilePhotoFile",
-                            "Image size must be less than 2MB."
-                        );
-
-                        patient.ProfilePhotoPath =
-                            existingPatient
-                                .ProfilePhotoPath;
-
-                        patient.AppointmentTime =
-                            appointmentPeriodForView;
-
-                        ViewBag.IsVisitClosed =
-                            latestVisit != null
-                            &&
-                            latestVisit.IsClosed;
-
-                        ViewBag.IsAdmin =
-                            isAdmin;
-
-                        ViewBag.IsReadOnly =
-                            false;
-
-                        return View(patient);
-                    }
-
-                    if (
+                    &&
+                    (
+                        removePhotoRequested
+                        ||
                         !string.IsNullOrWhiteSpace(
-                            existingPatient.ProfilePhotoPath
+                            newPhotoRelativePath
                         )
                     )
+                    &&
+                    !string.Equals(
+                        oldPhotoPath,
+                        newPhotoRelativePath,
+                        StringComparison.OrdinalIgnoreCase
+                    );
+
+                if (oldPhotoShouldBeDeleted)
+                {
+                    try
                     {
                         string oldFilePath =
                             Path.Combine(
                                 Directory.GetCurrentDirectory(),
                                 "wwwroot",
-                                existingPatient
-                                    .ProfilePhotoPath
+                                oldPhotoPath!
                                     .TrimStart('/')
                                     .Replace(
                                         '/',
@@ -1403,127 +1391,24 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                             );
                         }
                     }
-
-                    string uploadsFolder =
-                        Path.Combine(
-                            Directory.GetCurrentDirectory(),
-                            "wwwroot",
-                            "uploads",
-                            "patients"
-                        );
-
-                    Directory.CreateDirectory(
-                        uploadsFolder
-                    );
-
-                    string fileName =
-                        $"{Guid.NewGuid()}{Path.GetExtension(ProfilePhotoFile.FileName)}";
-
-                    string filePath =
-                        Path.Combine(
-                            uploadsFolder,
-                            fileName
-                        );
-
-                    await using (
-                        var stream =
-                            new FileStream(
-                                filePath,
-                                FileMode.Create
-                            )
-                    )
+                    catch (Exception fileDeleteEx)
                     {
-                        await ProfilePhotoFile
-                            .CopyToAsync(stream);
+                        /*
+                         * لا نفشل عملية تعديل بيانات المريض
+                         * فقط لأن حذف الملف القديم فشل.
+                         */
+                        Console.WriteLine(
+                            "Old patient photo delete warning: "
+                            + fileDeleteEx
+                        );
                     }
-
-                    existingPatient.ProfilePhotoPath =
-                        $"/uploads/patients/{fileName}";
                 }
-
-                /*
-                 * هذا هو الإصلاح الأساسي:
-                 * تحديث الموعد الحقيقي في جدول Appointments.
-                 */
-                var scheduledAppointment =
-                    await _context.Appointments
-                        .Where(
-                            a =>
-                                a.PatientID == id
-                                &&
-                                a.AppointmentStatus
-                                    == "Scheduled"
-                        )
-                        .OrderBy(
-                            a => a.AppointmentDate
-                        )
-                        .ThenBy(
-                            a => a.TimeFrom
-                        )
-                        .FirstOrDefaultAsync();
-
-                if (scheduledAppointment == null)
-                {
-                    scheduledAppointment =
-                        new Appointment
-                        {
-                            PatientID =
-                                id,
-
-                            ClinicName =
-                                "General",
-
-                            AppointmentStatus =
-                                "Scheduled",
-
-                            CreatedDate =
-                                DateTime.Now
-                        };
-
-                    _context.Appointments.Add(
-                        scheduledAppointment
-                    );
-                }
-
-                scheduledAppointment.AppointmentDate =
-                    patient.AppointmentDate.Date;
-
-                scheduledAppointment.AppointmentDay =
-                    patient.AppointmentDate
-                        .DayOfWeek
-                        .ToString();
-
-                scheduledAppointment.TimeFrom =
-                    newTimeFrom;
-
-                scheduledAppointment.TimeTo =
-                    newTimeTo;
-
-                scheduledAppointment.AppointmentStatus =
-                    "Scheduled";
-
-                await _context.SaveChangesAsync();
-
-                string formattedTime =
-                    DateTime.Today
-                        .Add(newTimeFrom)
-                        .ToString("hh:mm tt");
 
                 TempData["Success"] =
-                    "Patient appointment was updated successfully to "
-                    +
-                    patient.AppointmentDate
-                        .ToString("yyyy-MM-dd")
-                    +
-                    " at "
-                    +
-                    formattedTime
-                    +
-                    ".";
+                    "Patient information updated successfully.";
 
                 /*
-                 * العودة إلى Home/Index حتى تظهر الرسالة
-                 * والموعد المعدل في Next Appointment.
+                 * نحافظ على نفس وجهة الرجوع الموجودة في الكنترولر السابق.
                  */
                 return RedirectToAction(
                     "Index",
@@ -1532,6 +1417,31 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             }
             catch (DbUpdateConcurrencyException ex)
             {
+                /*
+                 * إذا فشل حفظ قاعدة البيانات والصورة الجديدة
+                 * كانت قد تم إنشاؤها، نحذفها حتى لا يبقى ملف يتيم.
+                 */
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        newPhotoFullPath
+                    )
+                    && System.IO.File.Exists(
+                        newPhotoFullPath
+                    )
+                )
+                {
+                    try
+                    {
+                        System.IO.File.Delete(
+                            newPhotoFullPath
+                        );
+                    }
+                    catch
+                    {
+                        // لا نغطي خطأ الـ DB بخطأ حذف ملف.
+                    }
+                }
+
                 if (!PatientExists(id))
                 {
                     return NotFound();
@@ -1549,15 +1459,11 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
 
                 patient.ProfilePhotoPath =
-                    existingPatient.ProfilePhotoPath;
-
-                patient.AppointmentTime =
-                    appointmentPeriodForView;
+                    oldPhotoPath;
 
                 ViewBag.IsVisitClosed =
                     latestVisit != null
-                    &&
-                    latestVisit.IsClosed;
+                    && latestVisit.IsClosed;
 
                 ViewBag.IsAdmin =
                     isAdmin;
@@ -1569,10 +1475,30 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             }
             catch (DbUpdateException ex)
             {
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        newPhotoFullPath
+                    )
+                    && System.IO.File.Exists(
+                        newPhotoFullPath
+                    )
+                )
+                {
+                    try
+                    {
+                        System.IO.File.Delete(
+                            newPhotoFullPath
+                        );
+                    }
+                    catch
+                    {
+                        // لا نغطي خطأ الـ DB بخطأ حذف ملف.
+                    }
+                }
+
                 string databaseError =
                     ex.InnerException?.Message
-                    ??
-                    ex.Message;
+                    ?? ex.Message;
 
                 Console.WriteLine(
                     "Patient edit database error: "
@@ -1581,20 +1507,16 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
                 ModelState.AddModelError(
                     string.Empty,
-                    "Database error while updating the patient appointment: "
+                    "Database error while updating the patient information: "
                     + databaseError
                 );
 
                 patient.ProfilePhotoPath =
-                    existingPatient.ProfilePhotoPath;
-
-                patient.AppointmentTime =
-                    appointmentPeriodForView;
+                    oldPhotoPath;
 
                 ViewBag.IsVisitClosed =
                     latestVisit != null
-                    &&
-                    latestVisit.IsClosed;
+                    && latestVisit.IsClosed;
 
                 ViewBag.IsAdmin =
                     isAdmin;
@@ -1606,6 +1528,27 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             }
             catch (Exception ex)
             {
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        newPhotoFullPath
+                    )
+                    && System.IO.File.Exists(
+                        newPhotoFullPath
+                    )
+                )
+                {
+                    try
+                    {
+                        System.IO.File.Delete(
+                            newPhotoFullPath
+                        );
+                    }
+                    catch
+                    {
+                        // لا نغطي الخطأ الأصلي بخطأ حذف ملف.
+                    }
+                }
+
                 Console.WriteLine(
                     "Patient edit error: "
                     + ex
@@ -1618,15 +1561,11 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 );
 
                 patient.ProfilePhotoPath =
-                    existingPatient.ProfilePhotoPath;
-
-                patient.AppointmentTime =
-                    appointmentPeriodForView;
+                    oldPhotoPath;
 
                 ViewBag.IsVisitClosed =
                     latestVisit != null
-                    &&
-                    latestVisit.IsClosed;
+                    && latestVisit.IsClosed;
 
                 ViewBag.IsAdmin =
                     isAdmin;

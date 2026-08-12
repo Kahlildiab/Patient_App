@@ -100,6 +100,19 @@
 
         return $"{parts[0]} — {slotName}";
     }
+
+    string RadiographPhotoUrl(string? storedPath)
+    {
+        string cleanPath = (storedPath ?? string.Empty)
+            .Replace("\\", "/")
+            .TrimStart('/');
+
+        string pathBase =
+            Context.Request.PathBase.Value?.TrimEnd('/')
+            ?? string.Empty;
+
+        return $"{pathBase}/{cleanPath}";
+    }
 }
 
 <style>
@@ -630,9 +643,11 @@
                         <div class="rad-slot-body">
                             @if (existing != null)
                             {
-                                <img src="@existing.PhotoPath"
+                                var existingPhotoUrl = RadiographPhotoUrl(existing.PhotoPath);
+
+                                <img src="@existingPhotoUrl"
                                      alt="@slot.Label"
-                                     onclick="openRadLightbox('@existing.PhotoPath')" />
+                                     onclick="openRadLightbox('@existingPhotoUrl')" />
 
                                 <button type="button"
                                         class="rad-slot-delete"
@@ -713,9 +728,11 @@
                         <div class="rad-slot-body">
                             @if (existing != null)
                             {
-                                <img src="@existing.PhotoPath"
+                                var existingPhotoUrl = RadiographPhotoUrl(existing.PhotoPath);
+
+                                <img src="@existingPhotoUrl"
                                      alt="@slot.Label"
-                                     onclick="openRadLightbox('@existing.PhotoPath')" />
+                                     onclick="openRadLightbox('@existingPhotoUrl')" />
 
                                 <button type="button"
                                         class="rad-slot-delete"
@@ -805,9 +822,11 @@
                         <div class="rad-slot-body">
                             @if (existing != null)
                             {
-                                <img src="@existing.PhotoPath"
+                                var existingPhotoUrl = RadiographPhotoUrl(existing.PhotoPath);
+
+                                <img src="@existingPhotoUrl"
                                      alt="@slot.Label"
-                                     onclick="openRadLightbox('@existing.PhotoPath')" />
+                                     onclick="openRadLightbox('@existingPhotoUrl')" />
 
                                 <button type="button"
                                         class="rad-slot-delete"
@@ -925,13 +944,15 @@
                 )
             )
             {
+                var radiographPhotoUrl = RadiographPhotoUrl(radiograph.PhotoPath);
+
                 <div id="rad_@radiograph.RadiographID"
                      class="rad-gallery-card">
 
                     <div class="rad-gallery-image">
-                        <img src="@radiograph.PhotoPath"
+                        <img src="@radiographPhotoUrl"
                              alt="@DisplayRadiographType(radiograph.RadiographType)"
-                             onclick="openRadLightbox('@radiograph.PhotoPath')" />
+                             onclick="openRadLightbox('@radiographPhotoUrl')" />
                     </div>
 
                     <button type="button"
@@ -983,12 +1004,17 @@
 
 <script>
     const RAD_PATIENT_ID =
-        @Model.PatientID;
+            @Model.PatientID;
 
     const RAD_TOKEN =
         document.querySelector(
             'input[name="__RequestVerificationToken"]'
         )?.value ?? '';
+
+    const RAD_URLS = {
+        upload: '@Url.Action("Upload", "Radiographs")',
+        delete: '@Url.Action("Delete", "Radiographs")'
+    };
 
     function changeRadiographMode() {
         const type =
@@ -1183,67 +1209,71 @@
         );
 
         fetch(
-            '/Radiographs/Upload',
+            RAD_URLS.upload,
             {
                 method: 'POST',
                 body: data
             }
         )
-        .then(response => response.json())
-        .then(result => {
-            if (!result.success) {
+            .then(response => response.json())
+            .then(result => {
+                if (!result.success) {
+                    setRadStatus(
+                        result.message || 'Upload failed.',
+                        false
+                    );
+
+                    return;
+                }
+
+                result.photoPath =
+                    result.photoUrl
+                    || result.photoPath;
+
+                if (result.replacedPhotoId) {
+                    document.getElementById(
+                        `rad_${result.replacedPhotoId}`
+                    )?.remove();
+
+                    document.getElementById(
+                        `ph_rad_${result.replacedPhotoId}`
+                    )?.remove();
+                }
+
+                if (templateSlot) {
+                    updateTemplateSlot(
+                        result,
+                        templateSlot,
+                        displayType
+                    );
+                }
+
+                addGalleryCard(result);
+                refreshRadCount();
+
                 setRadStatus(
-                    result.message || 'Upload failed.',
+                    `${file.name} uploaded successfully.`,
+                    true
+                );
+
+                if (typeof showToast === 'function') {
+                    showToast(
+                        'Radiograph uploaded.',
+                        'success'
+                    );
+                }
+            })
+            .catch(() => {
+                setRadStatus(
+                    'Upload failed. Please try again.',
                     false
                 );
-
-                return;
-            }
-
-            if (result.replacedPhotoId) {
-                document.getElementById(
-                    `rad_${result.replacedPhotoId}`
-                )?.remove();
-
-                document.getElementById(
-                    `ph_rad_${result.replacedPhotoId}`
-                )?.remove();
-            }
-
-            if (templateSlot) {
-                updateTemplateSlot(
-                    result,
-                    templateSlot,
-                    displayType
-                );
-            }
-
-            addGalleryCard(result);
-            refreshRadCount();
-
-            setRadStatus(
-                `${file.name} uploaded successfully.`,
-                true
-            );
-
-            if (typeof showToast === 'function') {
-                showToast(
-                    'Radiograph uploaded.',
-                    'success'
-                );
-            }
-        })
-        .catch(() => {
-            setRadStatus(
-                'Upload failed. Please try again.',
-                false
-            );
-        })
-        .finally(() => {
-            if (sourceInput) {
-                sourceInput.value = '';
-            }
-        });
+            })
+            .finally(() => {
+                if (sourceInput) {
+                    sourceInput.value = '';
+                }
+            });
     }
 
     function updateTemplateSlot(
@@ -1266,17 +1296,17 @@
             );
 
         body.innerHTML = `
-            <img src="${escapeAttribute(result.photoPath)}"
-                 alt="${escapeAttribute(displayType)}"
-                 onclick="openRadLightbox('${escapeJs(result.photoPath)}')" />
+                <img src="${escapeAttribute(result.photoPath)}"
+                     alt="${escapeAttribute(displayType)}"
+                     onclick="openRadLightbox('${escapeJs(result.photoPath)}')" />
 
-            <button type="button"
-                    class="rad-slot-delete"
-                    onclick="deleteRadiograph(${result.photoId}, event)"
-                    title="Delete">
-                ✕
-            </button>
-        `;
+                <button type="button"
+                        class="rad-slot-delete"
+                        onclick="deleteRadiograph(${result.photoId}, event)"
+                        title="Delete">
+                    ✕
+                </button>
+            `;
 
         slot.querySelector(
             '.rad-slot-upload'
@@ -1308,33 +1338,33 @@
             'rad-gallery-card';
 
         card.innerHTML = `
-            <div class="rad-gallery-image">
-                <img src="${escapeAttribute(result.photoPath)}"
-                     alt="${escapeAttribute(result.displayType)}"
-                     onclick="openRadLightbox('${escapeJs(result.photoPath)}')" />
-            </div>
+                <div class="rad-gallery-image">
+                    <img src="${escapeAttribute(result.photoPath)}"
+                         alt="${escapeAttribute(result.displayType)}"
+                         onclick="openRadLightbox('${escapeJs(result.photoPath)}')" />
+                </div>
 
-            <button type="button"
-                    class="rad-gallery-delete"
-                    onclick="deleteRadiograph(${result.photoId}, event)"
-                    title="Delete">
-                ✕
-            </button>
+                <button type="button"
+                        class="rad-gallery-delete"
+                        onclick="deleteRadiograph(${result.photoId}, event)"
+                        title="Delete">
+                    ✕
+                </button>
 
-            <div class="rad-gallery-info">
-                <span class="rad-gallery-type">
-                    ${escapeHtml(result.displayType)}
-                </span>
+                <div class="rad-gallery-info">
+                    <span class="rad-gallery-type">
+                        ${escapeHtml(result.displayType)}
+                    </span>
 
-                <span class="rad-gallery-file">
-                    ${escapeHtml(result.fileName)}
-                </span>
+                    <span class="rad-gallery-file">
+                        ${escapeHtml(result.fileName)}
+                    </span>
 
-                <span class="rad-gallery-date">
-                    ${escapeHtml(result.uploadedDate)}
-                </span>
-            </div>
-        `;
+                    <span class="rad-gallery-date">
+                        ${escapeHtml(result.uploadedDate)}
+                    </span>
+                </div>
+            `;
 
         gallery.prepend(card);
     }
@@ -1370,49 +1400,49 @@
         );
 
         fetch(
-            '/Radiographs/Delete',
+            RAD_URLS.delete,
             {
                 method: 'POST',
                 body: data
             }
         )
-        .then(response => response.json())
-        .then(result => {
-            if (!result.success) {
+            .then(response => response.json())
+            .then(result => {
+                if (!result.success) {
+                    setRadStatus(
+                        result.message || 'Delete failed.',
+                        false
+                    );
+
+                    return;
+                }
+
+                document.getElementById(
+                    `rad_${photoId}`
+                )?.remove();
+
+                document.getElementById(
+                    `ph_rad_${photoId}`
+                )?.remove();
+
+                if (result.templateSlot) {
+                    clearTemplateSlot(
+                        result.templateSlot
+                    );
+                }
+
+                refreshRadCount();
                 setRadStatus(
-                    result.message || 'Delete failed.',
+                    'Radiograph deleted.',
+                    true
+                );
+            })
+            .catch(() => {
+                setRadStatus(
+                    'Server error while deleting.',
                     false
                 );
-
-                return;
-            }
-
-            document.getElementById(
-                `rad_${photoId}`
-            )?.remove();
-
-            document.getElementById(
-                `ph_rad_${photoId}`
-            )?.remove();
-
-            if (result.templateSlot) {
-                clearTemplateSlot(
-                    result.templateSlot
-                );
-            }
-
-            refreshRadCount();
-            setRadStatus(
-                'Radiograph deleted.',
-                true
-            );
-        })
-        .catch(() => {
-            setRadStatus(
-                'Server error while deleting.',
-                false
-            );
-        });
+            });
     }
 
     function clearTemplateSlot(templateSlot) {
@@ -1437,23 +1467,23 @@
         slot.querySelector(
             '.rad-slot-body'
         ).innerHTML = `
-            <div class="rad-slot-empty">
-                <svg width="29"
-                     height="29"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.8">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
+                <div class="rad-slot-empty">
+                    <svg width="29"
+                         height="29"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
 
-                <span>
-                    Upload ${escapeHtml(label)}
-                </span>
-            </div>
-        `;
+                    <span>
+                        Upload ${escapeHtml(label)}
+                    </span>
+                </div>
+            `;
 
         slot.querySelector(
             '.rad-slot-upload'
@@ -1541,7 +1571,7 @@
 
     document.addEventListener(
         'DOMContentLoaded',
-        function () {
+        function() {
             changeRadiographMode();
 
             const normalZone =
@@ -1551,7 +1581,7 @@
 
             normalZone.addEventListener(
                 'dragover',
-                function (event) {
+                function(event) {
                     event.preventDefault();
                     normalZone.style.borderColor =
                         '#1a237e';
@@ -1560,7 +1590,7 @@
 
             normalZone.addEventListener(
                 'dragleave',
-                function () {
+                function() {
                     normalZone.style.borderColor =
                         '#c5cad5';
                 }
@@ -1568,7 +1598,7 @@
 
             normalZone.addEventListener(
                 'drop',
-                function (event) {
+                function(event) {
                     event.preventDefault();
 
                     normalZone.style.borderColor =
@@ -1598,7 +1628,7 @@
             );
 
             const pageReadOnly =
-                @pageReadOnly.ToString().ToLower();
+                    @pageReadOnly.ToString().ToLower();
 
             const root =
                 document.getElementById(

@@ -187,32 +187,48 @@
             <div id="smokingDetailsDiv" style="display:@(sh?.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.CurrentSmoker || sh?.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.FormerSmoker ? "block" : "none"); margin-top:14px; border-top:1px dashed #ddd; padding-top:14px;">
                 <div style="font-size:12px; font-weight:600; color:#555; margin-bottom:8px;">Method of Smoking</div>
                 <div class="sh-grid-2" style="margin-bottom:12px;">
-                    <label class="sh-check-label"><input type="checkbox" name="SmokingMethodCigarettes" value="true" /> Cigarettes</label>
-                    <label class="sh-check-label"><input type="checkbox" name="SmokingMethodVape" value="true" /> Vape</label>
-                    <label class="sh-check-label"><input type="checkbox" name="SmokingMethodShisha" value="true" /> Shisha</label>
-                    <label class="sh-check-label"><input type="checkbox" name="SmokingMethodOther" value="true" /> Other</label>
+                    <label class="sh-check-label">
+                        <input type="checkbox" name="SmokingMethodCigarettes" value="true" />
+                        Cigarettes
+                    </label>
+                    <label class="sh-check-label">
+                        <input type="checkbox" name="SmokingMethodVape" value="true" />
+                        Vape
+                    </label>
+                    <label class="sh-check-label">
+                        <input type="checkbox" name="SmokingMethodShisha" value="true" />
+                        Shisha
+                    </label>
+                    <label class="sh-check-label">
+                        <input type="checkbox" name="SmokingMethodOther" value="true" />
+                        Other
+                    </label>
                 </div>
                 <div class="sh-grid-2">
                     <div>
                         <label class="sh-field-label">Duration</label>
-                        <input type="text" name="SmokingDuration" class="sh-text-input" placeholder="e.g., 5 years" />
+                        <input type="text" name="SmokingDuration" class="sh-text-input"
+                               placeholder="e.g., 5 years" />
                     </div>
-                    
+
                 </div>
                 <div style="margin-bottom:12px;">
                     <label class="sh-field-label">Quantity (per day/week)</label>
-                    <input type="text" name="SmokingQuantity" class="sh-text-input" placeholder="e.g., 10 cigarettes per day" />
+                    <input type="text" name="SmokingQuantity" class="sh-text-input"
+                           placeholder="e.g., 10 cigarettes per day" />
                 </div>
                 <div>
                     <label class="sh-field-label">Previous Attempts for Quitting</label>
-                    <textarea name="SmokingQuittingAttempts" class="sh-text-input" rows="3" placeholder="Describe previous quitting attempts..."></textarea>
+                    <textarea name="SmokingQuittingAttempts" class="sh-text-input" rows="3"
+                              placeholder="Describe previous quitting attempts..."></textarea>
                 </div>
             </div>
 
             <!-- DIV الثاني: Former فقط -->
             <div id="formerSmokingDiv" style="display:@(sh?.SmokingStatus == DentalCollegeManagementSystem_AAU.Models.SmokingStatusType.FormerSmoker ? "block" : "none"); margin-top:12px;">
                 <label class="sh-field-label">Previous Smoking History</label>
-                <textarea name="PreviousSmokingHistory" class="sh-text-input" rows="3" placeholder="Details about previous smoking..."></textarea>
+                <textarea name="PreviousSmokingHistory" class="sh-text-input" rows="3"
+                          placeholder="Details about previous smoking..."></textarea>
             </div>
         </div>
 
@@ -317,13 +333,102 @@
             function handleSmokingStatus(value) {
                 document.getElementById('smokingDetailsDiv').style.display =
                     (value === 'CurrentSmoker' || value === 'FormerSmoker') ? 'block' : 'none';
+
                 document.getElementById('formerSmokingDiv').style.display =
                     (value === 'FormerSmoker') ? 'block' : 'none';
+
                 saveSocialFormData();
+                saveSmokingDetailsLocal();
             }
 
             // ── sessionStorage ────────────────────────────────────────
             const SH_FORM_KEY = 'socialHistoryForm_@Model.PatientID';
+
+            // ── Smoking details localStorage ─────────────────────────────
+            // هذه الحقول غير موجودة في SocialHistory Model / DB.
+            // لذلك نحفظها محلياً حسب المريض بدون Migration.
+            const SH_SMOKING_KEY = 'socialHistorySmokingDetails_@Model.PatientID';
+
+            const SH_SMOKING_FIELDS = [
+                'SmokingMethodCigarettes',
+                'SmokingMethodVape',
+                'SmokingMethodShisha',
+                'SmokingMethodOther',
+                'SmokingDuration',
+                'SmokingQuantity',
+                'SmokingQuittingAttempts',
+                'PreviousSmokingHistory'
+            ];
+
+            function saveSmokingDetailsLocal() {
+                const form = document.querySelector('#social-history form');
+                if (!form) return;
+
+                const details = {};
+
+                SH_SMOKING_FIELDS.forEach(function(name) {
+                    const el = form.querySelector(`[name="${name}"]`);
+                    if (!el) return;
+
+                    if (el.type === 'checkbox') {
+                        details[name] = el.checked;
+                    } else {
+                        details[name] = el.value || '';
+                    }
+                });
+
+                localStorage.setItem(
+                    SH_SMOKING_KEY,
+                    JSON.stringify(details)
+                );
+            }
+
+            function restoreSmokingDetailsLocal() {
+                const form = document.querySelector('#social-history form');
+                if (!form) return;
+
+                const saved = localStorage.getItem(SH_SMOKING_KEY);
+                if (!saved) return;
+
+                let details;
+
+                try {
+                    details = JSON.parse(saved);
+                }
+                catch {
+                    localStorage.removeItem(SH_SMOKING_KEY);
+                    return;
+                }
+
+                SH_SMOKING_FIELDS.forEach(function(name) {
+                    const el = form.querySelector(`[name="${name}"]`);
+                    if (!el || !(name in details)) return;
+
+                    if (el.type === 'checkbox') {
+                        el.checked = details[name] === true;
+                    } else {
+                        el.value = details[name] ?? '';
+                    }
+                });
+            }
+
+            function clearSmokingDetailsLocal() {
+                localStorage.removeItem(SH_SMOKING_KEY);
+
+                const form = document.querySelector('#social-history form');
+                if (!form) return;
+
+                SH_SMOKING_FIELDS.forEach(function(name) {
+                    const el = form.querySelector(`[name="${name}"]`);
+                    if (!el) return;
+
+                    if (el.type === 'checkbox') {
+                        el.checked = false;
+                    } else {
+                        el.value = '';
+                    }
+                });
+            }
 
             function restoreSocialFormData() {
                 const saved = sessionStorage.getItem(SH_FORM_KEY);
@@ -366,48 +471,84 @@
             }
 
             // ── ربط الأحداث ───────────────────────────────────────────
-            document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('DOMContentLoaded', function() {
                 restoreSocialFormData();
+                restoreSmokingDetailsLocal();
 
                 const form = document.querySelector('#social-history form');
                 if (!form) return;
-                form.addEventListener('change', saveSocialFormData);
-                form.addEventListener('input', saveSocialFormData);
+
+                form.addEventListener('change', function(event) {
+                    saveSocialFormData();
+
+                    if (
+                        event.target &&
+                        SH_SMOKING_FIELDS.includes(event.target.name)
+                    ) {
+                        saveSmokingDetailsLocal();
+                    }
+                });
+
+                form.addEventListener('input', function(event) {
+                    saveSocialFormData();
+
+                    if (
+                        event.target &&
+                        SH_SMOKING_FIELDS.includes(event.target.name)
+                    ) {
+                        saveSmokingDetailsLocal();
+                    }
+                });
             });
 
             // ── Save ──────────────────────────────────────────────────
             function saveSocialHistory() {
-                const form    = document.querySelector('#social-history form');
-                const data    = new FormData(form);
+                const form = document.querySelector('#social-history form');
+
+                // نخزن تفاصيل التدخين محلياً قبل إرسال الحقول الموجودة في Model للسيرفر.
+                saveSmokingDetailsLocal();
+
+                const data = new FormData(form);
                 const saveBtn = document.getElementById('saveSocialHistoryBtn');
 
-                saveBtn.disabled  = true;
+                saveBtn.disabled = true;
                 saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
 
                 fetch('/SocialHistories/Save', { method: 'POST', body: data })
-                .then(res => res.json())
-                .then(result => {
-                    if (result.success) {
-                        clearSocialSavedData();
-                        showToast('Social History saved successfully.', 'success');
-                    } else {
-                        showToast(result.message || 'Error saving.', 'error');
-                    }
-                })
-                .catch(() => showToast('Server error. Please try again.', 'error'))
-                .finally(() => {
-                    saveBtn.disabled  = false;
-                    saveBtn.innerHTML = 'Save';
-                });
+                    .then(res => res.json())
+                    .then(result => {
+                        if (result.success) {
+                            clearSocialSavedData();
+
+                            const selectedSmokingStatus =
+                                form.querySelector('input[name="SmokingStatus"]:checked')?.value;
+
+                            // إذا اختار Never Smoked وحفظ، نمسح التفاصيل المحلية القديمة.
+                            if (selectedSmokingStatus === 'NeverSmoked') {
+                                clearSmokingDetailsLocal();
+                            } else {
+                                saveSmokingDetailsLocal();
+                            }
+
+                            showToast('Social History saved successfully.', 'success');
+                        } else {
+                            showToast(result.message || 'Error saving.', 'error');
+                        }
+                    })
+                    .catch(() => showToast('Server error. Please try again.', 'error'))
+                    .finally(() => {
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = 'Save';
+                    });
             }
     </script>
 
     <script>
-            (function () {
-                document.addEventListener("DOMContentLoaded", function () {
+            (function() {
+                document.addEventListener("DOMContentLoaded", function() {
 
                     const pageReadOnly =
-                        @pageReadOnly.ToString().ToLower();
+                                                @pageReadOnly.ToString().ToLower();
 
                     const root =
                         document.getElementById("socialHistoryReadOnlyRoot");
@@ -420,38 +561,38 @@
 
                     root.querySelectorAll(
                         "input:not([type='hidden']), textarea, select"
-                    ).forEach(function (element) {
+                    ).forEach(function(element) {
                         element.disabled = true;
                     });
 
                     root.querySelectorAll(
                         "[contenteditable='true']"
-                    ).forEach(function (element) {
+                    ).forEach(function(element) {
                         element.setAttribute("contenteditable", "false");
                     });
 
                     function isViewOnlyButton(button) {
                         const text =
                             (button.textContent || "")
-                            .replace(/\s+/g, " ")
-                            .trim()
-                            .toLowerCase();
+                                .replace(/\s+/g, " ")
+                                .trim()
+                                .toLowerCase();
 
                         return button.matches(
                             ".btn-close, [data-bs-dismiss='modal'], [data-readonly-allow='true']"
                         )
-                        || text === "details"
-                        || text === "view"
-                        || text.startsWith("view ")
-                        || text.includes("preview")
-                        || text === "close"
-                        || text === "×"
-                        || text === "✕";
+                            || text === "details"
+                            || text === "view"
+                            || text.startsWith("view ")
+                            || text.includes("preview")
+                            || text === "close"
+                            || text === "×"
+                            || text === "✕";
                     }
 
                     root.querySelectorAll(
                         "button, input[type='button'], input[type='submit']"
-                    ).forEach(function (button) {
+                    ).forEach(function(button) {
 
                         if (isViewOnlyButton(button)) {
                             return;
@@ -464,14 +605,14 @@
 
                     root.querySelectorAll(
                         ".photo-drop-zone, .ph-upload-zone, input[type='file']"
-                    ).forEach(function (element) {
+                    ).forEach(function(element) {
                         element.classList.add("readonly-disabled-action");
                     });
 
-                    root.querySelectorAll("form").forEach(function (form) {
+                    root.querySelectorAll("form").forEach(function(form) {
                         form.addEventListener(
                             "submit",
-                            function (event) {
+                            function(event) {
                                 event.preventDefault();
                                 event.stopImmediatePropagation();
                             },
@@ -481,7 +622,7 @@
 
                     root.addEventListener(
                         "click",
-                        function (event) {
+                        function(event) {
 
                             const blocked =
                                 event.target.closest(
@@ -498,10 +639,10 @@
                         true
                     );
 
-                    ["dragover", "drop"].forEach(function (eventName) {
+                    ["dragover", "drop"].forEach(function(eventName) {
                         root.addEventListener(
                             eventName,
-                            function (event) {
+                            function(event) {
                                 if (
                                     event.target.closest(
                                         ".photo-drop-zone, .ph-upload-zone"

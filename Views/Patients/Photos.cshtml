@@ -7,6 +7,15 @@
     var radiographs = ViewBag.Radiographs as List<Radiograph> ?? new();
     var patientPhotos = ViewBag.PatientPhotos as List<PatientPhoto> ?? new();
 
+    // ✅ Build application-aware URLs (works on Local and under IIS virtual path such as /APP2)
+    string AppPhotoUrl(string? storedPath)
+    {
+        if (string.IsNullOrWhiteSpace(storedPath))
+            return string.Empty;
+
+        return Url.Content("~/" + storedPath.TrimStart('/'));
+    }
+
     var extraoralSections = new (string Key, string Label, string Icon)[]
     {
         ("right",         "Right Side",         "◀"),
@@ -524,9 +533,9 @@
                              id="ph_eePhoto_@p.ExtraoralExamPhotoID"
                              data-group="extraoral"
                              data-caption="@caption"
-                             onclick="openLightbox('@p.PhotoPath', 'extraoral', '@caption')">
+                             onclick="openLightbox('@AppPhotoUrl(p.PhotoPath)', 'extraoral', '@caption')">
                             <div class="ph-img-wrap">
-                                <img src="@p.PhotoPath" alt="@sec.Label" />
+                                <img src="@AppPhotoUrl(p.PhotoPath)" alt="@sec.Label" />
                                 <div class="ph-type-pill">@sec.Label</div>
                                 <div class="ph-lock-icon">🔒</div>
                             </div>
@@ -566,9 +575,9 @@
                              id="ph_iePhoto_@p.IntraoralExamPhotoID"
                              data-group="intraoral"
                              data-caption="@caption"
-                             onclick="openLightbox('@p.PhotoPath', 'intraoral', '@caption')">
+                             onclick="openLightbox('@AppPhotoUrl(p.PhotoPath)', 'intraoral', '@caption')">
                             <div class="ph-img-wrap">
-                                <img src="@p.PhotoPath" alt="@sec.Label" />
+                                <img src="@AppPhotoUrl(p.PhotoPath)" alt="@sec.Label" />
                                 <div class="ph-type-pill">@sec.Label</div>
                                 <div class="ph-lock-icon">🔒</div>
                             </div>
@@ -607,9 +616,9 @@
                              id="ph_rad_@r.RadiographID"
                              data-group="radiograph"
                              data-caption="@caption"
-                             onclick="openLightbox('@r.PhotoPath', 'radiograph', '@caption')">
+                             onclick="openLightbox('@AppPhotoUrl(r.PhotoPath)', 'radiograph', '@caption')">
                             <div class="ph-img-wrap">
-                                <img src="@r.PhotoPath" alt="@r.RadiographType" />
+                                <img src="@AppPhotoUrl(r.PhotoPath)" alt="@r.RadiographType" />
                                 <div class="ph-type-pill">@r.RadiographType</div>
                                 <div class="ph-lock-icon">🔒</div>
                             </div>
@@ -655,9 +664,9 @@
                              id="pp_@p.PatientPhotoID"
                              data-group="additional"
                              data-caption="@caption"
-                             onclick="openLightbox('@p.PhotoPath', 'additional', '@caption')">
+                             onclick="openLightbox('@AppPhotoUrl(p.PhotoPath)', 'additional', '@caption')">
                             <div class="ph-img-wrap">
-                                <img src="@p.PhotoPath" alt="@p.FileName" />
+                                <img src="@AppPhotoUrl(p.PhotoPath)" alt="@p.FileName" />
                                 <div class="ph-type-pill">Additional</div>
                                 <button class="ph-delete-btn"
                                         onclick="deletePatientPhoto(@p.PatientPhotoID, event)"
@@ -752,41 +761,47 @@
             const PATIENT_ID = @Model.PatientID;
             const CSRF_TOKEN = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
 
+            // ✅ Never hard-code /PatientPhotos/...; Url.Action keeps Local and /APP2 publish working
+            const PATIENT_PHOTO_URLS = {
+                upload: '@Url.Action("Upload", "PatientPhotos")',
+                delete: '@Url.Action("Delete", "PatientPhotos")'
+            };
+
             const _svgPerson = `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
             const _svgCal = `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5">
-                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+                            <rect x="3" y="4" width="18" height="18" rx="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/></svg>`;
             const _svgFile = `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/></svg>`;
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/></svg>`;
             const _svgInfo = `<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
 
             function _buildInfo(nameIcon, nameTxt, dateTxt, sourceLabel, notes = '') {
                 return `
-            <div class="ph-photo-info">
-                <div class="ph-info-row">
-                    <div class="ph-icon-sq">${nameIcon}</div>
-                    <span class="ph-info-section-name">${nameTxt}</span>
-                </div>
-                <div class="ph-info-divider"></div>
-                <div class="ph-info-row">
-                    <div class="ph-icon-sq">${_svgCal}</div>
-                    <span class="ph-info-date">${dateTxt}</span>
-                </div>
-                <div class="ph-source-tag">${_svgInfo} ${sourceLabel}</div>
-                ${notes ? `<span class="ph-info-notes">${notes}</span>` : ''}
-            </div>`;
+                        <div class="ph-photo-info">
+                            <div class="ph-info-row">
+                                <div class="ph-icon-sq">${nameIcon}</div>
+                                <span class="ph-info-section-name">${nameTxt}</span>
+                            </div>
+                            <div class="ph-info-divider"></div>
+                            <div class="ph-info-row">
+                                <div class="ph-icon-sq">${_svgCal}</div>
+                                <span class="ph-info-date">${dateTxt}</span>
+                            </div>
+                            <div class="ph-source-tag">${_svgInfo} ${sourceLabel}</div>
+                            ${notes ? `<span class="ph-info-notes">${notes}</span>` : ''}
+                        </div>`;
             }
 
             // ══ LIGHTBOX ══
-            let _lbPhotos   = [];
+            let _lbPhotos = [];
             let _lbCaptions = [];
-            let _lbIndex    = 0;
+            let _lbIndex = 0;
 
             function _normUrl(url) {
                 try { return new URL(url, location.origin).pathname; }
@@ -799,7 +814,7 @@
                 );
                 if (!cards.length) return;
 
-                _lbPhotos   = cards.map(c => { const img = c.querySelector('img'); return img ? img.getAttribute('src') : ''; }).filter(Boolean);
+                _lbPhotos = cards.map(c => { const img = c.querySelector('img'); return img ? img.getAttribute('src') : ''; }).filter(Boolean);
                 _lbCaptions = cards.map(c => c.dataset.caption ?? '');
 
                 const clickedPath = _normUrl(clickedSrc);
@@ -825,10 +840,10 @@
 
             function _updateLB() {
                 const src = (_lbPhotos[_lbIndex] ?? '').split('?')[0];
-                const img     = document.getElementById('ph-lightbox-img');
+                const img = document.getElementById('ph-lightbox-img');
                 const caption = document.getElementById('ph-lightbox-caption');
                 const counter = document.getElementById('ph-lightbox-counter');
-                if (img)     img.src             = src;
+                if (img) img.src = src;
                 if (caption) caption.textContent = _lbCaptions[_lbIndex] ?? '';
                 if (counter) counter.textContent = _lbPhotos.length > 1 ? `${_lbIndex + 1} / ${_lbPhotos.length}` : '';
             }
@@ -848,9 +863,9 @@
             }
 
             function _handleKey(e) {
-                if (e.key === 'ArrowLeft')  prevPhoto(null);
+                if (e.key === 'ArrowLeft') prevPhoto(null);
                 if (e.key === 'ArrowRight') nextPhoto(null);
-                if (e.key === 'Escape')     closeLightbox();
+                if (e.key === 'Escape') closeLightbox();
             }
 
             // ══ مزامنة Extraoral ══
@@ -874,12 +889,12 @@
                 card.dataset.caption = caption;
                 card.setAttribute('onclick', `openLightbox('${photoPath}', 'extraoral', '${caption}')`);
                 card.innerHTML = `
-                    <div class="ph-img-wrap">
-                        <img src="${photoPath}?t=${Date.now()}" alt="${label}" />
-                        <div class="ph-type-pill">${label}</div>
-                        <div class="ph-lock-icon">🔒</div>
-                    </div>
-                    ${_buildInfo(_svgPerson, label, today, 'Extraoral Exam')}`;
+                                <div class="ph-img-wrap">
+                                    <img src="${photoPath}?t=${Date.now()}" alt="${label}" />
+                                    <div class="ph-type-pill">${label}</div>
+                                    <div class="ph-lock-icon">🔒</div>
+                                </div>
+                                ${_buildInfo(_svgPerson, label, today, 'Extraoral Exam')}`;
                 gallery.appendChild(card);
                 return true;
             }
@@ -905,12 +920,12 @@
                 card.dataset.caption = caption;
                 card.setAttribute('onclick', `openLightbox('${photoPath}', 'intraoral', '${caption}')`);
                 card.innerHTML = `
-                    <div class="ph-img-wrap">
-                        <img src="${photoPath}?t=${Date.now()}" alt="${label}" />
-                        <div class="ph-type-pill">${label}</div>
-                        <div class="ph-lock-icon">🔒</div>
-                    </div>
-                    ${_buildInfo(_svgPerson, label, today, 'Intraoral Exam')}`;
+                                <div class="ph-img-wrap">
+                                    <img src="${photoPath}?t=${Date.now()}" alt="${label}" />
+                                    <div class="ph-type-pill">${label}</div>
+                                    <div class="ph-lock-icon">🔒</div>
+                                </div>
+                                ${_buildInfo(_svgPerson, label, today, 'Intraoral Exam')}`;
                 gallery.appendChild(card);
                 return true;
             }
@@ -936,12 +951,12 @@
                 card.dataset.caption = caption;
                 card.setAttribute('onclick', `openLightbox('${photoPath}', 'radiograph', '${caption}')`);
                 card.innerHTML = `
-                    <div class="ph-img-wrap">
-                        <img src="${photoPath}" alt="${radType}" />
-                        <div class="ph-type-pill">${radType}</div>
-                        <div class="ph-lock-icon">🔒</div>
-                    </div>
-                    ${_buildInfo(_svgFile, fileName, today, 'Radiograph')}`;
+                                <div class="ph-img-wrap">
+                                    <img src="${photoPath}" alt="${radType}" />
+                                    <div class="ph-type-pill">${radType}</div>
+                                    <div class="ph-lock-icon">🔒</div>
+                                </div>
+                                ${_buildInfo(_svgFile, fileName, today, 'Radiograph')}`;
                 gallery.appendChild(card);
             }
 
@@ -966,8 +981,8 @@
             function removePhotoFromPhotosTab(prefix, photoId) {
                 const map = {
                     galleryId: { ee: 'ph_extraoralGallery', ie: 'ph_intraoralGallery' },
-                    emptyId:   { ee: 'ph_extraoralEmpty',   ie: 'ph_intraoralEmpty'   },
-                    wrapperId: { ee: 'ph_extraoralWrapper',  ie: 'ph_intraoralWrapper'  },
+                    emptyId: { ee: 'ph_extraoralEmpty', ie: 'ph_intraoralEmpty' },
+                    wrapperId: { ee: 'ph_extraoralWrapper', ie: 'ph_intraoralWrapper' },
                     emptyText: { ee: 'No extraoral photos yet.', ie: 'No intraoral photos yet.' }
                 };
                 document.getElementById(`ph_${prefix}Photo_${photoId}`)?.remove();
@@ -999,14 +1014,14 @@
 
             function uploadPatientPhoto() {
                 const fileInput = document.getElementById('ppFileInput');
-                const notes     = document.getElementById('ppNotes')?.value ?? '';
+                const notes = document.getElementById('ppNotes')?.value ?? '';
                 if (!fileInput?.files?.length) { showToast('Please select an image first.', 'error'); return; }
                 const fd = new FormData();
                 fd.append('patientId', PATIENT_ID);
                 fd.append('photo', fileInput.files[0]);
                 fd.append('notes', notes);
                 fd.append('__RequestVerificationToken', CSRF_TOKEN);
-                fetch('/PatientPhotos/Upload', { method: 'POST', body: fd })
+                fetch(PATIENT_PHOTO_URLS.upload, { method: 'POST', body: fd })
                     .then(r => r.json())
                     .then(result => {
                         if (result.success) {
@@ -1019,7 +1034,7 @@
                                 gallery.id = 'patientPhotoGallery';
                                 document.getElementById('ph_additionalWrapper')?.appendChild(gallery);
                             }
-                            const today   = new Date().toLocaleDateString('en-GB');
+                            const today = new Date().toLocaleDateString('en-GB');
                             const caption = `${result.fileName} · ${today}`;
                             const card = document.createElement('div');
                             card.className = 'ph-photo-card';
@@ -1028,17 +1043,17 @@
                             card.dataset.caption = caption;
                             card.setAttribute('onclick', `openLightbox('${result.photoPath}', 'additional', '${caption}')`);
                             card.innerHTML = `
-                                <div class="ph-img-wrap">
-                                    <img src="${result.photoPath}" alt="${result.fileName}" />
-                                    <div class="ph-type-pill">Additional</div>
-                                    <button class="ph-delete-btn" onclick="deletePatientPhoto(${result.photoId}, event)" title="Delete">&#x2715;</button>
-                                </div>
-                                ${_buildInfo(_svgFile, result.fileName, today, 'Additional', notes)}`;
+                                            <div class="ph-img-wrap">
+                                                <img src="${result.photoPath}" alt="${result.fileName}" />
+                                                <div class="ph-type-pill">Additional</div>
+                                                <button class="ph-delete-btn" onclick="deletePatientPhoto(${result.photoId}, event)" title="Delete">&#x2715;</button>
+                                            </div>
+                                            ${_buildInfo(_svgFile, result.fileName, today, 'Additional', notes)}`;
                             gallery.appendChild(card);
                             showToast('Photo uploaded.', 'success');
                             fileInput.value = '';
                             if (document.getElementById('ppFileName')) document.getElementById('ppFileName').textContent = '';
-                            if (document.getElementById('ppNotes'))    document.getElementById('ppNotes').value = '';
+                            if (document.getElementById('ppNotes')) document.getElementById('ppNotes').value = '';
                         } else {
                             showToast(result.message || 'Upload failed.', 'error');
                         }
@@ -1053,7 +1068,7 @@
                 fd.append('photoId', photoId);
                 fd.append('patientId', PATIENT_ID);
                 fd.append('__RequestVerificationToken', CSRF_TOKEN);
-                fetch('/PatientPhotos/Delete', { method: 'POST', body: fd })
+                fetch(PATIENT_PHOTO_URLS.delete, { method: 'POST', body: fd })
                     .then(r => r.json())
                     .then(result => {
                         if (result.success) {
@@ -1077,7 +1092,7 @@
 
             // ══ Toast ══
             if (typeof showToast === 'undefined') {
-                window.showToast = function (msg, type = 'success') {
+                window.showToast = function(msg, type = 'success') {
                     const t = document.createElement('div');
                     t.textContent = msg;
                     Object.assign(t.style, {
@@ -1094,11 +1109,11 @@
     </script>
 
     <script>
-            (function () {
-                document.addEventListener("DOMContentLoaded", function () {
+            (function() {
+                document.addEventListener("DOMContentLoaded", function() {
 
                     const pageReadOnly =
-                        @pageReadOnly.ToString().ToLower();
+                                    @pageReadOnly.ToString().ToLower();
 
                     const root =
                         document.getElementById("photosReadOnlyRoot");
@@ -1111,38 +1126,38 @@
 
                     root.querySelectorAll(
                         "input:not([type='hidden']), textarea, select"
-                    ).forEach(function (element) {
+                    ).forEach(function(element) {
                         element.disabled = true;
                     });
 
                     root.querySelectorAll(
                         "[contenteditable='true']"
-                    ).forEach(function (element) {
+                    ).forEach(function(element) {
                         element.setAttribute("contenteditable", "false");
                     });
 
                     function isViewOnlyButton(button) {
                         const text =
                             (button.textContent || "")
-                            .replace(/\s+/g, " ")
-                            .trim()
-                            .toLowerCase();
+                                .replace(/\s+/g, " ")
+                                .trim()
+                                .toLowerCase();
 
                         return button.matches(
                             ".btn-close, [data-bs-dismiss='modal'], [data-readonly-allow='true']"
                         )
-                        || text === "details"
-                        || text === "view"
-                        || text.startsWith("view ")
-                        || text.includes("preview")
-                        || text === "close"
-                        || text === "×"
-                        || text === "✕";
+                            || text === "details"
+                            || text === "view"
+                            || text.startsWith("view ")
+                            || text.includes("preview")
+                            || text === "close"
+                            || text === "×"
+                            || text === "✕";
                     }
 
                     root.querySelectorAll(
                         "button, input[type='button'], input[type='submit']"
-                    ).forEach(function (button) {
+                    ).forEach(function(button) {
 
                         if (isViewOnlyButton(button)) {
                             return;
@@ -1155,14 +1170,14 @@
 
                     root.querySelectorAll(
                         ".photo-drop-zone, .ph-upload-zone, input[type='file']"
-                    ).forEach(function (element) {
+                    ).forEach(function(element) {
                         element.classList.add("readonly-disabled-action");
                     });
 
-                    root.querySelectorAll("form").forEach(function (form) {
+                    root.querySelectorAll("form").forEach(function(form) {
                         form.addEventListener(
                             "submit",
-                            function (event) {
+                            function(event) {
                                 event.preventDefault();
                                 event.stopImmediatePropagation();
                             },
@@ -1172,7 +1187,7 @@
 
                     root.addEventListener(
                         "click",
-                        function (event) {
+                        function(event) {
 
                             const blocked =
                                 event.target.closest(
@@ -1189,10 +1204,10 @@
                         true
                     );
 
-                    ["dragover", "drop"].forEach(function (eventName) {
+                    ["dragover", "drop"].forEach(function(eventName) {
                         root.addEventListener(
                             eventName,
-                            function (event) {
+                            function(event) {
                                 if (
                                     event.target.closest(
                                         ".photo-drop-zone, .ph-upload-zone"

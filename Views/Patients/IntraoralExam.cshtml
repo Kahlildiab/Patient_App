@@ -400,8 +400,11 @@
                             <div class="ie-photo-gallery" id="iePhotoGallery_@photoSec.Key">
                                 @foreach (var p in sectionPhotos)
                                 {
+                                    var cleanPhotoPath = (p.PhotoPath ?? "").Replace("\\", "/").TrimStart('/');
+                                    var displayPhotoUrl = $"{Context.Request.PathBase}/{cleanPhotoPath}";
+
                                     <div class="ie-photo-item" id="ieExamPhoto_@p.IntraoralExamPhotoID">
-                                        <img src="@p.PhotoPath" alt="@photoSec.Label" />
+                                        <img src="@displayPhotoUrl" alt="@photoSec.Label" />
                                         <button type="button" class="delete-btn"
                                                 onclick="deleteIEPhoto(@p.IntraoralExamPhotoID, '@photoSec.Key')"
                                                 title="Delete">
@@ -579,14 +582,14 @@
                 }
 
                 items.forEach(
-                    function (item) {
+                    function(item) {
                         const elements =
                             form.querySelectorAll(
                                 `[name="${CSS.escape(item.name)}"]`
                             );
 
                         elements.forEach(
-                            function (element) {
+                            function(element) {
                                 if (
                                     item.type === 'file'
                                 ) {
@@ -640,7 +643,7 @@
                     'input, select, textarea'
                 )
                     .forEach(
-                        function (element) {
+                        function(element) {
                             if (
                                 !element.name
                                 ||
@@ -952,15 +955,18 @@
                             sectionKey
                         );
 
+                        const uploadedPhotoUrl =
+                            result.photoUrl || result.photoPath;
+
                         if (
-                            result.photoPath
+                            uploadedPhotoUrl
                             &&
                             result.photoId
                         ) {
                             syncPhotoToPhotosTab(
                                 'ie',
                                 sectionKey,
-                                result.photoPath,
+                                uploadedPhotoUrl,
                                 result.photoId
                             );
                         }
@@ -997,10 +1003,13 @@
                 sectionKey,
                 result
             ) {
+                const uploadedPhotoUrl =
+                    result.photoUrl || result.photoPath;
+
                 if (
                     !result.photoId
                     ||
-                    !result.photoPath
+                    !uploadedPhotoUrl
                 ) {
                     return;
                 }
@@ -1027,7 +1036,7 @@
                     );
 
                 image.src =
-                    result.photoPath;
+                    uploadedPhotoUrl;
 
                 image.alt =
                     sectionKey;
@@ -1051,7 +1060,7 @@
 
                 deleteButton.addEventListener(
                     'click',
-                    function () {
+                    function() {
                         deleteIEPhoto(
                             result.photoId,
                             sectionKey
@@ -1211,7 +1220,7 @@
 
             document.addEventListener(
                 'DOMContentLoaded',
-                function () {
+                function() {
                     const form =
                         getIntraoralExamForm();
 
@@ -1233,7 +1242,7 @@
 
                     form.addEventListener(
                         'submit',
-                        function (event) {
+                        function(event) {
                             event.preventDefault();
                             event.stopPropagation();
 
@@ -1247,7 +1256,7 @@
                         '[id^="ieDropZone_"]'
                     )
                         .forEach(
-                            function (zone) {
+                            function(zone) {
                                 const sectionKey =
                                     zone.id.replace(
                                         'ieDropZone_',
@@ -1256,7 +1265,7 @@
 
                                 zone.addEventListener(
                                     'dragover',
-                                    function (event) {
+                                    function(event) {
                                         event.preventDefault();
 
                                         zone.classList.add(
@@ -1267,7 +1276,7 @@
 
                                 zone.addEventListener(
                                     'dragleave',
-                                    function () {
+                                    function() {
                                         zone.classList.remove(
                                             'drag-over'
                                         );
@@ -1276,7 +1285,7 @@
 
                                 zone.addEventListener(
                                     'drop',
-                                    function (event) {
+                                    function(event) {
                                         event.preventDefault();
 
                                         zone.classList.remove(
@@ -1309,7 +1318,7 @@
 
                                         Array.from(files)
                                             .forEach(
-                                                function (file) {
+                                                function(file) {
                                                     transfer.items.add(
                                                         file
                                                     );
@@ -1421,7 +1430,7 @@
                         .replace(/_/g, ' ')
                         .replace(
                             /\b\w/g,
-                            function (letter) {
+                            function(letter) {
                                 return letter.toUpperCase();
                             }
                         );
@@ -1438,40 +1447,40 @@
                     `ph_${prefix}Photo_${photoId}`;
 
                 card.innerHTML = `
-                            <div class="ph-img-wrap">
-                                <img src="${escapeIEHtml(photoPath)}"
-                                     alt="${escapeIEHtml(labelText)}" />
+                                        <div class="ph-img-wrap">
+                                            <img src="${escapeIEHtml(photoPath)}"
+                                                 alt="${escapeIEHtml(labelText)}" />
 
-                                <div class="ph-type-pill">
-                                    ${escapeIEHtml(labelText)}
-                                </div>
+                                            <div class="ph-type-pill">
+                                                ${escapeIEHtml(labelText)}
+                                            </div>
 
-                                <div class="ph-lock-icon">
-                                    🔒
-                                </div>
-                            </div>
+                                            <div class="ph-lock-icon">
+                                                🔒
+                                            </div>
+                                        </div>
 
-                            <div class="ph-photo-info">
+                                        <div class="ph-photo-info">
 
-                                <div class="ph-info-row">
-                                    <span class="ph-info-section-name">
-                                        ${escapeIEHtml(labelText)}
-                                    </span>
-                                </div>
+                                            <div class="ph-info-row">
+                                                <span class="ph-info-section-name">
+                                                    ${escapeIEHtml(labelText)}
+                                                </span>
+                                            </div>
 
-                                <div class="ph-info-divider"></div>
+                                            <div class="ph-info-divider"></div>
 
-                                <div class="ph-info-row">
-                                    <span class="ph-info-date">
-                                        ${escapeIEHtml(today)}
-                                    </span>
-                                </div>
+                                            <div class="ph-info-row">
+                                                <span class="ph-info-date">
+                                                    ${escapeIEHtml(today)}
+                                                </span>
+                                            </div>
 
-                                <div class="ph-source-tag">
-                                    ${escapeIEHtml(map.sourceLabel[prefix])}
-                                </div>
+                                            <div class="ph-source-tag">
+                                                ${escapeIEHtml(map.sourceLabel[prefix])}
+                                            </div>
 
-                            </div>`;
+                                        </div>`;
 
                 gallery.appendChild(
                     card
@@ -1591,7 +1600,7 @@
                         )
                     )
                         .map(
-                            function (image) {
+                            function(image) {
                                 return image.getAttribute(
                                     'src'
                                 );
@@ -1603,7 +1612,7 @@
                     '.ph-photo-card'
                 )
                     .forEach(
-                        function (card) {
+                        function(card) {
                             const imagePath =
                                 card.querySelector(
                                     'img'
@@ -1633,7 +1642,7 @@
                             }
 
                             card.onclick =
-                                function () {
+                                function() {
                                     window.openLightbox(
                                         imagePath,
                                         paths,
@@ -1661,11 +1670,11 @@
 
 
     <script>
-            (function () {
-                document.addEventListener("DOMContentLoaded", function () {
+            (function() {
+                document.addEventListener("DOMContentLoaded", function() {
 
                     const pageReadOnly =
-                                    @pageReadOnly.ToString().ToLower();
+                                                @pageReadOnly.ToString().ToLower();
 
                     const root =
                         document.getElementById("intraoralReadOnlyRoot");
@@ -1678,13 +1687,13 @@
 
                     root.querySelectorAll(
                         "input:not([type='hidden']), textarea, select"
-                    ).forEach(function (element) {
+                    ).forEach(function(element) {
                         element.disabled = true;
                     });
 
                     root.querySelectorAll(
                         "[contenteditable='true']"
-                    ).forEach(function (element) {
+                    ).forEach(function(element) {
                         element.setAttribute("contenteditable", "false");
                     });
 
@@ -1709,7 +1718,7 @@
 
                     root.querySelectorAll(
                         "button, input[type='button'], input[type='submit']"
-                    ).forEach(function (button) {
+                    ).forEach(function(button) {
 
                         if (isViewOnlyButton(button)) {
                             return;
@@ -1722,14 +1731,14 @@
 
                     root.querySelectorAll(
                         ".photo-drop-zone, .ph-upload-zone, input[type='file']"
-                    ).forEach(function (element) {
+                    ).forEach(function(element) {
                         element.classList.add("readonly-disabled-action");
                     });
 
-                    root.querySelectorAll("form").forEach(function (form) {
+                    root.querySelectorAll("form").forEach(function(form) {
                         form.addEventListener(
                             "submit",
-                            function (event) {
+                            function(event) {
                                 event.preventDefault();
                                 event.stopImmediatePropagation();
                             },
@@ -1739,7 +1748,7 @@
 
                     root.addEventListener(
                         "click",
-                        function (event) {
+                        function(event) {
 
                             const blocked =
                                 event.target.closest(
@@ -1756,10 +1765,10 @@
                         true
                     );
 
-                    ["dragover", "drop"].forEach(function (eventName) {
+                    ["dragover", "drop"].forEach(function(eventName) {
                         root.addEventListener(
                             eventName,
-                            function (event) {
+                            function(event) {
                                 if (
                                     event.target.closest(
                                         ".photo-drop-zone, .ph-upload-zone"

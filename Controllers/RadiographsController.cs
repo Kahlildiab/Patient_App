@@ -9,6 +9,17 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
     public class RadiographsController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly IWebHostEnvironment _env;
+
+        private const long MaxPhotoSize = 10 * 1024 * 1024; // 10 MB
+
+        private static readonly HashSet<string> AllowedExtensions =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ".jpg",
+                ".jpeg",
+                ".png"
+            };
 
         private static readonly string[] AllowedContentTypes =
         {
@@ -23,7 +34,8 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             "Bitewing",
             "Panoramic",
             "Occlusal",
-            "Cephalometric"
+            "Cephalometric",
+            "CBCT"
         };
 
         private static readonly HashSet<string> PeriapicalSlots =
@@ -85,9 +97,48 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 ["LEFT_MOLAR_BW"] = "Left Molar Bitewing"
             };
 
-        public RadiographsController(AppDbContext context)
+        public RadiographsController(
+            AppDbContext context,
+            IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
+        }
+
+        // يعمل Local وبعد Publish حتى لو التطبيق داخل /APP2 أو Virtual Directory.
+        private string GetWebRootPath()
+        {
+            return !string.IsNullOrWhiteSpace(_env.WebRootPath)
+                ? _env.WebRootPath
+                : Path.Combine(_env.ContentRootPath, "wwwroot");
+        }
+
+        // يبني URL صحيح للصورة مع PathBase الخاص بالتطبيق.
+        private string BuildPhotoUrl(string relativePath)
+        {
+            string cleanPath = (relativePath ?? string.Empty)
+                .Replace("\\", "/")
+                .TrimStart('/');
+
+            string pathBase =
+                Request.PathBase.Value?.TrimEnd('/')
+                ?? string.Empty;
+
+            return $"{pathBase}/{cleanPath}";
+        }
+
+        // يدعم المسارات القديمة المخزنة مثل /uploads/... والجديدة uploads/...
+        private string GetPhysicalPath(string relativePath)
+        {
+            string cleanPath = (relativePath ?? string.Empty)
+                .Replace('/', Path.DirectorySeparatorChar)
+                .Replace('\\', Path.DirectorySeparatorChar)
+                .TrimStart(Path.DirectorySeparatorChar);
+
+            return Path.Combine(
+                GetWebRootPath(),
+                cleanPath
+            );
         }
 
         /*
@@ -100,6 +151,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
          */
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(MaxPhotoSize)]
         public async Task<IActionResult> Upload(
             int patientId,
             IFormFile photo,
@@ -112,6 +164,15 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 {
                     success = false,
                     message = "No file selected."
+                });
+            }
+
+            if (photo.Length > MaxPhotoSize)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Maximum file size is 10MB."
                 });
             }
 
@@ -129,9 +190,12 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 });
             }
 
-            if (!AllowedContentTypes.Contains(
-                    photo.ContentType,
-                    StringComparer.OrdinalIgnoreCase))
+            string extension =
+                Path.GetExtension(photo.FileName)
+                    .ToLowerInvariant();
+
+            if (string.IsNullOrWhiteSpace(extension)
+                || !AllowedExtensions.Contains(extension))
             {
                 return Json(new
                 {
@@ -140,12 +204,15 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 });
             }
 
-            if (photo.Length > 10 * 1024 * 1024)
+            if (!string.IsNullOrWhiteSpace(photo.ContentType)
+                && !AllowedContentTypes.Contains(
+                    photo.ContentType,
+                    StringComparer.OrdinalIgnoreCase))
             {
                 return Json(new
                 {
                     success = false,
-                    message = "Maximum file size is 10MB."
+                    message = "Only JPG or PNG files are supported."
                 });
             }
 
@@ -169,8 +236,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             bool usesTemplate =
                 normalizedType == "Periapical"
-                ||
-                normalizedType == "Bitewing";
+                || normalizedType == "Bitewing";
 
             string normalizedSlot =
                 templateSlot?.Trim()
@@ -204,38 +270,68 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             string uploadsFolder =
                 Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "wwwroot",
+                    GetWebRootPath(),
                     "uploads",
                     "radiographs"
                 );
-
-            Directory.CreateDirectory(uploadsFolder);
-
-            string extension =
-                Path.GetExtension(photo.FileName);
 
             string savedFileName =
                 $"{patientId}_radiograph_{Guid.NewGuid():N}{extension}";
 
             string filePath =
-                Path.Combine(uploadsFolder, savedFileName);
+                Path.Combine(
+                    uploadsFolder,
+                    savedFileName
+                );
 
+            // نخزن في DB مسار نسبي حتى يعمل Local وPublish.
             string photoPath =
-                $"/uploads/radiographs/{savedFileName}";
+                $"uploads/radiographs/{savedFileName}";
 
-            await using (var stream =
-                new FileStream(filePath, FileMode.CreateNew))
+            try
             {
+                Directory.CreateDirectory(uploadsFolder);
+
+                await using var stream =
+                    new FileStream(
+                        filePath,
+                        FileMode.CreateNew,
+                        FileAccess.Write,
+                        FileShare.None
+                    );
+
                 await photo.CopyToAsync(stream);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Server cannot write to wwwroot/uploads/radiographs. Give the IIS Application Pool Modify permission on this folder."
+                });
+            }
+            catch (IOException ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Could not save the radiograph on the server: " + ex.Message
+                });
             }
 
             int? replacedPhotoId = null;
             string? oldPhysicalPath = null;
 
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync();
-
+            /*
+             * مهم:
+             * لا نستخدم BeginTransactionAsync هنا لأن المشروع يستخدم
+             * EnableRetryOnFailure / SqlServerRetryingExecutionStrategy.
+             *
+             * SaveChangesAsync ينفذ حذف الصورة القديمة من قاعدة البيانات
+             * وإضافة الصورة الجديدة داخل Transaction تلقائية واحدة من EF Core.
+             * لذلك لا نحتاج Transaction يدوية، وبهذا نتجنب الخطأ:
+             * "SqlServerRetryingExecutionStrategy does not support user-initiated transactions".
+             */
             try
             {
                 /*
@@ -276,13 +372,25 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     };
 
                 _context.Radiographs.Add(radiograph);
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
 
+                /*
+                 * EF Core creates the required database transaction automatically.
+                 * This operation is compatible with SqlServerRetryingExecutionStrategy.
+                 */
+                await _context.SaveChangesAsync();
+
+                // حذف الصورة القديمة من القرص فقط بعد نجاح الحفظ في قاعدة البيانات.
                 if (!string.IsNullOrWhiteSpace(oldPhysicalPath)
                     && System.IO.File.Exists(oldPhysicalPath))
                 {
-                    System.IO.File.Delete(oldPhysicalPath);
+                    try
+                    {
+                        System.IO.File.Delete(oldPhysicalPath);
+                    }
+                    catch
+                    {
+                        // لا نفشل الحفظ الجديد إذا تعذر حذف الملف القديم فقط.
+                    }
                 }
 
                 string displayType =
@@ -292,12 +400,16 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                             normalizedType)
                         : normalizedType;
 
+                string photoUrl =
+                    BuildPhotoUrl(photoPath);
+
                 return Json(new
                 {
                     success = true,
                     photoId = radiograph.RadiographID,
                     replacedPhotoId,
                     photoPath,
+                    photoUrl,
                     fileName = photo.FileName,
                     radiographType = normalizedType,
                     templateSlot = normalizedSlot,
@@ -307,19 +419,27 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                             .ToString("dd/MM/yyyy HH:mm")
                 });
             }
-            catch
+            catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-
+                /*
+                 * إذا فشل الحفظ في قاعدة البيانات نحذف الملف الجديد
+                 * الذي تم رفعه حتى لا يبقى ملف بدون سجل في DB.
+                 */
                 if (System.IO.File.Exists(filePath))
                 {
-                    System.IO.File.Delete(filePath);
+                    try
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+                    catch
+                    {
+                    }
                 }
 
                 return Json(new
                 {
                     success = false,
-                    message = "The radiograph could not be saved."
+                    message = "The radiograph could not be saved: " + ex.Message
                 });
             }
         }
@@ -360,12 +480,40 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             string physicalPath =
                 GetPhysicalPath(radiograph.PhotoPath);
 
-            _context.Radiographs.Remove(radiograph);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Radiographs.Remove(radiograph);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Could not delete the radiograph record: " + ex.Message
+                });
+            }
 
             if (System.IO.File.Exists(physicalPath))
             {
-                System.IO.File.Delete(physicalPath);
+                try
+                {
+                    System.IO.File.Delete(physicalPath);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // السجل انحذف من DB، لذلك نرجع نجاح مع تحذير فقط.
+                    return Json(new
+                    {
+                        success = true,
+                        templateSlot,
+                        warning = "Radiograph record was deleted, but IIS could not delete the physical file. Check Modify permission on wwwroot/uploads/radiographs."
+                    });
+                }
+                catch (IOException)
+                {
+                    // نفس المنطق: لا نرجع السجل للـ DB بسبب ملف فقط.
+                }
             }
 
             return Json(new
@@ -373,20 +521,6 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 success = true,
                 templateSlot
             });
-        }
-
-        private string GetPhysicalPath(string relativePath)
-        {
-            return Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "wwwroot",
-                relativePath
-                    .TrimStart('/')
-                    .Replace(
-                        '/',
-                        Path.DirectorySeparatorChar
-                    )
-            );
         }
     }
 }

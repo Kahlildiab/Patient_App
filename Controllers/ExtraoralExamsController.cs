@@ -10,7 +10,6 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _env;
 
-        // ─── الأقسام المسموح بها — مطابقة لـ View ───────────────
         private static readonly HashSet<string> _allowedSections = new(StringComparer.OrdinalIgnoreCase)
         {
             "right", "frontal", "left",
@@ -18,13 +17,19 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             "other"
         };
 
+        private static readonly HashSet<string> _allowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"
+        };
+
+        private const long MaxPhotoSize = 15 * 1024 * 1024; // 15 MB
+
         public ExtraoralExamsController(AppDbContext context, IWebHostEnvironment env)
         {
             _context = context;
             _env = env;
         }
 
-        // ✅ تحويل section key إلى label مقروء
         private static string GetSectionLabel(string key) => key switch
         {
             "right" => "Right Side",
@@ -36,13 +41,39 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             _ => "Other"
         };
 
-        // ═══════════════════════════════════════════════════════
-        //  GET — عرض صفحة الفحص الخارجي لمريض معين
-        // ═══════════════════════════════════════════════════════
+        private string GetWebRootPath()
+        {
+            return !string.IsNullOrWhiteSpace(_env.WebRootPath)
+                ? _env.WebRootPath
+                : Path.Combine(_env.ContentRootPath, "wwwroot");
+        }
+
+        private string BuildPhotoUrl(string relativePath)
+        {
+            var cleanPath = (relativePath ?? string.Empty)
+                .Replace("\\", "/")
+                .TrimStart('/');
+
+            var pathBase = Request.PathBase.Value?.TrimEnd('/') ?? string.Empty;
+            return $"{pathBase}/{cleanPath}";
+        }
+
+        private string GetPhysicalPhotoPath(string photoPath)
+        {
+            var cleanPath = (photoPath ?? string.Empty)
+                .Replace('/', Path.DirectorySeparatorChar)
+                .Replace('\\', Path.DirectorySeparatorChar)
+                .TrimStart(Path.DirectorySeparatorChar);
+
+            return Path.Combine(GetWebRootPath(), cleanPath);
+        }
+
+        // GET: /ExtraoralExams/Index?patientId=1
         public async Task<IActionResult> Index(int patientId)
         {
             var patient = await _context.Patients.FindAsync(patientId);
-            if (patient == null) return NotFound();
+            if (patient == null)
+                return NotFound();
 
             var exam = await _context.ExtraoralExams
                 .FirstOrDefaultAsync(e => e.PatientID == patientId);
@@ -60,9 +91,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             return View(patient);
         }
 
-        // ═══════════════════════════════════════════════════════
-        //  POST — حفظ / تحديث بيانات الفحص (AJAX)
-        // ═══════════════════════════════════════════════════════
+        // POST: Save/update exam by AJAX
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveAjax(ExtraoralExam model)
@@ -71,7 +100,27 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             ModelState.Remove("Photos");
 
             if (!ModelState.IsValid)
-                return Json(new { success = false, message = "Invalid data." });
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .ToList();
+
+                return Json(new
+                {
+                    success = false,
+                    message = errors.Count > 0
+                        ? string.Join(" | ", errors)
+                        : "Invalid data."
+                });
+            }
+
+            var patientExists = await _context.Patients
+                .AnyAsync(p => p.PatientID == model.PatientID);
+
+            if (!patientExists)
+                return Json(new { success = false, message = "Patient not found." });
 
             var existing = await _context.ExtraoralExams
                 .FirstOrDefaultAsync(e => e.PatientID == model.PatientID);
@@ -81,45 +130,59 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 model.CreatedDate = DateTime.Now;
                 _context.ExtraoralExams.Add(model);
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, examId = model.ExtraoralExamID });
+
+                return Json(new
+                {
+                    success = true,
+                    examId = model.ExtraoralExamID
+                });
             }
-            else
+
+            existing.FacialSymmetry = model.FacialSymmetry;
+            existing.SkinColor = model.SkinColor;
+            existing.FacialProfile = model.FacialProfile;
+            existing.TMJExamination = model.TMJExamination;
+            existing.LymphNodesPalpation = model.LymphNodesPalpation;
+            existing.OtherFindings = model.OtherFindings;
+            existing.UpdatedDate = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return Json(new
             {
-                existing.FacialSymmetry = model.FacialSymmetry;
-                existing.SkinColor = model.SkinColor;
-                existing.FacialProfile = model.FacialProfile;
-                existing.TMJExamination = model.TMJExamination;
-                existing.LymphNodesPalpation = model.LymphNodesPalpation;
-                existing.OtherFindings = model.OtherFindings;
-                existing.UpdatedDate = DateTime.Now;
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, examId = existing.ExtraoralExamID });
-            }
+                success = true,
+                examId = existing.ExtraoralExamID
+            });
         }
 
-        // ═══════════════════════════════════════════════════════
-        //  POST — رفع صورة واحدة لقسم معين (AJAX)
-        // ═══════════════════════════════════════════════════════
+        // POST: Upload one photo by AJAX
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(MaxPhotoSize)]
         public async Task<IActionResult> UploadPhotoAjax(
             int patientId,
             IFormFile photo,
             string photoSection = "other")
         {
-            // ── Validation ──────────────────────────────────────
             if (photo == null || photo.Length == 0)
                 return Json(new { success = false, message = "No photo provided." });
+
+            if (photo.Length > MaxPhotoSize)
+                return Json(new { success = false, message = "Photo is too large. Maximum size is 15 MB." });
 
             if (!_allowedSections.Contains(photoSection))
                 photoSection = "other";
 
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
-            var ext = Path.GetExtension(photo.FileName).ToLowerInvariant();
-            if (!allowedExtensions.Contains(ext))
+            var ext = Path.GetExtension(photo.FileName);
+            if (string.IsNullOrWhiteSpace(ext) || !_allowedExtensions.Contains(ext))
                 return Json(new { success = false, message = "Invalid file type. Only images are allowed." });
 
-            // ── جلب أو إنشاء الفحص ────────────────────────────
+            var patientExists = await _context.Patients
+                .AnyAsync(p => p.PatientID == patientId);
+
+            if (!patientExists)
+                return Json(new { success = false, message = "Patient not found." });
+
             var exam = await _context.ExtraoralExams
                 .FirstOrDefaultAsync(e => e.PatientID == patientId);
 
@@ -130,48 +193,88 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     PatientID = patientId,
                     CreatedDate = DateTime.Now
                 };
+
                 _context.ExtraoralExams.Add(exam);
                 await _context.SaveChangesAsync();
             }
 
-            // ── بناء اسم الملف ────────────────────────────────
             var existingCount = await _context.ExtraoralExamPhotos
                 .CountAsync(p => p.ExtraoralExamID == exam.ExtraoralExamID
                               && p.PhotoSection == photoSection);
 
             var counter = existingCount + 1;
-            var uniqueSuffix = Guid.NewGuid().ToString("N")[..6];
-            var fileName = $"{patientId}_extraoral_{photoSection}_{counter}_{uniqueSuffix}{ext}";
+            var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+            var safeExt = ext.ToLowerInvariant();
+            var fileName = $"{patientId}_extraoral_{photoSection}_{counter}_{uniqueSuffix}{safeExt}";
 
-            // ── مسار الحفظ ────────────────────────────────────
+            // IMPORTANT:
+            // File is saved physically under wwwroot/uploads/extraoral
+            // DB stores a relative path so it works locally and after Publish.
             var folderRelative = Path.Combine("uploads", "extraoral");
-            var folderAbsolute = Path.Combine(_env.WebRootPath, folderRelative);
-            Directory.CreateDirectory(folderAbsolute);
-
+            var folderAbsolute = Path.Combine(GetWebRootPath(), folderRelative);
             var fullPath = Path.Combine(folderAbsolute, fileName);
 
-            using (var stream = new FileStream(fullPath, FileMode.Create))
-                await photo.CopyToAsync(stream);
+            try
+            {
+                Directory.CreateDirectory(folderAbsolute);
 
-            var photoPath = $"/{folderRelative.Replace("\\", "/")}/{fileName}";
+                await using (var stream = new FileStream(
+                    fullPath,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.None))
+                {
+                    await photo.CopyToAsync(stream);
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Server cannot write to wwwroot/uploads/extraoral. Give the IIS Application Pool Modify permission on this folder."
+                });
+            }
+            catch (IOException ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Could not save the photo on the server: " + ex.Message
+                });
+            }
 
-            // ── حفظ السجل في قاعدة البيانات ──────────────────
+            var relativePath = $"uploads/extraoral/{fileName}";
+
             var examPhoto = new ExtraoralExamPhoto
             {
                 ExtraoralExamID = exam.ExtraoralExamID,
-                PhotoPath = photoPath,
+                PhotoPath = relativePath,
                 PhotoSection = photoSection,
                 UploadedDate = DateTime.Now
             };
 
-            _context.ExtraoralExamPhotos.Add(examPhoto);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.ExtraoralExamPhotos.Add(examPhoto);
+                await _context.SaveChangesAsync();
+            }
+            catch
+            {
+                // If DB save fails, remove the physical file so we do not leave orphan files.
+                if (System.IO.File.Exists(fullPath))
+                    System.IO.File.Delete(fullPath);
 
-            // ✅ نرجع sectionLabel و uploadedDate عشان Photos tab يتحدث بدون ريفريش
+                throw;
+            }
+
+            var photoUrl = BuildPhotoUrl(relativePath);
+
             return Json(new
             {
                 success = true,
-                photoPath = photoPath,
+                photoPath = relativePath,
+                photoUrl,
                 photoId = examPhoto.ExtraoralExamPhotoID,
                 examId = exam.ExtraoralExamID,
                 section = photoSection,
@@ -180,9 +283,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             });
         }
 
-        // ═══════════════════════════════════════════════════════
-        //  POST — حذف صورة بالـ photoId (AJAX)
-        // ═══════════════════════════════════════════════════════
+        // POST: Delete one photo
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeletePhoto(int photoId)
@@ -192,24 +293,32 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             if (photo == null)
                 return Json(new { success = false, message = "Photo not found." });
 
-            // حذف الملف من الـ wwwroot
-            if (!string.IsNullOrEmpty(photo.PhotoPath))
+            try
             {
-                var physicalPath = Path.Combine(_env.WebRootPath, photo.PhotoPath.TrimStart('/'));
-                if (System.IO.File.Exists(physicalPath))
-                    System.IO.File.Delete(physicalPath);
+                if (!string.IsNullOrWhiteSpace(photo.PhotoPath))
+                {
+                    var physicalPath = GetPhysicalPhotoPath(photo.PhotoPath);
+
+                    if (System.IO.File.Exists(physicalPath))
+                        System.IO.File.Delete(physicalPath);
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Server cannot delete this file. Check IIS folder permissions."
+                });
             }
 
-            // حذف السجل من قاعدة البيانات
             _context.ExtraoralExamPhotos.Remove(photo);
             await _context.SaveChangesAsync();
 
             return Json(new { success = true });
         }
 
-        // ═══════════════════════════════════════════════════════
-        //  POST — حذف كل صور قسم معين (AJAX)
-        // ═══════════════════════════════════════════════════════
+        // POST: Delete all photos in one section
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteSectionPhotos(int examId, string section)
@@ -221,20 +330,36 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 .Where(p => p.ExtraoralExamID == examId && p.PhotoSection == section)
                 .ToListAsync();
 
-            foreach (var photo in photos)
+            try
             {
-                if (!string.IsNullOrEmpty(photo.PhotoPath))
+                foreach (var photo in photos)
                 {
-                    var physicalPath = Path.Combine(_env.WebRootPath, photo.PhotoPath.TrimStart('/'));
+                    if (string.IsNullOrWhiteSpace(photo.PhotoPath))
+                        continue;
+
+                    var physicalPath = GetPhysicalPhotoPath(photo.PhotoPath);
+
                     if (System.IO.File.Exists(physicalPath))
                         System.IO.File.Delete(physicalPath);
                 }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Server cannot delete files. Check IIS folder permissions."
+                });
             }
 
             _context.ExtraoralExamPhotos.RemoveRange(photos);
             await _context.SaveChangesAsync();
 
-            return Json(new { success = true, deleted = photos.Count });
+            return Json(new
+            {
+                success = true,
+                deleted = photos.Count
+            });
         }
     }
 }

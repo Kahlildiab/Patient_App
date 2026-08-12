@@ -28,55 +28,87 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             string? searchID,
             string? filterStatus,
             string? visitDate,
+            string? caseComplexity,
             int page = 1)
         {
-            int pageSize = 10;
+            const int pageSize = 10;
 
-            var query = _context.Patients.AsQueryable();
+            var query =
+                _context.Patients
+                    .AsNoTracking()
+                    .AsQueryable();
 
             DateTime? parsedVisitDate = null;
 
-            if (!string.IsNullOrWhiteSpace(visitDate) &&
+            if (
+                !string.IsNullOrWhiteSpace(visitDate)
+                &&
                 DateTime.TryParseExact(
                     visitDate,
                     "yyyy-MM-dd",
                     System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.None,
-                    out DateTime selectedVisitDate))
+                    out DateTime selectedVisitDate
+                )
+            )
             {
                 parsedVisitDate = selectedVisitDate.Date;
             }
 
             if (!string.IsNullOrWhiteSpace(searchName))
             {
-                query = query.Where(p =>
-                    (p.FirstName + " " + p.SecondName + " " +
-                     p.ThirdName + " " + p.FourthName)
-                    .ToLower()
-                    .Contains(searchName.Trim().ToLower()));
+                string normalizedSearchName =
+                    searchName.Trim().ToLower();
+
+                query = query.Where(
+                    patient =>
+                        (
+                            patient.FirstName + " "
+                            + patient.SecondName + " "
+                            + patient.ThirdName + " "
+                            + patient.FourthName
+                        )
+                        .ToLower()
+                        .Contains(normalizedSearchName)
+                );
             }
 
             if (!string.IsNullOrWhiteSpace(searchID))
             {
-                query = query.Where(p =>
-                    p.NationalID_PassportNumber != null &&
-                    p.NationalID_PassportNumber
-                        .ToLower()
-                        .Contains(searchID.Trim().ToLower()));
+                string normalizedSearchId =
+                    searchID.Trim().ToLower();
+
+                query = query.Where(
+                    patient =>
+                        patient.NationalID_PassportNumber != null
+                        && patient.NationalID_PassportNumber
+                            .ToLower()
+                            .Contains(normalizedSearchId)
+                );
             }
 
             if (!string.IsNullOrWhiteSpace(filterStatus))
             {
-                if (filterStatus == "Screening")
+                if (
+                    string.Equals(
+                        filterStatus,
+                        "Screening",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
                 {
-                    query = query.Where(p =>
-                        p.PatientStatus == "Screening" ||
-                        string.IsNullOrEmpty(p.PatientStatus));
+                    query = query.Where(
+                        patient =>
+                            patient.PatientStatus == "Screening"
+                            || string.IsNullOrEmpty(patient.PatientStatus)
+                    );
                 }
                 else
                 {
-                    query = query.Where(p =>
-                        p.PatientStatus == filterStatus);
+                    query = query.Where(
+                        patient =>
+                            patient.PatientStatus == filterStatus
+                    );
                 }
             }
 
@@ -85,18 +117,78 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 DateTime fromDate = parsedVisitDate.Value.Date;
                 DateTime toDate = fromDate.AddDays(1);
 
-                query = query.Where(p =>
-                    _context.Appointments.Any(a =>
-                        a.PatientID == p.PatientID &&
-                        a.AppointmentDate >= fromDate &&
-                        a.AppointmentDate < toDate));
+                query = query.Where(
+                    patient =>
+                        _context.Appointments.Any(
+                            appointment =>
+                                appointment.PatientID == patient.PatientID
+                                && appointment.AppointmentDate >= fromDate
+                                && appointment.AppointmentDate < toDate
+                        )
+                );
+            }
+
+            // Case Complexity is stored in Visits.
+            // The first non-empty CaseComplexity for each patient is used,
+            // matching the logic that was previously in AllocatedStudent.
+            if (!string.IsNullOrWhiteSpace(caseComplexity))
+            {
+                var candidatePatientIds =
+                    await query
+                        .Select(patient => patient.PatientID)
+                        .ToListAsync();
+
+                var candidateComplexities =
+                    await GetCaseComplexityByPatientAsync(
+                        candidatePatientIds
+                    );
+
+                List<int> matchingPatientIds;
+
+                if (
+                    string.Equals(
+                        caseComplexity,
+                        "Not Set",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    matchingPatientIds =
+                        candidatePatientIds
+                            .Where(
+                                patientId =>
+                                    !candidateComplexities.ContainsKey(patientId)
+                            )
+                            .ToList();
+                }
+                else
+                {
+                    matchingPatientIds =
+                        candidateComplexities
+                            .Where(
+                                item =>
+                                    string.Equals(
+                                        item.Value,
+                                        caseComplexity.Trim(),
+                                        StringComparison.OrdinalIgnoreCase
+                                    )
+                            )
+                            .Select(item => item.Key)
+                            .ToList();
+                }
+
+                query = query.Where(
+                    patient =>
+                        matchingPatientIds.Contains(patient.PatientID)
+                );
             }
 
             int totalItems = await query.CountAsync();
 
             int totalPages =
                 (int)Math.Ceiling(
-                    (double)totalItems / pageSize);
+                    (double)totalItems / pageSize
+                );
 
             if (page < 1)
             {
@@ -108,45 +200,68 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 page = totalPages;
             }
 
-            var patients = await query
-                .OrderByDescending(p => p.PatientID)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            var patients =
+                await query
+                    .OrderByDescending(
+                        patient => patient.PatientID
+                    )
+                    .Skip(
+                        (page - 1) * pageSize
+                    )
+                    .Take(pageSize)
+                    .ToListAsync();
 
-            var patientIds = patients
-                .Select(p => p.PatientID)
-                .ToList();
+            var patientIds =
+                patients
+                    .Select(patient => patient.PatientID)
+                    .ToList();
 
-            var appointmentRows = await _context.Appointments
-                .Where(a => patientIds.Contains(a.PatientID))
-                .Select(a => new
-                {
-                    a.PatientID,
-                    a.AppointmentDate
-                })
-                .ToListAsync();
+            var appointmentRows =
+                await _context.Appointments
+                    .AsNoTracking()
+                    .Where(
+                        appointment =>
+                            patientIds.Contains(appointment.PatientID)
+                    )
+                    .Select(
+                        appointment => new
+                        {
+                            appointment.PatientID,
+                            appointment.AppointmentDate
+                        }
+                    )
+                    .ToListAsync();
 
             var displayedVisitDates =
                 new Dictionary<int, DateTime?>();
 
             foreach (int patientId in patientIds)
             {
-                var patientDates = appointmentRows
-                    .Where(a => a.PatientID == patientId)
-                    .Select(a => (DateTime?)a.AppointmentDate)
-                    .Where(d => d.HasValue)
-                    .Select(d => d!.Value)
-                    .OrderBy(d => d)
-                    .ToList();
+                var patientDates =
+                    appointmentRows
+                        .Where(
+                            appointment =>
+                                appointment.PatientID == patientId
+                        )
+                        .Select(
+                            appointment =>
+                                (DateTime?)appointment.AppointmentDate
+                        )
+                        .Where(date => date.HasValue)
+                        .Select(date => date!.Value)
+                        .OrderBy(date => date)
+                        .ToList();
 
                 DateTime? displayedDate = null;
 
                 if (parsedVisitDate.HasValue)
                 {
-                    displayedDate = patientDates
-                        .FirstOrDefault(d =>
-                            d.Date == parsedVisitDate.Value.Date);
+                    displayedDate =
+                        patientDates
+                            .FirstOrDefault(
+                                date =>
+                                    date.Date == parsedVisitDate.Value.Date
+                            );
 
                     if (displayedDate == DateTime.MinValue)
                     {
@@ -155,14 +270,19 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 }
                 else
                 {
-                    displayedDate = patientDates
-                        .FirstOrDefault(d => d.Date >= DateTime.Today);
+                    displayedDate =
+                        patientDates
+                            .FirstOrDefault(
+                                date =>
+                                    date.Date >= DateTime.Today
+                            );
 
                     if (displayedDate == DateTime.MinValue)
                     {
-                        displayedDate = patientDates
-                            .OrderByDescending(d => d)
-                            .FirstOrDefault();
+                        displayedDate =
+                            patientDates
+                                .OrderByDescending(date => date)
+                                .FirstOrDefault();
 
                         if (displayedDate == DateTime.MinValue)
                         {
@@ -176,30 +296,95 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
 
             ViewBag.VisitDates = displayedVisitDates;
 
+            ViewBag.CaseComplexityByPatient =
+                await GetCaseComplexityByPatientAsync(patientIds);
+
             ViewBag.TotalPatients =
                 await _context.Patients.CountAsync();
 
             ViewBag.Screening =
-                await _context.Patients.CountAsync(p =>
-                    p.PatientStatus == "Screening" ||
-                    string.IsNullOrEmpty(p.PatientStatus));
+                await _context.Patients.CountAsync(
+                    patient =>
+                        patient.PatientStatus == "Screening"
+                        || string.IsNullOrEmpty(patient.PatientStatus)
+                );
 
             ViewBag.Allocated =
-                await _context.Patients.CountAsync(p =>
-                    p.PatientStatus == "Allocated");
+                await _context.Patients.CountAsync(
+                    patient =>
+                        patient.PatientStatus == "Allocated"
+                );
 
             ViewBag.Discharged =
-                await _context.Patients.CountAsync(p =>
-                    p.PatientStatus == "Discharged");
+                await _context.Patients.CountAsync(
+                    patient =>
+                        patient.PatientStatus == "Discharged"
+                );
 
             ViewBag.TotalPages = totalPages;
             ViewBag.CurrentPage = page;
-            ViewBag.SearchName = searchName ?? "";
-            ViewBag.SearchID = searchID ?? "";
-            ViewBag.FilterStatus = filterStatus ?? "";
-            ViewBag.VisitDate = parsedVisitDate?.ToString("yyyy-MM-dd") ?? "";
+            ViewBag.SearchName = searchName ?? string.Empty;
+            ViewBag.SearchID = searchID ?? string.Empty;
+            ViewBag.FilterStatus = filterStatus ?? string.Empty;
+            ViewBag.VisitDate =
+                parsedVisitDate?.ToString("yyyy-MM-dd")
+                ?? string.Empty;
+            ViewBag.CaseComplexity = caseComplexity ?? string.Empty;
 
             return View(patients);
+        }
+
+        private async Task<Dictionary<int, string>>
+            GetCaseComplexityByPatientAsync(
+                IEnumerable<int> patientIds
+            )
+        {
+            var ids =
+                patientIds
+                    .Distinct()
+                    .ToList();
+
+            if (!ids.Any())
+            {
+                return new Dictionary<int, string>();
+            }
+
+            var rows =
+                await _context.Visits
+                    .AsNoTracking()
+                    .Where(
+                        visit =>
+                            ids.Contains(visit.PatientID)
+                            && visit.CaseComplexity != null
+                            && visit.CaseComplexity != ""
+                    )
+                    .OrderBy(
+                        visit => visit.VisitDate
+                    )
+                    .ThenBy(
+                        visit => visit.VisitID
+                    )
+                    .Select(
+                        visit => new
+                        {
+                            visit.PatientID,
+                            visit.CaseComplexity
+                        }
+                    )
+                    .ToListAsync();
+
+            return rows
+                .Where(
+                    row =>
+                        !string.IsNullOrWhiteSpace(row.CaseComplexity)
+                )
+                .GroupBy(
+                    row => row.PatientID
+                )
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.First().CaseComplexity!.Trim()
+                );
         }
 
         // ═══════════════════════════════════════════════════════
@@ -338,7 +523,9 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             var assignedIds =
                 await _context.AllocatedStudents
                     .AsNoTracking()
-                    .Where(a => a.PatientID == patientId)
+                    .Where(a =>
+                        a.PatientID == patientId
+                        && a.IsActive)
                     .Select(a => a.AppUserId)
                     .Distinct()
                     .ToListAsync();
@@ -404,6 +591,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             string? searchID,
             string? filterStatus,
             string? visitDate,
+            string? caseComplexity,
             int page = 1)
         {
             var redirectArgs =
@@ -413,6 +601,7 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     searchID,
                     filterStatus,
                     visitDate,
+                    caseComplexity,
                     page
                 };
 
