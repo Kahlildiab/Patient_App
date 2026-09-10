@@ -38,21 +38,21 @@
         border: 1px solid #d9d9d9 !important;
     }
     /*
-                                            ملفات الخط يجب أن تكون داخل:
+                                                    ملفات الخط يجب أن تكون داخل:
 
-                                            wwwroot
-                                            └── Fonts
-                                                └── NeoSansArabic
-                                                    ├── NEOSANSARABIC.TTF
-                                                    ├── NEOSANSARABIC-LIGHT.TTF
-                                                    ├── NEOSANSARABIC-MEDIUM.TTF
-                                                    ├── NEOSANSARABIC-BOLD.TTF
-                                                    ├── NEOSANSARABIC-BLACK.TTF
-                                                    └── NEOSANSARABIC-ULTRA.TTF
+                                                    wwwroot
+                                                    └── Fonts
+                                                        └── NeoSansArabic
+                                                            ├── NEOSANSARABIC.TTF
+                                                            ├── NEOSANSARABIC-LIGHT.TTF
+                                                            ├── NEOSANSARABIC-MEDIUM.TTF
+                                                            ├── NEOSANSARABIC-BOLD.TTF
+                                                            ├── NEOSANSARABIC-BLACK.TTF
+                                                            └── NEOSANSARABIC-ULTRA.TTF
 
-                                            نكتب @@font-face داخل ملف cshtml حتى يقوم Razor
-                                            بطباعة font -face بشكل صحيح داخل CSS.
-                                    */
+                                                    نكتب @@font-face داخل ملف cshtml حتى يقوم Razor
+                                                    بطباعة font -face بشكل صحيح داخل CSS.
+                                            */
 
     @@font-face {
         font-family: 'NeoSansArabic';
@@ -141,8 +141,8 @@
     }
 
     /*
-                                            نحافظ على خط Font Awesome حتى لا تختفي الأيقونات.
-                                        */
+                                                    نحافظ على خط Font Awesome حتى لا تختفي الأيقونات.
+                                                */
     .fa,
     .fas,
     .far,
@@ -194,8 +194,117 @@
         }
 
     /* =============================================
-                                       CAPTCHA محلية — بدون Session أو إعدادات إضافية
-                                       =============================================== */
+               بطاقة إرشادات الحجز
+               =============================================== */
+    .booking-guide {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 14px 16px;
+        border: 1px solid #e2e4f0;
+        border-right: 4px solid #daa328;
+        background: #fbfbfe;
+    }
+
+    .booking-guide-icon {
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #252468;
+        color: #fff;
+        border-radius: 50%;
+        font-size: 17px;
+    }
+
+    .booking-guide-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .booking-guide-title {
+        color: #252468;
+        font-size: 15px;
+        font-weight: 800;
+        margin-bottom: 3px;
+    }
+
+    .booking-guide-text {
+        color: #4f5563;
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    .booking-guide-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 9px;
+    }
+
+    .booking-guide-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+        .booking-guide-chip.current {
+            color: #235c42;
+            background: #edf8f2;
+            border: 1px solid #ccebd9;
+        }
+
+        .booking-guide-chip.new {
+            color: #252468;
+            background: #efeffa;
+            border: 1px solid #d9d9ee;
+        }
+
+    .booking-guide-muted {
+        margin-top: 8px;
+        color: #777d89;
+        font-size: 12px;
+    }
+
+    .booking-capacity-note {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin-top: 14px;
+        padding: 7px 10px;
+        color: #6d5314;
+        background: #fff9e9;
+        border: 1px solid #f0dfaa;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    @@media (max-width: 767.98px) {
+        .booking-guide {
+            padding: 12px;
+        }
+
+        .booking-guide-icon {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+        }
+
+        .booking-guide-chip {
+            white-space: normal;
+        }
+    }
+
+    /* =============================================
+                                               CAPTCHA محلية — بدون Session أو إعدادات إضافية
+                                               =============================================== */
     .local-captcha-box {
         border: 1px solid #d9d9d9;
         background: #f8f8fb;
@@ -508,86 +617,88 @@
 
         <!-- الموعد الأول -->
         <div class="mb-4">
-            <p class="fw-bold fs-5 text-end mb-2"
-               style="color:#252468;">
+            <p class="fw-bold fs-5 text-end mb-2" style="color:#252468;">
                 الموعد الأول
             </p>
 
             <div class="bg-white p-3">
-
-                <div class="row g-3 mb-2">
+                <div class="row g-3 mb-3">
 
                     <!-- Appointment Date -->
                     <div class="col-md-6">
-                        <div class="d-flex align-items-center gap-2">
-
+                        <div class="d-flex align-items-start gap-2">
                             <label class="fw-semibold text-nowrap"
                                    style="width:140px; color:#252468;">
                                 * تاريخ الموعد
                             </label>
 
                             <div class="flex-fill">
-
                                 <input asp-for="AppointmentDate"
                                        type="text"
                                        id="appointmentDatePicker"
                                        class="form-control rounded-0"
-                                       placeholder="اختر التاريخ" />
+                                       placeholder="اختر التاريخ"
+                                       autocomplete="off" />
 
                                 <span asp-validation-for="AppointmentDate"
                                       class="text-danger small"></span>
 
-                                <div class="small mt-1"
-                                     style="color:#6c757d;">
-                                    الحجز متاح ابتداءً من 26/07/2026،
-                                    باستثناء يومي الجمعة والسبت.
+                                <div class="booking-guide"
+                                     style="justify-content:center; align-items:center; text-align:center;">
+                                    <span class="booking-guide-chip new"
+                                          style="font-size:13px; padding:7px 12px;">
+                                        الجدول الجديد يبدأ 25/10/2026
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Period -->
+                    <!-- Available appointment slots -->
                     <div class="col-md-6">
-                        <div class="d-flex align-items-center gap-2">
-
+                        <div class="d-flex align-items-start gap-2">
                             <label class="fw-semibold text-nowrap"
                                    style="width:140px; color:#252468;">
-                                * الفترة
+                                * الوقت المتاح
                             </label>
 
                             <div class="flex-fill">
-
-                                <div class="d-flex gap-3 align-items-center">
-
-                                    <label class="d-flex align-items-center gap-1 fw-medium"
-                                           style="color:#252468;">
-
-                                        <input type="radio"
-                                               name="TimePeriod"
-                                               value="AM"
-                                               class="form-check-input mt-0"
-                                               style="accent-color:#252468;" />
-
-                                        صباحاً
-                                    </label>
-
-                                    <label class="d-flex align-items-center gap-1 fw-medium"
-                                           style="color:#252468;">
-
-                                        <input type="radio"
-                                               name="TimePeriod"
-                                               value="PM"
-                                               class="form-check-input mt-0"
-                                               style="accent-color:#252468;" />
-
-                                        مساءً
-                                    </label>
+                                <div id="slotsHelpText"
+                                     class="small mb-2"
+                                     style="color:#6c757d;">
+                                    اختر تاريخ الموعد أولاً لتظهر المواعيد المتاحة.
                                 </div>
 
-                                <div class="small mt-1"
-                                     style="color:#6c757d;">
-                                    صباحاً: 09:00 تلقائياً —
-                                    مساءً: 13:00 تلقائياً
+                                <div id="slotButtons"
+                                     class="d-flex flex-wrap gap-2">
+                                </div>
+
+                                <input asp-for="AppointmentTime"
+                                       type="hidden"
+                                       id="AppointmentTimeHidden" />
+
+                                <span asp-validation-for="AppointmentTime"
+                                      class="text-danger small d-block mt-1"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selected appointment -->
+                <div class="row g-3 mb-2" id="selectedTimeRow" style="display:none;">
+                    <div class="col-md-6"></div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="fw-semibold text-nowrap"
+                                   style="width:140px; color:#252468;">
+                                الوقت المحدد
+                            </label>
+
+                            <div class="flex-fill">
+                                <div id="selectedTimeText"
+                                     class="form-control rounded-0"
+                                     style="background:#f7f7fb; border-color:#ced4da; color:#252468; font-weight:700;">
+                                    —
                                 </div>
                             </div>
                         </div>
@@ -599,59 +710,20 @@
                      class="alert alert-warning rounded-0 mt-3 mb-2 d-none"
                      role="alert"
                      style="border-right:4px solid #daa328; color:#252468;">
-
                     <i class="fa-solid fa-calendar-xmark ms-1"></i>
-
-                    موعدا هذا اليوم ممتلئان.
-                    يرجى اختيار يوم آخر.
+                    جميع مواعيد هذا اليوم ممتلئة. يرجى اختيار يوم آخر.
                 </div>
 
-                <!-- Automatically selected time -->
-                <div class="row g-3 mb-2"
-                     id="selectedTimeRow"
-                     style="display:none;">
-
-                    <div class="col-md-6"></div>
-
-                    <div class="col-md-6">
-
-                        <div class="d-flex align-items-center gap-2">
-
-                            <label class="fw-semibold text-nowrap"
-                                   style="width:140px; color:#252468;">
-                                الوقت المحدد
-                            </label>
-
-                            <div class="flex-fill">
-
-                                <div id="selectedTimeText"
-                                     class="form-control rounded-0"
-                                     style="
-                                    background:#f7f7fb;
-                                    border-color:#ced4da;
-                                    color:#252468;
-                                    font-weight:700;">
-                                    —
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- The value sent to ASP.NET -->
-                        <input asp-for="AppointmentTime"
-                               type="hidden"
-                               id="AppointmentTimeHidden" />
-
-                        <span asp-validation-for="AppointmentTime"
-                              class="text-danger small d-block mt-1"></span>
-
-                        <div id="capacityWarning"
-                             class="text-danger small mt-1 d-none">
-                            ⚠️ هذا الموعد ممتلئ (10/10).
-                            يرجى اختيار الفترة الأخرى أو يوماً آخر.
-                        </div>
-                    </div>
+                <!-- Selected slot warning -->
+                <div id="capacityWarning"
+                     class="text-danger small mt-2 d-none">
+                    ⚠️ هذا الموعد ممتلئ (8/8). يرجى اختيار موعد آخر.
                 </div>
 
+                <div class="booking-capacity-note">
+                    <i class="fa-solid fa-user-group"></i>
+                    <span>الحد الأقصى لكل فترة: <strong>8 مرضى</strong></span>
+                </div>
             </div>
         </div>
 
@@ -835,7 +907,7 @@
                 <p id="slotFullModalMessage"
                    class="text-muted mb-0"
                    style="font-size:14px; line-height:1.9;">
-                    حالياً لا يمكن التسجيل، يرجى اختيار موعد آخر لأنه لا يوجد مجال للتسجيل في هذا التاريخ.
+                    حالياً لا يمكن التسجيل في هذا الموعد. يرجى اختيار موعد آخر متاح.
                 </p>
             </div>
 
@@ -861,511 +933,335 @@
 <script>
 
     /* =============================================
-    المواعيد المتاحة
+    نظام المواعيد الجديد
 
-    صباحاً = 09:00 فقط
-    مساءً  = 13:00 فقط
+    حتى 07/09/2026:
+    يبقى الحجز الحالي متاحاً حتى آخر يوم محدد.
 
-    لا توجد قائمة بأربع ساعات.
-    اختيار الفترة يحدد الوقت تلقائياً.
+    من 08/09/2026 إلى 24/10/2026:
+    الحجز متوقف بالكامل.
+
+    من 25/10/2026:
+    الأحد / الاثنين / الثلاثاء:
+      09:00 - 11:00
+      11:00 - 13:00
+
+    الأربعاء:
+      09:00 - 11:00
+      11:00 - 13:00
+      13:00 - 15:00
+      15:00 - 17:00
+
+    الخميس / الجمعة / السبت:
+    لا يوجد حجز.
+
+    الحد الأقصى لكل فترة = 8 مرضى.
     =============================================== */
 
-    const BOOKING_START_DATE =
-        "2026-07-26";
+    const OLD_BOOKING_START_DATE = "2026-09-06";
+    const LAST_OLD_BOOKING_DATE = "2026-09-07";
+    const NEW_BOOKING_START_DATE = "2026-10-25";
+    const MAX_PATIENTS_PER_SLOT = 8;
 
-    const DEFAULT_APPOINTMENTS = {
+    // آخر يومين قبل الإيقاف يستخدمان النظام السابق الموجود عندك.
+    const OLD_SLOTS = [
+        { value: "09:00", label: "09:00 - 11:00" },
+        { value: "13:00", label: "13:00 - 15:00" }
+    ];
 
-        AM: {
-            value: "09:00",
-            label: "09:00 صباحاً"
-        },
+    const NORMAL_DAY_SLOTS = [
+        { value: "09:00", label: "09:00 - 11:00" },
+        { value: "11:00", label: "11:00 - 13:00" }
+    ];
 
-        PM: {
-            value: "13:00",
-            label: "01:00 مساءً"
-        }
+    const WEDNESDAY_SLOTS = [
+        { value: "09:00", label: "09:00 - 11:00" },
+        { value: "11:00", label: "11:00 - 13:00" },
+        { value: "13:00", label: "13:00 - 15:00" },
+        { value: "15:00", label: "15:00 - 17:00" }
+    ];
 
-    };
-
-    /*
-    * true  = الموعد متاح
-    * false = الموعد ممتلئ
-    */
     let slotAvailability = {};
+    let isWholeDayFull = false;
+    let isSelectedSlotFull = false;
 
-    let isWholeDayFull =
-        false;
+    function parseLocalDate(dateString) {
+        if (!dateString) return null;
 
-    let isSelectedSlotFull =
-        false;
+        const parts = dateString.split("-");
+        if (parts.length !== 3) return null;
 
-    function getAllDefaultAppointments() {
-
-        return [
-            DEFAULT_APPOINTMENTS.AM,
-            DEFAULT_APPOINTMENTS.PM
-        ];
+        return new Date(
+            Number(parts[0]),
+            Number(parts[1]) - 1,
+            Number(parts[2]),
+            0, 0, 0, 0
+        );
     }
 
-    function setSubmitDisabled(
-        disabled
-    ) {
+    function formatDateLocal(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
 
-        const button =
-            document.getElementById(
-                "submitBtn"
-            );
+    function getSlotsForDate(dateString) {
+        if (!dateString) return [];
 
-        button.disabled =
-            disabled;
+        // النظام السابق فقط يومي الأحد 06/09/2026 والاثنين 07/09/2026.
+        if (
+            dateString >= OLD_BOOKING_START_DATE &&
+            dateString <= LAST_OLD_BOOKING_DATE
+        ) {
+            return OLD_SLOTS;
+        }
 
-        button.style.opacity =
-            disabled
-                ? "0.6"
-                : "1";
+        // فترة الإيقاف.
+        if (dateString < NEW_BOOKING_START_DATE) {
+            return [];
+        }
+
+        const date = parseLocalDate(dateString);
+        if (!date) return [];
+
+        const dayOfWeek = date.getDay();
+
+        // Sunday = 0, Monday = 1, Tuesday = 2
+        if (dayOfWeek === 0 || dayOfWeek === 1 || dayOfWeek === 2) {
+            return NORMAL_DAY_SLOTS;
+        }
+
+        // Wednesday = 3
+        if (dayOfWeek === 3) {
+            return WEDNESDAY_SLOTS;
+        }
+
+        // Thursday / Friday / Saturday
+        return [];
+    }
+
+    function isBlockedAppointmentDate(date) {
+        const dateString = formatDateLocal(date);
+
+        // أي تاريخ بعد الشفتات القديمة وقبل 25/10/2026 لا يوجد فيه حجز.
+        if (
+            dateString > LAST_OLD_BOOKING_DATE &&
+            dateString < NEW_BOOKING_START_DATE
+        ) {
+            return true;
+        }
+
+        // من 25/10/2026: الخميس والجمعة والسبت ممنوعة.
+        if (dateString >= NEW_BOOKING_START_DATE) {
+            const dayOfWeek = date.getDay();
+            return dayOfWeek === 4 || dayOfWeek === 5 || dayOfWeek === 6;
+        }
+
+        return false;
+    }
+
+    function setSubmitDisabled(disabled) {
+        const button = document.getElementById("submitBtn");
+        button.disabled = disabled;
+        button.style.opacity = disabled ? "0.6" : "1";
     }
 
     function updateSubmitButtonState() {
-
-        // نُبقي زر تقديم الطلب متاحاً دائماً.
-        // التحقق من امتلاء الموعد يتم عند الضغط على تقديم الطلب.
+        // يبقى الزر متاحاً، والفحص النهائي يتم عند الإرسال.
         setSubmitDisabled(false);
     }
 
     function hideCapacityMessages() {
-
-        document.getElementById(
-            "capacityWarning"
-        ).classList.add(
-            "d-none"
-        );
-
-        document.getElementById(
-            "dayCapacityWarning"
-        ).classList.add(
-            "d-none"
-        );
+        document.getElementById("capacityWarning").classList.add("d-none");
+        document.getElementById("dayCapacityWarning").classList.add("d-none");
     }
 
     function showSlotFullModal(message) {
-
-        const messageElement =
-            document.getElementById(
-                "slotFullModalMessage"
-            );
+        const messageElement = document.getElementById("slotFullModalMessage");
 
         messageElement.textContent =
             message ||
-            "حالياً لا يمكن التسجيل، يرجى اختيار موعد آخر لأنه لا يوجد مجال للتسجيل في هذا التاريخ.";
+            "هذا الموعد ممتلئ. يرجى اختيار موعد آخر.";
 
-        const modalElement =
-            document.getElementById(
-                "slotFullModal"
-            );
-
-        const modal =
-            bootstrap.Modal.getOrCreateInstance(
-                modalElement
-            );
-
+        const modalElement = document.getElementById("slotFullModal");
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
         modal.show();
     }
 
     function clearSelectedAppointment() {
+        document.getElementById("AppointmentTimeHidden").value = "";
+        document.getElementById("selectedTimeText").textContent = "—";
+        document.getElementById("selectedTimeRow").style.display = "none";
 
-        document.getElementById(
-            "AppointmentTimeHidden"
-        ).value = "";
+        document.querySelectorAll("#slotButtons .slot-btn").forEach(function(button) {
+            button.classList.remove("selected");
+        });
 
-        document.getElementById(
-            "selectedTimeText"
-        ).textContent = "—";
-
-        document.getElementById(
-            "selectedTimeRow"
-        ).style.display = "none";
-
-        document.querySelectorAll(
-            'input[name="TimePeriod"]'
-        ).forEach(
-            function(radio) {
-
-                radio.checked = false;
-                radio.disabled = false;
-            }
-        );
-
-        isSelectedSlotFull =
-            false;
-
-        updateSubmitButtonState();
-    }
-
-    /*
-    * اختيار صباحاً أو مساءً:
-    *
-    * AM يضع 09:00 تلقائياً.
-    * PM يضع 13:00 تلقائياً.
-    */
-    async function selectDefaultAppointment(
-        period
-    ) {
-
-        const date =
-            document.getElementById(
-                "appointmentDatePicker"
-            ).value;
-
-        const selectedAppointment =
-            DEFAULT_APPOINTMENTS[
-            period
-            ];
-
-        const hiddenInput =
-            document.getElementById(
-                "AppointmentTimeHidden"
-            );
-
-        const selectedTimeText =
-            document.getElementById(
-                "selectedTimeText"
-            );
-
-        const selectedTimeRow =
-            document.getElementById(
-                "selectedTimeRow"
-            );
-
-        const warning =
-            document.getElementById(
-                "capacityWarning"
-            );
-
-        warning.classList.add(
-            "d-none"
-        );
-
-        isSelectedSlotFull =
-            false;
-
-        if (!date) {
-
-            hiddenInput.value = "";
-
-            selectedTimeRow.style.display =
-                "none";
-
-            alert(
-                "يرجى اختيار تاريخ الموعد أولاً."
-            );
-
-            const selectedRadio =
-                document.querySelector(
-                    'input[name="TimePeriod"]:checked'
-                );
-
-            if (selectedRadio) {
-                selectedRadio.checked = false;
-            }
-
-            return;
-        }
-
-        hiddenInput.value =
-            selectedAppointment.value;
-
-        selectedTimeText.textContent =
-            selectedAppointment.label;
-
-        selectedTimeRow.style.removeProperty(
-            "display"
-        );
-
-        /*
-        * حتى لو كانت الفترة ممتلئة، نسمح للمستخدم باختيارها.
-        * رسالة الامتلاء تظهر فقط عند الضغط على زر تقديم الطلب.
-        */
-        warning.classList.add("d-none");
         isSelectedSlotFull = false;
-
         updateSubmitButtonState();
     }
 
-    /* =============================================
-    فحص الموعدين الافتراضيين لليوم
+    function selectAppointmentSlot(value, label, button) {
+        clearSelectedAppointment();
 
-    09:00 و13:00 فقط
-    =============================================== */
+        document.getElementById("AppointmentTimeHidden").value = value;
+        document.getElementById("selectedTimeText").textContent = label;
+        document.getElementById("selectedTimeRow").style.removeProperty("display");
 
-    async function checkDayAvailability() {
+        if (button) {
+            button.classList.add("selected");
+        }
 
-        const date =
-            document.getElementById(
-                "appointmentDatePicker"
-            ).value;
+        document.getElementById("capacityWarning").classList.add("d-none");
+        isSelectedSlotFull = false;
+    }
 
-        const dayWarning =
-            document.getElementById(
-                "dayCapacityWarning"
-            );
+    async function fetchSlotAvailability(date, slot) {
+        const response = await fetch(
+            `/Patients/CheckSlot?date=${encodeURIComponent(date)}&time=${encodeURIComponent(slot.value)}`,
+            { cache: "no-store" }
+        );
 
-        slotAvailability = {};
+        if (!response.ok) {
+            throw new Error("تعذر فحص الموعد");
+        }
 
-        isWholeDayFull =
-            false;
+        const data = await response.json();
 
-        isSelectedSlotFull =
-            false;
+        return {
+            value: slot.value,
+            label: slot.label,
+            available: data.available === true,
+            count: Number.isFinite(Number(data.count)) ? Number(data.count) : 0,
+            reason: data.reason || ""
+        };
+    }
 
+    async function renderAvailableSlots() {
+        const date = document.getElementById("appointmentDatePicker").value;
+        const slotButtons = document.getElementById("slotButtons");
+        const helpText = document.getElementById("slotsHelpText");
+        const dayWarning = document.getElementById("dayCapacityWarning");
+
+        clearSelectedAppointment();
         hideCapacityMessages();
-
-        updateSubmitButtonState();
+        slotButtons.innerHTML = "";
+        slotAvailability = {};
+        isWholeDayFull = false;
 
         if (!date) {
+            helpText.textContent = "اختر تاريخ الموعد أولاً لتظهر المواعيد المتاحة.";
             return;
         }
+
+        const slots = getSlotsForDate(date);
+
+        if (slots.length === 0) {
+            helpText.textContent = "لا يوجد حجز في هذا التاريخ. يرجى اختيار يوم متاح.";
+            return;
+        }
+
+        helpText.textContent = "اختر إحدى الفترات المتاحة:";
 
         try {
-
-            const results =
-                await Promise.all(
-
-                    getAllDefaultAppointments()
-                        .map(
-                            async function(
-                                appointment
-                            ) {
-
-                                const response =
-                                    await fetch(
-                                        `/Patients/CheckSlot?date=${encodeURIComponent(date)}&time=${encodeURIComponent(appointment.value)}`,
-                                        {
-                                            cache: "no-store"
-                                        }
-                                    );
-
-                                if (!response.ok) {
-
-                                    throw new Error(
-                                        "تعذر فحص الموعد"
-                                    );
-                                }
-
-                                const data =
-                                    await response.json();
-
-                                return {
-                                    value:
-                                        appointment.value,
-
-                                    available:
-                                        data.available === true
-                                };
-                            }
-                        )
-                );
-
-            results.forEach(
-                function(
-                    result
-                ) {
-
-                    slotAvailability[
-                        result.value
-                    ] =
-                        result.available;
-                }
+            const results = await Promise.all(
+                slots.map(function(slot) {
+                    return fetchSlotAvailability(date, slot);
+                })
             );
 
-            isWholeDayFull =
-                results.every(
-                    function(
-                        result
-                    ) {
+            results.forEach(function(result) {
+                slotAvailability[result.value] = result.available;
 
-                        return (
-                            result.available
-                            === false
-                        );
-                    }
-                );
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "slot-btn";
+                button.dataset.value = result.value;
 
-            const morningRadio =
-                document.querySelector(
-                    'input[name="TimePeriod"][value="AM"]'
-                );
+                if (result.available) {
+                    button.textContent = result.label;
+                    button.title = `المحجوز حالياً: ${result.count} من ${MAX_PATIENTS_PER_SLOT}`;
 
-            const eveningRadio =
-                document.querySelector(
-                    'input[name="TimePeriod"][value="PM"]'
-                );
+                    button.addEventListener("click", function() {
+                        selectAppointmentSlot(result.value, result.label, button);
+                    });
+                }
+                else {
+                    button.disabled = true;
+                    button.classList.add("full");
+                    button.textContent = `${result.label} - ممتلئ`;
+                    button.title = `ممتلئ (${MAX_PATIENTS_PER_SLOT}/${MAX_PATIENTS_PER_SLOT})`;
+                }
 
-            // نسمح باختيار صباحاً أو مساءً حتى لو كانت الفترة ممتلئة.
-            // التنبيه يظهر فقط عند الضغط على تقديم الطلب.
-            morningRadio.disabled = false;
-            eveningRadio.disabled = false;
+                slotButtons.appendChild(button);
+            });
+
+            isWholeDayFull = results.every(function(result) {
+                return result.available === false;
+            });
 
             if (isWholeDayFull) {
-
-                // نحفظ حالة امتلاء اليوم، لكن لا نظهر التنبيه الآن.
-                // سيظهر عند الضغط على زر تقديم الطلب.
-                dayWarning.classList.add("d-none");
+                dayWarning.classList.remove("d-none");
             }
-            else {
-
-                dayWarning.classList.add(
-                    "d-none"
-                );
-            }
-
-            updateSubmitButtonState();
         }
-        catch (
-        error
-        ) {
-
-            console.warn(
-                "فشل فحص مواعيد اليوم:",
-                error
-            );
-
-            /*
-            * عند تعذر الاتصال لا نعتبر الموعد ممتلئاً
-            * من الواجهة. يبقى فحص الخادم هو المرجع النهائي.
-            */
-            slotAvailability = {};
-
-            isWholeDayFull =
-                false;
-
-            dayWarning.classList.add(
-                "d-none"
-            );
-
-            document.querySelectorAll(
-                'input[name="TimePeriod"]'
-            ).forEach(
-                function(
-                    radio
-                ) {
-
-                    radio.disabled =
-                        false;
-                }
-            );
-
-            updateSubmitButtonState();
+        catch (error) {
+            console.error("فشل تحميل المواعيد:", error);
+            helpText.textContent = "تعذر التحقق من المواعيد حالياً. يرجى تحديث الصفحة والمحاولة مرة أخرى.";
+            slotButtons.innerHTML = "";
         }
     }
 
-    /* =============================================
-    إعادة فحص الموعد المختار قبل الحفظ
-    =============================================== */
-
     async function checkCapacity() {
+        const date = document.getElementById("appointmentDatePicker").value;
+        const timeValue = document.getElementById("AppointmentTimeHidden").value;
+        const warning = document.getElementById("capacityWarning");
 
-        const date =
-            document.getElementById(
-                "appointmentDatePicker"
-            ).value;
-
-        const timeValue =
-            document.getElementById(
-                "AppointmentTimeHidden"
-            ).value;
-
-        const warning =
-            document.getElementById(
-                "capacityWarning"
-            );
-
-        if (
-            !date
-            ||
-            !timeValue
-        ) {
-
+        if (!date || !timeValue) {
             return false;
         }
 
         try {
-
-            const response =
-                await fetch(
-                    `/Patients/CheckSlot?date=${encodeURIComponent(date)}&time=${encodeURIComponent(timeValue)}`,
-                    {
-                        cache: "no-store"
-                    }
-                );
+            const response = await fetch(
+                `/Patients/CheckSlot?date=${encodeURIComponent(date)}&time=${encodeURIComponent(timeValue)}`,
+                { cache: "no-store" }
+            );
 
             if (!response.ok) {
-
-                throw new Error(
-                    "تعذر فحص الموعد"
-                );
+                throw new Error("تعذر فحص الموعد");
             }
 
-            const data =
-                await response.json();
+            const data = await response.json();
+            const available = data.available === true;
 
-            const available =
-                data.available === true;
-
-            slotAvailability[
-                timeValue
-            ] =
-                available;
+            slotAvailability[timeValue] = available;
 
             if (!available) {
-
                 warning.textContent =
-                    "⚠️ هذا الموعد ممتلئ (10/10). "
-                    +
-                    "يرجى اختيار الفترة الأخرى أو يوماً آخر.";
-
-                warning.classList.remove(
-                    "d-none"
-                );
-
-                isSelectedSlotFull =
-                    true;
+                    `⚠️ هذا الموعد غير متاح أو ممتلئ (${MAX_PATIENTS_PER_SLOT}/${MAX_PATIENTS_PER_SLOT}). يرجى اختيار موعد آخر.`;
+                warning.classList.remove("d-none");
+                isSelectedSlotFull = true;
 
                 showSlotFullModal(
-                    "يرجى اختيار تاريخ للزيارة في يوم مختلف بسبب امتلاء الحجوزات لهذا اليوم."
+                    data.reason ||
+                    "هذا الموعد ممتلئ. يرجى اختيار فترة أخرى أو يوماً آخر."
                 );
             }
             else {
-
-                warning.classList.add(
-                    "d-none"
-                );
-
-                isSelectedSlotFull =
-                    false;
+                warning.classList.add("d-none");
+                isSelectedSlotFull = false;
             }
 
             updateSubmitButtonState();
-
             return available;
         }
-        catch (
-        error
-        ) {
-
-            console.error(
-                "فشل فحص الموعد المختار:",
-                error
-            );
+        catch (error) {
+            console.error("فشل فحص الموعد المختار:", error);
 
             warning.textContent =
                 "⚠️ تعذر التحقق من توفر الموعد حالياً. يرجى المحاولة مرة أخرى.";
-
-            warning.classList.remove(
-                "d-none"
-            );
-
-            isSelectedSlotFull =
-                true;
+            warning.classList.remove("d-none");
+            isSelectedSlotFull = true;
 
             updateSubmitButtonState();
 
@@ -1378,66 +1274,22 @@
     }
 
     /* =============================================
-    Flatpickr — أول يوم متاح 26/07/2026
+    Flatpickr — نظام الإيقاف والجدول الجديد
     =============================================== */
 
-    flatpickr(
-        "#appointmentDatePicker",
-        {
-
-            dateFormat:
-                "Y-m-d",
-
-            minDate:
-                BOOKING_START_DATE,
-
-            disable: [
-                function(
-                    date
-                ) {
-
-                    /*
-                    * منع الجمعة والسبت.
-                    */
-                    return (
-                        date.getDay() === 5
-                        ||
-                        date.getDay() === 6
-                    );
-                }
-            ],
-
-            onChange:
-                async function() {
-
-                    clearSelectedAppointment();
-
-                    await checkDayAvailability();
-                }
+    flatpickr("#appointmentDatePicker", {
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        disableMobile: true,
+        disable: [
+            function(date) {
+                return isBlockedAppointmentDate(date);
+            }
+        ],
+        onChange: async function() {
+            await renderAvailableSlots();
         }
-    );
-
-    /* =============================================
-    اختيار الفترة
-    =============================================== */
-
-    document.querySelectorAll(
-        'input[name="TimePeriod"]'
-    ).forEach(
-        function(
-            radio
-        ) {
-
-            radio.addEventListener(
-                "change",
-                async function() {
-
-                    await selectDefaultAppointment(
-                        this.value
-                    );
-                }
-            );
-        });
+    });
 
     /* =============================================
     تاريخ الميلاد — يظهر يوم/شهر/سنة
@@ -1706,7 +1558,7 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             preview.innerHTML = `<img src="${e.target.result}"
-            style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`;
+                    style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />`;
         };
         reader.readAsDataURL(file);
     });
@@ -1857,39 +1709,22 @@
             return;
         }
 
-        // 3) التحقق من اختيار الفترة والوقت الافتراضي
+        // 3) التحقق من اختيار التاريخ والموعد
         if (!timeValue) {
-
             const appointmentDate =
-                document.getElementById(
-                    "appointmentDatePicker"
-                ).value;
+                document.getElementById("appointmentDatePicker").value;
 
             if (!appointmentDate) {
+                document.getElementById("appointmentDatePicker")
+                    .scrollIntoView({ behavior: "smooth", block: "center" });
 
-                document.getElementById(
-                    "appointmentDatePicker"
-                ).scrollIntoView({
-                    behavior: "smooth",
-                    block: "center"
-                });
-
-                alert(
-                    "يرجى اختيار تاريخ الموعد."
-                );
+                alert("يرجى اختيار تاريخ الموعد.");
             }
             else {
+                document.getElementById("slotButtons")
+                    .scrollIntoView({ behavior: "smooth", block: "center" });
 
-                document.querySelector(
-                    'input[name="TimePeriod"]'
-                ).scrollIntoView({
-                    behavior: "smooth",
-                    block: "center"
-                });
-
-                alert(
-                    "يرجى اختيار الفترة: صباحاً أو مساءً."
-                );
+                alert("يرجى اختيار أحد المواعيد المتاحة.");
             }
 
             return;

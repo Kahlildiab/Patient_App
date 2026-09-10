@@ -11,6 +11,18 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
     {
         private readonly AppDbContext _context;
 
+        /*
+         * قواعد الحجز العامة:
+         *
+         * - يبقى نظام الحجز السابق متاحاً حتى 24/10/2026.
+         * - يبدأ الجدول الجديد من 25/10/2026.
+         * - الحد الأعلى لكل فترة: 8 مرضى.
+         */
+        private const int MaxBookingCapacity = 8;
+
+        private static readonly DateTime NewBookingStartDate =
+            new DateTime(2026, 10, 25);
+
         public PatientsController(AppDbContext context)
         {
             _context = context;
@@ -78,7 +90,10 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     .SelectMany(v => v.Errors)
                     .Select(e => e.ErrorMessage)
                     .ToList();
-                TempData["Error"] = "Validation errors: " + string.Join(" | ", errors);
+
+                TempData["Error"] =
+                    "Validation errors: " + string.Join(" | ", errors);
+
                 return View("CreatePublic", patient);
             }
 
@@ -95,30 +110,78 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             {
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     return Json(new { isDuplicate = true });
-                ModelState.AddModelError(string.Empty, "هذا المريض مسجل مسبقاً في النظام.");
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "هذا المريض مسجل مسبقاً في النظام.");
+
                 return View("CreatePublic", patient);
             }
 
-            if (patient.AppointmentDate != default && !string.IsNullOrEmpty(patient.AppointmentTime))
-            {
-                string normalizedAppointmentTime =
-                    NormalizeAppointmentTime(patient.AppointmentTime);
+            /*
+             * EnableRetryOnFailure / SqlServerRetryingExecutionStrategy
+             * لا يسمح ببدء Transaction يدوياً خارج ExecutionStrategy.
+             *
+             * لذلك ننفذ فحص المقعد + الحفظ + Commit كوحدة واحدة
+             * داخل CreateExecutionStrategy().
+             */
+            var strategy =
+                _context.Database.CreateExecutionStrategy();
 
-                int slotCount = await _context.Patients.CountAsync(p =>
-                    p.StatusID != 6 &&
-                    p.AppointmentDate.Date == patient.AppointmentDate.Date &&
-                    p.AppointmentTime == normalizedAppointmentTime);
+            bool bookingFailed =
+                false;
 
-                if (slotCount >= 10)
+            string bookingError =
+                string.Empty;
+
+            await strategy.ExecuteAsync(
+                async () =>
                 {
-                    ModelState.AddModelError(string.Empty,
-                        $"لا تتوفر أماكن في هذه الفترة ({patient.AppointmentTime}) بتاريخ {patient.AppointmentDate:yyyy-MM-dd}. الطاقة ممتلئة (10/10).");
-                    return View("CreatePublic", patient);
-                }
+                    await using var bookingTransaction =
+                        await _context.Database.BeginTransactionAsync(
+                            System.Data.IsolationLevel.Serializable);
+
+                    var slotStatus =
+                        await GetBookingSlotStatusAsync(
+                            patient.AppointmentDate,
+                            patient.AppointmentTime);
+
+                    if (!slotStatus.Available)
+                    {
+                        bookingFailed =
+                            true;
+
+                        bookingError =
+                            slotStatus.Message;
+
+                        await bookingTransaction.RollbackAsync();
+
+                        return;
+                    }
+
+                    patient.AppointmentTime =
+                        slotStatus.NormalizedTime;
+
+                    await SavePatientAndAppointment(
+                        patient,
+                        ProfilePhotoFile);
+
+                    await bookingTransaction.CommitAsync();
+                });
+
+            if (bookingFailed)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    bookingError);
+
+                return View(
+                    "CreatePublic",
+                    patient);
             }
 
-            await SavePatientAndAppointment(patient, ProfilePhotoFile);
-            return RedirectToAction("CreateSuccess");
+            return RedirectToAction(
+                "CreateSuccess");
         }
 
         [AllowAnonymous]
@@ -134,7 +197,10 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                     .SelectMany(v => v.Errors)
                     .Select(e => e.ErrorMessage)
                     .ToList();
-                TempData["Error"] = "Validation errors: " + string.Join(" | ", errors);
+
+                TempData["Error"] =
+                    "Validation errors: " + string.Join(" | ", errors);
+
                 return View("CreatePublic", patient);
             }
 
@@ -151,30 +217,72 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             {
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     return Json(new { isDuplicate = true });
-                ModelState.AddModelError(string.Empty, "هذا المريض مسجل مسبقاً في النظام.");
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "هذا المريض مسجل مسبقاً في النظام.");
+
                 return View("CreatePublic", patient);
             }
 
-            if (patient.AppointmentDate != default && !string.IsNullOrEmpty(patient.AppointmentTime))
-            {
-                string normalizedAppointmentTime =
-                    NormalizeAppointmentTime(patient.AppointmentTime);
+            var strategy =
+                _context.Database.CreateExecutionStrategy();
 
-                int slotCount = await _context.Patients.CountAsync(p =>
-                    p.StatusID != 6 &&
-                    p.AppointmentDate.Date == patient.AppointmentDate.Date &&
-                    p.AppointmentTime == normalizedAppointmentTime);
+            bool bookingFailed =
+                false;
 
-                if (slotCount >= 10)
+            string bookingError =
+                string.Empty;
+
+            await strategy.ExecuteAsync(
+                async () =>
                 {
-                    ModelState.AddModelError(string.Empty,
-                        $"لا تتوفر أماكن في هذه الفترة ({patient.AppointmentTime}) بتاريخ {patient.AppointmentDate:yyyy-MM-dd}. الطاقة ممتلئة (10/10).");
-                    return View("CreatePublic", patient);
-                }
+                    await using var bookingTransaction =
+                        await _context.Database.BeginTransactionAsync(
+                            System.Data.IsolationLevel.Serializable);
+
+                    var slotStatus =
+                        await GetBookingSlotStatusAsync(
+                            patient.AppointmentDate,
+                            patient.AppointmentTime);
+
+                    if (!slotStatus.Available)
+                    {
+                        bookingFailed =
+                            true;
+
+                        bookingError =
+                            slotStatus.Message;
+
+                        await bookingTransaction.RollbackAsync();
+
+                        return;
+                    }
+
+                    patient.AppointmentTime =
+                        slotStatus.NormalizedTime;
+
+                    await SavePatientAndAppointment(
+                        patient,
+                        ProfilePhotoFile);
+
+                    await bookingTransaction.CommitAsync();
+                });
+
+            if (bookingFailed)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    bookingError);
+
+                return View(
+                    "CreatePublic",
+                    patient);
             }
 
-            await SavePatientAndAppointment(patient, ProfilePhotoFile);
-            return RedirectToAction("Index", "Appointments");
+            return RedirectToAction(
+                "Index",
+                "Appointments");
         }
 
         // ─── Internal Staff Form ──────────────────────────────────────────────────
@@ -201,33 +309,75 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 {
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                         return Json(new { isDuplicate = true });
-                    ModelState.AddModelError(string.Empty, "هذا المريض مسجل مسبقاً في النظام.");
+
+                    ModelState.AddModelError(
+                        string.Empty,
+                        "هذا المريض مسجل مسبقاً في النظام.");
+
                     return View(patient);
                 }
 
-                if (patient.AppointmentDate != default && !string.IsNullOrEmpty(patient.AppointmentTime))
-                {
-                    string normalizedAppointmentTime =
-                        NormalizeAppointmentTime(patient.AppointmentTime);
+                var strategy =
+                    _context.Database.CreateExecutionStrategy();
 
-                    int slotCount = await _context.Patients.CountAsync(p =>
-                        p.StatusID != 6 &&
-                        p.AppointmentDate.Date == patient.AppointmentDate.Date &&
-                        p.AppointmentTime == normalizedAppointmentTime);
+                bool bookingFailed =
+                    false;
 
-                    if (slotCount >= 10)
+                string bookingError =
+                    string.Empty;
+
+                await strategy.ExecuteAsync(
+                    async () =>
                     {
-                        ModelState.AddModelError(string.Empty,
-                            $"لا تتوفر أماكن في هذه الفترة ({patient.AppointmentTime}) بتاريخ {patient.AppointmentDate:yyyy-MM-dd}. الطاقة ممتلئة (10/10).");
-                        return View(patient);
-                    }
+                        await using var bookingTransaction =
+                            await _context.Database.BeginTransactionAsync(
+                                System.Data.IsolationLevel.Serializable);
+
+                        var slotStatus =
+                            await GetBookingSlotStatusAsync(
+                                patient.AppointmentDate,
+                                patient.AppointmentTime);
+
+                        if (!slotStatus.Available)
+                        {
+                            bookingFailed =
+                                true;
+
+                            bookingError =
+                                slotStatus.Message;
+
+                            await bookingTransaction.RollbackAsync();
+
+                            return;
+                        }
+
+                        patient.AppointmentTime =
+                            slotStatus.NormalizedTime;
+
+                        await SavePatientAndAppointment(
+                            patient,
+                            ProfilePhotoFile);
+
+                        await bookingTransaction.CommitAsync();
+                    });
+
+                if (bookingFailed)
+                {
+                    ModelState.AddModelError(
+                        string.Empty,
+                        bookingError);
+
+                    return View(
+                        patient);
                 }
 
-                await SavePatientAndAppointment(patient, ProfilePhotoFile);
+                TempData["Success"] =
+                    $"✅ Patient '{patient.FirstName} {patient.FourthName}' added successfully and appointment scheduled for {patient.AppointmentDate:yyyy-MM-dd} ({patient.AppointmentTime}).";
 
-                TempData["Success"] = $"✅ Patient '{patient.FirstName} {patient.FourthName}' added successfully and appointment scheduled for {patient.AppointmentDate:yyyy-MM-dd} ({patient.AppointmentTime}).";
-                return RedirectToAction("Index");
+                return RedirectToAction(
+                    "Index");
             }
+
             return View(patient);
         }
 
@@ -262,48 +412,39 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
                 : DateTime.Today;
 
             /*
-             * الوقت القادم من الصفحة أصبح واحداً من قيمتين فقط:
+             * جميع الفترات مدتها ساعتان.
              *
-             * 09:00 = الفترة الصباحية
-             * 13:00 = الفترة المسائية
+             * القيم المسموحة:
+             * 09:00 -> 11:00
+             * 11:00 -> 13:00
+             * 13:00 -> 15:00
+             * 15:00 -> 17:00
              *
-             * كل موعد مدته ساعتان.
+             * التحقق من أن الوقت مسموح لهذا اليوم يتم قبل الوصول
+             * إلى هذه الدالة داخل GetBookingSlotStatusAsync.
              */
-            TimeSpan timeFrom;
+            string normalizedAppointmentTime =
+                NormalizeAppointmentTime(
+                    patient.AppointmentTime
+                );
 
-            if (
-                string.Equals(
-                    patient.AppointmentTime,
-                    "13:00",
-                    StringComparison.OrdinalIgnoreCase
-                )
-                ||
-                string.Equals(
-                    patient.AppointmentTime,
-                    "PM",
-                    StringComparison.OrdinalIgnoreCase
-                )
-                ||
-                string.Equals(
-                    patient.AppointmentTime,
-                    "PM|13:00",
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
+            if (string.IsNullOrWhiteSpace(normalizedAppointmentTime))
             {
-                timeFrom =
-                    new TimeSpan(13, 0, 0);
-
-                patient.AppointmentTime =
-                    "13:00";
+                throw new InvalidOperationException(
+                    "وقت الموعد غير صالح."
+                );
             }
-            else
-            {
-                timeFrom =
-                    new TimeSpan(9, 0, 0);
 
-                patient.AppointmentTime =
-                    "09:00";
+            patient.AppointmentTime =
+                normalizedAppointmentTime;
+
+            if (!TimeSpan.TryParse(
+                    normalizedAppointmentTime,
+                    out TimeSpan timeFrom))
+            {
+                throw new InvalidOperationException(
+                    "تعذر قراءة وقت الموعد."
+                );
             }
 
             TimeSpan timeTo =
@@ -1601,19 +1742,235 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private static string NormalizeAppointmentTime(string? appointmentTime)
+        private static string NormalizeAppointmentTime(
+            string? appointmentTime)
         {
             string value =
                 (appointmentTime ?? string.Empty)
                 .Trim()
                 .ToUpperInvariant();
 
-            return value == "PM"
-                || value == "13:00"
-                || value == "13:00:00"
-                || value == "PM|13:00"
-                    ? "13:00"
-                    : "09:00";
+            /*
+             * دعم القيم القديمة AM / PM إلى جانب الفترات الجديدة.
+             * لا نحول أي قيمة مجهولة إلى 09:00؛ القيمة غير الصحيحة
+             * ترجع فارغة حتى يرفضها السيرفر.
+             */
+            return value switch
+            {
+                "AM" => "09:00",
+                "AM|09:00" => "09:00",
+                "09:00" => "09:00",
+                "09:00:00" => "09:00",
+                "09:00-11:00" => "09:00",
+                "09:00 - 11:00" => "09:00",
+
+                "11:00" => "11:00",
+                "11:00:00" => "11:00",
+                "11:00-13:00" => "11:00",
+                "11:00 - 13:00" => "11:00",
+
+                "PM" => "13:00",
+                "PM|13:00" => "13:00",
+                "13:00" => "13:00",
+                "13:00:00" => "13:00",
+                "13:00-15:00" => "13:00",
+                "13:00 - 15:00" => "13:00",
+
+                "15:00" => "15:00",
+                "15:00:00" => "15:00",
+                "15:00-17:00" => "15:00",
+                "15:00 - 17:00" => "15:00",
+
+                _ => string.Empty
+            };
+        }
+
+        private static string[] GetAllowedAppointmentTimes(
+            DateTime appointmentDate)
+        {
+            DateTime date =
+                appointmentDate.Date;
+
+            /*
+             * حتى 24/10/2026:
+             * نبقي نظام الحجز السابق يعمل بدون إيقاف.
+             *
+             * الشفتات السابقة:
+             * 09:00 -> 11:00
+             * 13:00 -> 15:00
+             */
+            if (date < NewBookingStartDate)
+            {
+                return new[]
+                {
+                    "09:00",
+                    "13:00"
+                };
+            }
+
+            /*
+             * الجدول الجديد ابتداءً من 25/10/2026.
+             */
+            return date.DayOfWeek switch
+            {
+                DayOfWeek.Sunday => new[]
+                {
+                    "09:00",
+                    "11:00"
+                },
+
+                DayOfWeek.Monday => new[]
+                {
+                    "09:00",
+                    "11:00"
+                },
+
+                DayOfWeek.Tuesday => new[]
+                {
+                    "09:00",
+                    "11:00"
+                },
+
+                DayOfWeek.Wednesday => new[]
+                {
+                    "09:00",
+                    "11:00",
+                    "13:00",
+                    "15:00"
+                },
+
+                _ => Array.Empty<string>()
+            };
+        }
+
+        private async Task<(
+            bool Available,
+            int Count,
+            string NormalizedTime,
+            string Message)>
+            GetBookingSlotStatusAsync(
+                DateTime appointmentDate,
+                string? appointmentTime,
+                int? excludePatientId = null)
+        {
+            if (appointmentDate == default)
+            {
+                return (
+                    false,
+                    0,
+                    string.Empty,
+                    "يرجى اختيار تاريخ الموعد."
+                );
+            }
+
+            DateTime date =
+                appointmentDate.Date;
+
+            if (date < DateTime.Today)
+            {
+                return (
+                    false,
+                    0,
+                    string.Empty,
+                    "لا يمكن اختيار تاريخ سابق. يرجى اختيار اليوم أو تاريخ لاحق."
+                );
+            }
+
+            string normalizedTime =
+                NormalizeAppointmentTime(
+                    appointmentTime
+                );
+
+            if (string.IsNullOrWhiteSpace(normalizedTime))
+            {
+                return (
+                    false,
+                    0,
+                    string.Empty,
+                    "وقت الموعد غير صحيح. يرجى اختيار إحدى الفترات المتاحة."
+                );
+            }
+
+            string[] allowedTimes =
+                GetAllowedAppointmentTimes(
+                    date
+                );
+
+            /*
+             * الخميس والجمعة والسبت غير متاحة في الجدول الجديد.
+             */
+            if (
+                date >= NewBookingStartDate
+                && allowedTimes.Length == 0
+            )
+            {
+                return (
+                    false,
+                    0,
+                    normalizedTime,
+                    "الحجز متاح فقط من الأحد إلى الأربعاء. الخميس والجمعة والسبت غير متاحة للحجز."
+                );
+            }
+
+            if (!allowedTimes.Contains(normalizedTime))
+            {
+                string allowedText =
+                    string.Join(
+                        "، ",
+                        allowedTimes.Select(
+                            GetAppointmentSlotLabel
+                        )
+                    );
+
+                return (
+                    false,
+                    0,
+                    normalizedTime,
+                    $"الفترة المختارة غير متاحة في هذا اليوم. الفترات المتاحة: {allowedText}."
+                );
+            }
+
+            int count =
+                await _context.Patients.CountAsync(
+                    patient =>
+                        patient.StatusID != 6
+                        && patient.AppointmentDate.Date == date
+                        && patient.AppointmentTime == normalizedTime
+                        && (
+                            !excludePatientId.HasValue
+                            || patient.PatientID != excludePatientId.Value
+                        )
+                );
+
+            if (count >= MaxBookingCapacity)
+            {
+                return (
+                    false,
+                    count,
+                    normalizedTime,
+                    $"هذا الموعد ممتلئ ({MaxBookingCapacity}/{MaxBookingCapacity}). يرجى اختيار موعد آخر."
+                );
+            }
+
+            return (
+                true,
+                count,
+                normalizedTime,
+                string.Empty
+            );
+        }
+
+        private static string GetAppointmentSlotLabel(
+            string startTime)
+        {
+            return startTime switch
+            {
+                "09:00" => "09:00 - 11:00",
+                "11:00" => "11:00 - 13:00",
+                "13:00" => "13:00 - 15:00",
+                "15:00" => "15:00 - 17:00",
+                _ => startTime
+            };
         }
 
         private bool PatientExists(int id) =>
@@ -1627,53 +1984,36 @@ namespace DentalCollegeManagementSystem_AAU.Controllers
             string time,
             int? excludePatientId = null)
         {
-            const int maxCapacity = 10;
-
             if (
-                !DateTime.TryParse(date, out DateTime parsedDate)
-                || string.IsNullOrWhiteSpace(time)
+                !DateTime.TryParse(
+                    date,
+                    out DateTime parsedDate
+                )
             )
             {
                 return Json(new
                 {
                     available = false,
                     count = 0,
-                    capacity = maxCapacity,
-                    message = "بيانات الموعد غير مكتملة."
+                    capacity = MaxBookingCapacity,
+                    message = "بيانات تاريخ الموعد غير صحيحة."
                 });
             }
 
-            if (parsedDate.Date < DateTime.Today)
-            {
-                return Json(new
-                {
-                    available = false,
-                    count = 0,
-                    capacity = maxCapacity,
-                    message = "لا يمكن اختيار تاريخ سابق. يرجى اختيار اليوم أو تاريخ لاحق."
-                });
-            }
-
-            string normalizedTime =
-                NormalizeAppointmentTime(time);
-
-            int count = await _context.Patients.CountAsync(patient =>
-                patient.StatusID != 6
-                && patient.AppointmentDate.Date == parsedDate.Date
-                && patient.AppointmentTime == normalizedTime
-                && (
-                    !excludePatientId.HasValue
-                    || patient.PatientID != excludePatientId.Value
-                ));
+            var slotStatus =
+                await GetBookingSlotStatusAsync(
+                    parsedDate,
+                    time,
+                    excludePatientId
+                );
 
             return Json(new
             {
-                available = count < maxCapacity,
-                count,
-                capacity = maxCapacity,
-                message = count >= maxCapacity
-                    ? "هذا الموعد ممتلئ (10/10). يرجى اختيار موعد آخر."
-                    : string.Empty
+                available = slotStatus.Available,
+                count = slotStatus.Count,
+                capacity = MaxBookingCapacity,
+                normalizedTime = slotStatus.NormalizedTime,
+                message = slotStatus.Message
             });
         }
 
